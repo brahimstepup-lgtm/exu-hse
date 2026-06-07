@@ -215,10 +215,12 @@ function extractFileId_(cellValue, formulaValue) {
 //  FOLDER CACHE (fallback Photo_NNN)
 // ================================================================
 var _folderCache = null;
+var _fileByName  = null;   // nom de fichier (minuscule) -> fileId
 
 function loadFolderCache_() {
   if (_folderCache) return;
   _folderCache = {};
+  _fileByName  = {};
   try {
     var folder = DriveApp.getFolderById(getConfig().folderId);
     var files  = folder.getFiles();
@@ -226,6 +228,7 @@ function loadFolderCache_() {
       var f      = files.next();
       var name   = f.getName();
       var fileId = f.getId();
+      _fileByName[name.toLowerCase()] = fileId;
       var m = name.match(/^(\d+)\.(Référence Photo|Reference Photo|Photo apr[èe]s|Photo avant)\b/i);
       if (m) {
         var id   = m[1];
@@ -251,6 +254,48 @@ function loadFolderCache_() {
 function getFolderPhotoFor_(num) {
   if (!_folderCache) loadFolderCache_();
   return _folderCache[String(num)] || { avantId:'', apresId:'' };
+}
+
+// Numéro de tag encodé dans une référence de cellule ("tags/731.Référence Photo…" -> "731").
+// Renvoie '' pour une URL Drive ou un texte sans préfixe numérique.
+function photoRefNum_(cellVal) {
+  var s = String(cellVal == null ? '' : cellVal).trim();
+  if (!s) return '';
+  var base = s.split('/').pop();                       // enlève un éventuel "tags/"
+  var m = base.match(/^(\d{1,6})\.\s*(?:R[eé]f[eé]rence|Photo)/i);
+  return m ? m[1] : '';
+}
+
+// Résout un chemin/nom de cellule ("tags/731.Référence Photo.081355.jpg")
+// vers le fileId du fichier de même nom dans le dossier.
+function resolveFolderFileByName_(cellVal) {
+  var s = String(cellVal == null ? '' : cellVal).trim();
+  if (!s) return '';
+  var base = s.split('/').pop().toLowerCase();          // nom de fichier seul
+  if (!base) return '';
+  if (!_fileByName) loadFolderCache_();
+  return _fileByName[base] || '';
+}
+
+// Renvoie le fileId de la photo (avant/après) RÉELLEMENT rattachée à ce tag.
+// Garantit qu'on n'affiche jamais la photo d'un AUTRE tag (problème "photo
+// pas adéquate avec la ligne").
+function resolvePhoto_(tagNum, cellVal, cellFormula, richLink, type) {
+  // 1) Priorité : fichier du dossier nommé "{tagNum}.{type}.*"
+  var fp  = getFolderPhotoFor_(tagNum);
+  var own = (type === 'apres') ? fp.apresId : fp.avantId;
+  if (own) return own;
+
+  // 2) Référence explicite de la cellule (URL Drive, lien hypertexte, ou chemin "tags/NNN.*")
+  var candidate = extractFileId_(cellVal, cellFormula) || extractFileId_(richLink, '');
+  if (!candidate) candidate = resolveFolderFileByName_(cellVal);
+  if (!candidate) return '';
+
+  // 3) Anti-mélange : si la cellule cible explicitement un AUTRE tag, on n'affiche rien
+  var refNum = photoRefNum_(cellVal);
+  if (refNum && String(refNum) !== String(tagNum)) return '';
+
+  return candidate;
 }
 
 // ================================================================
@@ -302,16 +347,14 @@ function getTags() {
         } catch(e) {}
       }
 
-      var avId = extractFileId_(row[C.PHOTO_AV], formulas[i][C.PHOTO_AV])
-              || extractFileId_(richAv, '');
-      var apId = extractFileId_(lc > 14 ? row[C.PHOTO_AP] : '', lc > 14 ? formulas[i][C.PHOTO_AP] : '')
-              || extractFileId_(richAp, '');
-
-      if (!avId || !apId) {
-        var fp = getFolderPhotoFor_(num);
-        if (!avId && fp.avantId) avId = fp.avantId;
-        if (!apId && fp.apresId) apId = fp.apresId;
-      }
+      // Photo strictement rattachée à CE tag (anti-mélange entre lignes) :
+      //  1) fichier du dossier nommé "{num}.…" — la source la plus fiable
+      //  2) sinon, référence de la cellule, SAUF si elle cible un autre tag
+      var avId = resolvePhoto_(num, row[C.PHOTO_AV], formulas[i][C.PHOTO_AV], richAv, 'avant');
+      var apId = resolvePhoto_(num,
+                               lc > 14 ? row[C.PHOTO_AP] : '',
+                               lc > 14 ? formulas[i][C.PHOTO_AP] : '',
+                               richAp, 'apres');
 
       tags.push({
         id:           num,
@@ -595,7 +638,7 @@ function saveConfig(payload) {
     p.setProperty('SHEET_ID', sheetId);
     p.setProperty('SHEET_NAME', sheetName);
     p.setProperty('PHOTOS_FOLDER_ID', folderId);
-    _cfg = null; _folderCache = null;
+    _cfg = null; _folderCache = null; _fileByName = null;
 
     return { success: true, data: {
       sheetName: ss.getName(), tab: sheetName, folderName: folder.getName(),
@@ -621,7 +664,7 @@ function createNewWorkspace(payload) {
     p.setProperty('SHEET_ID', ss.getId());
     p.setProperty('SHEET_NAME', DEFAULT_SHEET_NAME);
     p.setProperty('PHOTOS_FOLDER_ID', folder.getId());
-    _cfg = null; _folderCache = null;
+    _cfg = null; _folderCache = null; _fileByName = null;
 
     return { success: true, data: {
       sheetId: ss.getId(),    sheetUrl: ss.getUrl(),    sheetName: ss.getName(),
@@ -637,7 +680,7 @@ function resetConfig() {
     p.deleteProperty('SHEET_ID');
     p.deleteProperty('SHEET_NAME');
     p.deleteProperty('PHOTOS_FOLDER_ID');
-    _cfg = null; _folderCache = null;
+    _cfg = null; _folderCache = null; _fileByName = null;
     return { success: true };
   } catch (e) { return { success: false, error: e.message }; }
 }
@@ -658,7 +701,7 @@ function savePhotoToFolder_(b64, name, mime) {
     var folder= DriveApp.getFolderById(getConfig().folderId);
     var file  = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    _folderCache = null;
+    _folderCache = null; _fileByName = null;
     return 'https://drive.google.com/uc?export=view&id=' + file.getId();
   } catch(e) { Logger.log('savePhotoToFolder_: ' + e.message); return ''; }
 }
