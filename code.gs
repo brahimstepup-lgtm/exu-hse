@@ -7,9 +7,10 @@
 //  ✅ Endpoints batch + lazy pour images
 // ================================================================
 
-var SHEET_ID         = '1UPfWAHzIKBVvECIPqjg3ccgIwBlX1KzyflJ73jfPRc0';
-var SHEET_NAME       = 'plan';
-var PHOTOS_FOLDER_ID = '1AE6QUkG0hLSmnyzKAVOqWadtjVzUEUQ7';
+// ----- Configuration par défaut (utilisée tant que rien n'est enregistré) -----
+var DEFAULT_SHEET_ID   = '1UPfWAHzIKBVvECIPqjg3ccgIwBlX1KzyflJ73jfPRc0';
+var DEFAULT_SHEET_NAME = 'plan';
+var DEFAULT_FOLDER_ID  = '1AE6QUkG0hLSmnyzKAVOqWadtjVzUEUQ7';
 
 var C = {
   NUM:0, DATE_CR:1, DATE_CI:2, DANGER:3, GRAVITE:4,
@@ -20,6 +21,25 @@ var C = {
 
 var HEADER_ROW = 7;
 var DATA_START = 8;
+
+// En-têtes écrits automatiquement par ensureHeaders_ (ordre = colonnes A→U)
+var HSE_HEADERS = ['N° Cas','Date Création','Date Cible','Type de Danger','Gravité',
+  'Emplacement','Zone','Description','Risque Principal','Action Urgente',
+  'Propositions','Photo Avant','Statut','Responsable','Photo Après',
+  'Date Fermeture','Auteur','Anonyme','Latitude','Longitude','QR Zone'];
+
+// ----- Config dynamique (Script Properties) avec cache par exécution -----
+var _cfg = null;
+function getConfig() {
+  if (_cfg) return _cfg;
+  var p = PropertiesService.getScriptProperties();
+  _cfg = {
+    sheetId:   p.getProperty('SHEET_ID')        || DEFAULT_SHEET_ID,
+    sheetName: p.getProperty('SHEET_NAME')      || DEFAULT_SHEET_NAME,
+    folderId:  p.getProperty('PHOTOS_FOLDER_ID') || DEFAULT_FOLDER_ID
+  };
+  return _cfg;
+}
 
 // ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
@@ -149,8 +169,9 @@ function getImagesBatch(fileIds) {
 //  GET SHEET
 // ================================================================
 function getSheet_() {
-  var ss    = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName(SHEET_NAME);
+  var cfg   = getConfig();
+  var ss    = SpreadsheetApp.openById(cfg.sheetId);
+  var sheet = ss.getSheetByName(cfg.sheetName);
   if (!sheet) {
     var all = ss.getSheets();
     for (var i = 0; i < all.length; i++) {
@@ -199,7 +220,7 @@ function loadFolderCache_() {
   if (_folderCache) return;
   _folderCache = {};
   try {
-    var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+    var folder = DriveApp.getFolderById(getConfig().folderId);
     var files  = folder.getFiles();
     while (files.hasNext()) {
       var f      = files.next();
@@ -458,6 +479,170 @@ function deleteTag(rowIndex) {
 }
 
 // ================================================================
+//  CONFIGURATION — Brancher son propre Sheet + dossier Drive
+//  Les IDs sont stockés dans Script Properties (plus de hardcode).
+// ================================================================
+
+// Extrait un ID Drive depuis une URL complète OU un ID brut.
+function extractDriveId_(s) {
+  s = String(s == null ? '' : s).trim();
+  if (!s) return '';
+  var m = s.match(/\/d\/([a-zA-Z0-9_-]{20,})/);           // .../d/<id>/...
+  if (m) return m[1];
+  m = s.match(/\/folders\/([a-zA-Z0-9_-]{20,})/);         // .../folders/<id>
+  if (m) return m[1];
+  m = s.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);             // ...?id=<id>
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) return s;           // ID brut
+  return '';
+}
+
+// La feuille possède-t-elle déjà ses en-têtes (ligne HEADER_ROW) ?
+function hasHeaders_(sheet) {
+  try {
+    return String(sheet.getRange(HEADER_ROW, 1).getValue() || '')
+             .toLowerCase().indexOf('cas') !== -1;
+  } catch (e) { return false; }
+}
+
+// Écrit les en-têtes (A→U) sur la ligne HEADER_ROW si absentes. Retourne true si créés.
+function ensureHeaders_(sheet) {
+  if (hasHeaders_(sheet)) return false;
+  try {
+    sheet.getRange(1, 1).setValue('HSE TAGS — Registre des signalements');
+  } catch (e) {}
+  sheet.getRange(HEADER_ROW, 1, 1, HSE_HEADERS.length)
+       .setValues([HSE_HEADERS])
+       .setFontWeight('bold').setBackground('#1c2030').setFontColor('#f5c518');
+  try { sheet.setFrozenRows(HEADER_ROW); } catch (e) {}
+  return true;
+}
+
+// Décrit l'état d'un Sheet (accès, nom, onglet, nb lignes, en-têtes).
+function describeSheet_(sheetId, sheetName) {
+  try {
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sh = (sheetName && ss.getSheetByName(sheetName)) || ss.getSheets()[0];
+    return {
+      ok: true, name: ss.getName(), tab: sh.getName(), url: ss.getUrl(),
+      rows: Math.max(0, sh.getLastRow() - DATA_START + 1),
+      hasHeaders: hasHeaders_(sh)
+    };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// Décrit l'état d'un dossier Drive (accès, nom).
+function describeFolder_(folderId) {
+  try {
+    var f = DriveApp.getFolderById(folderId);
+    return { ok: true, name: f.getName(), url: f.getUrl() };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// Renvoie la config actuelle + état de connexion (pour l'écran de réglages).
+function getAppConfig() {
+  try {
+    var cfg = getConfig();
+    return { success: true, data: {
+      sheetId:   cfg.sheetId,
+      sheetName: cfg.sheetName,
+      folderId:  cfg.folderId,
+      isDefault: (cfg.sheetId === DEFAULT_SHEET_ID && cfg.folderId === DEFAULT_FOLDER_ID),
+      sheet:     describeSheet_(cfg.sheetId, cfg.sheetName),
+      folder:    describeFolder_(cfg.folderId)
+    }};
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+// Teste une connexion sans rien enregistrer (URL ou ID acceptés).
+function testConnection(payload) {
+  payload = payload || {};
+  var sheetId  = extractDriveId_(payload.sheetId);
+  var folderId = extractDriveId_(payload.folderId);
+  var sheetName = (payload.sheetName || '').trim() || DEFAULT_SHEET_NAME;
+  return {
+    success: true,
+    sheet:  sheetId  ? describeSheet_(sheetId, sheetName)
+                     : { ok: false, error: 'ID / URL de feuille manquant ou invalide.' },
+    folder: folderId ? describeFolder_(folderId)
+                     : { ok: false, error: 'ID / URL de dossier manquant ou invalide.' }
+  };
+}
+
+// Enregistre la config après validation de l'accès. Crée les en-têtes si demandé.
+function saveConfig(payload) {
+  try {
+    payload = payload || {};
+    var sheetId   = extractDriveId_(payload.sheetId);
+    var folderId  = extractDriveId_(payload.folderId);
+    var sheetName = (payload.sheetName || '').trim() || DEFAULT_SHEET_NAME;
+    if (!sheetId)  return { success: false, error: 'ID / URL de feuille invalide.' };
+    if (!folderId) return { success: false, error: 'ID / URL de dossier Drive invalide.' };
+
+    var ss     = SpreadsheetApp.openById(sheetId);   // lève une erreur si pas d'accès
+    var folder = DriveApp.getFolderById(folderId);   // lève une erreur si pas d'accès
+
+    var headersCreated = false;
+    if (payload.initStructure) {
+      var sh = ss.getSheetByName(sheetName);
+      if (!sh) sh = ss.insertSheet(sheetName);
+      // Sécurité : on n'écrit les en-têtes que si la feuille n'a aucune donnée
+      // (évite d'écraser une feuille déjà remplie).
+      if (sh.getLastRow() < DATA_START) headersCreated = ensureHeaders_(sh);
+    }
+
+    var p = PropertiesService.getScriptProperties();
+    p.setProperty('SHEET_ID', sheetId);
+    p.setProperty('SHEET_NAME', sheetName);
+    p.setProperty('PHOTOS_FOLDER_ID', folderId);
+    _cfg = null; _folderCache = null;
+
+    return { success: true, data: {
+      sheetName: ss.getName(), tab: sheetName, folderName: folder.getName(),
+      headersCreated: headersCreated, sheetUrl: ss.getUrl(), folderUrl: folder.getUrl()
+    }};
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+// Crée automatiquement un nouveau Sheet + dossier Drive, puis les enregistre.
+function createNewWorkspace(payload) {
+  try {
+    payload = payload || {};
+    var base = (payload.name || '').trim() || 'HSE Tags';
+
+    var ss = SpreadsheetApp.create(base + ' — Données');
+    var sh = ss.getSheets()[0];
+    sh.setName(DEFAULT_SHEET_NAME);
+    ensureHeaders_(sh);
+
+    var folder = DriveApp.createFolder(base + ' — Photos');
+
+    var p = PropertiesService.getScriptProperties();
+    p.setProperty('SHEET_ID', ss.getId());
+    p.setProperty('SHEET_NAME', DEFAULT_SHEET_NAME);
+    p.setProperty('PHOTOS_FOLDER_ID', folder.getId());
+    _cfg = null; _folderCache = null;
+
+    return { success: true, data: {
+      sheetId: ss.getId(),    sheetUrl: ss.getUrl(),    sheetName: ss.getName(),
+      folderId: folder.getId(), folderUrl: folder.getUrl(), folderName: folder.getName()
+    }};
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+// Réinitialise la config sur les valeurs par défaut.
+function resetConfig() {
+  try {
+    var p = PropertiesService.getScriptProperties();
+    p.deleteProperty('SHEET_ID');
+    p.deleteProperty('SHEET_NAME');
+    p.deleteProperty('PHOTOS_FOLDER_ID');
+    _cfg = null; _folderCache = null;
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+// ================================================================
 //  HELPERS
 // ================================================================
 function nowHHMMSS_() {
@@ -470,7 +655,7 @@ function savePhotoToFolder_(b64, name, mime) {
   try {
     var clean = b64.replace(/^data:[^;]+;base64,/, '');
     var blob  = Utilities.newBlob(Utilities.base64Decode(clean), mime, name);
-    var folder= DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+    var folder= DriveApp.getFolderById(getConfig().folderId);
     var file  = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     _folderCache = null;

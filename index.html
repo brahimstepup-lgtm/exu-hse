@@ -596,6 +596,24 @@ img{max-width:100%;display:block;}
 
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
 .fab{animation:fabPulse 2.4s ease-in-out infinite;}
+
+/* ══ CONFIG SHEET (Drive & Sheet) ══════════════════════════ */
+.cfg-status{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);
+  padding:11px 12px;font-size:.74rem;line-height:1.6;margin-bottom:14px;word-break:break-word;}
+.cfg-status .cs-row{display:flex;align-items:flex-start;gap:6px;margin:4px 0;}
+.cfg-status .cs-ok{color:var(--grn);} .cfg-status .cs-err{color:var(--red);}
+.cfg-status a{color:var(--y);text-decoration:none;}
+.cfg-check{display:flex;align-items:center;gap:9px;font-size:.76rem;color:var(--t2);
+  background:var(--ink2);border:1px solid var(--line);border-radius:var(--rm);
+  padding:10px 12px;cursor:pointer;user-select:none;}
+.cfg-check input{width:17px;height:17px;accent-color:var(--y);flex-shrink:0;}
+.cfg-or{text-align:center;font-size:.66rem;color:var(--t3);letter-spacing:1.5px;
+  margin:16px 0 12px;font-weight:600;}
+.cfg-badge{display:inline-block;padding:2px 9px;border-radius:20px;
+  font-size:.64rem;font-weight:700;font-family:var(--fm);}
+.cfg-badge.def{background:var(--ora2);color:var(--ora);}
+.cfg-badge.cust{background:var(--grn2);color:var(--grn);}
+.cfg-hint{font-size:.68rem;color:var(--t3);margin-top:7px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -631,6 +649,8 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="closed"><span class="snav-i">✅</span>Fermés</button>
   <div class="sb-sec">Admin KPI</div>
   <button class="snav" data-v="admin"><span class="snav-i">📊</span>Dashboard</button>
+  <div class="sb-sec">Réglages</div>
+  <button class="snav" onclick="openConfig()"><span class="snav-i">⚙</span>Configuration</button>
 </nav>
 
 <!-- APP -->
@@ -644,6 +664,7 @@ img{max-width:100%;display:block;}
       <button class="tb-btn tb-notif" onclick="goV('admin',null)" title="KPI Admin">
         📊<span class="tb-badge" id="tbBadge" style="display:none">!</span>
       </button>
+      <button class="tb-btn" onclick="openConfig()" title="Configuration Drive / Sheet">⚙</button>
       <button class="tb-btn" onclick="loadAll()" title="Actualiser">↺</button>
       <button class="tb-btn pri" onclick="openQuick()">＋ Signaler</button>
     </div>
@@ -954,6 +975,62 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('delOv')">Annuler</button>
       <button class="btn btn-r" id="delConfBtn">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Configuration Drive / Sheet ═══ -->
+<div class="ov" id="cfgOv">
+  <div class="sheet" style="max-width:560px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title">⚙ Configuration — Drive & Sheet</span>
+      <button class="sh-close" onclick="closeSheet('cfgOv')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="fw">
+        <div id="cfgStatus" class="cfg-status">Chargement de la configuration…</div>
+
+        <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin:2px 0 11px;">
+          📋 Brancher ton Google Sheet &amp; ton dossier Drive
+        </div>
+
+        <div class="fg full" style="margin-bottom:10px;">
+          <label class="fl">Google Sheet — URL ou ID *</label>
+          <input class="fi" id="cfgSheet" placeholder="https://docs.google.com/spreadsheets/d/…"/>
+        </div>
+        <div class="fg full" style="margin-bottom:10px;">
+          <label class="fl">Nom de l'onglet</label>
+          <input class="fi" id="cfgTab" placeholder="plan"/>
+        </div>
+        <div class="fg full" style="margin-bottom:12px;">
+          <label class="fl">Dossier Drive (photos) — URL ou ID *</label>
+          <input class="fi" id="cfgFolder" placeholder="https://drive.google.com/drive/folders/…"/>
+        </div>
+
+        <label class="cfg-check">
+          <input type="checkbox" id="cfgInit" checked/>
+          <span>Créer automatiquement les colonnes si la feuille est vide</span>
+        </label>
+
+        <div class="ur" style="margin-top:12px;">
+          <button class="ub" id="cfgTestBtn" onclick="cfgTest()">🔌 Tester la connexion</button>
+        </div>
+
+        <div class="cfg-or">— OU —</div>
+
+        <button class="btn btn-g" style="width:100%;" id="cfgCreateBtn" onclick="cfgCreateNew()">
+          ✨ Créer un nouveau Sheet + dossier automatiquement
+        </button>
+        <div class="cfg-hint">
+          Crée pour toi un Google Sheet (avec les bonnes colonnes) et un dossier Drive,
+          puis les connecte automatiquement à l'application.
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('cfgOv')">Annuler</button>
+      <button class="btn btn-p" id="cfgSaveBtn" onclick="cfgSave()">💾 Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1935,6 +2012,122 @@ function updateMFCount(){
   document.getElementById('mfCount').textContent = active>0 ? '('+active+' actif'+(active>1?'s':'')+')' : '';
 }
 
+
+/* ══════════════════════════════════════════
+   CONFIGURATION — Drive & Sheet
+══════════════════════════════════════════ */
+function openConfig(){
+  document.getElementById('cfgStatus').innerHTML =
+    '<span style="color:var(--t3)">⏳ Lecture de la configuration…</span>';
+  openSheet('cfgOv');
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r && r.success){ cfgFill(r.data); cfgRenderStatus(r.data); }
+      else cfgStatusErr((r&&r.error)||'Erreur inconnue');
+    })
+    .withFailureHandler(function(e){ cfgStatusErr(e.message); })
+    .getAppConfig();
+}
+
+function cfgFill(d){
+  document.getElementById('cfgSheet').value  = d.sheetId  || '';
+  document.getElementById('cfgTab').value    = d.sheetName|| '';
+  document.getElementById('cfgFolder').value = d.folderId || '';
+}
+
+function cfgSheetLine(s){
+  if(!s || !s.ok) return '<div class="cs-row cs-err">❌ Feuille : '+esc((s&&s.error)||'inaccessible')+'</div>';
+  return '<div class="cs-row cs-ok">✅ Feuille : <strong>'+esc(s.name)+'</strong> · onglet « '+esc(s.tab)+
+         ' » · '+s.rows+' enregistrement(s)'+
+         (s.hasHeaders?'':' · <span class="cs-err">colonnes à créer</span>')+'</div>';
+}
+function cfgFolderLine(f){
+  if(!f || !f.ok) return '<div class="cs-row cs-err">❌ Dossier : '+esc((f&&f.error)||'inaccessible')+'</div>';
+  return '<div class="cs-row cs-ok">✅ Dossier : <strong>'+esc(f.name)+'</strong></div>';
+}
+
+function cfgRenderStatus(d){
+  var badge = d.isDefault
+    ? '<span class="cfg-badge def">Config par défaut</span>'
+    : '<span class="cfg-badge cust">Config personnalisée</span>';
+  document.getElementById('cfgStatus').innerHTML =
+    '<div style="margin-bottom:8px">'+badge+'</div>'+
+    cfgSheetLine(d.sheet)+cfgFolderLine(d.folder);
+}
+
+function cfgStatusErr(msg){
+  document.getElementById('cfgStatus').innerHTML =
+    '<div class="cs-row cs-err">❌ '+esc(msg)+'</div>';
+}
+
+function cfgPayload(){
+  return {
+    sheetId:       document.getElementById('cfgSheet').value.trim(),
+    sheetName:     document.getElementById('cfgTab').value.trim(),
+    folderId:      document.getElementById('cfgFolder').value.trim(),
+    initStructure: document.getElementById('cfgInit').checked
+  };
+}
+
+function cfgTest(){
+  var btn=document.getElementById('cfgTestBtn'); var old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ Test…';
+  google.script.run
+    .withSuccessHandler(function(r){
+      btn.disabled=false; btn.textContent=old;
+      document.getElementById('cfgStatus').innerHTML =
+        cfgSheetLine(r.sheet)+cfgFolderLine(r.folder);
+      var ok = r.sheet&&r.sheet.ok && r.folder&&r.folder.ok;
+      toast(ok?'✓ Connexion OK':'⚠ Vérifie les accès', ok?'ok':'err');
+    })
+    .withFailureHandler(function(e){
+      btn.disabled=false; btn.textContent=old; toast('Erreur: '+e.message,'err');
+    })
+    .testConnection(cfgPayload());
+}
+
+function cfgSave(){
+  var p=cfgPayload();
+  if(!p.sheetId){  toast('Renseigne le Google Sheet','err'); return; }
+  if(!p.folderId){ toast('Renseigne le dossier Drive','err'); return; }
+  var btn=document.getElementById('cfgSaveBtn'); var old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ …';
+  google.script.run
+    .withSuccessHandler(function(r){
+      btn.disabled=false; btn.textContent=old;
+      if(r.success){
+        toast('✓ Configuration enregistrée'+(r.data.headersCreated?' · colonnes créées':''),'ok');
+        closeSheet('cfgOv');
+        loadAll();
+      } else toast('Erreur: '+(r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){
+      btn.disabled=false; btn.textContent=old; toast('Erreur: '+e.message,'err');
+    })
+    .saveConfig(p);
+}
+
+function cfgCreateNew(){
+  if(!confirm('Créer un NOUVEAU Google Sheet + dossier Drive et les connecter à l\'application ?')) return;
+  var btn=document.getElementById('cfgCreateBtn'); var old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ Création…';
+  google.script.run
+    .withSuccessHandler(function(r){
+      btn.disabled=false; btn.textContent=old;
+      if(r.success){
+        cfgFill({sheetId:r.data.sheetId, sheetName:'plan', folderId:r.data.folderId});
+        document.getElementById('cfgStatus').innerHTML =
+          '<div class="cs-row cs-ok">✅ Sheet créé : <a href="'+esc(r.data.sheetUrl)+'" target="_blank">'+esc(r.data.sheetName)+'</a></div>'+
+          '<div class="cs-row cs-ok">✅ Dossier créé : <a href="'+esc(r.data.folderUrl)+'" target="_blank">'+esc(r.data.folderName)+'</a></div>';
+        toast('✓ Espace créé et connecté','ok');
+        loadAll();
+      } else toast('Erreur: '+(r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){
+      btn.disabled=false; btn.textContent=old; toast('Erreur: '+e.message,'err');
+    })
+    .createNewWorkspace({});
+}
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
