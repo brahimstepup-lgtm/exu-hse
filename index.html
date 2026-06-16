@@ -835,7 +835,19 @@ img{max-width:100%;display:block;}
           </div>
           <div class="fg" style="margin-bottom:8px;">
             <label class="fl">Responsable</label>
-            <input class="fi" id="qResp" placeholder="Nom du responsable…"/>
+            <select class="fsel" id="qResp">
+              <option value="">— Choisir un responsable —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select>
           </div>
           <div class="anon-row">
             <span style="font-size:1rem">🎭</span>
@@ -899,7 +911,20 @@ img{max-width:100%;display:block;}
           <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/></div>
           <div class="fg full"><label class="fl">Action Urgente</label><textarea class="ft" id="fAction"></textarea></div>
           <div class="fg full"><label class="fl">Propositions</label><textarea class="ft" id="fPropo"></textarea></div>
-          <div class="fg full"><label class="fl">Responsable</label><input class="fi" id="fResp"/></div>
+          <div class="fg full"><label class="fl">Responsable</label>
+            <select class="fsel" id="fResp">
+              <option value="">— Choisir un responsable —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select></div>
         </div>
         <div class="anon-row">
           <span style="font-size:1rem">🎭</span>
@@ -1643,6 +1668,27 @@ function qPrev(){ if(S.qStep>1){ S.qStep--; updQStep(); } }
 /* ══════════════════════════════════════════
    FULL FORM (Modifier)
 ══════════════════════════════════════════ */
+/* Sélectionne le responsable dans le menu déroulant.
+   Tolère les anciennes valeurs (casse/espaces différents) et,
+   si la valeur n'existe pas dans la liste, l'ajoute en option. */
+function setRespValue(selId,val){
+  var sel=document.getElementById(selId);
+  if(!sel) return;
+  val=(val||'').trim();
+  if(!val){ sel.value=''; return; }
+  var norm=function(s){return s.toLowerCase().replace(/\s+/g,' ').trim();};
+  var target=norm(val), matched=null;
+  for(var i=0;i<sel.options.length;i++){
+    if(norm(sel.options[i].value||sel.options[i].text)===target){ matched=sel.options[i]; break; }
+  }
+  if(matched){ sel.value=matched.value||matched.text; }
+  else{
+    var opt=document.createElement('option');
+    opt.value=val; opt.text=val;
+    sel.appendChild(opt);
+    sel.value=val;
+  }
+}
 function editTag(id){
   var t=S.tags.find(function(x){return String(x.id)===String(id);});
   if(!t) return;
@@ -1661,7 +1707,7 @@ function editTag(id){
   document.getElementById('fRisque').value=t.risque||'';
   document.getElementById('fAction').value=t.action||'';
   document.getElementById('fPropo').value=t.propositions||'';
-  document.getElementById('fResp').value=t.responsable||'';
+  setRespValue('fResp',t.responsable||'');
   document.getElementById('fAnon').checked=t.anonymous||false;
   ['avPrev','apPrev'].forEach(function(id){document.getElementById(id).style.display='none';});
   ['avOk','apOk'].forEach(function(id){document.getElementById(id).style.display='none';});
