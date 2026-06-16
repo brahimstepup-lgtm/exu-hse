@@ -1583,7 +1583,11 @@ function uploadAfterPhoto(input){
     google.script.run
       .withSuccessHandler(function(res){
         hideSplash();
-        if(res&&res.success){ toast('✓ Photo après ajoutée','ok'); loadAll(); }
+        if(res&&res.success){
+          var msg = res.statut==='Fermé' ? '✓ Photo après ajoutée — Tag fermé ✅' : '✓ Photo après ajoutée';
+          toast(msg,'ok');
+          loadAll();
+        }
         else toast('Erreur: '+((res&&res.error)||'?'),'err');
       })
       .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })

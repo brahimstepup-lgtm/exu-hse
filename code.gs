@@ -89,7 +89,11 @@ function insertTagWithAutoIncrement(payload) {
     if (payload.photoApres && payload.photoApres.length > 10) {
       var fnAp  = nextId + '.Photo après.' + nowHHMMSS_() + '.jpg';
       var urlAp = savePhotoToFolder_(payload.photoApres, fnAp, payload.mime || 'image/jpeg');
-      if (urlAp) sheet.getRange(ir, C.PHOTO_AP + 1).setValue(urlAp);
+      if (urlAp) {
+        sheet.getRange(ir, C.PHOTO_AP + 1).setValue(urlAp);
+        sheet.getRange(ir, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
+        sheet.getRange(ir, C.DATE_FERME + 1).setValue(new Date());
+      }
     }
 
     routeNotification_(payload, nextId);
@@ -500,7 +504,14 @@ function saveAfterPhoto(p) {
     var url = savePhotoToFolder_(p.photoApres, fn, p.mime || 'image/jpeg');
     if (!url) return { success:false, error:'Échec de la sauvegarde' };
     sheet.getRange(ri, C.PHOTO_AP + 1).setValue(url);
-    return { success:true, status:'SUCCESS', url:url };
+
+    var oldStatut = parseStatut_(sheet.getRange(ri, C.STATUT + 1).getValue());
+    if (oldStatut === 'Ouvert') {
+      sheet.getRange(ri, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
+      sheet.getRange(ri, C.DATE_FERME + 1).setValue(new Date());
+    }
+
+    return { success:true, status:'SUCCESS', url:url, statut:'Fermé' };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
