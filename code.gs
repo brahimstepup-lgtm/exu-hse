@@ -477,19 +477,26 @@ function saveAfterPhoto(p) {
 }
 
 // ================================================================
-//  ANALYSE IA DE LA PHOTO (Gemini Vision) → description suggérée
-//  Nécessite une clé API dans Propriétés du script : GEMINI_API_KEY
+//  ANALYSE IA DE LA PHOTO → description suggérée
+//  Compatible OpenAI (Groq par défaut, gratuit). Configurable via
+//  Propriétés du script :
+//    AI_API_KEY  (obligatoire)  ex: clé Groq (gsk_...) ou OpenRouter
+//    AI_API_URL  (optionnel)    défaut Groq
+//    AI_MODEL    (optionnel)    défaut Llama 4 Scout (vision)
+//  Pour OpenRouter : AI_API_URL=https://openrouter.ai/api/v1/chat/completions
+//                    AI_MODEL=meta-llama/llama-3.2-11b-vision-instruct:free
 // ================================================================
 function analyzePhoto(p) {
   try {
     if (!p || !p.photo || p.photo.length < 10) return { success:false, error:'Photo manquante' };
-    var key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-    if (!key) return { success:false, error:'Clé GEMINI_API_KEY non configurée (Propriétés du script)' };
+    var props = PropertiesService.getScriptProperties();
+    var key   = props.getProperty('AI_API_KEY') || props.getProperty('GROQ_API_KEY');
+    if (!key) return { success:false, error:'Clé AI_API_KEY non configurée (Propriétés du script)' };
+    var url   = props.getProperty('AI_API_URL') || 'https://api.groq.com/openai/v1/chat/completions';
+    var model = props.getProperty('AI_MODEL')   || 'meta-llama/llama-4-scout-17b-16e-instruct';
 
-    var clean = String(p.photo).replace(/^data:[^;]+;base64,/, '');
-    var model = 'gemini-2.0-flash';
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model +
-              ':generateContent?key=' + encodeURIComponent(key);
+    var clean   = String(p.photo).replace(/^data:[^;]+;base64,/, '');
+    var dataUrl = 'data:' + (p.mime || 'image/jpeg') + ';base64,' + clean;
 
     var prompt = "Tu es un inspecteur HSE (Hygiène Sécurité Environnement) en milieu industriel. " +
       "Décris en UNE seule phrase concise et factuelle, en français, l'anomalie ou le danger de sécurité " +
@@ -497,28 +504,37 @@ function analyzePhoto(p) {
       "Pas de préambule ni de liste : uniquement la description.";
 
     var payload = {
-      contents: [{ parts: [
-        { text: prompt },
-        { inline_data: { mime_type: (p.mime || 'image/jpeg'), data: clean } }
-      ]}],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 150 }
+      model: model,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: dataUrl } }
+        ]
+      }],
+      temperature: 0.4,
+      max_tokens: 200
     };
 
     var res = UrlFetchApp.fetch(url, {
       method: 'post',
       contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + key, 'HTTP-Referer': 'https://hse-tags.app', 'X-Title': 'HSE Tags' },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     });
 
     var code = res.getResponseCode();
-    var data = JSON.parse(res.getContentText() || '{}');
+    var raw  = res.getContentText() || '{}';
+    var data = {};
+    try { data = JSON.parse(raw); } catch(e) {}
     if (code !== 200) {
-      return { success:false, error:'Gemini ' + code + ': ' + ((data.error && data.error.message) || '') };
+      var msg = (data.error && (data.error.message || data.error)) || raw.substring(0, 200);
+      return { success:false, error:'IA ' + code + ': ' + msg };
     }
     var text = '';
-    try { text = data.candidates[0].content.parts[0].text.trim(); } catch(e) {}
-    if (!text) return { success:false, error:'Réponse vide de Gemini' };
+    try { text = data.choices[0].message.content.trim(); } catch(e) {}
+    if (!text) return { success:false, error:'Réponse vide de l\'IA' };
     return { success:true, text:text };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
