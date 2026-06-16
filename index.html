@@ -830,6 +830,10 @@ img{max-width:100%;display:block;}
               <option>magasin mp</option><option>autre</option>
             </select>
           </div>
+          <div class="fg" style="margin-bottom:9px;">
+            <label class="fl">Emplacement</label>
+            <input class="fi" id="qEmplace" placeholder="Lieu exact (machine, local…)"/>
+          </div>
           <div class="ur">
             <button class="ub" id="gpsBtn" onclick="getGPS()">📍 GPS Auto</button>
             <button class="ub" id="qrBtn" onclick="scanQR()">📷 Scan QR</button>
@@ -842,7 +846,22 @@ img{max-width:100%;display:block;}
           </div>
           <div class="fg" style="margin-bottom:8px;">
             <label class="fl">Description *</label>
-            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="3"></textarea>
+            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="3" oninput="refreshQSugg()"></textarea>
+          </div>
+          <div class="fg" style="margin-bottom:8px;">
+            <label class="fl">Risque Principal</label>
+            <input class="fi" id="qRisque" placeholder="Risque identifié…"/>
+            <div class="sugg" id="qSuggRisque"></div>
+          </div>
+          <div class="fg" style="margin-bottom:8px;">
+            <label class="fl">Action Urgente <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne J)</span></label>
+            <textarea class="ft" id="qAction" placeholder="Action urgente à mener…" rows="2"></textarea>
+            <div class="sugg" id="qSuggAction"></div>
+          </div>
+          <div class="fg" style="margin-bottom:8px;">
+            <label class="fl">Propositions <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne K)</span></label>
+            <textarea class="ft" id="qPropo" placeholder="Solution proposée…" rows="2"></textarea>
+            <div class="sugg" id="qSuggPropo"></div>
           </div>
           <div class="fg" style="margin-bottom:8px;">
             <label class="fl">Responsable</label>
@@ -859,6 +878,12 @@ img{max-width:100%;display:block;}
               <option>Media Amine</option>
               <option>Mohamed Zerar</option>
             </select>
+          </div>
+          <div class="fg" style="margin-bottom:8px;">
+            <label class="fl">Photo après <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
+            <div class="ps"><div class="ps-h">✅ Après réalisation</div>
+              <div class="ps-b"><label class="pub"><input type="file" id="qPhAp" accept="image/*" onchange="prevCamAp(this)"/>📁 Choisir</label>
+              <img class="pth" id="qApPrev"/></div></div>
           </div>
           <div class="anon-row">
             <span style="font-size:1rem">🎭</span>
@@ -1517,9 +1542,18 @@ function tlI(cls,ico,lbl,dt){
 ══════════════════════════════════════════ */
 function openQuick(){
   S.qStep=1; S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
+  S.camApB64=''; S.camApMime='image/jpeg';
   S.qLat=0; S.qLng=0; S.qQR='';
   document.getElementById('qDesc').value='';
   document.getElementById('qResp').value='';
+  document.getElementById('qEmplace').value='';
+  document.getElementById('qRisque').value='';
+  document.getElementById('qAction').value='';
+  document.getElementById('qPropo').value='';
+  document.getElementById('qPhAp').value='';
+  document.getElementById('qApPrev').style.display='none';
+  SUGG_IGNORED={};
+  ['qSuggRisque','qSuggAction','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
   document.getElementById('qAnon').checked=false;
   document.getElementById('gpsInfo').style.display='none';
   document.getElementById('qrInfo').style.display='none';
@@ -1569,6 +1603,16 @@ function prevCam(input){
   r.onload=function(e){
     S.camB64=e.target.result.split(',')[1];
     var p=document.getElementById('camPrev'); p.src=e.target.result; p.style.display='block';
+  };
+  r.readAsDataURL(f);
+}
+function prevCamAp(input){
+  if(!input.files||!input.files[0]) return;
+  var f=input.files[0]; S.camApMime=f.type||'image/jpeg';
+  var r=new FileReader();
+  r.onload=function(e){
+    S.camApB64=e.target.result.split(',')[1];
+    var p=document.getElementById('qApPrev'); p.src=e.target.result; p.style.display='block';
   };
   r.readAsDataURL(f);
 }
@@ -1628,15 +1672,24 @@ function qNext(){
   if(s===1){
     if(!S.qDng){ toast('Sélectionnez un type de danger','err'); return; }
     S.qStep=2;
+    refreshQSugg();
   } else if(s===2){
     var desc=document.getElementById('qDesc').value.trim();
     if(!desc){ toast('Description requise','err'); return; }
+    var qRisque=document.getElementById('qRisque').value.trim();
+    var qAction=document.getElementById('qAction').value.trim();
+    var qPropo=document.getElementById('qPropo').value.trim();
     // Build summary for confirmation
     document.getElementById('qSummary').innerHTML=
       '<div>🏷 <strong>Danger:</strong> '+esc(S.qDng)+'</div>'+
       '<div>🔴 <strong>Gravité:</strong> '+esc(S.qGrav)+'</div>'+
       '<div>📍 <strong>Zone:</strong> '+esc(document.getElementById('qZone').value)+'</div>'+
+      (document.getElementById('qEmplace').value?'<div>📌 <strong>Emplacement:</strong> '+esc(document.getElementById('qEmplace').value)+'</div>':'')+
       '<div>📝 <strong>Description:</strong> '+esc(desc)+'</div>'+
+      (qRisque?'<div>⚠️ <strong>Risque principal:</strong> '+esc(qRisque)+'</div>':'')+
+      (qAction?'<div>🚨 <strong>Action urgente:</strong> '+esc(qAction)+'</div>':'')+
+      (qPropo?'<div>💡 <strong>Propositions:</strong> '+esc(qPropo)+'</div>':'')+
+      (document.getElementById('qResp').value?'<div>👤 <strong>Responsable:</strong> '+esc(document.getElementById('qResp').value)+'</div>':'')+
       (S.qLat?'<div>📡 <strong>GPS:</strong> '+S.qLat.toFixed(5)+', '+S.qLng.toFixed(5)+'</div>':'')+
       (S.qQR?'<div>📷 <strong>QR Zone:</strong> '+esc(S.qQR)+'</div>':'')+
       (document.getElementById('qAnon').checked?'<div>🎭 <strong>Anonyme</strong></div>':'')+
@@ -1647,11 +1700,15 @@ function qNext(){
     var data={
       danger:S.qDng, gravite:S.qGrav,
       zone:document.getElementById('qZone').value,
+      emplacement:document.getElementById('qEmplace').value.trim(),
       description:document.getElementById('qDesc').value.trim(),
+      risque:document.getElementById('qRisque').value.trim(),
+      action:document.getElementById('qAction').value.trim(),
+      propositions:document.getElementById('qPropo').value.trim(),
       responsable:document.getElementById('qResp').value.trim(),
       anonymous:document.getElementById('qAnon').checked,
       auteur:'',lat:S.qLat,lng:S.qLng,qrZone:S.qQR,
-      photoAvant:S.camB64, mime:S.camMime
+      photoAvant:S.camB64, photoApres:S.camApB64, mime:S.camMime
     };
     closeSheet('quickOv');
     if(S.offline){
@@ -1773,6 +1830,20 @@ function refreshSugg(){
   renderSugg('suggRisque','fRisque',empty('fRisque')?s.risque:'');
   renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
   renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
+}
+/* Suggestions pour le formulaire d'ajout (Signalement Rapide) */
+function refreshQSugg(){
+  var danger=S.qDng||'';
+  var desc=document.getElementById('qDesc').value;
+  if(!danger&&!desc){
+    ['qSuggRisque','qSuggAction','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg(danger,desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('qSuggRisque','qRisque',empty('qRisque')?s.risque:'');
+  renderSugg('qSuggAction','qAction',empty('qAction')?s.action:'');
+  renderSugg('qSuggPropo','qPropo',empty('qPropo')?s.propo:'');
 }
 function applySugg(fieldId,boxId){
   var box=document.getElementById(boxId);
