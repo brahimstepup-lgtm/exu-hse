@@ -458,6 +458,25 @@ function deleteTag(rowIndex) {
 }
 
 // ================================================================
+//  SAVE AFTER-PHOTO ONLY (sans réécrire les autres colonnes)
+//  Permet d'ajouter la "Photo après" directement depuis le détail
+// ================================================================
+function saveAfterPhoto(p) {
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+    if (!p.photoApres || p.photoApres.length < 10) return { success:false, error:'Photo manquante' };
+    var tagId = parseInt(p.id, 10) || ri;
+    var fn  = tagId + '.Photo après.' + nowHHMMSS_() + '.jpg';
+    var url = savePhotoToFolder_(p.photoApres, fn, p.mime || 'image/jpeg');
+    if (!url) return { success:false, error:'Échec de la sauvegarde' };
+    sheet.getRange(ri, C.PHOTO_AP + 1).setValue(url);
+    return { success:true, status:'SUCCESS', url:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
 //  HELPERS
 // ================================================================
 function nowHHMMSS_() {

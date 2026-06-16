@@ -402,6 +402,11 @@ img{max-width:100%;display:block;}
 .pub input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .pth{width:100%;height:68px;object-fit:cover;border-radius:var(--rs);display:none;margin-top:6px;}
 .ok{color:var(--grn);display:none;font-size:.68rem;}
+.pub-ap{display:block;position:relative;width:100%;text-align:center;cursor:pointer;
+  background:var(--y);color:#0b0c0f;font-weight:700;font-size:.72rem;
+  padding:9px 6px;border-radius:0 0 var(--rm) var(--rm);transition:filter .15s;}
+.pub-ap:active{filter:brightness(.9);}
+.pub-ap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 
 /* ══ DETAIL VIEW ══════════════════════════════════════════ */
 .dw{padding:13px 15px;}
@@ -1030,7 +1035,8 @@ var S = {
   tags:[], kpis:null, view:'home', filter:'all', search:'',
   editing:null, delRow:null, offline:false, queue:[],
   qStep:1, qDng:'', qGrav:'Élevée', qLat:0, qLng:0, qQR:'',
-  camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null
+  camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null,
+  booted:false, detailTag:null
 };
 var _tt; // toast timer
 
@@ -1068,7 +1074,7 @@ function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
    Loader masqué dès réception de la réponse
 ══════════════════════════════════════════ */
 function loadAll(){
-  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); return; }
+  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); bootQuickAdd(); return; }
   splashMsg('Chargement des tags…');
   document.getElementById('spFill').style.width='40%';
 
@@ -1088,6 +1094,7 @@ function loadAll(){
     .withFailureHandler(function(e){           // Ordre 3 ✓
       hideSplash();
       toast('Erreur réseau: '+e.message,'err');
+      bootQuickAdd();
     })
     .getTags();
 }
@@ -1101,14 +1108,25 @@ function loadKPIs(){
       renderCurrent();
       updateBadge();
       toast('✓ '+S.tags.length+' tags chargés','ok');
+      bootQuickAdd();
     })
     .withFailureHandler(function(){
       hideSplash();
       renderCurrent();
+      bootQuickAdd();
     })
     .getKPIs();
 }
 
+/* Au premier chargement, ouvrir le formulaire d'ajout par défaut
+   (signalement rapide en avant — pratique sur téléphone) */
+function bootQuickAdd(){
+  if(S.booted) return;
+  S.booted=true;
+  setTimeout(function(){
+    if(!document.querySelector('.ov.on')) openQuick();
+  }, 650);
+}
 function hideSplash(){
   setTimeout(function(){ document.getElementById('splash').classList.add('out'); },200);
 }
@@ -1444,6 +1462,7 @@ function cardHtml(t){
 function openDetail(id){
   var t=S.tags.find(function(x){return String(x.id)===String(id);});
   if(!t) return;
+  S.detailTag=t;
 
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
   document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
@@ -1504,7 +1523,10 @@ function openDetail(id){
     '<div class="fl" style="margin:11px 0 7px">📷 Photos Avant / Après</div>'+
     '<div class="pcs">'+
       '<div class="pcs-sl"><div class="pcs-h">Avant</div><div class="pcs-b">'+avH+'</div></div>'+
-      '<div class="pcs-sl"><div class="pcs-h">Après</div><div class="pcs-b">'+apH+'</div></div>'+
+      '<div class="pcs-sl"><div class="pcs-h">Après</div><div class="pcs-b" id="detApSlot">'+apH+'</div>'+
+        '<label class="pub-ap"><input type="file" accept="image/*" onchange="uploadAfterPhoto(this)"/>'+
+        (t.photoApresId?'🔄 Remplacer la photo après':'📷 Ajouter la photo après')+'</label>'+
+      '</div>'+
     '</div>'+
     '<div class="fl" style="margin:11px 0 7px">📋 Historique des Statuts</div>'+tl;
 
@@ -1529,6 +1551,30 @@ function openDetail(id){
 function applyDetailImg(el, dataUrl){
   el.classList.add('loaded');
   el.innerHTML = '<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;cursor:pointer;"/>';
+}
+/* Ajout direct de la "Photo après" depuis le détail du tag */
+function uploadAfterPhoto(input){
+  if(!input.files||!input.files[0]) return;
+  var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
+  var f=input.files[0];
+  var r=new FileReader();
+  r.onload=function(e){
+    var dataUrl=e.target.result;
+    var b64=dataUrl.split(',')[1];
+    // Aperçu immédiat
+    var slot=document.getElementById('detApSlot');
+    if(slot) slot.innerHTML='<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;"/>';
+    showLoader('Envoi de la photo après…');
+    google.script.run
+      .withSuccessHandler(function(res){
+        hideSplash();
+        if(res&&res.success){ toast('✓ Photo après ajoutée','ok'); loadAll(); }
+        else toast('Erreur: '+((res&&res.error)||'?'),'err');
+      })
+      .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+      .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:f.type||'image/jpeg' });
+  };
+  r.readAsDataURL(f);
 }
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
