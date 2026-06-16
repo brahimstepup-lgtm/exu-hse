@@ -1076,7 +1076,7 @@ function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
    Loader masqué dès réception de la réponse
 ══════════════════════════════════════════ */
 function loadAll(){
-  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); bootQuickAdd(); return; }
+  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); return; }
   splashMsg('Chargement des tags…');
   document.getElementById('spFill').style.width='40%';
 
@@ -1096,7 +1096,6 @@ function loadAll(){
     .withFailureHandler(function(e){           // Ordre 3 ✓
       hideSplash();
       toast('Erreur réseau: '+e.message,'err');
-      bootQuickAdd();
     })
     .getTags();
 }
@@ -1110,25 +1109,14 @@ function loadKPIs(){
       renderCurrent();
       updateBadge();
       toast('✓ '+S.tags.length+' tags chargés','ok');
-      bootQuickAdd();
     })
     .withFailureHandler(function(){
       hideSplash();
       renderCurrent();
-      bootQuickAdd();
     })
     .getKPIs();
 }
 
-/* Au premier chargement, ouvrir le formulaire d'ajout par défaut
-   (signalement rapide en avant — pratique sur téléphone) */
-function bootQuickAdd(){
-  if(S.booted) return;
-  S.booted=true;
-  setTimeout(function(){
-    if(!document.querySelector('.ov.on')) openQuick();
-  }, 650);
-}
 function hideSplash(){
   setTimeout(function(){ document.getElementById('splash').classList.add('out'); },200);
 }
@@ -1561,9 +1549,7 @@ function uploadAfterPhoto(input){
   if(!input.files||!input.files[0]) return;
   var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
   var f=input.files[0];
-  var r=new FileReader();
-  r.onload=function(e){
-    var dataUrl=e.target.result;
+  compressImage(f,function(dataUrl){
     var b64=dataUrl.split(',')[1];
     // Aperçu immédiat
     var slot=document.getElementById('detApSlot');
@@ -1576,9 +1562,8 @@ function uploadAfterPhoto(input){
         else toast('Erreur: '+((res&&res.error)||'?'),'err');
       })
       .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
-      .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:f.type||'image/jpeg' });
-  };
-  r.readAsDataURL(f);
+      .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:'image/jpeg' });
+  });
 }
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
@@ -1648,23 +1633,42 @@ function selSev(s,btn){
 }
 function prevCam(input){
   if(!input.files||!input.files[0]) return;
-  var f=input.files[0]; S.camMime=f.type||'image/jpeg';
-  var r=new FileReader();
-  r.onload=function(e){
-    S.camB64=e.target.result.split(',')[1];
-    var p=document.getElementById('camPrev'); p.src=e.target.result; p.style.display='block';
-  };
-  r.readAsDataURL(f);
+  S.camMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camB64=dataUrl.split(',')[1];
+    var p=document.getElementById('camPrev'); p.src=dataUrl; p.style.display='block';
+  });
 }
 function prevCamAp(input){
   if(!input.files||!input.files[0]) return;
-  var f=input.files[0]; S.camApMime=f.type||'image/jpeg';
+  S.camApMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camApB64=dataUrl.split(',')[1];
+    var p=document.getElementById('qApPrev'); p.src=dataUrl; p.style.display='block';
+  });
+}
+/* Compression d'image côté client (réduit la taille avant envoi)
+   Redimensionne au plus à maxDim px et ré-encode en JPEG. */
+function compressImage(file,cb,maxDim,quality){
+  maxDim=maxDim||1280; quality=quality||0.72;
   var r=new FileReader();
   r.onload=function(e){
-    S.camApB64=e.target.result.split(',')[1];
-    var p=document.getElementById('qApPrev'); p.src=e.target.result; p.style.display='block';
+    var src=e.target.result;
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width, h=img.height;
+      if(w>=h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+      else if(h>w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+      try{
+        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cb(cv.toDataURL('image/jpeg',quality));
+      }catch(err){ cb(src); }
+    };
+    img.onerror=function(){ cb(src); };
+    img.src=src;
   };
-  r.readAsDataURL(f);
+  r.readAsDataURL(file);
 }
 function getGPS(){
   var btn=document.getElementById('gpsBtn');
@@ -2004,7 +2008,7 @@ function submitFull(){
       google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).addTag(data);
     }
   }
-  function rf(f,cb){ var r=new FileReader(); r.onload=function(e){cb(e.target.result.split(',')[1],f.type);}; r.readAsDataURL(f); }
+  function rf(f,cb){ compressImage(f,function(dataUrl){ cb(dataUrl.split(',')[1],'image/jpeg'); }); }
   if(avF&&apF) rf(avF,function(a,m){ rf(apF,function(b){ doSave(a,b,m); }); });
   else if(avF) rf(avF,function(a,m){ doSave(a,'',m); });
   else if(apF) rf(apF,function(b,m){ doSave('',b,m); });
