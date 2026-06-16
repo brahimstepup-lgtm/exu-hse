@@ -205,6 +205,37 @@ img{max-width:100%;display:block;}
 
 /* ══ TAG CARDS ════════════════════════════════════════════ */
 .tlist{display:flex;flex-direction:column;gap:8px;}
+/* ══ GALLERY VIEW (photo avant + texte incrusté) ══ */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(min-width:560px){.gallery{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:900px){.gallery{grid-template-columns:repeat(4,1fr);}}
+.gcard{position:relative;aspect-ratio:3/4;border-radius:var(--rm);overflow:hidden;
+  background:var(--ink3);border:1px solid var(--line);cursor:pointer;transition:transform .15s;}
+.gcard:active{transform:scale(.98);}
+.gcard.elevee{border-color:rgba(255,71,87,.55);}
+.gcard.moyenne{border-color:rgba(255,165,2,.5);}
+.gcard.faible{border-color:rgba(46,213,115,.45);}
+.gc-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--ink3);color:var(--t3);font-size:.85rem;}
+.gc-img img{width:100%;height:100%;object-fit:cover;}
+.gc-noimg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;color:var(--t3);font-size:.66rem;background:var(--ink3);}
+.gc-noimg span{font-size:1.9rem;}
+.gc-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+  padding:8px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 48%,rgba(0,0,0,.82) 100%);}
+.gc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:5px;}
+.gc-id{font-family:var(--fm);font-weight:700;font-size:.74rem;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);}
+.gc-st{font-size:.58rem;font-weight:700;padding:3px 7px;border-radius:999px;
+  text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.gc-st.open{background:rgba(255,71,87,.9);color:#fff;}
+.gc-st.closed{background:rgba(46,213,115,.9);color:#06210f;}
+.gc-bot{display:flex;flex-direction:column;gap:3px;}
+.gc-resp{font-size:.74rem;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.95);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-since{display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:600;
+  color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.95);}
+.gc-since .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .tcard{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
 .tcard:active{transform:scale(.992);}
@@ -976,6 +1007,7 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('detailOv')">Fermer</button>
       <button class="btn btn-b" id="detEditBtn">✏️ Modifier</button>
+      <button class="btn btn-r" id="detDelBtn" style="flex:0 0 auto">🗑</button>
     </div>
   </div>
 </div>
@@ -1355,9 +1387,11 @@ function renderTagsView(){
   document.getElementById('resInfo').textContent=tags.length+' résultat(s)';
   var el=document.getElementById('tagsList');
   if(!tags.length){
+    el.className='tlist';
     el.innerHTML='<div class="empty"><div class="empty-i">🔍</div><div class="empty-t">Aucun tag trouvé</div></div>';
     return;
   }
+  el.className='gallery';
   el.innerHTML=tags.map(cardHtml).join('');
   // Lazy loading des images
   setupLazyImages();
@@ -1371,55 +1405,39 @@ function setChip(f,btn){
 }
 function doSearch(){ S.search=document.getElementById('searchIn').value; renderTagsView(); }
 
-// Ordre 9 : cardHtml — clic sur la carte → openDetail()
+// Galerie : photo "avant" + texte incrusté (statut, responsable, depuis)
 function cardHtml(t){
   var gc=t.gravite==='Élevée'?'elevee':t.gravite==='Moyenne'?'moyenne':'faible';
-  var gb=t.gravite==='Élevée'?'<span class="badge ge">🔴 Élevée</span>':
-         t.gravite==='Moyenne'?'<span class="badge gm">🟧 Moyenne</span>':
-         '<span class="badge gf">🟢 Faible</span>';
-  var sb=t.statut==='Ouvert'?'<span class="badge so">🟥 Ouvert</span>':'<span class="badge sc2">✅ Fermé</span>';
 
-  // KPI durée inline sur la carte
-  var kpiH='';
+  // Durée "depuis" (ou délai de fermeture)
+  var sinceH='';
   if(t.dateCreation){
     var d1=new Date(t.dateCreation);
     var d2=t.statut==='Fermé'&&t.dateFerme?new Date(t.dateFerme):new Date();
     if(!isNaN(d1.getTime())){
       var days=Math.round((d2-d1)/86400000);
       var col=days>14?'var(--red)':days>7?'var(--ora)':'var(--grn)';
-      kpiH='<span class="tc-kpi" style="color:'+col+'">⏱'+days+'j</span>';
+      var lbl=t.statut==='Fermé'?'Fermé en '+days+'j':'Depuis '+days+'j';
+      sinceH='<div class="gc-since"><span class="dot" style="background:'+col+'"></span>⏱ '+lbl+'</div>';
     }
   }
 
-  var avH = t.photoAvantId ?
-    '<div class="tc-th tc-lazy" data-imgid="'+esc(t.photoAvantId)+'" onclick="openLazyImg(\''+esc(t.photoAvantId)+'\');event.stopPropagation()"><span style="font-size:.55rem;color:var(--t3)">⏳</span></div>':
-    '<div class="tc-no">📷<br/>Avant</div>';
-  var apH = t.photoApresId ?
-    '<div class="tc-th tc-lazy" data-imgid="'+esc(t.photoApresId)+'" onclick="openLazyImg(\''+esc(t.photoApresId)+'\');event.stopPropagation()"><span style="font-size:.55rem;color:var(--t3)">⏳</span></div>':
-    '<div class="tc-no">📷<br/>Après</div>';
+  var img = t.photoAvantId ?
+    '<div class="gc-img tc-lazy" data-imgid="'+esc(t.photoAvantId)+'"><span>⏳</span></div>':
+    '<div class="gc-noimg"><span>📷</span>Pas de photo</div>';
+  var st = t.statut==='Ouvert'
+    ? '<span class="gc-st open">🟥 Ouvert</span>'
+    : '<span class="gc-st closed">✅ Fermé</span>';
+  var resp = t.responsable ? esc(t.responsable) : 'Non assigné';
 
-  var desc=(t.description||'').substring(0,75)+((t.description||'').length>75?'…':'');
-  var anonH=t.anonymous?'<span class="tc-anon">🎭</span>':'';
-
-  // Ordre 9 : onclick sur .tcard → openDetail(id)
-  return '<div class="tcard '+gc+'" onclick="openDetail(\''+t.id+'\')">'+
-    '<div class="tc-top">'+
-      '<div class="tc-photos">'+avH+apH+'</div>'+
-      '<div class="tc-body">'+
-        '<div class="tc-r1">'+
-          '<span class="tc-id">#'+t.id+'</span>'+
-          '<span class="tc-dt">'+t.dateCreation+'</span>'+anonH+
-        '</div>'+
-        '<div class="tc-danger">'+esc(t.danger||'—')+'</div>'+
-        '<div class="tc-desc">'+esc(desc)+'</div>'+
+  return '<div class="gcard '+gc+'" onclick="openDetail(\''+t.id+'\')" title="'+esc(t.danger||'')+'">'+
+    img+
+    '<div class="gc-overlay">'+
+      '<div class="gc-top"><span class="gc-id">#'+t.id+'</span>'+st+'</div>'+
+      '<div class="gc-bot">'+
+        '<div class="gc-resp">👤 '+resp+'</div>'+
+        sinceH+
       '</div>'+
-    '</div>'+
-    '<div class="tc-bot">'+gb+sb+kpiH+
-      '<span class="tc-zone">'+esc(t.zone||'')+'</span></div>'+
-    '<div class="tc-acts" onclick="event.stopPropagation()">'+
-      '<button class="ta v" onclick="openDetail(\''+t.id+'\')">👁 Voir</button>'+
-      '<button class="ta e" onclick="editTag(\''+t.id+'\')">✏️ Modifier</button>'+
-      '<button class="ta d" onclick="confirmDel('+t.rowIndex+')">🗑</button>'+
     '</div>'+
   '</div>';
 }
@@ -1436,6 +1454,7 @@ function openDetail(id){
 
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
   document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
+  document.getElementById('detDelBtn').onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
 
   // KPI durée de résolution — Ordre 8
   var kpiBlock='';
