@@ -1032,6 +1032,7 @@ img{max-width:100%;display:block;}
     <div class="sh-body"><div class="dw" id="detBody"></div></div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('detailOv')">Fermer</button>
+      <button class="btn btn-b" id="detMailBtn" style="flex:0 0 auto">📧</button>
       <button class="btn btn-b" id="detEditBtn">✏️ Modifier</button>
       <button class="btn btn-r" id="detDelBtn" style="flex:0 0 auto">🗑</button>
     </div>
@@ -1481,6 +1482,7 @@ function openDetail(id){
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
   document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
   document.getElementById('detDelBtn').onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
+  document.getElementById('detMailBtn').onclick=function(){ notifyResp(t); };
 
   // KPI durée de résolution — Ordre 8
   var kpiBlock='';
@@ -1593,6 +1595,21 @@ function uploadAfterPhoto(input){
       .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
       .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:'image/jpeg' });
   });
+}
+function notifyResp(t){
+  if(!t){ t=S.detailTag; }
+  if(!t){ toast('Tag introuvable','err'); return; }
+  if(!t.responsable||!t.responsable.trim()){ toast('Aucun responsable assigné à ce tag','err'); return; }
+  if(S.offline){ toast('📵 Hors-ligne — email impossible','err'); return; }
+  showLoader('Envoi de l\'email au responsable…');
+  google.script.run
+    .withSuccessHandler(function(res){
+      hideSplash();
+      if(res&&res.success){ toast('✓ Email envoyé à '+(res.to||t.responsable),'ok'); }
+      else toast('Erreur: '+((res&&res.error)||'?'),'err');
+    })
+    .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id });
 }
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }

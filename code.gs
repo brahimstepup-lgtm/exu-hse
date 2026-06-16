@@ -516,6 +516,119 @@ function saveAfterPhoto(p) {
 }
 
 // ================================================================
+//  EMAIL AU RESPONSABLE (bouton manuel dans la vue détail)
+//  Correspondance noms → emails. Complétez les adresses ci-dessous.
+//  Vous pouvez aussi ajouter/surcharger via Propriétés du script :
+//    clé RESP_EMAILS = {"Kouachi Brahim":"BrahimKOUACHI@palmaryfood.com", ...}
+// ================================================================
+var RESP_EMAILS = {
+  'Omar Ourihan':    '',
+  'Amir Mahmoud':    '',
+  'Kouachi Brahim':  'BrahimKOUACHI@palmaryfood.com',
+  'Chekalil Brahim': '',
+  'Salah Haloui':    '',
+  'Kerrad Nazim':    '',
+  'Rabah Seba':      '',
+  'Hadoune Youcef':  '',
+  'Media Amine':     '',
+  'Mohamed Zerar':   ''
+};
+
+function respEmailFor_(name) {
+  var k = normRespKey_(name);
+  // 1) Surcharge via Propriétés du script (JSON)
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('RESP_EMAILS');
+    if (raw) {
+      var extra = JSON.parse(raw);
+      for (var key in extra) {
+        if (normRespKey_(key) === k && extra[key]) return String(extra[key]).trim();
+      }
+    }
+  } catch(e) {}
+  // 2) Table interne
+  for (var name2 in RESP_EMAILS) {
+    if (normRespKey_(name2) === k && RESP_EMAILS[name2]) return RESP_EMAILS[name2];
+  }
+  return '';
+}
+
+function sendTagEmail(p) {
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+
+    var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
+    var resp = txt_(row[C.RESP]);
+    if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
+
+    var to = respEmailFor_(resp);
+    if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
+
+    var id       = txt_(row[C.NUM]) || p.id || ri;
+    var danger   = noFormula_(row[C.DANGER]);
+    var gravite  = parseGravite_(row[C.GRAVITE]);
+    var statut   = parseStatut_(row[C.STATUT]);
+    var zone     = noFormula_(row[C.ZONE]);
+    var emplace  = noFormula_(row[C.EMPLACE]);
+    var desc     = noFormula_(row[C.DESC]);
+    var risque   = noFormula_(row[C.RISQUE]);
+    var action   = noFormula_(row[C.ACTION]);
+    var propo    = noFormula_(row[C.PROPO]);
+    var dateCr   = fmtDate_(row[C.DATE_CR]);
+    var dateCi   = fmtDate_(row[C.DATE_CI]);
+
+    var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
+
+    var line = function(k, v) {
+      if (!v) return '';
+      return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
+             '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
+    };
+    var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
+
+    var html =
+      '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
+        '<div style="background:#1f2937;color:#fff;padding:16px 20px">' +
+          '<div style="font-size:18px;font-weight:700">⚠️ Tag HSE #' + id + '</div>' +
+          '<div style="font-size:13px;opacity:.85;margin-top:2px">Hygiène · Sécurité · Environnement</div>' +
+        '</div>' +
+        '<div style="padding:16px 20px;color:#111">' +
+          '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
+          '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
+            line('N° Cas', '#' + id) +
+            line('Type de danger', danger) +
+            '<tr><td style="padding:6px 12px;font-weight:600;color:#555">Gravité</td>' +
+              '<td style="padding:6px 12px"><span style="background:' + gravColor + ';color:#fff;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700">' + gravite + '</span></td></tr>' +
+            line('Statut', statut) +
+            line('Zone', zone) +
+            line('Emplacement', emplace) +
+            line('Description', desc) +
+            line('Risque principal', risque) +
+            line('Action', action) +
+            line('Propositions', propo) +
+            line('Date création', dateCr) +
+            line('Date cible', dateCi) +
+          '</table>' +
+          '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
+        '</div>' +
+        '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
+      '</div>';
+
+    MailApp.sendEmail({
+      to: to,
+      subject: subject,
+      htmlBody: html,
+      name: 'HSE Tags'
+    });
+
+    return { success:true, to:to, responsable:resp };
+  } catch(e) { return { success:false, error:e.toString() }; }
+}
+
+// ================================================================
 //  ANALYSE IA DE LA PHOTO → description suggérée
 //  Compatible OpenAI (Groq par défaut, gratuit). Configurable via
 //  Propriétés du script :
