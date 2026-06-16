@@ -388,6 +388,18 @@ img{max-width:100%;display:block;}
 .sugg-x{background:none;border:none;color:var(--t3);font-size:.68rem;cursor:pointer;
   text-decoration:underline;padding:3px 4px;}
 .sugg-x:hover{color:var(--t1);}
+/* Formulaire simple "tag informations" (libellé gauche / champ droite) */
+.sform{display:flex;flex-direction:column;}
+.srow{display:flex;align-items:flex-start;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);}
+.srow:last-child{border-bottom:none;}
+.slabel{flex:0 0 36%;font-size:.82rem;font-weight:600;color:var(--t2);padding-top:11px;line-height:1.25;}
+.srow.req .slabel::after{content:" *";color:var(--red);font-weight:700;}
+.sval{flex:1;min-width:0;}
+.sval .pth{display:none;margin-top:8px;height:96px;}
+.sval .ap-btns{border-radius:var(--rs);}
+.sval .pub-ap{border-radius:0;padding:11px 6px;}
+.sval .ap-btns .pub-ap:first-child{border-radius:var(--rs) 0 0 var(--rs);}
+.sval .ap-btns .pub-ap:last-child{border-radius:0 var(--rs) var(--rs) 0;}
 /* Photos */
 .pgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ps{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;}
@@ -781,55 +793,38 @@ img{max-width:100%;display:block;}
   <div class="sheet">
     <div class="sh-handle"></div>
     <div class="sh-hdr">
-      <span class="sh-title" id="qTitle">⚡ Signalement Rapide</span>
+      <span class="sh-title" id="qTitle">🏷️ Informations du tag</span>
       <button class="sh-close" onclick="closeSheet('quickOv')">✕</button>
     </div>
     <div class="sh-body">
-      <div class="qw">
-        <div class="step-ind">
-          <div class="sd act" id="sd1">1</div>
-          <div class="sl" id="sl1"></div>
-          <div class="sd" id="sd2">2</div>
-          <div class="sl" id="sl2"></div>
-          <div class="sd" id="sd3">3</div>
+      <div class="sform">
+        <div class="srow req">
+          <label class="slabel">N° Cas</label>
+          <div class="sval"><input class="fi" id="qNum" readonly placeholder="Auto"/></div>
         </div>
-        <!-- Step 1 -->
-        <div class="qa-step on" id="step1">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 1 — Type de danger &amp; Photo</div>
-          <div class="dg" id="dangerGrid">
-            <div class="dgb" onclick="selDng('Danger Électrique',this)"><span class="dg-i">⚡</span><span class="dg-l">Danger Électrique</span></div>
-            <div class="dgb" onclick="selDng('Risque Chute',this)"><span class="dg-i">🚧</span><span class="dg-l">Risque Chute</span></div>
-            <div class="dgb" onclick="selDng('Risque Incendie',this)"><span class="dg-i">🔥</span><span class="dg-l">Risque Incendie</span></div>
-            <div class="dgb" onclick="selDng('Fuite / Déversement',this)"><span class="dg-i">💧</span><span class="dg-l">Fuite / Déversement</span></div>
-            <div class="dgb" onclick="selDng('Risque Mécanique',this)"><span class="dg-i">⚙️</span><span class="dg-l">Risque Mécanique</span></div>
-            <div class="dgb" onclick="selDng('Risque Chimique',this)"><span class="dg-i">☣️</span><span class="dg-l">Risque Chimique</span></div>
-            <div class="dgb" onclick="selDng('Obstruction Voie',this)"><span class="dg-i">🚫</span><span class="dg-l">Obstruction Voie</span></div>
-            <div class="dgb" onclick="selDng('Autre Danger',this)"><span class="dg-i">⚠️</span><span class="dg-l">Autre</span></div>
+        <div class="srow">
+          <label class="slabel">Photo de l'anomalie</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCam(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCam(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="camPrev" class="pth" src="" alt=""/>
           </div>
-          <div class="cam-btns">
-            <label class="cam-opt"><input type="file" id="camIn" accept="image/*" capture="environment" onchange="prevCam(this)"/>📷 Caméra</label>
-            <label class="cam-opt"><input type="file" id="galIn" accept="image/*" onchange="prevCam(this)"/>🖼 Galerie</label>
-            <button class="cam-opt" onclick="startVoice()">🎙 Voix</button>
-          </div>
-          <div class="cam-area" id="camArea">
-            <span style="font-size:1.8rem">📷</span>
-            <span style="font-size:.78rem;color:var(--t3)">Appuyer pour une photo</span>
-            <input type="file" accept="image/*" capture="environment" onchange="prevCam(this)"/>
-            <img id="camPrev" src="" alt="" style="display:none"/>
-          </div>
-          <div class="va off" id="voiceAnim"><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div></div>
-          <div id="voiceTxt" style="display:none;font-size:.78rem;background:var(--y2);border:1px solid var(--y);border-radius:var(--rs);padding:7px;color:var(--t1);margin-top:5px;"></div>
         </div>
-        <!-- Step 2 -->
-        <div class="qa-step" id="step2">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 2 — Sévérité &amp; Localisation</div>
-          <div class="sev-row">
-            <div class="sev-btn e" onclick="selSev('Élevée',this)"><div class="sev-i">🔴</div><div class="sev-l">Élevée</div></div>
-            <div class="sev-btn m" onclick="selSev('Moyenne',this)"><div class="sev-i">🟧</div><div class="sev-l">Moyenne</div></div>
-            <div class="sev-btn f" onclick="selSev('Faible',this)"><div class="sev-i">🟢</div><div class="sev-l">Faible</div></div>
+        <div class="srow">
+          <label class="slabel">Gravité</label>
+          <div class="sval">
+            <select class="fsel" id="qGravSel">
+              <option value="Élevée">🔴 Élevée</option>
+              <option value="Moyenne">🟧 Moyenne</option>
+              <option value="Faible">🟢 Faible</option>
+            </select>
           </div>
-          <div class="fg" style="margin-bottom:9px;">
-            <label class="fl">Zone</label>
+        </div>
+        <div class="srow">
+          <label class="slabel">Zone</label>
+          <div class="sval">
             <select class="fsel" id="qZone">
               <option>étage 0</option><option>étage -1</option><option>étage 1</option>
               <option>étage Brovind</option><option>les utilités</option>
@@ -837,43 +832,24 @@ img{max-width:100%;display:block;}
               <option>magasin mp</option><option>autre</option>
             </select>
           </div>
-          <div class="fg" style="margin-bottom:9px;">
-            <label class="fl">Emplacement</label>
-            <input class="fi" id="qEmplace" placeholder="Lieu exact (machine, local…)"/>
-          </div>
-          <div class="ur">
-            <button class="ub" id="gpsBtn" onclick="getGPS()">📍 GPS Auto</button>
-            <button class="ub" id="qrBtn" onclick="scanQR()">📷 Scan QR</button>
-          </div>
-          <div id="gpsInfo" style="display:none;font-size:.7rem;color:var(--grn);padding:5px 9px;background:var(--grn2);border-radius:var(--rs);margin-bottom:8px;">
-            📍 Position : <span id="gpsTxt"></span>
-          </div>
-          <div id="qrInfo" style="display:none;font-size:.7rem;padding:5px 9px;background:var(--y2);border-radius:var(--rs);margin-bottom:8px;">
-            📎 Zone QR : <strong id="qrTxt"></strong>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Description *</label>
-            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="3" oninput="refreshQSugg()"></textarea>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Risque Principal</label>
-            <input class="fi" id="qRisque" placeholder="Risque identifié…"/>
-            <div class="sugg" id="qSuggRisque"></div>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Action Urgente <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne J)</span></label>
-            <textarea class="ft" id="qAction" placeholder="Action urgente à mener…" rows="2"></textarea>
-            <div class="sugg" id="qSuggAction"></div>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Propositions <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne K)</span></label>
-            <textarea class="ft" id="qPropo" placeholder="Solution proposée…" rows="2"></textarea>
-            <div class="sugg" id="qSuggPropo"></div>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Responsable</label>
+        </div>
+        <div class="srow req">
+          <label class="slabel">Description</label>
+          <div class="sval"><textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="2" oninput="refreshQSugg()"></textarea></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Risque Principal</label>
+          <div class="sval"><input class="fi" id="qRisque" placeholder="Risque identifié…"/><div class="sugg" id="qSuggRisque"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Propositions</label>
+          <div class="sval"><textarea class="ft" id="qPropo" placeholder="Solution proposée…" rows="2"></textarea><div class="sugg" id="qSuggPropo"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Responsable</label>
+          <div class="sval">
             <select class="fsel" id="qResp">
-              <option value="">— Choisir un responsable —</option>
+              <option value="">— Choisir —</option>
               <option>Omar Ourihan</option>
               <option>Amir Mahmoud</option>
               <option>Kouachi Brahim</option>
@@ -886,31 +862,22 @@ img{max-width:100%;display:block;}
               <option>Mohamed Zerar</option>
             </select>
           </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Photo après <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
-            <div class="ps"><div class="ps-h">✅ Après réalisation</div>
-              <div class="ps-b"><label class="pub"><input type="file" id="qPhAp" accept="image/*" onchange="prevCamAp(this)"/>📁 Choisir</label>
-              <img class="pth" id="qApPrev"/></div></div>
-          </div>
-          <div class="anon-row">
-            <span style="font-size:1rem">🎭</span>
-            <div class="anon-txt">Signalement anonyme<span class="anon-sub">Identité protégée</span></div>
-            <label class="tgl"><input type="checkbox" id="qAnon"/><div class="tgl-track"><div class="tgl-thumb"></div></div></label>
-          </div>
         </div>
-        <!-- Step 3 -->
-        <div class="qa-step" id="step3">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 3 — Confirmer &amp; Envoyer</div>
-          <div id="qSummary" style="background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);padding:13px;margin-bottom:12px;font-size:.8rem;line-height:1.8;"></div>
-          <div style="background:var(--y3);border:1px solid rgba(245,197,24,.15);border-radius:var(--rs);padding:9px;font-size:.72rem;color:var(--t2);">
-            ⚡ Le département sera automatiquement notifié. Statut : <strong style="color:var(--red)">Ouvert</strong>
+        <div class="srow">
+          <label class="slabel">Photo après</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCamAp(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCamAp(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="qApPrev" class="pth" src="" alt=""/>
           </div>
         </div>
       </div>
     </div>
     <div class="sh-foot" id="qFoot">
-      <button class="btn btn-g" id="qBack" onclick="qPrev()" style="display:none">← Retour</button>
-      <button class="btn btn-p" id="qNext" onclick="qNext()">Suivant →</button>
+      <button class="btn btn-g" onclick="closeSheet('quickOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitQuick()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1586,64 +1553,62 @@ function tlI(cls,ico,lbl,dt){
 }
 
 /* ══════════════════════════════════════════
-   QUICK ADD — 3 ÉTAPES
+   FORMULAIRE D'AJOUT (page unique "tag informations")
 ══════════════════════════════════════════ */
 function openQuick(){
-  S.qStep=1; S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
+  S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
   S.camApB64=''; S.camApMime='image/jpeg';
   S.qLat=0; S.qLng=0; S.qQR='';
+  // N° Cas prévisionnel (le serveur attribue l'ID définitif)
+  var maxId=0; (S.tags||[]).forEach(function(t){ if(t.id>maxId) maxId=t.id; });
+  document.getElementById('qNum').value=(maxId+1);
+  document.getElementById('qGravSel').value='Élevée';
+  document.getElementById('qZone').value='étage 0';
   document.getElementById('qDesc').value='';
-  document.getElementById('qResp').value='';
-  document.getElementById('qEmplace').value='';
   document.getElementById('qRisque').value='';
-  document.getElementById('qAction').value='';
   document.getElementById('qPropo').value='';
-  document.getElementById('qPhAp').value='';
-  document.getElementById('qApPrev').style.display='none';
+  document.getElementById('qResp').value='';
+  var cp=document.getElementById('camPrev'); cp.src=''; cp.style.display='none';
+  var ap=document.getElementById('qApPrev'); ap.src=''; ap.style.display='none';
   SUGG_IGNORED={};
-  ['qSuggRisque','qSuggAction','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
-  document.getElementById('qAnon').checked=false;
-  document.getElementById('gpsInfo').style.display='none';
-  document.getElementById('qrInfo').style.display='none';
-  document.getElementById('voiceTxt').style.display='none';
-  document.getElementById('camPrev').style.display='none';
-  document.getElementById('voiceAnim').classList.add('off');
-  document.querySelectorAll('.dgb').forEach(function(b){b.classList.remove('sel');});
-  document.querySelectorAll('.sev-btn').forEach(function(b){b.classList.remove('sel');});
-  document.getElementById('gpsBtn').classList.remove('on');
-  document.getElementById('gpsBtn').textContent='📍 GPS Auto';
-  document.getElementById('qrBtn').classList.remove('on');
-  document.getElementById('qrBtn').textContent='📷 Scan QR';
-  updQStep();
+  ['qSuggRisque','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
   openSheet('quickOv');
 }
 
-function updQStep(){
-  var s=S.qStep;
-  [1,2,3].forEach(function(i){
-    document.getElementById('step'+i).classList.toggle('on',i===s);
-    var dot=document.getElementById('sd'+i);
-    dot.className='sd'+(i<s?' done':i===s?' act':'');
-    if(i<3) document.getElementById('sl'+i).className='sl'+(i<s?' done':'');
-  });
-  document.getElementById('qBack').style.display=s>1?'':'none';
-  document.getElementById('qNext').textContent=s<3?'Suivant →':'✓ Envoyer';
-  document.getElementById('qTitle').textContent=
-    s===1?'⚡ Étape 1 / 3 — Danger & Photo':
-    s===2?'📍 Étape 2 / 3 — Sévérité & Zone':
-          '✅ Étape 3 / 3 — Confirmer';
+function submitQuick(){
+  var desc=document.getElementById('qDesc').value.trim();
+  if(!desc){ toast('Description requise','err'); return; }
+  var data={
+    danger:S.qDng||'',
+    gravite:document.getElementById('qGravSel').value,
+    zone:document.getElementById('qZone').value,
+    description:desc,
+    risque:document.getElementById('qRisque').value.trim(),
+    propositions:document.getElementById('qPropo').value.trim(),
+    responsable:document.getElementById('qResp').value.trim(),
+    anonymous:false,
+    auteur:'',lat:0,lng:0,qrZone:'',
+    photoAvant:S.camB64, photoApres:S.camApB64, mime:S.camMime
+  };
+  closeSheet('quickOv');
+  if(S.offline){
+    S.queue.push(data);
+    localStorage.setItem('hse_q',JSON.stringify(S.queue));
+    document.getElementById('syncBanner').classList.add('on');
+    toast('📵 Sauvegardé hors-ligne','info');
+    return;
+  }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r.success){ toast('✓ Tag #'+r.id+' créé ! Statut: Ouvert','ok'); loadAll(); }
+      else toast('Erreur: '+(r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .addTag(data);
 }
 
-function selDng(d,btn){
-  S.qDng=d;
-  document.querySelectorAll('.dgb').forEach(function(b){b.classList.remove('sel');});
-  btn.classList.add('sel');
-}
-function selSev(s,btn){
-  S.qGrav=s;
-  document.querySelectorAll('.sev-btn').forEach(function(b){b.classList.remove('sel');});
-  btn.classList.add('sel');
-}
 function prevCam(input){
   if(!input.files||!input.files[0]) return;
   S.camMime='image/jpeg';
@@ -1683,125 +1648,6 @@ function compressImage(file,cb,maxDim,quality){
   };
   r.readAsDataURL(file);
 }
-function getGPS(){
-  var btn=document.getElementById('gpsBtn');
-  btn.classList.add('on'); btn.textContent='📍 Localisation…';
-  if(!navigator.geolocation){ toast('GPS non disponible','err'); btn.classList.remove('on'); return; }
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      S.qLat=pos.coords.latitude; S.qLng=pos.coords.longitude;
-      document.getElementById('gpsTxt').textContent=S.qLat.toFixed(5)+', '+S.qLng.toFixed(5);
-      document.getElementById('gpsInfo').style.display='block';
-      btn.textContent='✅ GPS OK'; toast('📍 Position obtenue','ok');
-    },
-    function(){ btn.classList.remove('on'); btn.textContent='📍 GPS Auto'; toast('Erreur GPS','err'); }
-  );
-}
-function scanQR(){
-  var zone=prompt('Simuler scan QR — Entrez le code zone:','Z-001');
-  if(zone){
-    S.qQR=zone;
-    document.getElementById('qrTxt').textContent=zone;
-    document.getElementById('qrInfo').style.display='block';
-    var b=document.getElementById('qrBtn'); b.classList.add('on'); b.textContent='✅ QR OK';
-    toast('📷 Zone scannée: '+zone,'ok');
-  }
-}
-var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
-function startVoice(){
-  if(!SpeechRec){ toast('Voix non supportée','err'); return; }
-  if(S.voiceOn){ S.recog&&S.recog.stop(); return; }
-  S.recog=new SpeechRec();
-  S.recog.lang='fr-FR'; S.recog.continuous=false; S.recog.interimResults=false;
-  S.recog.onstart=function(){
-    S.voiceOn=true;
-    document.getElementById('voiceAnim').classList.remove('off');
-    document.getElementById('voiceTxt').style.display='block';
-    document.getElementById('voiceTxt').textContent='🎙 Parlez maintenant…';
-    toast('🎙 Écoute en cours…','info');
-  };
-  S.recog.onresult=function(e){
-    var txt=e.results[0][0].transcript;
-    document.getElementById('voiceTxt').textContent='📝 '+txt;
-    document.getElementById('qDesc').value+=(document.getElementById('qDesc').value?' ':'')+txt;
-    S.voiceOn=false; document.getElementById('voiceAnim').classList.add('off');
-    toast('✓ Transcription: '+txt.substring(0,40),'ok');
-  };
-  S.recog.onerror=function(e){
-    S.voiceOn=false; document.getElementById('voiceAnim').classList.add('off');
-    toast('Erreur voix: '+e.error,'err');
-  };
-  S.recog.start();
-}
-
-function qNext(){
-  var s=S.qStep;
-  if(s===1){
-    if(!S.qDng){ toast('Sélectionnez un type de danger','err'); return; }
-    S.qStep=2;
-    refreshQSugg();
-  } else if(s===2){
-    var desc=document.getElementById('qDesc').value.trim();
-    if(!desc){ toast('Description requise','err'); return; }
-    var qRisque=document.getElementById('qRisque').value.trim();
-    var qAction=document.getElementById('qAction').value.trim();
-    var qPropo=document.getElementById('qPropo').value.trim();
-    // Build summary for confirmation
-    document.getElementById('qSummary').innerHTML=
-      '<div>🏷 <strong>Danger:</strong> '+esc(S.qDng)+'</div>'+
-      '<div>🔴 <strong>Gravité:</strong> '+esc(S.qGrav)+'</div>'+
-      '<div>📍 <strong>Zone:</strong> '+esc(document.getElementById('qZone').value)+'</div>'+
-      (document.getElementById('qEmplace').value?'<div>📌 <strong>Emplacement:</strong> '+esc(document.getElementById('qEmplace').value)+'</div>':'')+
-      '<div>📝 <strong>Description:</strong> '+esc(desc)+'</div>'+
-      (qRisque?'<div>⚠️ <strong>Risque principal:</strong> '+esc(qRisque)+'</div>':'')+
-      (qAction?'<div>🚨 <strong>Action urgente:</strong> '+esc(qAction)+'</div>':'')+
-      (qPropo?'<div>💡 <strong>Propositions:</strong> '+esc(qPropo)+'</div>':'')+
-      (document.getElementById('qResp').value?'<div>👤 <strong>Responsable:</strong> '+esc(document.getElementById('qResp').value)+'</div>':'')+
-      (S.qLat?'<div>📡 <strong>GPS:</strong> '+S.qLat.toFixed(5)+', '+S.qLng.toFixed(5)+'</div>':'')+
-      (S.qQR?'<div>📷 <strong>QR Zone:</strong> '+esc(S.qQR)+'</div>':'')+
-      (document.getElementById('qAnon').checked?'<div>🎭 <strong>Anonyme</strong></div>':'')+
-      (S.camB64?'<div>📷 <strong>Photo:</strong> ✓ Attachée</div>':'');
-    S.qStep=3;
-  } else {
-    // Envoyer — Ordre 3 : withSuccessHandler + masquage loader
-    var data={
-      danger:S.qDng, gravite:S.qGrav,
-      zone:document.getElementById('qZone').value,
-      emplacement:document.getElementById('qEmplace').value.trim(),
-      description:document.getElementById('qDesc').value.trim(),
-      risque:document.getElementById('qRisque').value.trim(),
-      action:document.getElementById('qAction').value.trim(),
-      propositions:document.getElementById('qPropo').value.trim(),
-      responsable:document.getElementById('qResp').value.trim(),
-      anonymous:document.getElementById('qAnon').checked,
-      auteur:'',lat:S.qLat,lng:S.qLng,qrZone:S.qQR,
-      photoAvant:S.camB64, photoApres:S.camApB64, mime:S.camMime
-    };
-    closeSheet('quickOv');
-    if(S.offline){
-      S.queue.push(data);
-      localStorage.setItem('hse_q',JSON.stringify(S.queue));
-      document.getElementById('syncBanner').classList.add('on');
-      toast('📵 Sauvegardé hors-ligne','info');
-      return;
-    }
-    showLoader('Envoi du signalement…');
-    google.script.run
-      .withSuccessHandler(function(r){       // Ordre 3 ✓
-        hideSplash();                        // Ordre 3 : masquer loader ✓
-        if(r.success){ toast('✓ Tag #'+r.id+' créé ! Statut: Ouvert','ok'); loadAll(); }
-        else toast('Erreur: '+(r.error||'?'),'err');
-      })
-      .withFailureHandler(function(e){       // Ordre 3 ✓
-        hideSplash();
-        toast('Erreur: '+e.message,'err');
-      })
-      .addTag(data);
-    return;
-  }
-  updQStep();
-}
-function qPrev(){ if(S.qStep>1){ S.qStep--; updQStep(); } }
 
 /* ══════════════════════════════════════════
    SUGGESTIONS (Risque / Action / Propositions)
@@ -1898,18 +1744,16 @@ function refreshSugg(){
   renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
   renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
 }
-/* Suggestions pour le formulaire d'ajout (Signalement Rapide) */
+/* Suggestions pour le formulaire d'ajout (basées sur la description) */
 function refreshQSugg(){
-  var danger=S.qDng||'';
   var desc=document.getElementById('qDesc').value;
-  if(!danger&&!desc){
-    ['qSuggRisque','qSuggAction','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
+  if(!desc){
+    ['qSuggRisque','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
     return;
   }
-  var s=computeSugg(danger,desc);
+  var s=computeSugg('',desc);
   var empty=function(id){return !document.getElementById(id).value.trim();};
   renderSugg('qSuggRisque','qRisque',empty('qRisque')?s.risque:'');
-  renderSugg('qSuggAction','qAction',empty('qAction')?s.action:'');
   renderSugg('qSuggPropo','qPropo',empty('qPropo')?s.propo:'');
 }
 function applySugg(fieldId,boxId){
