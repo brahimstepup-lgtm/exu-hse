@@ -205,6 +205,38 @@ img{max-width:100%;display:block;}
 
 /* ══ TAG CARDS ════════════════════════════════════════════ */
 .tlist{display:flex;flex-direction:column;gap:8px;}
+/* ══ GALLERY VIEW (photo avant + texte incrusté) ══ */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(min-width:560px){.gallery{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:900px){.gallery{grid-template-columns:repeat(4,1fr);}}
+.gcard{position:relative;aspect-ratio:3/4;border-radius:var(--rm);overflow:hidden;
+  background:var(--ink3);border:1px solid var(--line);cursor:pointer;transition:transform .15s;}
+.gcard:active{transform:scale(.98);}
+.gcard.elevee{border-color:rgba(255,71,87,.55);}
+.gcard.moyenne{border-color:rgba(255,165,2,.5);}
+.gcard.faible{border-color:rgba(46,213,115,.45);}
+.gc-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--ink3);color:var(--t3);font-size:.85rem;}
+.gc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.gc-img.tc-lazy{width:100%;height:100%;border-radius:0;border:none;}
+.gc-noimg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;color:var(--t3);font-size:.66rem;background:var(--ink3);}
+.gc-noimg span{font-size:1.9rem;}
+.gc-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+  padding:8px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 48%,rgba(0,0,0,.82) 100%);}
+.gc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:5px;}
+.gc-id{font-family:var(--fm);font-weight:700;font-size:.74rem;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);}
+.gc-st{font-size:.58rem;font-weight:700;padding:3px 7px;border-radius:999px;
+  text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.gc-st.open{background:rgba(255,71,87,.9);color:#fff;}
+.gc-st.closed{background:rgba(46,213,115,.9);color:#06210f;}
+.gc-bot{display:flex;flex-direction:column;gap:3px;}
+.gc-resp{font-size:.74rem;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.95);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-since{display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:600;
+  color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.95);}
+.gc-since .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .tcard{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
 .tcard:active{transform:scale(.992);}
@@ -271,6 +303,23 @@ img{max-width:100%;display:block;}
     transform:translateY(16px) scale(.97);border:1px solid var(--line);}
   .ov.on .sheet{transform:none;}
 }
+/* Formulaire d'ajout en PLEIN ÉCRAN (pas en fenêtre centrée) */
+#quickOv{align-items:stretch;justify-content:stretch;backdrop-filter:none;-webkit-backdrop-filter:none;}
+#quickOv .sheet{max-width:none;width:100%;max-height:none;height:100%;
+  border-radius:0;border:none;transform:translateY(100%);}
+#quickOv.on .sheet{transform:none;}
+#quickOv .sform{max-width:820px;margin:0 auto;width:100%;padding:6px 6px;}
+/* Textes & boutons agrandis + meilleure lisibilité */
+#quickOv .sh-title{font-size:1.1rem;}
+#quickOv .srow{padding:16px 4px;}
+#quickOv .slabel{flex:0 0 34%;font-size:1rem;padding-top:14px;color:var(--t1);font-weight:700;}
+#quickOv .fi,#quickOv .fsel,#quickOv .ft{font-size:1.02rem;padding:15px 14px;
+  color:var(--t1);border-color:var(--line2);}
+#quickOv .fi::placeholder,#quickOv .ft::placeholder{color:var(--t3);}
+#quickOv .ft{min-height:96px;max-height:200px;}
+#quickOv .pub-ap{padding:16px 8px;font-size:.92rem;}
+#quickOv .scan-btn{padding:15px;font-size:.95rem;}
+#quickOv .sh-foot .btn{font-size:1.08rem;min-height:62px;}
 .sh-handle{width:36px;height:4px;background:var(--line2);border-radius:2px;
   margin:10px auto 0;flex-shrink:0;}
 @media(min-width:600px){.sh-handle{display:none;}}
@@ -377,6 +426,33 @@ img{max-width:100%;display:block;}
 .fi:focus,.fsel:focus,.ft:focus{border-color:var(--y);}
 .ft{resize:vertical;min-height:62px;}
 .fsel option{background:var(--ink2);}
+/* Suggestions IA */
+.sugg{margin-top:6px;display:none;flex-wrap:wrap;align-items:center;gap:6px;}
+.sugg.on{display:flex;}
+.sugg-lead{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--y);}
+.sugg-chip{background:var(--y3);border:1px solid rgba(245,197,24,.35);border-radius:999px;
+  color:var(--t1);font-size:.74rem;padding:5px 11px;cursor:pointer;text-align:left;
+  line-height:1.3;transition:background .15s,border-color .15s;}
+.sugg-chip:hover{background:var(--y2);border-color:var(--y);}
+.sugg-x{background:none;border:none;color:var(--t3);font-size:.68rem;cursor:pointer;
+  text-decoration:underline;padding:3px 4px;}
+.sugg-x:hover{color:var(--t1);}
+/* Formulaire simple "tag informations" (libellé gauche / champ droite) */
+.sform{display:flex;flex-direction:column;}
+.srow{display:flex;align-items:flex-start;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);}
+.srow:last-child{border-bottom:none;}
+.slabel{flex:0 0 36%;font-size:.82rem;font-weight:600;color:var(--t2);padding-top:11px;line-height:1.25;}
+.srow.req .slabel::after{content:" *";color:var(--red);font-weight:700;}
+.sval{flex:1;min-width:0;}
+.sval .pth{display:none;margin-top:8px;height:96px;}
+.sval .ap-btns{border-radius:var(--rs);}
+.sval .pub-ap{border-radius:0;padding:11px 6px;}
+.sval .ap-btns .pub-ap:first-child{border-radius:var(--rs) 0 0 var(--rs);}
+.sval .ap-btns .pub-ap:last-child{border-radius:0 var(--rs) var(--rs) 0;}
+.scan-btn{margin-top:8px;width:100%;background:var(--blu2);color:var(--blu);
+  border:1px solid rgba(94,158,244,.3);border-radius:var(--rs);
+  padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;transition:filter .15s;}
+.scan-btn:active{filter:brightness(.88);}
 /* Photos */
 .pgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ps{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;}
@@ -391,6 +467,13 @@ img{max-width:100%;display:block;}
 .pub input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .pth{width:100%;height:68px;object-fit:cover;border-radius:var(--rs);display:none;margin-top:6px;}
 .ok{color:var(--grn);display:none;font-size:.68rem;}
+.ap-btns{display:flex;border-radius:0 0 var(--rm) var(--rm);overflow:hidden;}
+.pub-ap{flex:1;display:block;position:relative;text-align:center;cursor:pointer;
+  background:var(--y);color:#0b0c0f;font-weight:700;font-size:.72rem;
+  padding:9px 6px;transition:filter .15s;}
+.pub-ap.alt{background:var(--ink4);color:var(--t1);border-left:1px solid var(--line);}
+.pub-ap:active{filter:brightness(.9);}
+.pub-ap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 
 /* ══ DETAIL VIEW ══════════════════════════════════════════ */
 .dw{padding:13px 15px;}
@@ -590,9 +673,9 @@ img{max-width:100%;display:block;}
 .dg-i{font-size:1.7rem;}
 .dg-l{font-size:.74rem;}
 
-/* Bigger primary buttons */
-.btn{padding:13px 16px;font-size:.88rem;}
-.sh-foot .btn{padding:14px 16px;}
+/* Bigger primary buttons (mobile-first, thumb-friendly) */
+.btn{padding:15px 18px;font-size:.92rem;min-height:50px;}
+.sh-foot .btn{padding:17px 18px;font-size:.95rem;min-height:56px;}
 
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
 .fab{animation:fabPulse 2.4s ease-in-out infinite;}
@@ -763,55 +846,38 @@ img{max-width:100%;display:block;}
   <div class="sheet">
     <div class="sh-handle"></div>
     <div class="sh-hdr">
-      <span class="sh-title" id="qTitle">⚡ Signalement Rapide</span>
+      <span class="sh-title" id="qTitle">🏷️ Informations du tag</span>
       <button class="sh-close" onclick="closeSheet('quickOv')">✕</button>
     </div>
     <div class="sh-body">
-      <div class="qw">
-        <div class="step-ind">
-          <div class="sd act" id="sd1">1</div>
-          <div class="sl" id="sl1"></div>
-          <div class="sd" id="sd2">2</div>
-          <div class="sl" id="sl2"></div>
-          <div class="sd" id="sd3">3</div>
+      <div class="sform">
+        <div class="srow req">
+          <label class="slabel">N° Cas</label>
+          <div class="sval"><input class="fi" id="qNum" readonly placeholder="Auto"/></div>
         </div>
-        <!-- Step 1 -->
-        <div class="qa-step on" id="step1">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 1 — Type de danger &amp; Photo</div>
-          <div class="dg" id="dangerGrid">
-            <div class="dgb" onclick="selDng('Danger Électrique',this)"><span class="dg-i">⚡</span><span class="dg-l">Danger Électrique</span></div>
-            <div class="dgb" onclick="selDng('Risque Chute',this)"><span class="dg-i">🚧</span><span class="dg-l">Risque Chute</span></div>
-            <div class="dgb" onclick="selDng('Risque Incendie',this)"><span class="dg-i">🔥</span><span class="dg-l">Risque Incendie</span></div>
-            <div class="dgb" onclick="selDng('Fuite / Déversement',this)"><span class="dg-i">💧</span><span class="dg-l">Fuite / Déversement</span></div>
-            <div class="dgb" onclick="selDng('Risque Mécanique',this)"><span class="dg-i">⚙️</span><span class="dg-l">Risque Mécanique</span></div>
-            <div class="dgb" onclick="selDng('Risque Chimique',this)"><span class="dg-i">☣️</span><span class="dg-l">Risque Chimique</span></div>
-            <div class="dgb" onclick="selDng('Obstruction Voie',this)"><span class="dg-i">🚫</span><span class="dg-l">Obstruction Voie</span></div>
-            <div class="dgb" onclick="selDng('Autre Danger',this)"><span class="dg-i">⚠️</span><span class="dg-l">Autre</span></div>
+        <div class="srow">
+          <label class="slabel">Photo de l'anomalie</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCam(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCam(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="camPrev" class="pth" src="" alt=""/>
           </div>
-          <div class="cam-btns">
-            <label class="cam-opt"><input type="file" id="camIn" accept="image/*" capture="environment" onchange="prevCam(this)"/>📷 Caméra</label>
-            <label class="cam-opt"><input type="file" id="galIn" accept="image/*" onchange="prevCam(this)"/>🖼 Galerie</label>
-            <button class="cam-opt" onclick="startVoice()">🎙 Voix</button>
-          </div>
-          <div class="cam-area" id="camArea">
-            <span style="font-size:1.8rem">📷</span>
-            <span style="font-size:.78rem;color:var(--t3)">Appuyer pour une photo</span>
-            <input type="file" accept="image/*" capture="environment" onchange="prevCam(this)"/>
-            <img id="camPrev" src="" alt="" style="display:none"/>
-          </div>
-          <div class="va off" id="voiceAnim"><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div></div>
-          <div id="voiceTxt" style="display:none;font-size:.78rem;background:var(--y2);border:1px solid var(--y);border-radius:var(--rs);padding:7px;color:var(--t1);margin-top:5px;"></div>
         </div>
-        <!-- Step 2 -->
-        <div class="qa-step" id="step2">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 2 — Sévérité &amp; Localisation</div>
-          <div class="sev-row">
-            <div class="sev-btn e" onclick="selSev('Élevée',this)"><div class="sev-i">🔴</div><div class="sev-l">Élevée</div></div>
-            <div class="sev-btn m" onclick="selSev('Moyenne',this)"><div class="sev-i">🟧</div><div class="sev-l">Moyenne</div></div>
-            <div class="sev-btn f" onclick="selSev('Faible',this)"><div class="sev-i">🟢</div><div class="sev-l">Faible</div></div>
+        <div class="srow">
+          <label class="slabel">Gravité</label>
+          <div class="sval">
+            <select class="fsel" id="qGravSel">
+              <option value="Élevée">🔴 Élevée</option>
+              <option value="Moyenne">🟧 Moyenne</option>
+              <option value="Faible">🟢 Faible</option>
+            </select>
           </div>
-          <div class="fg" style="margin-bottom:9px;">
-            <label class="fl">Zone</label>
+        </div>
+        <div class="srow">
+          <label class="slabel">Zone</label>
+          <div class="sval">
             <select class="fsel" id="qZone">
               <option>étage 0</option><option>étage -1</option><option>étage 1</option>
               <option>étage Brovind</option><option>les utilités</option>
@@ -819,43 +885,56 @@ img{max-width:100%;display:block;}
               <option>magasin mp</option><option>autre</option>
             </select>
           </div>
-          <div class="ur">
-            <button class="ub" id="gpsBtn" onclick="getGPS()">📍 GPS Auto</button>
-            <button class="ub" id="qrBtn" onclick="scanQR()">📷 Scan QR</button>
-          </div>
-          <div id="gpsInfo" style="display:none;font-size:.7rem;color:var(--grn);padding:5px 9px;background:var(--grn2);border-radius:var(--rs);margin-bottom:8px;">
-            📍 Position : <span id="gpsTxt"></span>
-          </div>
-          <div id="qrInfo" style="display:none;font-size:.7rem;padding:5px 9px;background:var(--y2);border-radius:var(--rs);margin-bottom:8px;">
-            📎 Zone QR : <strong id="qrTxt"></strong>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Description *</label>
-            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="3"></textarea>
-          </div>
-          <div class="fg" style="margin-bottom:8px;">
-            <label class="fl">Responsable</label>
-            <input class="fi" id="qResp" placeholder="Nom du responsable…"/>
-          </div>
-          <div class="anon-row">
-            <span style="font-size:1rem">🎭</span>
-            <div class="anon-txt">Signalement anonyme<span class="anon-sub">Identité protégée</span></div>
-            <label class="tgl"><input type="checkbox" id="qAnon"/><div class="tgl-track"><div class="tgl-thumb"></div></div></label>
+        </div>
+        <div class="srow req">
+          <label class="slabel">Description</label>
+          <div class="sval">
+            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="2" oninput="refreshQSugg()"></textarea>
+            <button type="button" class="scan-btn" onclick="scanPhotoDesc()">🔍 Analyser la photo &amp; décrire (IA)</button>
+            <div class="sugg" id="qSuggDesc"></div>
           </div>
         </div>
-        <!-- Step 3 -->
-        <div class="qa-step" id="step3">
-          <div style="font-size:.78rem;font-weight:700;color:var(--t2);margin-bottom:11px;">Étape 3 — Confirmer &amp; Envoyer</div>
-          <div id="qSummary" style="background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);padding:13px;margin-bottom:12px;font-size:.8rem;line-height:1.8;"></div>
-          <div style="background:var(--y3);border:1px solid rgba(245,197,24,.15);border-radius:var(--rs);padding:9px;font-size:.72rem;color:var(--t2);">
-            ⚡ Le département sera automatiquement notifié. Statut : <strong style="color:var(--red)">Ouvert</strong>
+        <div class="srow">
+          <label class="slabel">Risque Principal</label>
+          <div class="sval"><input class="fi" id="qRisque" placeholder="Risque identifié…"/><div class="sugg" id="qSuggRisque"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Propositions</label>
+          <div class="sval"><textarea class="ft" id="qPropo" placeholder="Solution proposée…" rows="2"></textarea><div class="sugg" id="qSuggPropo"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Responsable</label>
+          <div class="sval">
+            <select class="fsel" id="qResp">
+              <option value="">— Choisir —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Photo après</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCamAp(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCamAp(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="qApPrev" class="pth" src="" alt=""/>
           </div>
         </div>
       </div>
     </div>
     <div class="sh-foot" id="qFoot">
-      <button class="btn btn-g" id="qBack" onclick="qPrev()" style="display:none">← Retour</button>
-      <button class="btn btn-p" id="qNext" onclick="qNext()">Suivant →</button>
+      <button class="btn btn-g" onclick="closeSheet('quickOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitQuick()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -873,7 +952,7 @@ img{max-width:100%;display:block;}
         <input type="hidden" id="fRowIdx"/>
         <input type="hidden" id="fId"/>
         <div class="fg2">
-          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required/></div>
+          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required oninput="refreshSugg()"/></div>
           <div class="fg"><label class="fl">Gravité</label>
             <select class="fsel" id="fGravite">
               <option value="Élevée">🔴 Élevée</option>
@@ -895,11 +974,27 @@ img{max-width:100%;display:block;}
             </select></div>
           <div class="fg"><label class="fl">Date Création</label><input class="fi" type="date" id="fDateCr"/></div>
           <div class="fg"><label class="fl">Date Cible</label><input class="fi" type="date" id="fDateCi"/></div>
-          <div class="fg full"><label class="fl">Description *</label><textarea class="ft" id="fDesc" required></textarea></div>
-          <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/></div>
-          <div class="fg full"><label class="fl">Action Urgente</label><textarea class="ft" id="fAction"></textarea></div>
-          <div class="fg full"><label class="fl">Propositions</label><textarea class="ft" id="fPropo"></textarea></div>
-          <div class="fg full"><label class="fl">Responsable</label><input class="fi" id="fResp"/></div>
+          <div class="fg full"><label class="fl">Description *</label><textarea class="ft" id="fDesc" required oninput="refreshSugg()"></textarea></div>
+          <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/>
+            <div class="sugg" id="suggRisque"></div></div>
+          <div class="fg full"><label class="fl">Action Urgente <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne J)</span></label><textarea class="ft" id="fAction"></textarea>
+            <div class="sugg" id="suggAction"></div></div>
+          <div class="fg full"><label class="fl">Propositions <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne K)</span></label><textarea class="ft" id="fPropo"></textarea>
+            <div class="sugg" id="suggPropo"></div></div>
+          <div class="fg full"><label class="fl">Responsable</label>
+            <select class="fsel" id="fResp">
+              <option value="">— Choisir un responsable —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select></div>
         </div>
         <div class="anon-row">
           <span style="font-size:1rem">🎭</span>
@@ -937,7 +1032,9 @@ img{max-width:100%;display:block;}
     <div class="sh-body"><div class="dw" id="detBody"></div></div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('detailOv')">Fermer</button>
+      <button class="btn btn-b" id="detMailBtn" style="flex:0 0 auto">📧</button>
       <button class="btn btn-b" id="detEditBtn">✏️ Modifier</button>
+      <button class="btn btn-r" id="detDelBtn" style="flex:0 0 auto">🗑</button>
     </div>
   </div>
 </div>
@@ -966,7 +1063,8 @@ var S = {
   tags:[], kpis:null, view:'home', filter:'all', search:'',
   editing:null, delRow:null, offline:false, queue:[],
   qStep:1, qDng:'', qGrav:'Élevée', qLat:0, qLng:0, qQR:'',
-  camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null
+  camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null,
+  booted:false, detailTag:null
 };
 var _tt; // toast timer
 
@@ -1004,7 +1102,7 @@ function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
    Loader masqué dès réception de la réponse
 ══════════════════════════════════════════ */
 function loadAll(){
-  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); return; }
+  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); bootForm(); return; }
   splashMsg('Chargement des tags…');
   document.getElementById('spFill').style.width='40%';
 
@@ -1024,6 +1122,7 @@ function loadAll(){
     .withFailureHandler(function(e){           // Ordre 3 ✓
       hideSplash();
       toast('Erreur réseau: '+e.message,'err');
+      bootForm();
     })
     .getTags();
 }
@@ -1037,12 +1136,24 @@ function loadKPIs(){
       renderCurrent();
       updateBadge();
       toast('✓ '+S.tags.length+' tags chargés','ok');
+      bootForm();
     })
     .withFailureHandler(function(){
       hideSplash();
       renderCurrent();
+      bootForm();
     })
     .getKPIs();
+}
+
+/* Mobile-first : le formulaire d'ajout est la page d'accueil par défaut.
+   Au premier chargement, on ouvre directement le Signalement Rapide. */
+function bootForm(){
+  if(S.booted) return;
+  S.booted=true;
+  setTimeout(function(){
+    if(!document.querySelector('.ov.on')) openQuick();
+  }, 500);
 }
 
 function hideSplash(){
@@ -1303,9 +1414,11 @@ function renderTagsView(){
   document.getElementById('resInfo').textContent=tags.length+' résultat(s)';
   var el=document.getElementById('tagsList');
   if(!tags.length){
+    el.className='tlist';
     el.innerHTML='<div class="empty"><div class="empty-i">🔍</div><div class="empty-t">Aucun tag trouvé</div></div>';
     return;
   }
+  el.className='gallery';
   el.innerHTML=tags.map(cardHtml).join('');
   // Lazy loading des images
   setupLazyImages();
@@ -1319,55 +1432,39 @@ function setChip(f,btn){
 }
 function doSearch(){ S.search=document.getElementById('searchIn').value; renderTagsView(); }
 
-// Ordre 9 : cardHtml — clic sur la carte → openDetail()
+// Galerie : photo "avant" + texte incrusté (statut, responsable, depuis)
 function cardHtml(t){
   var gc=t.gravite==='Élevée'?'elevee':t.gravite==='Moyenne'?'moyenne':'faible';
-  var gb=t.gravite==='Élevée'?'<span class="badge ge">🔴 Élevée</span>':
-         t.gravite==='Moyenne'?'<span class="badge gm">🟧 Moyenne</span>':
-         '<span class="badge gf">🟢 Faible</span>';
-  var sb=t.statut==='Ouvert'?'<span class="badge so">🟥 Ouvert</span>':'<span class="badge sc2">✅ Fermé</span>';
 
-  // KPI durée inline sur la carte
-  var kpiH='';
+  // Durée "depuis" (ou délai de fermeture)
+  var sinceH='';
   if(t.dateCreation){
     var d1=new Date(t.dateCreation);
     var d2=t.statut==='Fermé'&&t.dateFerme?new Date(t.dateFerme):new Date();
     if(!isNaN(d1.getTime())){
       var days=Math.round((d2-d1)/86400000);
       var col=days>14?'var(--red)':days>7?'var(--ora)':'var(--grn)';
-      kpiH='<span class="tc-kpi" style="color:'+col+'">⏱'+days+'j</span>';
+      var lbl=t.statut==='Fermé'?'Fermé en '+days+'j':'Depuis '+days+'j';
+      sinceH='<div class="gc-since"><span class="dot" style="background:'+col+'"></span>⏱ '+lbl+'</div>';
     }
   }
 
-  var avH = t.photoAvantId ?
-    '<div class="tc-th tc-lazy" data-imgid="'+esc(t.photoAvantId)+'" onclick="openLazyImg(\''+esc(t.photoAvantId)+'\');event.stopPropagation()"><span style="font-size:.55rem;color:var(--t3)">⏳</span></div>':
-    '<div class="tc-no">📷<br/>Avant</div>';
-  var apH = t.photoApresId ?
-    '<div class="tc-th tc-lazy" data-imgid="'+esc(t.photoApresId)+'" onclick="openLazyImg(\''+esc(t.photoApresId)+'\');event.stopPropagation()"><span style="font-size:.55rem;color:var(--t3)">⏳</span></div>':
-    '<div class="tc-no">📷<br/>Après</div>';
+  var img = t.photoAvantId ?
+    '<div class="gc-img tc-lazy" data-imgid="'+esc(t.photoAvantId)+'"><span>⏳</span></div>':
+    '<div class="gc-noimg"><span>📷</span>Pas de photo</div>';
+  var st = t.statut==='Ouvert'
+    ? '<span class="gc-st open">🟥 Ouvert</span>'
+    : '<span class="gc-st closed">✅ Fermé</span>';
+  var resp = t.responsable ? esc(t.responsable) : 'Non assigné';
 
-  var desc=(t.description||'').substring(0,75)+((t.description||'').length>75?'…':'');
-  var anonH=t.anonymous?'<span class="tc-anon">🎭</span>':'';
-
-  // Ordre 9 : onclick sur .tcard → openDetail(id)
-  return '<div class="tcard '+gc+'" onclick="openDetail(\''+t.id+'\')">'+
-    '<div class="tc-top">'+
-      '<div class="tc-photos">'+avH+apH+'</div>'+
-      '<div class="tc-body">'+
-        '<div class="tc-r1">'+
-          '<span class="tc-id">#'+t.id+'</span>'+
-          '<span class="tc-dt">'+t.dateCreation+'</span>'+anonH+
-        '</div>'+
-        '<div class="tc-danger">'+esc(t.danger||'—')+'</div>'+
-        '<div class="tc-desc">'+esc(desc)+'</div>'+
+  return '<div class="gcard '+gc+'" onclick="openDetail(\''+t.id+'\')" title="'+esc(t.danger||'')+'">'+
+    img+
+    '<div class="gc-overlay">'+
+      '<div class="gc-top"><span class="gc-id">#'+t.id+'</span>'+st+'</div>'+
+      '<div class="gc-bot">'+
+        '<div class="gc-resp">👤 '+resp+'</div>'+
+        sinceH+
       '</div>'+
-    '</div>'+
-    '<div class="tc-bot">'+gb+sb+kpiH+
-      '<span class="tc-zone">'+esc(t.zone||'')+'</span></div>'+
-    '<div class="tc-acts" onclick="event.stopPropagation()">'+
-      '<button class="ta v" onclick="openDetail(\''+t.id+'\')">👁 Voir</button>'+
-      '<button class="ta e" onclick="editTag(\''+t.id+'\')">✏️ Modifier</button>'+
-      '<button class="ta d" onclick="confirmDel('+t.rowIndex+')">🗑</button>'+
     '</div>'+
   '</div>';
 }
@@ -1380,9 +1477,12 @@ function cardHtml(t){
 function openDetail(id){
   var t=S.tags.find(function(x){return String(x.id)===String(id);});
   if(!t) return;
+  S.detailTag=t;
 
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
   document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
+  document.getElementById('detDelBtn').onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
+  document.getElementById('detMailBtn').onclick=function(){ notifyResp(t); };
 
   // KPI durée de résolution — Ordre 8
   var kpiBlock='';
@@ -1440,7 +1540,12 @@ function openDetail(id){
     '<div class="fl" style="margin:11px 0 7px">📷 Photos Avant / Après</div>'+
     '<div class="pcs">'+
       '<div class="pcs-sl"><div class="pcs-h">Avant</div><div class="pcs-b">'+avH+'</div></div>'+
-      '<div class="pcs-sl"><div class="pcs-h">Après</div><div class="pcs-b">'+apH+'</div></div>'+
+      '<div class="pcs-sl"><div class="pcs-h">Après</div><div class="pcs-b" id="detApSlot">'+apH+'</div>'+
+        '<div class="ap-btns">'+
+          '<label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="uploadAfterPhoto(this)"/>📷 Caméra</label>'+
+          '<label class="pub-ap alt"><input type="file" accept="image/*" onchange="uploadAfterPhoto(this)"/>🖼 Galerie</label>'+
+        '</div>'+
+      '</div>'+
     '</div>'+
     '<div class="fl" style="margin:11px 0 7px">📋 Historique des Statuts</div>'+tl;
 
@@ -1466,6 +1571,46 @@ function applyDetailImg(el, dataUrl){
   el.classList.add('loaded');
   el.innerHTML = '<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;cursor:pointer;"/>';
 }
+/* Ajout direct de la "Photo après" depuis le détail du tag */
+function uploadAfterPhoto(input){
+  if(!input.files||!input.files[0]) return;
+  var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
+  var f=input.files[0];
+  compressImage(f,function(dataUrl){
+    var b64=dataUrl.split(',')[1];
+    // Aperçu immédiat
+    var slot=document.getElementById('detApSlot');
+    if(slot) slot.innerHTML='<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;"/>';
+    showLoader('Envoi de la photo après…');
+    google.script.run
+      .withSuccessHandler(function(res){
+        hideSplash();
+        if(res&&res.success){
+          var msg = res.statut==='Fermé' ? '✓ Photo après ajoutée — Tag fermé ✅' : '✓ Photo après ajoutée';
+          toast(msg,'ok');
+          loadAll();
+        }
+        else toast('Erreur: '+((res&&res.error)||'?'),'err');
+      })
+      .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+      .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:'image/jpeg' });
+  });
+}
+function notifyResp(t){
+  if(!t){ t=S.detailTag; }
+  if(!t){ toast('Tag introuvable','err'); return; }
+  if(!t.responsable||!t.responsable.trim()){ toast('Aucun responsable assigné à ce tag','err'); return; }
+  if(S.offline){ toast('📵 Hors-ligne — email impossible','err'); return; }
+  showLoader('Envoi de l\'email au responsable…');
+  google.script.run
+    .withSuccessHandler(function(res){
+      hideSplash();
+      if(res&&res.success){ toast('✓ Email envoyé à '+(res.to||t.responsable),'ok'); }
+      else toast('Erreur: '+((res&&res.error)||'?'),'err');
+    })
+    .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id });
+}
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function tlI(cls,ico,lbl,dt){
@@ -1474,175 +1619,266 @@ function tlI(cls,ico,lbl,dt){
 }
 
 /* ══════════════════════════════════════════
-   QUICK ADD — 3 ÉTAPES
+   FORMULAIRE D'AJOUT (page unique "tag informations")
 ══════════════════════════════════════════ */
 function openQuick(){
-  S.qStep=1; S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
+  S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
+  S.camApB64=''; S.camApMime='image/jpeg';
   S.qLat=0; S.qLng=0; S.qQR='';
+  // N° Cas prévisionnel (le serveur attribue l'ID définitif)
+  var maxId=0; (S.tags||[]).forEach(function(t){ if(t.id>maxId) maxId=t.id; });
+  document.getElementById('qNum').value=(maxId+1);
+  document.getElementById('qGravSel').value='Élevée';
+  document.getElementById('qZone').value='étage 0';
   document.getElementById('qDesc').value='';
+  document.getElementById('qRisque').value='';
+  document.getElementById('qPropo').value='';
   document.getElementById('qResp').value='';
-  document.getElementById('qAnon').checked=false;
-  document.getElementById('gpsInfo').style.display='none';
-  document.getElementById('qrInfo').style.display='none';
-  document.getElementById('voiceTxt').style.display='none';
-  document.getElementById('camPrev').style.display='none';
-  document.getElementById('voiceAnim').classList.add('off');
-  document.querySelectorAll('.dgb').forEach(function(b){b.classList.remove('sel');});
-  document.querySelectorAll('.sev-btn').forEach(function(b){b.classList.remove('sel');});
-  document.getElementById('gpsBtn').classList.remove('on');
-  document.getElementById('gpsBtn').textContent='📍 GPS Auto';
-  document.getElementById('qrBtn').classList.remove('on');
-  document.getElementById('qrBtn').textContent='📷 Scan QR';
-  updQStep();
+  var cp=document.getElementById('camPrev'); cp.src=''; cp.style.display='none';
+  var ap=document.getElementById('qApPrev'); ap.src=''; ap.style.display='none';
+  SUGG_IGNORED={};
+  ['qSuggRisque','qSuggPropo','qSuggDesc'].forEach(function(b){renderSugg(b,'','');});
   openSheet('quickOv');
 }
 
-function updQStep(){
-  var s=S.qStep;
-  [1,2,3].forEach(function(i){
-    document.getElementById('step'+i).classList.toggle('on',i===s);
-    var dot=document.getElementById('sd'+i);
-    dot.className='sd'+(i<s?' done':i===s?' act':'');
-    if(i<3) document.getElementById('sl'+i).className='sl'+(i<s?' done':'');
-  });
-  document.getElementById('qBack').style.display=s>1?'':'none';
-  document.getElementById('qNext').textContent=s<3?'Suivant →':'✓ Envoyer';
-  document.getElementById('qTitle').textContent=
-    s===1?'⚡ Étape 1 / 3 — Danger & Photo':
-    s===2?'📍 Étape 2 / 3 — Sévérité & Zone':
-          '✅ Étape 3 / 3 — Confirmer';
-}
-
-function selDng(d,btn){
-  S.qDng=d;
-  document.querySelectorAll('.dgb').forEach(function(b){b.classList.remove('sel');});
-  btn.classList.add('sel');
-}
-function selSev(s,btn){
-  S.qGrav=s;
-  document.querySelectorAll('.sev-btn').forEach(function(b){b.classList.remove('sel');});
-  btn.classList.add('sel');
-}
-function prevCam(input){
-  if(!input.files||!input.files[0]) return;
-  var f=input.files[0]; S.camMime=f.type||'image/jpeg';
-  var r=new FileReader();
-  r.onload=function(e){
-    S.camB64=e.target.result.split(',')[1];
-    var p=document.getElementById('camPrev'); p.src=e.target.result; p.style.display='block';
+function submitQuick(){
+  var desc=document.getElementById('qDesc').value.trim();
+  if(!desc){ toast('Description requise','err'); return; }
+  var data={
+    danger:S.qDng||'',
+    gravite:document.getElementById('qGravSel').value,
+    zone:document.getElementById('qZone').value,
+    description:desc,
+    risque:document.getElementById('qRisque').value.trim(),
+    propositions:document.getElementById('qPropo').value.trim(),
+    responsable:document.getElementById('qResp').value.trim(),
+    anonymous:false,
+    auteur:'',lat:0,lng:0,qrZone:'',
+    photoAvant:S.camB64, photoApres:S.camApB64, mime:S.camMime
   };
-  r.readAsDataURL(f);
-}
-function getGPS(){
-  var btn=document.getElementById('gpsBtn');
-  btn.classList.add('on'); btn.textContent='📍 Localisation…';
-  if(!navigator.geolocation){ toast('GPS non disponible','err'); btn.classList.remove('on'); return; }
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      S.qLat=pos.coords.latitude; S.qLng=pos.coords.longitude;
-      document.getElementById('gpsTxt').textContent=S.qLat.toFixed(5)+', '+S.qLng.toFixed(5);
-      document.getElementById('gpsInfo').style.display='block';
-      btn.textContent='✅ GPS OK'; toast('📍 Position obtenue','ok');
-    },
-    function(){ btn.classList.remove('on'); btn.textContent='📍 GPS Auto'; toast('Erreur GPS','err'); }
-  );
-}
-function scanQR(){
-  var zone=prompt('Simuler scan QR — Entrez le code zone:','Z-001');
-  if(zone){
-    S.qQR=zone;
-    document.getElementById('qrTxt').textContent=zone;
-    document.getElementById('qrInfo').style.display='block';
-    var b=document.getElementById('qrBtn'); b.classList.add('on'); b.textContent='✅ QR OK';
-    toast('📷 Zone scannée: '+zone,'ok');
-  }
-}
-var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
-function startVoice(){
-  if(!SpeechRec){ toast('Voix non supportée','err'); return; }
-  if(S.voiceOn){ S.recog&&S.recog.stop(); return; }
-  S.recog=new SpeechRec();
-  S.recog.lang='fr-FR'; S.recog.continuous=false; S.recog.interimResults=false;
-  S.recog.onstart=function(){
-    S.voiceOn=true;
-    document.getElementById('voiceAnim').classList.remove('off');
-    document.getElementById('voiceTxt').style.display='block';
-    document.getElementById('voiceTxt').textContent='🎙 Parlez maintenant…';
-    toast('🎙 Écoute en cours…','info');
-  };
-  S.recog.onresult=function(e){
-    var txt=e.results[0][0].transcript;
-    document.getElementById('voiceTxt').textContent='📝 '+txt;
-    document.getElementById('qDesc').value+=(document.getElementById('qDesc').value?' ':'')+txt;
-    S.voiceOn=false; document.getElementById('voiceAnim').classList.add('off');
-    toast('✓ Transcription: '+txt.substring(0,40),'ok');
-  };
-  S.recog.onerror=function(e){
-    S.voiceOn=false; document.getElementById('voiceAnim').classList.add('off');
-    toast('Erreur voix: '+e.error,'err');
-  };
-  S.recog.start();
-}
-
-function qNext(){
-  var s=S.qStep;
-  if(s===1){
-    if(!S.qDng){ toast('Sélectionnez un type de danger','err'); return; }
-    S.qStep=2;
-  } else if(s===2){
-    var desc=document.getElementById('qDesc').value.trim();
-    if(!desc){ toast('Description requise','err'); return; }
-    // Build summary for confirmation
-    document.getElementById('qSummary').innerHTML=
-      '<div>🏷 <strong>Danger:</strong> '+esc(S.qDng)+'</div>'+
-      '<div>🔴 <strong>Gravité:</strong> '+esc(S.qGrav)+'</div>'+
-      '<div>📍 <strong>Zone:</strong> '+esc(document.getElementById('qZone').value)+'</div>'+
-      '<div>📝 <strong>Description:</strong> '+esc(desc)+'</div>'+
-      (S.qLat?'<div>📡 <strong>GPS:</strong> '+S.qLat.toFixed(5)+', '+S.qLng.toFixed(5)+'</div>':'')+
-      (S.qQR?'<div>📷 <strong>QR Zone:</strong> '+esc(S.qQR)+'</div>':'')+
-      (document.getElementById('qAnon').checked?'<div>🎭 <strong>Anonyme</strong></div>':'')+
-      (S.camB64?'<div>📷 <strong>Photo:</strong> ✓ Attachée</div>':'');
-    S.qStep=3;
-  } else {
-    // Envoyer — Ordre 3 : withSuccessHandler + masquage loader
-    var data={
-      danger:S.qDng, gravite:S.qGrav,
-      zone:document.getElementById('qZone').value,
-      description:document.getElementById('qDesc').value.trim(),
-      responsable:document.getElementById('qResp').value.trim(),
-      anonymous:document.getElementById('qAnon').checked,
-      auteur:'',lat:S.qLat,lng:S.qLng,qrZone:S.qQR,
-      photoAvant:S.camB64, mime:S.camMime
-    };
-    closeSheet('quickOv');
-    if(S.offline){
-      S.queue.push(data);
-      localStorage.setItem('hse_q',JSON.stringify(S.queue));
-      document.getElementById('syncBanner').classList.add('on');
-      toast('📵 Sauvegardé hors-ligne','info');
-      return;
-    }
-    showLoader('Envoi du signalement…');
-    google.script.run
-      .withSuccessHandler(function(r){       // Ordre 3 ✓
-        hideSplash();                        // Ordre 3 : masquer loader ✓
-        if(r.success){ toast('✓ Tag #'+r.id+' créé ! Statut: Ouvert','ok'); loadAll(); }
-        else toast('Erreur: '+(r.error||'?'),'err');
-      })
-      .withFailureHandler(function(e){       // Ordre 3 ✓
-        hideSplash();
-        toast('Erreur: '+e.message,'err');
-      })
-      .addTag(data);
+  closeSheet('quickOv');
+  if(S.offline){
+    S.queue.push(data);
+    localStorage.setItem('hse_q',JSON.stringify(S.queue));
+    document.getElementById('syncBanner').classList.add('on');
+    toast('📵 Sauvegardé hors-ligne','info');
     return;
   }
-  updQStep();
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r.success){ toast('✓ Tag #'+r.id+' créé ! Statut: Ouvert','ok'); loadAll(); }
+      else toast('Erreur: '+(r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .addTag(data);
 }
-function qPrev(){ if(S.qStep>1){ S.qStep--; updQStep(); } }
+
+function prevCam(input){
+  if(!input.files||!input.files[0]) return;
+  S.camMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camB64=dataUrl.split(',')[1];
+    var p=document.getElementById('camPrev'); p.src=dataUrl; p.style.display='block';
+  });
+}
+function prevCamAp(input){
+  if(!input.files||!input.files[0]) return;
+  S.camApMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camApB64=dataUrl.split(',')[1];
+    var p=document.getElementById('qApPrev'); p.src=dataUrl; p.style.display='block';
+  });
+}
+/* Compression d'image côté client (réduit la taille avant envoi)
+   Redimensionne au plus à maxDim px et ré-encode en JPEG. */
+function compressImage(file,cb,maxDim,quality){
+  maxDim=maxDim||1280; quality=quality||0.72;
+  var r=new FileReader();
+  r.onload=function(e){
+    var src=e.target.result;
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width, h=img.height;
+      if(w>=h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+      else if(h>w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+      try{
+        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cb(cv.toDataURL('image/jpeg',quality));
+      }catch(err){ cb(src); }
+    };
+    img.onerror=function(){ cb(src); };
+    img.src=src;
+  };
+  r.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════
+   SUGGESTIONS (Risque / Action / Propositions)
+   Proposées selon le type de danger + la description.
+   L'utilisateur peut les appliquer ou les ignorer.
+══════════════════════════════════════════ */
+/* Bases par type de danger (mot-clé recherché dans le type) */
+var SUGG_BASE=[
+  {k:/[eé]lectr/i, risque:'Électrocution, court-circuit ou départ de feu',
+   action:'Consigner et couper l’alimentation électrique (LOTO) avant toute intervention',
+   propo:'Installer des coffrets/prises conformes (NF) et protéger les câbles exposés'},
+  {k:/chute|hauteur/i, risque:'Chute de hauteur ou de plain-pied',
+   action:'Baliser la zone et installer un garde-corps ou une ligne de vie conforme',
+   propo:'Mettre en place un échafaudage sécurisé ou un accès permanent conforme'},
+  {k:/incendie|feu|explos/i, risque:'Incendie / propagation des flammes',
+   action:'Dégager les issues, vérifier les moyens d’extinction et baliser la zone',
+   propo:'Installer/repositionner les extincteurs et respecter les consignes de stockage'},
+  {k:/fuite|d[eé]versement|eau|hydraul/i, risque:'Pollution, glissade ou atteinte à l’environnement',
+   action:'Contenir la fuite, baliser la zone et absorber le déversement',
+   propo:'Réparer la fuite, remplacer le joint/raccord défectueux et nettoyer la zone'},
+  {k:/m[eé]can/i, risque:'Happement, coupure ou écrasement par un organe mobile',
+   action:'Arrêter et consigner la machine (LOTO) avant toute intervention',
+   propo:'Installer une protection fixe ou asservie conforme aux normes (NF EN ISO)'},
+  {k:/chimiq|corros|toxi/i, risque:'Brûlure, intoxication ou réaction chimique',
+   action:'Isoler le produit, ventiler la zone et porter les EPI adaptés',
+   propo:'Stocker les produits dans la zone dédiée (rétention) et afficher les FDS'},
+  {k:/obstruction|voie|[eé]vacuation/i, risque:'Gêne d’évacuation / blocage des secours',
+   action:'Dégager immédiatement la voie ou l’issue de secours',
+   propo:'Matérialiser et maintenir les voies de circulation dégagées'}
+];
+var SUGG_DEFAULT={risque:'Risque pour la santé et la sécurité du personnel',
+  action:'Sécuriser et baliser immédiatement la zone concernée',
+  propo:'Mettre en place une mesure corrective adaptée et durable'};
+/* Raffinements selon des mots-clés de la description (surchargent la base) */
+var SUGG_KW=[
+  {k:/palette|stockage|gerbage/i, risque:'Chute d’objet (stockage non conforme)',
+   action:'Stabiliser et réorganiser le stockage en sécurité',
+   propo:'Stocker les palettes horizontalement et de manière sécurisée'},
+  {k:/mouche|insecte|nuisible|rongeur/i, risque:'Contamination / présence de nuisibles',
+   action:'Nettoyer et assainir la zone immédiatement',
+   propo:'Installer un fly killer / dispositif anti-nuisibles'},
+  {k:/glissant|glissade|tr[eé]buch|sol/i, risque:'Glissade ou trébuchement',
+   action:'Nettoyer, sécher et baliser le sol',
+   propo:'Éliminer la source et signaler durablement la zone'},
+  {k:/clou|verre|coupant|contondant/i, risque:'Blessure par objet contondant',
+   action:'Retirer immédiatement l’objet du sol',
+   propo:'Mettre en place un ramassage régulier et une zone de dépôt dédiée'},
+  {k:/trou|mural|ouverture/i, risque:'Chute / blessure (ouverture non protégée)',
+   action:'Baliser et condamner immédiatement l’ouverture',
+   propo:'Réparer ou combler le trou de manière conforme'},
+  {k:/garde-?corps|protection/i, risque:'Chute de hauteur (protection manquante)',
+   action:'Installer un garde-corps permanent conforme (NF E85-015)',
+   propo:'Mettre en place une protection collective pérenne'}
+];
+var SUGG_IGNORED={};
+function computeSugg(danger,desc){
+  var hay=((danger||'')+' '+(desc||'')).toLowerCase();
+  var out=null;
+  for(var i=0;i<SUGG_BASE.length;i++){ if(SUGG_BASE[i].k.test(hay)){ out=SUGG_BASE[i]; break; } }
+  if(!out) out=SUGG_DEFAULT;
+  var res={risque:out.risque,action:out.action,propo:out.propo};
+  for(var j=0;j<SUGG_KW.length;j++){
+    if(SUGG_KW[j].k.test(desc||'')){
+      var kw=SUGG_KW[j];
+      if(kw.risque) res.risque=kw.risque;
+      if(kw.action) res.action=kw.action;
+      if(kw.propo)  res.propo=kw.propo;
+      break;
+    }
+  }
+  return res;
+}
+function renderSugg(boxId,fieldId,text){
+  var box=document.getElementById(boxId);
+  if(!box) return;
+  if(!text||SUGG_IGNORED[boxId]){ box.className='sugg'; box.innerHTML=''; return; }
+  box.innerHTML='<span class="sugg-lead">💡 Suggestion</span>'+
+    '<button type="button" class="sugg-chip" onclick="applySugg(\''+fieldId+'\',\''+boxId+'\')"></button>'+
+    '<button type="button" class="sugg-x" onclick="ignoreSugg(\''+boxId+'\')">Ignorer</button>';
+  box.querySelector('.sugg-chip').textContent=text;
+  box.querySelector('.sugg-chip').dataset.txt=text;
+  box.className='sugg on';
+}
+function refreshSugg(){
+  var danger=document.getElementById('fDanger').value;
+  var desc=document.getElementById('fDesc').value;
+  if(!danger&&!desc){
+    ['suggRisque','suggAction','suggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg(danger,desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('suggRisque','fRisque',empty('fRisque')?s.risque:'');
+  renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
+  renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
+}
+/* Scanner la photo (IA Gemini) → suggérer la description de l'anomalie */
+function scanPhotoDesc(){
+  if(!S.camB64){ toast('Ajoutez d’abord une photo de l’anomalie','err'); return; }
+  showLoader('Analyse de la photo…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success&&r.text){
+        SUGG_IGNORED['qSuggDesc']=false;
+        renderSugg('qSuggDesc','qDesc',r.text);
+        toast('✓ Description suggérée','ok');
+      } else {
+        toast('Analyse impossible : '+((r&&r.error)||'?'),'err');
+      }
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur : '+e.message,'err'); })
+    .analyzePhoto({ photo:S.camB64, mime:S.camMime||'image/jpeg' });
+}
+/* Suggestions pour le formulaire d'ajout (basées sur la description) */
+function refreshQSugg(){
+  var desc=document.getElementById('qDesc').value;
+  if(!desc){
+    ['qSuggRisque','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg('',desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('qSuggRisque','qRisque',empty('qRisque')?s.risque:'');
+  renderSugg('qSuggPropo','qPropo',empty('qPropo')?s.propo:'');
+}
+function applySugg(fieldId,boxId){
+  var box=document.getElementById(boxId);
+  var chip=box?box.querySelector('.sugg-chip'):null;
+  if(chip){ document.getElementById(fieldId).value=chip.dataset.txt||chip.textContent; }
+  SUGG_IGNORED[boxId]=true;
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+  // Si on vient de remplir la description, recalculer Risque/Propositions
+  if(fieldId==='qDesc' && typeof refreshQSugg==='function') refreshQSugg();
+}
+function ignoreSugg(boxId){
+  SUGG_IGNORED[boxId]=true;
+  var box=document.getElementById(boxId);
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+}
 
 /* ══════════════════════════════════════════
    FULL FORM (Modifier)
 ══════════════════════════════════════════ */
+/* Sélectionne le responsable dans le menu déroulant.
+   Tolère les anciennes valeurs (casse/espaces différents) et,
+   si la valeur n'existe pas dans la liste, l'ajoute en option. */
+function setRespValue(selId,val){
+  var sel=document.getElementById(selId);
+  if(!sel) return;
+  val=(val||'').trim();
+  if(!val){ sel.value=''; return; }
+  var norm=function(s){return s.toLowerCase().replace(/\s+/g,' ').trim();};
+  var target=norm(val), matched=null;
+  for(var i=0;i<sel.options.length;i++){
+    if(norm(sel.options[i].value||sel.options[i].text)===target){ matched=sel.options[i]; break; }
+  }
+  if(matched){ sel.value=matched.value||matched.text; }
+  else{
+    var opt=document.createElement('option');
+    opt.value=val; opt.text=val;
+    sel.appendChild(opt);
+    sel.value=val;
+  }
+}
 function editTag(id){
   var t=S.tags.find(function(x){return String(x.id)===String(id);});
   if(!t) return;
@@ -1661,8 +1897,10 @@ function editTag(id){
   document.getElementById('fRisque').value=t.risque||'';
   document.getElementById('fAction').value=t.action||'';
   document.getElementById('fPropo').value=t.propositions||'';
-  document.getElementById('fResp').value=t.responsable||'';
+  setRespValue('fResp',t.responsable||'');
   document.getElementById('fAnon').checked=t.anonymous||false;
+  SUGG_IGNORED={};
+  refreshSugg();
   ['avPrev','apPrev'].forEach(function(id){document.getElementById(id).style.display='none';});
   ['avOk','apOk'].forEach(function(id){document.getElementById(id).style.display='none';});
   openSheet('formOv');
@@ -1713,7 +1951,7 @@ function submitFull(){
       google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).addTag(data);
     }
   }
-  function rf(f,cb){ var r=new FileReader(); r.onload=function(e){cb(e.target.result.split(',')[1],f.type);}; r.readAsDataURL(f); }
+  function rf(f,cb){ compressImage(f,function(dataUrl){ cb(dataUrl.split(',')[1],'image/jpeg'); }); }
   if(avF&&apF) rf(avF,function(a,m){ rf(apF,function(b){ doSave(a,b,m); }); });
   else if(avF) rf(avF,function(a,m){ doSave(a,'',m); });
   else if(apF) rf(apF,function(b,m){ doSave('',b,m); });

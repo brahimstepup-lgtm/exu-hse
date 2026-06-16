@@ -89,7 +89,11 @@ function insertTagWithAutoIncrement(payload) {
     if (payload.photoApres && payload.photoApres.length > 10) {
       var fnAp  = nextId + '.Photo après.' + nowHHMMSS_() + '.jpg';
       var urlAp = savePhotoToFolder_(payload.photoApres, fnAp, payload.mime || 'image/jpeg');
-      if (urlAp) sheet.getRange(ir, C.PHOTO_AP + 1).setValue(urlAp);
+      if (urlAp) {
+        sheet.getRange(ir, C.PHOTO_AP + 1).setValue(urlAp);
+        sheet.getRange(ir, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
+        sheet.getRange(ir, C.DATE_FERME + 1).setValue(new Date());
+      }
     }
 
     routeNotification_(payload, nextId);
@@ -325,14 +329,42 @@ function getTags() {
 // ================================================================
 //  GET ZONES + RESPONSABLES UNIQUES (pour filtres mobile)
 // ================================================================
+// Liste officielle des responsables (référence pour dédoublonnage)
+var RESP_LIST = [
+  'Omar Ourihan', 'Amir Mahmoud', 'Kouachi Brahim', 'Chekalil Brahim',
+  'Salah Haloui', 'Kerrad Nazim', 'Rabah Seba', 'Hadoune Youcef',
+  'Media Amine', 'Mohamed Zerar'
+];
+
+// Clé normalisée : minuscules, sans accents, espaces réduits
+function normRespKey_(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+// Renvoie le nom officiel si correspondance, sinon le nom nettoyé
+function canonResp_(s, lookup) {
+  var k = normRespKey_(s);
+  if (lookup[k]) return lookup[k];
+  return String(s || '').replace(/\s+/g, ' ').trim();
+}
+
 function getFilterOptions() {
   try {
     var res = getTags();
     if (!res.success) return res;
+    // Table de correspondance clé normalisée -> nom officiel
+    var lookup = {};
+    RESP_LIST.forEach(function(n){ lookup[normRespKey_(n)] = n; });
+
     var zones = {}, resps = {};
     res.data.forEach(function(t) {
-      if (t.zone)        zones[t.zone] = true;
-      if (t.responsable) resps[t.responsable] = true;
+      if (t.zone) zones[String(t.zone).replace(/\s+/g, ' ').trim()] = true;
+      if (t.responsable) {
+        var name = canonResp_(t.responsable, lookup);
+        if (name) resps[name] = true;
+      }
     });
     return {
       success: true,
@@ -455,6 +487,229 @@ function deleteTag(rowIndex) {
     getSheet_().deleteRow(parseInt(rowIndex, 10));
     return { success: true, status: 'SUCCESS' };
   } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
+//  SAVE AFTER-PHOTO ONLY (sans réécrire les autres colonnes)
+//  Permet d'ajouter la "Photo après" directement depuis le détail
+// ================================================================
+function saveAfterPhoto(p) {
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+    if (!p.photoApres || p.photoApres.length < 10) return { success:false, error:'Photo manquante' };
+    var tagId = parseInt(p.id, 10) || ri;
+    var fn  = tagId + '.Photo après.' + nowHHMMSS_() + '.jpg';
+    var url = savePhotoToFolder_(p.photoApres, fn, p.mime || 'image/jpeg');
+    if (!url) return { success:false, error:'Échec de la sauvegarde' };
+    sheet.getRange(ri, C.PHOTO_AP + 1).setValue(url);
+
+    var oldStatut = parseStatut_(sheet.getRange(ri, C.STATUT + 1).getValue());
+    if (oldStatut === 'Ouvert') {
+      sheet.getRange(ri, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
+      sheet.getRange(ri, C.DATE_FERME + 1).setValue(new Date());
+    }
+
+    return { success:true, status:'SUCCESS', url:url, statut:'Fermé' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
+//  TEST D'AUTORISATION MAIL — à exécuter UNE FOIS depuis l'éditeur
+//  (sélectionner "testMailAuth" puis ▶ Exécuter) pour déclencher
+//  l'écran d'autorisation de script.send_mail. Peut être supprimée
+//  après l'autorisation accordée.
+// ================================================================
+function testMailAuth() {
+  MailApp.sendEmail('brahimstepup@gmail.com', 'Test HSE Tags', 'Autorisation Mail OK.');
+}
+
+// ================================================================
+//  EMAIL AU RESPONSABLE (bouton manuel dans la vue détail)
+//  Correspondance noms → emails. Complétez les adresses ci-dessous.
+//  Vous pouvez aussi ajouter/surcharger via Propriétés du script :
+//    clé RESP_EMAILS = {"Kouachi Brahim":"BrahimKOUACHI@palmaryfood.com", ...}
+// ================================================================
+var RESP_EMAILS = {
+  'Omar Ourihan':    '',
+  'Amir Mahmoud':    '',
+  'Kouachi Brahim':  'BrahimKOUACHI@palmaryfood.com',
+  'Chekalil Brahim': '',
+  'Salah Haloui':    '',
+  'Kerrad Nazim':    '',
+  'Rabah Seba':      '',
+  'Hadoune Youcef':  '',
+  'Media Amine':     '',
+  'Mohamed Zerar':   ''
+};
+
+function respEmailFor_(name) {
+  var k = normRespKey_(name);
+  // 1) Surcharge via Propriétés du script (JSON)
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('RESP_EMAILS');
+    if (raw) {
+      var extra = JSON.parse(raw);
+      for (var key in extra) {
+        if (normRespKey_(key) === k && extra[key]) return String(extra[key]).trim();
+      }
+    }
+  } catch(e) {}
+  // 2) Table interne
+  for (var name2 in RESP_EMAILS) {
+    if (normRespKey_(name2) === k && RESP_EMAILS[name2]) return RESP_EMAILS[name2];
+  }
+  return '';
+}
+
+function sendTagEmail(p) {
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+
+    var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
+    var resp = txt_(row[C.RESP]);
+    if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
+
+    var to = respEmailFor_(resp);
+    if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
+
+    var id       = txt_(row[C.NUM]) || p.id || ri;
+    var danger   = noFormula_(row[C.DANGER]);
+    var gravite  = parseGravite_(row[C.GRAVITE]);
+    var statut   = parseStatut_(row[C.STATUT]);
+    var zone     = noFormula_(row[C.ZONE]);
+    var emplace  = noFormula_(row[C.EMPLACE]);
+    var desc     = noFormula_(row[C.DESC]);
+    var risque   = noFormula_(row[C.RISQUE]);
+    var action   = noFormula_(row[C.ACTION]);
+    var propo    = noFormula_(row[C.PROPO]);
+    var dateCr   = fmtDate_(row[C.DATE_CR]);
+    var dateCi   = fmtDate_(row[C.DATE_CI]);
+
+    var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
+
+    // Récupération de la photo avant depuis Drive
+    var photoBlob = null;
+    try {
+      var photoUrl = String(row[C.PHOTO_AV] || '').trim();
+      var fileId   = extractFileId_(photoUrl, '');
+      if (fileId) photoBlob = DriveApp.getFileById(fileId).getBlob();
+    } catch(e) { photoBlob = null; }
+
+    var line = function(k, v) {
+      if (!v) return '';
+      return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
+             '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
+    };
+    var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
+
+    var photoBlock = photoBlob
+      ? '<div style="margin:16px 0;text-align:center"><img src="cid:photoAvant" style="max-width:100%;max-height:320px;border-radius:6px;border:1px solid #ddd" alt="Photo de l\'anomalie"/><div style="font-size:11px;color:#999;margin-top:4px">📷 Photo de l\'anomalie</div></div>'
+      : '';
+
+    var html =
+      '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
+        '<div style="background:#1f2937;color:#fff;padding:16px 20px">' +
+          '<div style="font-size:18px;font-weight:700">⚠️ Tag HSE #' + id + '</div>' +
+          '<div style="font-size:13px;opacity:.85;margin-top:2px">Hygiène · Sécurité · Environnement</div>' +
+        '</div>' +
+        '<div style="padding:16px 20px;color:#111">' +
+          '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
+          '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
+          photoBlock +
+          '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
+            line('N° Cas', '#' + id) +
+            line('Type de danger', danger) +
+            '<tr><td style="padding:6px 12px;font-weight:600;color:#555">Gravité</td>' +
+              '<td style="padding:6px 12px"><span style="background:' + gravColor + ';color:#fff;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700">' + gravite + '</span></td></tr>' +
+            line('Statut', statut) +
+            line('Zone', zone) +
+            line('Emplacement', emplace) +
+            line('Description', desc) +
+            line('Risque principal', risque) +
+            line('Action', action) +
+            line('Propositions', propo) +
+            line('Date création', dateCr) +
+            line('Date cible', dateCi) +
+          '</table>' +
+          '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
+        '</div>' +
+        '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
+      '</div>';
+
+    var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
+    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
+
+    MailApp.sendEmail(mailOpts);
+
+    return { success:true, to:to, responsable:resp };
+  } catch(e) { return { success:false, error:e.toString() }; }
+}
+
+// ================================================================
+//  ANALYSE IA DE LA PHOTO → description suggérée
+//  Compatible OpenAI (Groq par défaut, gratuit). Configurable via
+//  Propriétés du script :
+//    AI_API_KEY  (obligatoire)  ex: clé Groq (gsk_...) ou OpenRouter
+//    AI_API_URL  (optionnel)    défaut Groq
+//    AI_MODEL    (optionnel)    défaut Llama 4 Scout (vision)
+//  Pour OpenRouter : AI_API_URL=https://openrouter.ai/api/v1/chat/completions
+//                    AI_MODEL=meta-llama/llama-3.2-11b-vision-instruct:free
+// ================================================================
+function analyzePhoto(p) {
+  try {
+    if (!p || !p.photo || p.photo.length < 10) return { success:false, error:'Photo manquante' };
+    var props = PropertiesService.getScriptProperties();
+    var key   = props.getProperty('AI_API_KEY') || props.getProperty('GROQ_API_KEY');
+    if (!key) return { success:false, error:'Clé AI_API_KEY non configurée (Propriétés du script)' };
+    var url   = props.getProperty('AI_API_URL') || 'https://api.groq.com/openai/v1/chat/completions';
+    var model = props.getProperty('AI_MODEL')   || 'meta-llama/llama-4-scout-17b-16e-instruct';
+
+    var clean   = String(p.photo).replace(/^data:[^;]+;base64,/, '');
+    var dataUrl = 'data:' + (p.mime || 'image/jpeg') + ';base64,' + clean;
+
+    var prompt = "Tu es un inspecteur HSE (Hygiène Sécurité Environnement) en milieu industriel. " +
+      "Décris en UNE seule phrase concise et factuelle, en français, l'anomalie ou le danger de sécurité " +
+      "visible sur la photo (équipement concerné, défaut observé, risque). " +
+      "Pas de préambule ni de liste : uniquement la description.";
+
+    var payload = {
+      model: model,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: dataUrl } }
+        ]
+      }],
+      temperature: 0.4,
+      max_tokens: 200
+    };
+
+    var res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + key, 'HTTP-Referer': 'https://hse-tags.app', 'X-Title': 'HSE Tags' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = res.getResponseCode();
+    var raw  = res.getContentText() || '{}';
+    var data = {};
+    try { data = JSON.parse(raw); } catch(e) {}
+    if (code !== 200) {
+      var msg = (data.error && (data.error.message || data.error)) || raw.substring(0, 200);
+      return { success:false, error:'IA ' + code + ': ' + msg };
+    }
+    var text = '';
+    try { text = data.choices[0].message.content.trim(); } catch(e) {}
+    if (!text) return { success:false, error:'Réponse vide de l\'IA' };
+    return { success:true, text:text };
+  } catch(e) { return { success:false, error:e.toString() }; }
 }
 
 // ================================================================
