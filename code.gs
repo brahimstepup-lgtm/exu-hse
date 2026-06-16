@@ -61,10 +61,18 @@ function insertTagWithAutoIncrement(payload) {
     var ref = 'Photo_' + String(nextId).padStart(3, '0');
 
     // Ordre 4 : appendRow avec ordre strict des colonnes
+    var dateCreation = payload.dateCreation ? new Date(payload.dateCreation) : new Date();
+    var dateCible;
+    if (payload.dateCible) {
+      dateCible = new Date(payload.dateCible);
+    } else {
+      dateCible = new Date(dateCreation.getTime());
+      dateCible.setDate(dateCible.getDate() + 3);
+    }
     sheet.appendRow([
-      nextId,                                                            // A
-      payload.dateCreation ? new Date(payload.dateCreation) : new Date(),// B
-      payload.dateCible ? new Date(payload.dateCible) : '',              // C
+      nextId,           // A
+      dateCreation,     // B
+      dateCible,        // C — défaut J+3 si non fourni
       payload.dangerType || payload.danger || '',                        // D
       toGraviteEmoji_(payload.gravity || payload.gravite),               // E
       payload.emplacement || '',                                         // F
