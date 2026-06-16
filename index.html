@@ -377,6 +377,17 @@ img{max-width:100%;display:block;}
 .fi:focus,.fsel:focus,.ft:focus{border-color:var(--y);}
 .ft{resize:vertical;min-height:62px;}
 .fsel option{background:var(--ink2);}
+/* Suggestions IA */
+.sugg{margin-top:6px;display:none;flex-wrap:wrap;align-items:center;gap:6px;}
+.sugg.on{display:flex;}
+.sugg-lead{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--y);}
+.sugg-chip{background:var(--y3);border:1px solid rgba(245,197,24,.35);border-radius:999px;
+  color:var(--t1);font-size:.74rem;padding:5px 11px;cursor:pointer;text-align:left;
+  line-height:1.3;transition:background .15s,border-color .15s;}
+.sugg-chip:hover{background:var(--y2);border-color:var(--y);}
+.sugg-x{background:none;border:none;color:var(--t3);font-size:.68rem;cursor:pointer;
+  text-decoration:underline;padding:3px 4px;}
+.sugg-x:hover{color:var(--t1);}
 /* Photos */
 .pgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ps{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;}
@@ -885,7 +896,7 @@ img{max-width:100%;display:block;}
         <input type="hidden" id="fRowIdx"/>
         <input type="hidden" id="fId"/>
         <div class="fg2">
-          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required/></div>
+          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required oninput="refreshSugg()"/></div>
           <div class="fg"><label class="fl">Gravité</label>
             <select class="fsel" id="fGravite">
               <option value="Élevée">🔴 Élevée</option>
@@ -907,10 +918,13 @@ img{max-width:100%;display:block;}
             </select></div>
           <div class="fg"><label class="fl">Date Création</label><input class="fi" type="date" id="fDateCr"/></div>
           <div class="fg"><label class="fl">Date Cible</label><input class="fi" type="date" id="fDateCi"/></div>
-          <div class="fg full"><label class="fl">Description *</label><textarea class="ft" id="fDesc" required></textarea></div>
-          <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/></div>
-          <div class="fg full"><label class="fl">Action Urgente</label><textarea class="ft" id="fAction"></textarea></div>
-          <div class="fg full"><label class="fl">Propositions</label><textarea class="ft" id="fPropo"></textarea></div>
+          <div class="fg full"><label class="fl">Description *</label><textarea class="ft" id="fDesc" required oninput="refreshSugg()"></textarea></div>
+          <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/>
+            <div class="sugg" id="suggRisque"></div></div>
+          <div class="fg full"><label class="fl">Action Urgente <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne J)</span></label><textarea class="ft" id="fAction"></textarea>
+            <div class="sugg" id="suggAction"></div></div>
+          <div class="fg full"><label class="fl">Propositions <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne K)</span></label><textarea class="ft" id="fPropo"></textarea>
+            <div class="sugg" id="suggPropo"></div></div>
           <div class="fg full"><label class="fl">Responsable</label>
             <select class="fsel" id="fResp">
               <option value="">— Choisir un responsable —</option>
@@ -1666,6 +1680,114 @@ function qNext(){
 function qPrev(){ if(S.qStep>1){ S.qStep--; updQStep(); } }
 
 /* ══════════════════════════════════════════
+   SUGGESTIONS (Risque / Action / Propositions)
+   Proposées selon le type de danger + la description.
+   L'utilisateur peut les appliquer ou les ignorer.
+══════════════════════════════════════════ */
+/* Bases par type de danger (mot-clé recherché dans le type) */
+var SUGG_BASE=[
+  {k:/[eé]lectr/i, risque:'Électrocution, court-circuit ou départ de feu',
+   action:'Consigner et couper l’alimentation électrique (LOTO) avant toute intervention',
+   propo:'Installer des coffrets/prises conformes (NF) et protéger les câbles exposés'},
+  {k:/chute|hauteur/i, risque:'Chute de hauteur ou de plain-pied',
+   action:'Baliser la zone et installer un garde-corps ou une ligne de vie conforme',
+   propo:'Mettre en place un échafaudage sécurisé ou un accès permanent conforme'},
+  {k:/incendie|feu|explos/i, risque:'Incendie / propagation des flammes',
+   action:'Dégager les issues, vérifier les moyens d’extinction et baliser la zone',
+   propo:'Installer/repositionner les extincteurs et respecter les consignes de stockage'},
+  {k:/fuite|d[eé]versement|eau|hydraul/i, risque:'Pollution, glissade ou atteinte à l’environnement',
+   action:'Contenir la fuite, baliser la zone et absorber le déversement',
+   propo:'Réparer la fuite, remplacer le joint/raccord défectueux et nettoyer la zone'},
+  {k:/m[eé]can/i, risque:'Happement, coupure ou écrasement par un organe mobile',
+   action:'Arrêter et consigner la machine (LOTO) avant toute intervention',
+   propo:'Installer une protection fixe ou asservie conforme aux normes (NF EN ISO)'},
+  {k:/chimiq|corros|toxi/i, risque:'Brûlure, intoxication ou réaction chimique',
+   action:'Isoler le produit, ventiler la zone et porter les EPI adaptés',
+   propo:'Stocker les produits dans la zone dédiée (rétention) et afficher les FDS'},
+  {k:/obstruction|voie|[eé]vacuation/i, risque:'Gêne d’évacuation / blocage des secours',
+   action:'Dégager immédiatement la voie ou l’issue de secours',
+   propo:'Matérialiser et maintenir les voies de circulation dégagées'}
+];
+var SUGG_DEFAULT={risque:'Risque pour la santé et la sécurité du personnel',
+  action:'Sécuriser et baliser immédiatement la zone concernée',
+  propo:'Mettre en place une mesure corrective adaptée et durable'};
+/* Raffinements selon des mots-clés de la description (surchargent la base) */
+var SUGG_KW=[
+  {k:/palette|stockage|gerbage/i, risque:'Chute d’objet (stockage non conforme)',
+   action:'Stabiliser et réorganiser le stockage en sécurité',
+   propo:'Stocker les palettes horizontalement et de manière sécurisée'},
+  {k:/mouche|insecte|nuisible|rongeur/i, risque:'Contamination / présence de nuisibles',
+   action:'Nettoyer et assainir la zone immédiatement',
+   propo:'Installer un fly killer / dispositif anti-nuisibles'},
+  {k:/glissant|glissade|tr[eé]buch|sol/i, risque:'Glissade ou trébuchement',
+   action:'Nettoyer, sécher et baliser le sol',
+   propo:'Éliminer la source et signaler durablement la zone'},
+  {k:/clou|verre|coupant|contondant/i, risque:'Blessure par objet contondant',
+   action:'Retirer immédiatement l’objet du sol',
+   propo:'Mettre en place un ramassage régulier et une zone de dépôt dédiée'},
+  {k:/trou|mural|ouverture/i, risque:'Chute / blessure (ouverture non protégée)',
+   action:'Baliser et condamner immédiatement l’ouverture',
+   propo:'Réparer ou combler le trou de manière conforme'},
+  {k:/garde-?corps|protection/i, risque:'Chute de hauteur (protection manquante)',
+   action:'Installer un garde-corps permanent conforme (NF E85-015)',
+   propo:'Mettre en place une protection collective pérenne'}
+];
+var SUGG_IGNORED={};
+function computeSugg(danger,desc){
+  var hay=((danger||'')+' '+(desc||'')).toLowerCase();
+  var out=null;
+  for(var i=0;i<SUGG_BASE.length;i++){ if(SUGG_BASE[i].k.test(hay)){ out=SUGG_BASE[i]; break; } }
+  if(!out) out=SUGG_DEFAULT;
+  var res={risque:out.risque,action:out.action,propo:out.propo};
+  for(var j=0;j<SUGG_KW.length;j++){
+    if(SUGG_KW[j].k.test(desc||'')){
+      var kw=SUGG_KW[j];
+      if(kw.risque) res.risque=kw.risque;
+      if(kw.action) res.action=kw.action;
+      if(kw.propo)  res.propo=kw.propo;
+      break;
+    }
+  }
+  return res;
+}
+function renderSugg(boxId,fieldId,text){
+  var box=document.getElementById(boxId);
+  if(!box) return;
+  if(!text||SUGG_IGNORED[boxId]){ box.className='sugg'; box.innerHTML=''; return; }
+  box.innerHTML='<span class="sugg-lead">💡 Suggestion</span>'+
+    '<button type="button" class="sugg-chip" onclick="applySugg(\''+fieldId+'\',\''+boxId+'\')"></button>'+
+    '<button type="button" class="sugg-x" onclick="ignoreSugg(\''+boxId+'\')">Ignorer</button>';
+  box.querySelector('.sugg-chip').textContent=text;
+  box.querySelector('.sugg-chip').dataset.txt=text;
+  box.className='sugg on';
+}
+function refreshSugg(){
+  var danger=document.getElementById('fDanger').value;
+  var desc=document.getElementById('fDesc').value;
+  if(!danger&&!desc){
+    ['suggRisque','suggAction','suggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg(danger,desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('suggRisque','fRisque',empty('fRisque')?s.risque:'');
+  renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
+  renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
+}
+function applySugg(fieldId,boxId){
+  var box=document.getElementById(boxId);
+  var chip=box?box.querySelector('.sugg-chip'):null;
+  if(chip){ document.getElementById(fieldId).value=chip.dataset.txt||chip.textContent; }
+  SUGG_IGNORED[boxId]=true;
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+}
+function ignoreSugg(boxId){
+  SUGG_IGNORED[boxId]=true;
+  var box=document.getElementById(boxId);
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+}
+
+/* ══════════════════════════════════════════
    FULL FORM (Modifier)
 ══════════════════════════════════════════ */
 /* Sélectionne le responsable dans le menu déroulant.
@@ -1709,6 +1831,8 @@ function editTag(id){
   document.getElementById('fPropo').value=t.propositions||'';
   setRespValue('fResp',t.responsable||'');
   document.getElementById('fAnon').checked=t.anonymous||false;
+  SUGG_IGNORED={};
+  refreshSugg();
   ['avPrev','apPrev'].forEach(function(id){document.getElementById(id).style.display='none';});
   ['avOk','apOk'].forEach(function(id){document.getElementById(id).style.display='none';});
   openSheet('formOv');
