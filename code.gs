@@ -477,6 +477,53 @@ function saveAfterPhoto(p) {
 }
 
 // ================================================================
+//  ANALYSE IA DE LA PHOTO (Gemini Vision) → description suggérée
+//  Nécessite une clé API dans Propriétés du script : GEMINI_API_KEY
+// ================================================================
+function analyzePhoto(p) {
+  try {
+    if (!p || !p.photo || p.photo.length < 10) return { success:false, error:'Photo manquante' };
+    var key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+    if (!key) return { success:false, error:'Clé GEMINI_API_KEY non configurée (Propriétés du script)' };
+
+    var clean = String(p.photo).replace(/^data:[^;]+;base64,/, '');
+    var model = 'gemini-2.0-flash';
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model +
+              ':generateContent?key=' + encodeURIComponent(key);
+
+    var prompt = "Tu es un inspecteur HSE (Hygiène Sécurité Environnement) en milieu industriel. " +
+      "Décris en UNE seule phrase concise et factuelle, en français, l'anomalie ou le danger de sécurité " +
+      "visible sur la photo (équipement concerné, défaut observé, risque). " +
+      "Pas de préambule ni de liste : uniquement la description.";
+
+    var payload = {
+      contents: [{ parts: [
+        { text: prompt },
+        { inline_data: { mime_type: (p.mime || 'image/jpeg'), data: clean } }
+      ]}],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 150 }
+    };
+
+    var res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = res.getResponseCode();
+    var data = JSON.parse(res.getContentText() || '{}');
+    if (code !== 200) {
+      return { success:false, error:'Gemini ' + code + ': ' + ((data.error && data.error.message) || '') };
+    }
+    var text = '';
+    try { text = data.candidates[0].content.parts[0].text.trim(); } catch(e) {}
+    if (!text) return { success:false, error:'Réponse vide de Gemini' };
+    return { success:true, text:text };
+  } catch(e) { return { success:false, error:e.toString() }; }
+}
+
+// ================================================================
 //  HELPERS
 // ================================================================
 function nowHHMMSS_() {

@@ -217,7 +217,7 @@ img{max-width:100%;display:block;}
 .gcard.faible{border-color:rgba(46,213,115,.45);}
 .gc-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:var(--ink3);color:var(--t3);font-size:.85rem;}
-.gc-img img{width:100%;height:100%;object-fit:cover;}
+.gc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .gc-noimg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:5px;color:var(--t3);font-size:.66rem;background:var(--ink3);}
 .gc-noimg span{font-size:1.9rem;}
@@ -431,6 +431,10 @@ img{max-width:100%;display:block;}
 .sval .pub-ap{border-radius:0;padding:11px 6px;}
 .sval .ap-btns .pub-ap:first-child{border-radius:var(--rs) 0 0 var(--rs);}
 .sval .ap-btns .pub-ap:last-child{border-radius:0 var(--rs) var(--rs) 0;}
+.scan-btn{margin-top:8px;width:100%;background:var(--blu2);color:var(--blu);
+  border:1px solid rgba(94,158,244,.3);border-radius:var(--rs);
+  padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;transition:filter .15s;}
+.scan-btn:active{filter:brightness(.88);}
 /* Photos */
 .pgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ps{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;}
@@ -866,7 +870,11 @@ img{max-width:100%;display:block;}
         </div>
         <div class="srow req">
           <label class="slabel">Description</label>
-          <div class="sval"><textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="2" oninput="refreshQSugg()"></textarea></div>
+          <div class="sval">
+            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="2" oninput="refreshQSugg()"></textarea>
+            <button type="button" class="scan-btn" onclick="scanPhotoDesc()">🔍 Analyser la photo &amp; décrire (IA)</button>
+            <div class="sugg" id="qSuggDesc"></div>
+          </div>
         </div>
         <div class="srow">
           <label class="slabel">Risque Principal</label>
@@ -1590,7 +1598,7 @@ function openQuick(){
   var cp=document.getElementById('camPrev'); cp.src=''; cp.style.display='none';
   var ap=document.getElementById('qApPrev'); ap.src=''; ap.style.display='none';
   SUGG_IGNORED={};
-  ['qSuggRisque','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
+  ['qSuggRisque','qSuggPropo','qSuggDesc'].forEach(function(b){renderSugg(b,'','');});
   openSheet('quickOv');
 }
 
@@ -1763,6 +1771,24 @@ function refreshSugg(){
   renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
   renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
 }
+/* Scanner la photo (IA Gemini) → suggérer la description de l'anomalie */
+function scanPhotoDesc(){
+  if(!S.camB64){ toast('Ajoutez d’abord une photo de l’anomalie','err'); return; }
+  showLoader('Analyse de la photo…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success&&r.text){
+        SUGG_IGNORED['qSuggDesc']=false;
+        renderSugg('qSuggDesc','qDesc',r.text);
+        toast('✓ Description suggérée','ok');
+      } else {
+        toast('Analyse impossible : '+((r&&r.error)||'?'),'err');
+      }
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur : '+e.message,'err'); })
+    .analyzePhoto({ photo:S.camB64, mime:S.camMime||'image/jpeg' });
+}
 /* Suggestions pour le formulaire d'ajout (basées sur la description) */
 function refreshQSugg(){
   var desc=document.getElementById('qDesc').value;
@@ -1781,6 +1807,8 @@ function applySugg(fieldId,boxId){
   if(chip){ document.getElementById(fieldId).value=chip.dataset.txt||chip.textContent; }
   SUGG_IGNORED[boxId]=true;
   if(box){ box.className='sugg'; box.innerHTML=''; }
+  // Si on vient de remplir la description, recalculer Risque/Propositions
+  if(fieldId==='qDesc' && typeof refreshQSugg==='function') refreshQSugg();
 }
 function ignoreSugg(boxId){
   SUGG_IGNORED[boxId]=true;
