@@ -516,6 +516,16 @@ function saveAfterPhoto(p) {
 }
 
 // ================================================================
+//  TEST D'AUTORISATION MAIL — à exécuter UNE FOIS depuis l'éditeur
+//  (sélectionner "testMailAuth" puis ▶ Exécuter) pour déclencher
+//  l'écran d'autorisation de script.send_mail. Peut être supprimée
+//  après l'autorisation accordée.
+// ================================================================
+function testMailAuth() {
+  MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Test HSE Tags', 'Autorisation Mail OK.');
+}
+
+// ================================================================
 //  EMAIL AU RESPONSABLE (bouton manuel dans la vue détail)
 //  Correspondance noms → emails. Complétez les adresses ci-dessous.
 //  Vous pouvez aussi ajouter/surcharger via Propriétés du script :
