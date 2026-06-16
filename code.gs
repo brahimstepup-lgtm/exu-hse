@@ -23,6 +23,25 @@ var HEADER_ROW = 7;
 var DATA_START = 8;
 
 // ================================================================
+//  AUTHENTIFICATION / RÔLES
+//  Mot de passe admin stocké dans Propriétés du script : ADMIN_PASSWORD
+//  Les utilisateurs ordinaires (anonymes) peuvent uniquement :
+//    - ajouter un tag      (addTag)
+//    - ajouter une photo   (saveAfterPhoto)
+//  Toute action de modification/suppression/dashboard exige l'admin.
+// ================================================================
+function login(password) {
+  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  if (!stored) return { success:false, error:'ADMIN_PASSWORD non configuré dans les Propriétés du script' };
+  if (String(password) === String(stored)) return { success:true, role:'admin' };
+  return { success:false, error:'Mot de passe incorrect' };
+}
+function isAdmin_(key) {
+  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  return !!stored && key != null && String(key) === String(stored);
+}
+
+// ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
 // ================================================================
 function doGet(e) {
@@ -360,13 +379,52 @@ function canonResp_(s, lookup) {
   return String(s || '').replace(/\s+/g, ' ').trim();
 }
 
+// ── Annuaire des responsables (noms + emails) ──────────────────
+// Modifiable par l'admin, stocké dans la propriété RESP_DIRECTORY (JSON).
+// À défaut, construit depuis RESP_LIST + RESP_EMAILS (valeurs par défaut).
+function getRespDirectory_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('RESP_DIRECTORY');
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && arr.length) {
+        return arr.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
+                  .filter(function(r){ return r.name; });
+      }
+    }
+  } catch(e) {}
+  return RESP_LIST.map(function(n){ return { name:n, email:(RESP_EMAILS[n]||'') }; });
+}
+
+// Public : noms seulement (pour les menus déroulants de l'app)
+function getResponsablesList() {
+  return { success:true, data: getRespDirectory_().map(function(r){ return r.name; }) };
+}
+
+// Admin : noms + emails (pour l'édition)
+function getResponsables(adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  return { success:true, data: getRespDirectory_() };
+}
+
+// Admin : enregistre l'annuaire (noms + emails)
+function saveResponsables(adminKey, list) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!Array.isArray(list)) return { success:false, error:'Liste invalide' };
+  var clean = list.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
+                  .filter(function(r){ return r.name; });
+  if (!clean.length) return { success:false, error:'Au moins un responsable requis' };
+  PropertiesService.getScriptProperties().setProperty('RESP_DIRECTORY', JSON.stringify(clean));
+  return { success:true, data:clean };
+}
+
 function getFilterOptions() {
   try {
     var res = getTags();
     if (!res.success) return res;
     // Table de correspondance clé normalisée -> nom officiel
     var lookup = {};
-    RESP_LIST.forEach(function(n){ lookup[normRespKey_(n)] = n; });
+    getRespDirectory_().forEach(function(r){ lookup[normRespKey_(r.name)] = r.name; });
 
     var zones = {}, resps = {};
     res.data.forEach(function(t) {
@@ -389,7 +447,8 @@ function getFilterOptions() {
 // ================================================================
 //  KPI
 // ================================================================
-function getKPIs() {
+function getKPIs(adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var res = getTags();
     if (!res.success) return res;
@@ -454,6 +513,7 @@ function getKPIs() {
 //  UPDATE / DELETE
 // ================================================================
 function updateTag(d) {
+  if (!isAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri    = parseInt(d.rowIndex, 10);
@@ -492,7 +552,8 @@ function updateTag(d) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-function deleteTag(rowIndex) {
+function deleteTag(rowIndex, adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     getSheet_().deleteRow(parseInt(rowIndex, 10));
     return { success: true, status: 'SUCCESS' };
@@ -556,7 +617,12 @@ var RESP_EMAILS = {
 
 function respEmailFor_(name) {
   var k = normRespKey_(name);
-  // 1) Surcharge via Propriétés du script (JSON)
+  // 1) Annuaire (modifiable par l'admin) — source principale
+  var dir = getRespDirectory_();
+  for (var i = 0; i < dir.length; i++) {
+    if (normRespKey_(dir[i].name) === k && dir[i].email) return dir[i].email;
+  }
+  // 2) Surcharge héritée via propriété RESP_EMAILS (JSON)
   try {
     var raw = PropertiesService.getScriptProperties().getProperty('RESP_EMAILS');
     if (raw) {
@@ -566,14 +632,11 @@ function respEmailFor_(name) {
       }
     }
   } catch(e) {}
-  // 2) Table interne
-  for (var name2 in RESP_EMAILS) {
-    if (normRespKey_(name2) === k && RESP_EMAILS[name2]) return RESP_EMAILS[name2];
-  }
   return '';
 }
 
 function sendTagEmail(p) {
+  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);

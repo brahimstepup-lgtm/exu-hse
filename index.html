@@ -530,6 +530,10 @@ img{max-width:100%;display:block;}
 .btn-b{background:var(--blu2);color:var(--blu);border:1px solid rgba(94,158,244,.3);}
 .btn-r{background:var(--red2);color:var(--red);border:1px solid rgba(255,71,87,.3);}
 .btn.sent{background:rgba(46,213,115,.15);color:var(--grn);border:1px solid rgba(46,213,115,.4);}
+.resp-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+.resp-row .rr-name{flex:0 0 38%;}
+.resp-row .rr-mail{flex:1;min-width:0;}
+.resp-row .rr-del{flex:0 0 auto;min-height:auto;padding:10px 12px;}
 
 /* ══ TOAST ══════════════════════════════════════════════ */
 .toast{position:fixed;bottom:calc(80px + var(--sab));left:10px;right:10px;
@@ -725,10 +729,11 @@ img{max-width:100%;display:block;}
       <div><div>HSE Tags</div><span class="tb-year">2025 / 2026</span></div>
     </div>
     <div class="tb-r">
-      <button class="tb-btn tb-notif" onclick="goV('admin',null)" title="KPI Admin">
+      <button class="tb-btn tb-notif" id="tbKpiBtn" onclick="goV('admin',null)" title="KPI Admin">
         📊<span class="tb-badge" id="tbBadge" style="display:none">!</span>
       </button>
       <button class="tb-btn" onclick="loadAll()" title="Actualiser">↺</button>
+      <button class="tb-btn" id="loginBtn" onclick="openLogin()" title="Se connecter">🔒 Log In</button>
       <button class="tb-btn pri" onclick="openQuick()">＋ Signaler</button>
     </div>
   </header>
@@ -828,7 +833,10 @@ img{max-width:100%;display:block;}
 
     <!-- ADMIN KPI -->
     <div class="view" id="view-admin">
-      <div class="ph"><h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1></div>
+      <div class="ph" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1>
+        <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
+      </div>
       <div id="adminBody"></div>
     </div>
   </main>
@@ -1056,6 +1064,43 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ SHEET: Connexion Admin ═══ -->
+<div class="ov" id="loginOv">
+  <div class="sheet" style="max-width:420px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title" id="loginTitle">🔒 Connexion Administrateur</span>
+      <button class="sh-close" onclick="closeSheet('loginOv')">✕</button></div>
+    <div class="sh-body">
+      <div class="sform">
+        <div class="srow"><label class="slabel">Mot de passe</label><div class="sval">
+          <input class="fi" id="loginPwd" type="password" placeholder="Mot de passe admin…" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--t3);margin:10px 2px 0">Les utilisateurs ordinaires n'ont pas besoin de se connecter : ils peuvent ajouter des tags et des photos.</p>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('loginOv')">Annuler</button>
+      <button class="btn btn-p" onclick="doLogin()">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Gérer les responsables (Admin) ═══ -->
+<div class="ov" id="respOv">
+  <div class="sheet" style="max-width:560px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">👥 Gérer les responsables</span>
+      <button class="sh-close" onclick="closeSheet('respOv')">✕</button></div>
+    <div class="sh-body"><div id="respList"></div>
+      <button class="btn btn-b" style="margin-top:10px;width:100%" onclick="addRespRow()">＋ Ajouter un responsable</button>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('respOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveRespList()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════
    STATE
@@ -1065,8 +1110,13 @@ var S = {
   editing:null, delRow:null, offline:false, queue:[],
   qStep:1, qDng:'', qGrav:'Élevée', qLat:0, qLng:0, qQR:'',
   camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null,
-  booted:false, detailTag:null
+  booted:false, detailTag:null,
+  role:'user', adminKey:'', respList:[]
 };
+try{
+  var _sr=sessionStorage.getItem('hse_role'), _sk=sessionStorage.getItem('hse_key');
+  if(_sr==='admin' && _sk){ S.role='admin'; S.adminKey=_sk; }
+}catch(e){}
 var _tt; // toast timer
 
 /* ══════════════════════════════════════════
@@ -1079,6 +1129,11 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 
   document.getElementById('fDateCr').value = todayStr();
+
+  // Rôle : appliquer l'état (admin/user) + vue par défaut
+  applyRole();
+  loadRespList();
+  goV(isAdmin()?'home':'all', null);
 
   // Offline detection
   window.addEventListener('online',  function(){ setOffline(false); });
@@ -1114,7 +1169,8 @@ function loadAll(){
         S.tags = r.data||[];
         splashMsg(S.tags.length + ' tags chargés ✓');
         populateMFilters();
-        loadKPIs();
+        if(isAdmin()) loadKPIs();
+        else { hideSplash(); renderCurrent(); toast('✓ '+S.tags.length+' tags chargés','ok'); bootForm(); }
       } else {
         hideSplash();
         toast('Erreur getTags: '+(r.error||'?'),'err');
@@ -1144,7 +1200,7 @@ function loadKPIs(){
       renderCurrent();
       bootForm();
     })
-    .getKPIs();
+    .getKPIs(S.adminKey);
 }
 
 /* Mobile-first : le formulaire d'ajout est la page d'accueil par défaut.
@@ -1193,9 +1249,146 @@ function syncQueue(){
 }
 
 /* ══════════════════════════════════════════
+   AUTHENTIFICATION / RÔLES
+══════════════════════════════════════════ */
+var ADMIN_ONLY_VIEWS = {home:true, admin:true};
+
+function isAdmin(){ return S.role==='admin'; }
+
+function openLogin(){
+  if(isAdmin()){ logout(); return; }
+  document.getElementById('loginPwd').value='';
+  openSheet('loginOv');
+  setTimeout(function(){ var i=document.getElementById('loginPwd'); if(i) i.focus(); }, 300);
+}
+function doLogin(){
+  var pwd=document.getElementById('loginPwd').value;
+  if(!pwd){ toast('Saisissez le mot de passe','err'); return; }
+  showLoader('Connexion…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        S.role='admin'; S.adminKey=pwd;
+        try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',pwd); }catch(e){}
+        closeSheet('loginOv');
+        toast('✓ Connecté en tant qu\'administrateur','ok');
+        applyRole();
+        goV('home',null);
+        loadAll();
+      } else {
+        toast(r&&r.error?r.error:'Mot de passe incorrect','err');
+      }
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .login(pwd);
+}
+function logout(){
+  S.role='user'; S.adminKey='';
+  try{ sessionStorage.removeItem('hse_role'); sessionStorage.removeItem('hse_key'); }catch(e){}
+  toast('Déconnecté','info');
+  applyRole();
+  goV('all',null);
+}
+
+/* Affiche/masque les éléments selon le rôle (et bloque côté serveur en plus) */
+function applyRole(){
+  var admin=isAdmin();
+  document.body.classList.toggle('is-admin', admin);
+  document.body.classList.toggle('is-user', !admin);
+  // Bouton login/logout
+  var lb=document.getElementById('loginBtn');
+  if(lb){ lb.innerHTML = admin ? '🔓 Déconnexion' : '🔒 Log In'; lb.title = admin?'Se déconnecter':'Se connecter'; }
+  // Bouton KPI dans le header
+  var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
+  // Navigation : masquer Tableau de bord + Dashboard pour les non-admins
+  document.querySelectorAll('[data-v="home"],[data-v="admin"]').forEach(function(b){
+    b.style.display = admin ? '' : 'none';
+  });
+  // Si l'utilisateur est sur une vue interdite, rediriger vers les Tags
+  if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV('all',null);
+}
+
+/* ── Responsables : liste dynamique pour les menus déroulants ── */
+function loadRespList(){
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success&&r.data&&r.data.length){ S.respList=r.data; fillRespSelects(); }
+    })
+    .withFailureHandler(function(){})
+    .getResponsablesList();
+}
+function fillRespSelects(){
+  if(!S.respList||!S.respList.length) return;
+  ['qResp','fResp'].forEach(function(id){
+    var sel=document.getElementById(id); if(!sel) return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">— Choisir un responsable —</option>'+
+      S.respList.map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('');
+    if(cur) setRespValue(id,cur);
+  });
+}
+
+/* ── Admin : gestion des responsables (noms + emails) ── */
+function openRespManager(){
+  if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){ renderRespRows(r.data); openSheet('respOv'); }
+      else toast(r&&r.error?r.error:'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getResponsables(S.adminKey);
+}
+function renderRespRows(list){
+  document.getElementById('respList').innerHTML=(list||[]).map(respRowHtml).join('');
+}
+function respRowHtml(r){
+  r=r||{name:'',email:''};
+  return '<div class="resp-row">'+
+    '<input class="fi rr-name" placeholder="Nom" value="'+esc(r.name||'')+'"/>'+
+    '<input class="fi rr-mail" placeholder="email@exemple.com" value="'+esc(r.email||'')+'"/>'+
+    '<button class="btn btn-r rr-del" title="Retirer" onclick="this.parentNode.remove()">✕</button>'+
+  '</div>';
+}
+function addRespRow(){
+  document.getElementById('respList').insertAdjacentHTML('beforeend', respRowHtml({name:'',email:''}));
+}
+function saveRespList(){
+  var list=[];
+  document.querySelectorAll('#respList .resp-row').forEach(function(row){
+    var name=row.querySelector('.rr-name').value.trim();
+    var email=row.querySelector('.rr-mail').value.trim();
+    if(name) list.push({name:name, email:email});
+  });
+  if(!list.length){ toast('Au moins un responsable requis','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        toast('✓ Responsables enregistrés','ok');
+        S.respList=r.data.map(function(x){ return x.name; });
+        fillRespSelects();
+        closeSheet('respOv');
+        loadAll();
+      } else toast(r&&r.error?r.error:'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveResponsables(S.adminKey, list);
+}
+
+/* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
 function goV(v, btn){
+  // Blocage d'accès (y compris via URL) : vues réservées à l'admin
+  if(ADMIN_ONLY_VIEWS[v] && !isAdmin()){
+    toast('🔒 Accès réservé à l\'administrateur','err');
+    v='all'; btn=null;
+  }
   S.view = v;
   document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('on'); });
   document.querySelectorAll('[data-v]').forEach(function(b){ b.classList.remove('on'); });
@@ -1481,9 +1674,14 @@ function openDetail(id){
   S.detailTag=t;
 
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
-  document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
-  document.getElementById('detDelBtn').onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
-  var mailBtn=document.getElementById('detMailBtn');
+  // Actions de modification réservées à l'admin
+  var admin=isAdmin();
+  var eb=document.getElementById('detEditBtn'), db=document.getElementById('detDelBtn'), mailBtn=document.getElementById('detMailBtn');
+  eb.style.display = admin?'':'none';
+  db.style.display = admin?'':'none';
+  mailBtn.style.display = admin?'':'none';
+  eb.onclick=function(){ closeSheet('detailOv'); editTag(id); };
+  db.onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
   mailBtn.onclick=function(){ notifyResp(t); };
   setMailBtnState(!!t.emailSent);
 
@@ -1624,7 +1822,7 @@ function notifyResp(t){
       else toast('Erreur: '+((res&&res.error)||'?'),'err');
     })
     .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
-    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id });
+    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id, adminKey:S.adminKey });
 }
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
@@ -1961,6 +2159,7 @@ function submitFull(){
     function onErr(e){ hideSplash(); toast(e.message,'err'); }
     if(S.editing){
       data.rowIndex=document.getElementById('fRowIdx').value;
+      data.adminKey=S.adminKey;
       google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).updateTag(data);
     } else {
       google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).addTag(data);
@@ -1988,7 +2187,7 @@ function confirmDel(row){
         else toast('Erreur','err');
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-      .deleteTag(S.delRow);
+      .deleteTag(S.delRow, S.adminKey);
   };
   openSheet('delOv');
 }
