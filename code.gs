@@ -591,12 +591,24 @@ function sendTagEmail(p) {
 
     var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
 
+    // Récupération de la photo avant depuis Drive
+    var photoBlob = null;
+    try {
+      var photoUrl = String(row[C.PHOTO_AV] || '').trim();
+      var fileId   = extractFileId_(photoUrl, '');
+      if (fileId) photoBlob = DriveApp.getFileById(fileId).getBlob();
+    } catch(e) { photoBlob = null; }
+
     var line = function(k, v) {
       if (!v) return '';
       return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
              '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
     };
     var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
+
+    var photoBlock = photoBlob
+      ? '<div style="margin:16px 0;text-align:center"><img src="cid:photoAvant" style="max-width:100%;max-height:320px;border-radius:6px;border:1px solid #ddd" alt="Photo de l\'anomalie"/><div style="font-size:11px;color:#999;margin-top:4px">📷 Photo de l\'anomalie</div></div>'
+      : '';
 
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
@@ -607,6 +619,7 @@ function sendTagEmail(p) {
         '<div style="padding:16px 20px;color:#111">' +
           '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
           '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
+          photoBlock +
           '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
             line('N° Cas', '#' + id) +
             line('Type de danger', danger) +
@@ -627,12 +640,10 @@ function sendTagEmail(p) {
         '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
       '</div>';
 
-    MailApp.sendEmail({
-      to: to,
-      subject: subject,
-      htmlBody: html,
-      name: 'HSE Tags'
-    });
+    var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
+    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
+
+    MailApp.sendEmail(mailOpts);
 
     return { success:true, to:to, responsable:resp };
   } catch(e) { return { success:false, error:e.toString() }; }
