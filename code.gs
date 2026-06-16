@@ -522,7 +522,7 @@ function saveAfterPhoto(p) {
 //  après l'autorisation accordée.
 // ================================================================
 function testMailAuth() {
-  MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Test HSE Tags', 'Autorisation Mail OK.');
+  MailApp.sendEmail('brahimstepup@gmail.com', 'Test HSE Tags', 'Autorisation Mail OK.');
 }
 
 // ================================================================
