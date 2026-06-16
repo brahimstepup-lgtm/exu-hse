@@ -608,9 +608,9 @@ img{max-width:100%;display:block;}
 .dg-i{font-size:1.7rem;}
 .dg-l{font-size:.74rem;}
 
-/* Bigger primary buttons */
-.btn{padding:13px 16px;font-size:.88rem;}
-.sh-foot .btn{padding:14px 16px;}
+/* Bigger primary buttons (mobile-first, thumb-friendly) */
+.btn{padding:15px 18px;font-size:.92rem;min-height:50px;}
+.sh-foot .btn{padding:17px 18px;font-size:.95rem;min-height:56px;}
 
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
 .fab{animation:fabPulse 2.4s ease-in-out infinite;}
@@ -1076,7 +1076,7 @@ function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
    Loader masqué dès réception de la réponse
 ══════════════════════════════════════════ */
 function loadAll(){
-  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); return; }
+  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); bootForm(); return; }
   splashMsg('Chargement des tags…');
   document.getElementById('spFill').style.width='40%';
 
@@ -1096,6 +1096,7 @@ function loadAll(){
     .withFailureHandler(function(e){           // Ordre 3 ✓
       hideSplash();
       toast('Erreur réseau: '+e.message,'err');
+      bootForm();
     })
     .getTags();
 }
@@ -1109,12 +1110,24 @@ function loadKPIs(){
       renderCurrent();
       updateBadge();
       toast('✓ '+S.tags.length+' tags chargés','ok');
+      bootForm();
     })
     .withFailureHandler(function(){
       hideSplash();
       renderCurrent();
+      bootForm();
     })
     .getKPIs();
+}
+
+/* Mobile-first : le formulaire d'ajout est la page d'accueil par défaut.
+   Au premier chargement, on ouvre directement le Signalement Rapide. */
+function bootForm(){
+  if(S.booted) return;
+  S.booted=true;
+  setTimeout(function(){
+    if(!document.querySelector('.ov.on')) openQuick();
+  }, 500);
 }
 
 function hideSplash(){
