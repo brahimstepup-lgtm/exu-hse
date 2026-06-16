@@ -15,7 +15,8 @@ var C = {
   NUM:0, DATE_CR:1, DATE_CI:2, DANGER:3, GRAVITE:4,
   EMPLACE:5, ZONE:6, DESC:7, RISQUE:8, ACTION:9,
   PROPO:10, PHOTO_AV:11, STATUT:12, RESP:13, PHOTO_AP:14,
-  DATE_FERME:15, AUTEUR:16, ANON:17, LAT:18, LNG:19, QR:20
+  DATE_FERME:15, AUTEUR:16, ANON:17, LAT:18, LNG:19, QR:20,
+  EMAIL_SENT:21
 };
 
 var HEADER_ROW = 7;
@@ -247,7 +248,7 @@ function getTags() {
     if (lr < DATA_START) return { success: true, data: [] };
 
     var numRows = lr - DATA_START + 1;
-    var range   = sheet.getRange(DATA_START, 1, numRows, Math.min(lc, 21));
+    var range   = sheet.getRange(DATA_START, 1, numRows, Math.min(lc, 22));
     var vals     = range.getValues();
     var formulas = range.getFormulas();
 
@@ -318,7 +319,8 @@ function getTags() {
         anonymous:    lc > 17 ? String(row[C.ANON]||'').toLowerCase() === 'true' : false,
         lat:          lc > 18 ? (parseFloat(row[C.LAT])||0) : 0,
         lng:          lc > 19 ? (parseFloat(row[C.LNG])||0) : 0,
-        qrZone:       lc > 20 ? txt_(row[C.QR]||'') : ''
+        qrZone:       lc > 20 ? txt_(row[C.QR]||'') : '',
+        emailSent:    lc > 21 ? txt_(row[C.EMAIL_SENT]||'') : ''
       });
     }
     tags.sort(function(a, b) { return b.id - a.id; });
@@ -645,7 +647,12 @@ function sendTagEmail(p) {
 
     MailApp.sendEmail(mailOpts);
 
-    return { success:true, to:to, responsable:resp };
+    // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
+    var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+    var trace = stamp + ' → ' + to;
+    try { sheet.getRange(ri, C.EMAIL_SENT + 1).setValue(trace); } catch(e) {}
+
+    return { success:true, to:to, responsable:resp, emailSent:trace };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
 

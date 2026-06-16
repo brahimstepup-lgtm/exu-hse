@@ -529,6 +529,7 @@ img{max-width:100%;display:block;}
 .btn-g{background:var(--ink3);border:1px solid var(--line);color:var(--t2);}
 .btn-b{background:var(--blu2);color:var(--blu);border:1px solid rgba(94,158,244,.3);}
 .btn-r{background:var(--red2);color:var(--red);border:1px solid rgba(255,71,87,.3);}
+.btn.sent{background:rgba(46,213,115,.15);color:var(--grn);border:1px solid rgba(46,213,115,.4);}
 
 /* ══ TOAST ══════════════════════════════════════════════ */
 .toast{position:fixed;bottom:calc(80px + var(--sab));left:10px;right:10px;
@@ -1482,7 +1483,9 @@ function openDetail(id){
   document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
   document.getElementById('detEditBtn').onclick=function(){ closeSheet('detailOv'); editTag(id); };
   document.getElementById('detDelBtn').onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
-  document.getElementById('detMailBtn').onclick=function(){ notifyResp(t); };
+  var mailBtn=document.getElementById('detMailBtn');
+  mailBtn.onclick=function(){ notifyResp(t); };
+  setMailBtnState(!!t.emailSent);
 
   // KPI durée de résolution — Ordre 8
   var kpiBlock='';
@@ -1506,6 +1509,7 @@ function openDetail(id){
   var tl='<div class="tl">'+
     tlI('done','✓','Signalement créé',t.dateCreation||'—')+
     tlI(t.statut!=='Ouvert'?'done':'act','⚙','Prise en charge',t.responsable||'En attente')+
+    (t.emailSent?tlI('done','📧','Email envoyé au responsable',t.emailSent):'')+
     tlI(t.statut==='Fermé'?'done':'','✅','Résolu / Fermé',t.dateFerme||'—')+
     '</div>';
 
@@ -1596,6 +1600,12 @@ function uploadAfterPhoto(input){
       .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:'image/jpeg' });
   });
 }
+function setMailBtnState(sent){
+  var b=document.getElementById('detMailBtn');
+  if(!b) return;
+  if(sent){ b.textContent='✓ 📧'; b.title='Email déjà envoyé au responsable'; b.classList.add('sent'); }
+  else{ b.textContent='📧'; b.title='Notifier le responsable par email'; b.classList.remove('sent'); }
+}
 function notifyResp(t){
   if(!t){ t=S.detailTag; }
   if(!t){ toast('Tag introuvable','err'); return; }
@@ -1605,7 +1615,12 @@ function notifyResp(t){
   google.script.run
     .withSuccessHandler(function(res){
       hideSplash();
-      if(res&&res.success){ toast('✓ Email envoyé à '+(res.to||t.responsable),'ok'); }
+      if(res&&res.success){
+        toast('✓ Email envoyé à '+(res.to||t.responsable),'ok');
+        if(S.detailTag) S.detailTag.emailSent=res.emailSent||'envoyé';
+        setMailBtnState(true);
+        loadAll();
+      }
       else toast('Erreur: '+((res&&res.error)||'?'),'err');
     })
     .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
