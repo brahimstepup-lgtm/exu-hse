@@ -325,14 +325,42 @@ function getTags() {
 // ================================================================
 //  GET ZONES + RESPONSABLES UNIQUES (pour filtres mobile)
 // ================================================================
+// Liste officielle des responsables (référence pour dédoublonnage)
+var RESP_LIST = [
+  'Omar Ourihan', 'Amir Mahmoud', 'Kouachi Brahim', 'Chekalil Brahim',
+  'Salah Haloui', 'Kerrad Nazim', 'Rabah Seba', 'Hadoune Youcef',
+  'Media Amine', 'Mohamed Zerar'
+];
+
+// Clé normalisée : minuscules, sans accents, espaces réduits
+function normRespKey_(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+// Renvoie le nom officiel si correspondance, sinon le nom nettoyé
+function canonResp_(s, lookup) {
+  var k = normRespKey_(s);
+  if (lookup[k]) return lookup[k];
+  return String(s || '').replace(/\s+/g, ' ').trim();
+}
+
 function getFilterOptions() {
   try {
     var res = getTags();
     if (!res.success) return res;
+    // Table de correspondance clé normalisée -> nom officiel
+    var lookup = {};
+    RESP_LIST.forEach(function(n){ lookup[normRespKey_(n)] = n; });
+
     var zones = {}, resps = {};
     res.data.forEach(function(t) {
-      if (t.zone)        zones[t.zone] = true;
-      if (t.responsable) resps[t.responsable] = true;
+      if (t.zone) zones[String(t.zone).replace(/\s+/g, ' ').trim()] = true;
+      if (t.responsable) {
+        var name = canonResp_(t.responsable, lookup);
+        if (name) resps[name] = true;
+      }
     });
     return {
       success: true,
