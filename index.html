@@ -1179,6 +1179,12 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function plusDaysStr(iso,n){
+  var d=iso?new Date(iso):new Date();
+  if(isNaN(d.getTime())) d=new Date();
+  d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
 function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
 
 /* ══════════════════════════════════════════
@@ -2189,7 +2195,7 @@ function editTag(id){
   document.getElementById('fEmplace').value=t.emplacement||'';
   document.getElementById('fZone').value=t.zone||'étage 0';
   document.getElementById('fDateCr').value=t.dateCreation||todayStr();
-  document.getElementById('fDateCi').value=t.dateCible||'';
+  document.getElementById('fDateCi').value=t.dateCible||plusDaysStr(t.dateCreation||todayStr(),3);
   document.getElementById('fDesc').value=t.description||'';
   document.getElementById('fRisque').value=t.risque||'';
   document.getElementById('fAction').value=t.action||'';
