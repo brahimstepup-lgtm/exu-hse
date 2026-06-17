@@ -561,6 +561,32 @@ function deleteTag(rowIndex, adminKey) {
 }
 
 // ================================================================
+//  SUPPRESSION D'UNE PHOTO (avant / après) — Admin uniquement
+//  Vide la cellule correspondante et met le fichier Drive à la corbeille.
+// ================================================================
+function deletePhoto(p) {
+  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+    var which = String(p.which || '').toLowerCase();
+    var col = which === 'apres' ? C.PHOTO_AP : which === 'avant' ? C.PHOTO_AV : -1;
+    if (col < 0) return { success:false, error:'Type de photo invalide (avant/apres)' };
+
+    // Met le fichier Drive à la corbeille (best-effort)
+    try {
+      var url = String(sheet.getRange(ri, col + 1).getValue() || '').trim();
+      var fileId = extractFileId_(url, '');
+      if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
+    } catch(e) {}
+
+    sheet.getRange(ri, col + 1).setValue('');
+    return { success:true, status:'SUCCESS', which:which };
+  } catch(e) { return { success:false, error:e.toString() }; }
+}
+
+// ================================================================
 //  SAVE AFTER-PHOTO ONLY (sans réécrire les autres colonnes)
 //  Permet d'ajouter la "Photo après" directement depuis le détail
 // ================================================================
@@ -649,6 +675,17 @@ function sendTagEmail(p) {
     var to = respEmailFor_(resp);
     if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
 
+    // Destinataires en copie (CC) — noms de responsables ou emails directs
+    var ccEmails = [];
+    if (p.cc && p.cc.length) {
+      for (var ci = 0; ci < p.cc.length; ci++) {
+        var c = String(p.cc[ci] || '').trim();
+        if (!c) continue;
+        var em = c.indexOf('@') >= 0 ? c : respEmailFor_(c);
+        if (em && em.toLowerCase() !== to.toLowerCase() && ccEmails.indexOf(em) < 0) ccEmails.push(em);
+      }
+    }
+
     var id       = txt_(row[C.NUM]) || p.id || ri;
     var danger   = noFormula_(row[C.DANGER]);
     var gravite  = parseGravite_(row[C.GRAVITE]);
@@ -714,16 +751,17 @@ function sendTagEmail(p) {
       '</div>';
 
     var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
+    if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
     if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
 
     MailApp.sendEmail(mailOpts);
 
     // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
     var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
-    var trace = stamp + ' → ' + to;
+    var trace = stamp + ' → ' + to + (ccEmails.length ? ' (CC: ' + ccEmails.join(', ') + ')' : '');
     try { sheet.getRange(ri, C.EMAIL_SENT + 1).setValue(trace); } catch(e) {}
 
-    return { success:true, to:to, responsable:resp, emailSent:trace };
+    return { success:true, to:to, cc:ccEmails.join(', '), responsable:resp, emailSent:trace };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
 
