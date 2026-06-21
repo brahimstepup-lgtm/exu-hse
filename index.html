@@ -1126,6 +1126,11 @@ img{max-width:100%;display:block;}
     <div class="sh-hdr"><span class="sh-title">👥 Gestion des accès</span>
       <button class="sh-close" onclick="closeSheet('usersOv')">✕</button></div>
     <div class="sh-body">
+      <div style="margin-bottom:10px">
+        <input id="usersSearch" type="text" placeholder="🔍 Rechercher par matricule ou nom…"
+          oninput="filterUsers(this.value)"
+          style="width:100%;box-sizing:border-box;background:var(--ink3);border:1px solid var(--line2);color:var(--t1);border-radius:8px;padding:8px 12px;font-size:.88rem;outline:none">
+      </div>
       <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
         <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
       </div>
@@ -1247,33 +1252,52 @@ function doLogout() {
 }
 
 /* ══ USER MANAGEMENT (admin only) ══ */
+var _usersData = [];
+
+function renderUsersList(data) {
+  var list = document.getElementById('usersList');
+  if (!data.length) { list.innerHTML='<div style="color:var(--t3);font-size:.85rem">Aucun résultat</div>'; return; }
+  list.innerHTML = data.map(function(u) {
+    var statusColor = u.actif ? '#22c55e' : '#ef4444';
+    var statusLabel = u.actif ? 'Actif' : 'Inactif';
+    var hasPwd = u.hasPassword ? '🔑' : '⚠️ Sans mot de passe';
+    return '<div style="background:var(--ink3);border-radius:10px;padding:12px 14px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
+      + '<div><div style="font-weight:600">'+esc(u.name)+'</div>'
+      + '<div style="font-size:.78rem;color:var(--t3)">'+esc(u.matricule)+' · '+esc(u.dept)+'</div>'
+      + '<div style="font-size:.75rem;margin-top:3px"><span style="color:'+statusColor+'">●</span> '+statusLabel+' &nbsp; '+hasPwd+'</div></div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;min-width:120px">'
+      + '<select onchange="adminChangeRole(\''+esc(u.matricule)+'\',this.value)" style="background:var(--ink4);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:4px 8px;font-size:.8rem">'
+      + '<option value="user"'+(u.role==='user'?' selected':'')+'>👤 Utilisateur</option>'
+      + '<option value="admin"'+(u.role==='admin'?' selected':'')+'>🔧 Admin</option>'
+      + '</select>'
+      + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
+      + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
+      + '</div></div></div>';
+  }).join('');
+}
+
+function filterUsers(q) {
+  var s = q.trim().toLowerCase();
+  if (!s) { renderUsersList(_usersData); return; }
+  renderUsersList(_usersData.filter(function(u) {
+    return u.matricule.toLowerCase().indexOf(s) !== -1 || u.name.toLowerCase().indexOf(s) !== -1;
+  }));
+}
+
 function openUsersPanel() {
   if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
   openSheet('usersOv');
   var list = document.getElementById('usersList');
+  var searchEl = document.getElementById('usersSearch');
+  if (searchEl) searchEl.value = '';
   list.innerHTML = '<div style="color:var(--t3);font-size:.85rem">Chargement…</div>';
   google.script.run
     .withSuccessHandler(function(r) {
       if (!r||!r.success) { list.innerHTML='<div style="color:red">'+( r&&r.error||'Erreur')+'</div>'; return; }
       if (!r.data.length) { list.innerHTML='<div style="color:var(--t3)">Aucun employé</div>'; return; }
-      list.innerHTML = r.data.map(function(u) {
-        var statusColor = u.actif ? '#22c55e' : '#ef4444';
-        var statusLabel = u.actif ? 'Actif' : 'Inactif';
-        var hasPwd = u.hasPassword ? '🔑' : '⚠️ Sans mot de passe';
-        return '<div style="background:var(--ink3);border-radius:10px;padding:12px 14px">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
-          + '<div><div style="font-weight:600">'+esc(u.name)+'</div>'
-          + '<div style="font-size:.78rem;color:var(--t3)">'+esc(u.matricule)+' · '+esc(u.dept)+'</div>'
-          + '<div style="font-size:.75rem;margin-top:3px"><span style="color:'+statusColor+'">●</span> '+statusLabel+' &nbsp; '+hasPwd+'</div></div>'
-          + '<div style="display:flex;flex-direction:column;gap:6px;min-width:120px">'
-          + '<select onchange="adminChangeRole(\''+esc(u.matricule)+'\',this.value)" style="background:var(--ink4);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:4px 8px;font-size:.8rem">'
-          + '<option value="user"'+(u.role==='user'?' selected':'')+'>👤 Utilisateur</option>'
-          + '<option value="admin"'+(u.role==='admin'?' selected':'')+'>🔧 Admin</option>'
-          + '</select>'
-          + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
-          + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
-          + '</div></div></div>';
-      }).join('');
+      _usersData = r.data;
+      renderUsersList(_usersData);
     })
     .withFailureHandler(function(e){ list.innerHTML='<div style="color:red">'+e.message+'</div>'; })
     .adminGetUsers(S.adminKey);
