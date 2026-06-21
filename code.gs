@@ -319,15 +319,15 @@ function getTags() {
       var apId = extractFileId_(lc > 14 ? row[C.PHOTO_AP] : '', lc > 14 ? formulas[i][C.PHOTO_AP] : '')
               || extractFileId_(richAp, '');
 
+      // Fallback Drive uniquement pour la photo avant.
+      // La photo après ne doit jamais être déduite du dossier :
+      // c'est une action intentionnelle (fermeture du tag).
       if (!avId) {
         var fp = getFolderPhotoFor_(num);
         if (fp.avantId) {
           avId = fp.avantId;
           cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AV + 1, fileId: avId });
         }
-        // Ne pas écrire automatiquement la photo après : c'est une action
-        // intentionnelle qui change le statut du tag (Ouvert → Fermé).
-        if (!apId && fp.apresId) apId = fp.apresId;
       }
 
       tags.push({
