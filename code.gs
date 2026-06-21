@@ -258,6 +258,7 @@ function getTags() {
     loadFolderCache_();
 
     var tags = [];
+    var cellRepairs = []; // collect {row, col, url} to write back missing links
     for (var i = 0; i < vals.length; i++) {
       var row    = vals[i];
       var rawNum = row[C.NUM];
@@ -292,8 +293,14 @@ function getTags() {
 
       if (!avId || !apId) {
         var fp = getFolderPhotoFor_(num);
-        if (!avId && fp.avantId) avId = fp.avantId;
-        if (!apId && fp.apresId) apId = fp.apresId;
+        if (!avId && fp.avantId) {
+          avId = fp.avantId;
+          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AV + 1, fileId: avId });
+        }
+        if (!apId && fp.apresId) {
+          apId = fp.apresId;
+          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AP + 1, fileId: apId });
+        }
       }
 
       tags.push({
@@ -321,6 +328,17 @@ function getTags() {
         qrZone:       lc > 20 ? txt_(row[C.QR]||'') : ''
       });
     }
+    // Write Drive URLs back to sheet for any cells that were missing
+    if (cellRepairs.length > 0) {
+      try {
+        for (var ci = 0; ci < cellRepairs.length; ci++) {
+          var rep = cellRepairs[ci];
+          var url = 'https://drive.google.com/uc?export=view&id=' + rep.fileId;
+          sheet.getRange(rep.rowIndex, rep.col).setValue(url);
+        }
+      } catch(repErr) { Logger.log('cellRepair error: ' + repErr.message); }
+    }
+
     tags.sort(function(a, b) { return b.id - a.id; });
     return { success: true, data: tags };
   } catch(e) { return { success: false, error: e.message }; }
