@@ -1137,12 +1137,17 @@ img{max-width:100%;display:block;}
 <div class="ov" id="mailOv">
   <div class="sheet" style="max-width:480px;">
     <div class="sh-handle"></div>
-    <div class="sh-hdr"><span class="sh-title">📧 Notifier le responsable</span>
+    <div class="sh-hdr"><span class="sh-title">📧 Notifier par email</span>
       <button class="sh-close" onclick="closeSheet('mailOv')">✕</button></div>
     <div class="sh-body">
-      <div class="mail-to">Destinataire : <b id="mailToName">—</b></div>
-      <div class="fl" style="margin:14px 0 7px">Mettre en copie (CC)</div>
+      <div class="fl" style="margin-bottom:8px">Destinataires</div>
       <div id="mailCcList" class="cc-list"></div>
+      <div class="fl" style="margin:14px 0 6px">Ajouter un email</div>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="mailExtraEmail" type="email" placeholder="exemple@domaine.com" style="flex:1"/>
+        <button class="btn btn-p" style="padding:0 14px;flex-shrink:0" onclick="mailAddExtra()">+ Ajouter</button>
+      </div>
+      <div id="mailExtraList" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('mailOv')">Annuler</button>
@@ -1887,26 +1892,29 @@ function deletePhoto(which){
     .deletePhoto({ rowIndex:t.rowIndex, id:t.id, which:which, adminKey:S.adminKey });
 }
 
-/* Ouvre le modal d'envoi d'email avec sélection des responsables en CC */
+/* Ouvre le modal d'envoi d'email avec tous les responsables cochables */
 function openMailModal(t){
   if(!t){ t=S.detailTag; }
   if(!t){ toast('Tag introuvable','err'); return; }
   if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
-  if(!t.responsable||!t.responsable.trim()){ toast('Aucun responsable assigné à ce tag','err'); return; }
   S.detailTag=t;
-  document.getElementById('mailToName').textContent=t.responsable;
+  document.getElementById('mailExtraEmail').value='';
+  document.getElementById('mailExtraList').innerHTML='';
   var box=document.getElementById('mailCcList');
   box.innerHTML='<div style="color:var(--t3);font-size:.8rem">Chargement…</div>';
   openSheet('mailOv');
   google.script.run
     .withSuccessHandler(function(r){
       var dir=(r&&r.success&&r.data)?r.data:[];
+      var rows=dir.filter(function(d){ return d.email; });
+      if(!rows.length){ box.innerHTML='<div style="color:var(--t3);font-size:.8rem">Aucun responsable avec email configuré.<br>Ajoutez des emails via « 👥 Gérer les responsables ».</div>'; return; }
       var rk=(t.responsable||'').trim().toLowerCase();
-      var rows=dir.filter(function(d){ return d.email && (d.name||'').trim().toLowerCase()!==rk; });
-      if(!rows.length){ box.innerHTML='<div style="color:var(--t3);font-size:.8rem">Aucun autre responsable avec email configuré.<br>Ajoutez des emails via « 👥 Gérer les responsables ».</div>'; return; }
       box.innerHTML=rows.map(function(d){
-        return '<label class="cc-row"><input type="checkbox" value="'+esc(d.name)+'"/>'+
-               '<span class="cc-nm">'+esc(d.name)+'</span>'+
+        var isPrimary=(d.name||'').trim().toLowerCase()===rk;
+        var chk=isPrimary?' checked':'';
+        var badge=isPrimary?' <span style="font-size:.7rem;background:var(--accent);color:#000;padding:1px 6px;border-radius:99px;margin-left:4px">Responsable</span>':'';
+        return '<label class="cc-row"><input type="checkbox" value="'+esc(d.name)+'"'+chk+'/>'+
+               '<span class="cc-nm">'+esc(d.name)+badge+'</span>'+
                '<span class="cc-em">'+esc(d.email)+'</span></label>';
       }).join('');
     })
@@ -1914,12 +1922,31 @@ function openMailModal(t){
     .getResponsables(S.adminKey);
 }
 
-/* Envoie l'email avec les CC sélectionnés */
+/* Ajoute un email libre dans la liste extras */
+function mailAddExtra(){
+  var inp=document.getElementById('mailExtraEmail');
+  var em=(inp.value||'').trim();
+  if(!em||em.indexOf('@')<0){ toast('Email invalide','err'); return; }
+  var list=document.getElementById('mailExtraList');
+  // évite les doublons
+  var existing=list.querySelectorAll('[data-em]');
+  for(var i=0;i<existing.length;i++){ if(existing[i].getAttribute('data-em')===em) return; }
+  var tag=document.createElement('div');
+  tag.setAttribute('data-em',em);
+  tag.style.cssText='display:flex;align-items:center;gap:5px;background:var(--ink3);border-radius:99px;padding:3px 10px;font-size:.82rem';
+  tag.innerHTML='<span>'+esc(em)+'</span><button onclick="this.parentNode.remove()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:1rem;line-height:1">×</button>';
+  list.appendChild(tag);
+  inp.value='';
+}
+
+/* Envoie l'email à tous les destinataires cochés + emails libres */
 function sendMailWithCc(){
   var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
   if(S.offline){ toast('📵 Hors-ligne — email impossible','err'); return; }
   var cc=[];
   document.querySelectorAll('#mailCcList input[type=checkbox]:checked').forEach(function(c){ cc.push(c.value); });
+  document.querySelectorAll('#mailExtraList [data-em]').forEach(function(el){ cc.push(el.getAttribute('data-em')); });
+  if(!cc.length){ toast('Sélectionnez au moins un destinataire','err'); return; }
   closeSheet('mailOv');
   showLoader('Envoi de l\'email au responsable…');
   google.script.run
