@@ -1742,7 +1742,7 @@ function openDetail(id){
     tlI('done','✓','Signalement créé',t.dateCreation||'—')+
     tlI(t.statut!=='Ouvert'?'done':'act','⚙','Prise en charge',t.responsable||'En attente')+
     (t.emailSent?tlI('done','📧','Email envoyé au responsable',t.emailSent):'')+
-    tlI(t.statut==='Fermé'?'done':'','✅','Résolu / Fermé',t.dateFerme||'—')+
+    (t.statut==='Fermé'?tlI('done','✅','Résolu / Fermé',t.dateFerme||'—'):'')+
     '</div>';
 
   var gb=t.gravite==='Élevée'?'<span class="badge ge">🔴 Élevée</span>':
