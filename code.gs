@@ -592,12 +592,36 @@ function deletePhoto(p) {
     var col = which === 'apres' ? C.PHOTO_AP : which === 'avant' ? C.PHOTO_AV : -1;
     if (col < 0) return { success:false, error:'Type de photo invalide (avant/apres)' };
 
-    // Met le fichier Drive à la corbeille (best-effort)
+    // Récupère l'ID de la ligne pour retrouver le tag
+    var tagId = String(sheet.getRange(ri, C.NUM + 1).getValue() || '').trim();
+
+    // Supprime le fichier Drive depuis la cellule (best-effort)
     try {
       var url = String(sheet.getRange(ri, col + 1).getValue() || '').trim();
       var fileId = extractFileId_(url, '');
       if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
     } catch(e) {}
+
+    // Supprime AUSSI tous les fichiers correspondants dans le dossier Drive
+    // pour éviter qu'ils soient retrouvés par le cache dossier
+    if (tagId) {
+      try {
+        var isApres = (which === 'apres');
+        var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+        var files = folder.getFiles();
+        while (files.hasNext()) {
+          var f = files.next();
+          var name = f.getName();
+          var m = name.match(/^(\d+)\.(Référence Photo|Reference Photo|Photo apr[èe]s|Photo avant)\b/i);
+          if (m && String(parseInt(m[1], 10)) === String(parseInt(tagId, 10))) {
+            var isApresFile = /apr/i.test(m[2]);
+            if (isApres === isApresFile) {
+              try { f.setTrashed(true); } catch(fe) {}
+            }
+          }
+        }
+      } catch(e) {}
+    }
 
     sheet.getRange(ri, col + 1).setValue('');
     return { success:true, status:'SUCCESS', which:which };
