@@ -971,7 +971,29 @@ img{max-width:100%;display:block;}
         <input type="hidden" id="fRowIdx"/>
         <input type="hidden" id="fId"/>
         <div class="fg2">
-          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required oninput="refreshSugg()"/></div>
+          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" list="dangerList" required oninput="refreshSugg()" autocomplete="off"/>
+            <datalist id="dangerList">
+              <option value="Risque électrique"/>
+              <option value="Fuite hydraulique"/>
+              <option value="Fuite de gaz"/>
+              <option value="Fuite d'eau"/>
+              <option value="Risque de chute"/>
+              <option value="Chute d'objet"/>
+              <option value="Sol glissant"/>
+              <option value="Incendie / Explosion"/>
+              <option value="Produit chimique / Corrosif"/>
+              <option value="Déversement / Pollution"/>
+              <option value="Bruit excessif"/>
+              <option value="Risque mécanique"/>
+              <option value="Défaut EPI"/>
+              <option value="Signalisation manquante"/>
+              <option value="Éclairage insuffisant"/>
+              <option value="Extincteur non identifié"/>
+              <option value="Caniveau cassé"/>
+              <option value="Équipement défectueux"/>
+              <option value="Risque ergonomique"/>
+              <option value="Autre"/>
+            </datalist></div>
           <div class="fg"><label class="fl">Gravité</label>
             <select class="fsel" id="fGravite">
               <option value="Élevée">🔴 Élevée</option>
