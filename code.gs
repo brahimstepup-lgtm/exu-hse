@@ -693,13 +693,13 @@ function getResponsablesList() {
 
 // Admin : noms + emails (pour l'édition)
 function getResponsables(adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   return { success:true, data: getRespDirectory_() };
 }
 
 // Admin : enregistre l'annuaire (noms + emails)
 function saveResponsables(adminKey, list) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   if (!Array.isArray(list)) return { success:false, error:'Liste invalide' };
   var clean = list.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
                   .filter(function(r){ return r.name; });
@@ -738,7 +738,7 @@ function getFilterOptions() {
 //  KPI
 // ================================================================
 function getKPIs(adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var res = getTags();
     if (!res.success) return res;
@@ -803,7 +803,7 @@ function getKPIs(adminKey) {
 //  UPDATE / DELETE
 // ================================================================
 function updateTag(d) {
-  if (!isAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(d && d.adminKey) && !isSessionAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri    = parseInt(d.rowIndex, 10);
@@ -843,7 +843,7 @@ function updateTag(d) {
 }
 
 function deleteTag(rowIndex, adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     getSheet_().deleteRow(parseInt(rowIndex, 10));
     return { success: true, status: 'SUCCESS' };
@@ -855,7 +855,7 @@ function deleteTag(rowIndex, adminKey) {
 //  Vide la cellule correspondante et met le fichier Drive à la corbeille.
 // ================================================================
 function deletePhoto(p) {
-  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);
@@ -975,7 +975,7 @@ function respEmailFor_(name) {
 }
 
 function sendTagEmail(p) {
-  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);
