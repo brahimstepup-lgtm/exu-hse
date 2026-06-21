@@ -698,7 +698,7 @@ img{max-width:100%;display:block;}
 </head>
 <body>
 <!-- ═══ AUTH WALL — shown before everything ═══ -->
-<div id="authWall" style="position:fixed;inset:0;z-index:9999;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+<div id="authWall" style="position:fixed;inset:0;z-index:99999;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:380px">
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:2.5rem;margin-bottom:8px">🔒</div>
@@ -1343,8 +1343,12 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   } catch(e) {}
 
-  // Si pas de session, l'authWall reste visible et bloque tout
-  if (!S_AUTH.token) return; // ne pas charger l'app avant connexion
+  // Si pas de session, masquer le splash et afficher l'authWall
+  if (!S_AUTH.token) {
+    hideSplash();
+    document.getElementById('authWall').style.display='flex';
+    return;
+  }
 
   bootApp();
 });
