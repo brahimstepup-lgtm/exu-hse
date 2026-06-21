@@ -44,13 +44,115 @@ function isAdmin_(key) {
 // ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
 // ================================================================
+// ================================================================
+//  TOKEN SIGNÉ POUR UPLOAD PHOTO APRÈS (sans PropertiesService)
+// ================================================================
+function makeApresToken_(tagId, rowIndex) {
+  var expires = Date.now() + 30 * 24 * 3600 * 1000;
+  var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+  var payload = tagId + '.' + rowIndex + '.' + expires;
+  var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
+  var hash    = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
+  return payload + '.' + hash;
+}
+
+function verifyApresToken_(token) {
+  try {
+    var parts = token.split('.');
+    if (parts.length !== 4) return null;
+    var tagId = parts[0], rowIndex = parts[1], expires = parseInt(parts[2], 10), hash = parts[3];
+    if (Date.now() > expires) return null;
+    var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+    var payload = tagId + '.' + rowIndex + '.' + expires;
+    var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
+    var expected = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
+    if (hash !== expected) return null;
+    return { tagId: tagId, rowIndex: parseInt(rowIndex, 10) };
+  } catch(e) { return null; }
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.img) {
     return serveImage_(e.parameter.img);
   }
+  if (e && e.parameter && e.parameter.action === 'upload_apres' && e.parameter.token) {
+    return serveUploadApresPage_(e.parameter.token);
+  }
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('HSE Tags 2025/2026')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ================================================================
+//  PAGE D'UPLOAD PHOTO APRÈS (lien dans l'email)
+// ================================================================
+function serveUploadApresPage_(token) {
+  var data = verifyApresToken_(token);
+  if (!data) {
+    return HtmlService.createHtmlOutput('<div style="font-family:sans-serif;text-align:center;padding:40px;color:#e74c3c"><h2>Lien invalide ou expiré.</h2><p style="color:#aaa">Ce lien a expiré ou a déjà été utilisé.</p></div>');
+  }
+  var tagId = data.tagId;
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>Photo après — Tag #' + tagId + '</title>'
+    + '<style>body{font-family:Arial,sans-serif;background:#111;color:#eee;display:flex;flex-direction:column;align-items:center;padding:30px 16px}'
+    + 'h2{color:#f5c518;margin-bottom:4px}p{color:#aaa;margin-bottom:24px;font-size:.9rem}'
+    + '.box{background:#1f2937;border-radius:12px;padding:24px;width:100%;max-width:420px}'
+    + 'label.btn{display:block;background:#f5c518;color:#000;font-weight:700;text-align:center;padding:14px;border-radius:8px;cursor:pointer;font-size:1rem}'
+    + 'img#prev{display:none;width:100%;border-radius:8px;margin:16px 0;max-height:300px;object-fit:cover}'
+    + 'button{width:100%;margin-top:12px;padding:14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}'
+    + 'button:disabled{background:#555;cursor:default}'
+    + '.msg{margin-top:16px;font-size:.9rem;text-align:center}'
+    + '.ok{color:#27ae60}.err{color:#e74c3c}'
+    + '</style></head><body>'
+    + '<h2>📸 Photo après — Tag #' + tagId + '</h2>'
+    + '<p>Ajoutez la photo de résolution pour fermer ce tag.</p>'
+    + '<div class="box">'
+    + '<label class="btn" for="photoInput">📷 Choisir / Prendre une photo</label>'
+    + '<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="preview(this)">'
+    + '<img id="prev">'
+    + '<button id="sendBtn" disabled onclick="upload()">✅ Envoyer la photo</button>'
+    + '<div id="msg" class="msg"></div>'
+    + '</div>'
+    + '<script>'
+    + 'var b64="",mime="image/jpeg";'
+    + 'function preview(inp){'
+    + '  var f=inp.files[0];if(!f)return;'
+    + '  mime=f.type||"image/jpeg";'
+    + '  var r=new FileReader();'
+    + '  r.onload=function(ev){'
+    + '    b64=ev.target.result.replace(/^data:[^;]+;base64,/,"");'
+    + '    var img=document.getElementById("prev");img.src=ev.target.result;img.style.display="block";'
+    + '    document.getElementById("sendBtn").disabled=false;'
+    + '  };r.readAsDataURL(f);'
+    + '}'
+    + 'function upload(){'
+    + '  var btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Envoi en cours…";'
+    + '  var msg=document.getElementById("msg");msg.textContent="";'
+    + '  google.script.run'
+    + '    .withSuccessHandler(function(r){'
+    + '      if(r&&r.success){msg.className="msg ok";msg.textContent="✅ Photo enregistrée ! Le tag est maintenant fermé.";btn.textContent="Envoyé ✓";}'
+    + '      else{msg.className="msg err";msg.textContent="Erreur : "+(r&&r.error||"?");btn.disabled=false;btn.textContent="Réessayer";}'
+    + '    })'
+    + '    .withFailureHandler(function(e){msg.className="msg err";msg.textContent="Erreur réseau : "+e.message;btn.disabled=false;btn.textContent="Réessayer";})'
+    + '    .submitApresFromEmail({token:"' + token + '",photo:b64,mime:mime});'
+    + '}'
+    + '<\/script>'
+    + '</body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('Photo après — Tag #' + tagId)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ================================================================
+//  SOUMISSION PHOTO APRÈS DEPUIS L'EMAIL
+// ================================================================
+function submitApresFromEmail(p) {
+  try {
+    var data = verifyApresToken_(p.token);
+    if (!data) return { success:false, error:'Lien invalide ou expiré' };
+    return saveAfterPhoto({ rowIndex:data.rowIndex, id:data.tagId, photoApres:p.photo, mime:p.mime });
+  } catch(e) { return { success:false, error:e.message }; }
 }
 
 // ================================================================
@@ -319,15 +421,14 @@ function getTags() {
       var apId = extractFileId_(lc > 14 ? row[C.PHOTO_AP] : '', lc > 14 ? formulas[i][C.PHOTO_AP] : '')
               || extractFileId_(richAp, '');
 
-      if (!avId || !apId) {
+      // Fallback Drive uniquement pour la photo avant.
+      // La photo après ne doit jamais être déduite du dossier :
+      // c'est une action intentionnelle (fermeture du tag).
+      if (!avId) {
         var fp = getFolderPhotoFor_(num);
-        if (!avId && fp.avantId) {
+        if (fp.avantId) {
           avId = fp.avantId;
           cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AV + 1, fileId: avId });
-        }
-        if (!apId && fp.apresId) {
-          apId = fp.apresId;
-          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AP + 1, fileId: apId });
         }
       }
 
@@ -592,12 +693,36 @@ function deletePhoto(p) {
     var col = which === 'apres' ? C.PHOTO_AP : which === 'avant' ? C.PHOTO_AV : -1;
     if (col < 0) return { success:false, error:'Type de photo invalide (avant/apres)' };
 
-    // Met le fichier Drive à la corbeille (best-effort)
+    // Récupère l'ID de la ligne pour retrouver le tag
+    var tagId = String(sheet.getRange(ri, C.NUM + 1).getValue() || '').trim();
+
+    // Supprime le fichier Drive depuis la cellule (best-effort)
     try {
       var url = String(sheet.getRange(ri, col + 1).getValue() || '').trim();
       var fileId = extractFileId_(url, '');
       if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
     } catch(e) {}
+
+    // Supprime AUSSI tous les fichiers correspondants dans le dossier Drive
+    // pour éviter qu'ils soient retrouvés par le cache dossier
+    if (tagId) {
+      try {
+        var isApres = (which === 'apres');
+        var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+        var files = folder.getFiles();
+        while (files.hasNext()) {
+          var f = files.next();
+          var name = f.getName();
+          var m = name.match(/^(\d+)\.(Référence Photo|Reference Photo|Photo apr[èe]s|Photo avant)\b/i);
+          if (m && String(parseInt(m[1], 10)) === String(parseInt(tagId, 10))) {
+            var isApresFile = /apr/i.test(m[2]);
+            if (isApres === isApresFile) {
+              try { f.setTrashed(true); } catch(fe) {}
+            }
+          }
+        }
+      } catch(e) {}
+    }
 
     sheet.getRange(ri, col + 1).setValue('');
     return { success:true, status:'SUCCESS', which:which };
@@ -686,14 +811,30 @@ function sendTagEmail(p) {
     if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
 
     var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
-    var resp = txt_(row[C.RESP]);
-    if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
 
-    var to = respEmailFor_(resp);
-    if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
+    // Résoudre les destinataires principaux (toList) envoyés depuis le client
+    var toEmails = [];
+    if (p.toList && p.toList.length) {
+      for (var ti = 0; ti < p.toList.length; ti++) {
+        var tEntry = String(p.toList[ti] || '').trim();
+        if (!tEntry) continue;
+        var tEm = tEntry.indexOf('@') >= 0 ? tEntry : respEmailFor_(tEntry);
+        if (tEm && toEmails.indexOf(tEm) < 0) toEmails.push(tEm);
+      }
+    }
+    // Fallback : responsable du tag
+    if (!toEmails.length) {
+      var resp = txt_(row[C.RESP]);
+      if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
+      var fallbackTo = respEmailFor_(resp);
+      if (!fallbackTo) return { success:false, error:'Email non configuré pour « ' + resp + ' ».' };
+      toEmails.push(fallbackTo);
+    }
+    var to = toEmails[0];
+    var extraTo = toEmails.slice(1); // destinataires supplémentaires → ajoutés en CC
 
-    // Destinataires en copie (CC) — noms de responsables ou emails directs
-    var ccEmails = [];
+    // Destinataires en copie (CC)
+    var ccEmails = [].concat(extraTo);
     if (p.cc && p.cc.length) {
       for (var ci = 0; ci < p.cc.length; ci++) {
         var c = String(p.cc[ci] || '').trim();
@@ -718,12 +859,33 @@ function sendTagEmail(p) {
 
     var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
 
+    // Token signé (tagId.rowIndex.expires.hash) — valable 30 jours, sans PropertiesService
+    var token     = makeApresToken_(id, ri);
+    var appUrl    = ScriptApp.getService().getUrl();
+    var uploadUrl = appUrl + '?action=upload_apres&token=' + encodeURIComponent(token);
+
     var line = function(k, v) {
       if (!v) return '';
       return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
              '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
     };
     var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
+
+    // Récupère la photo avant depuis Drive (best-effort)
+    var photoBlob = null;
+    try {
+      var avUrl = String(row[C.PHOTO_AV] || '').trim();
+      var avId  = extractFileId_(avUrl, '');
+      if (!avId) {
+        var fp = getFolderPhotoFor_(parseInt(id, 10));
+        avId = fp.avantId || '';
+      }
+      if (avId) photoBlob = DriveApp.getFileById(avId).getBlob().setName('photo_avant.jpg');
+    } catch(e) {}
+
+    var photoHtml = photoBlob
+      ? '<div style="padding:0 20px 16px"><img src="cid:photoAvant" style="max-width:100%;border-radius:6px;border:1px solid #eee"></div>'
+      : '';
 
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
@@ -751,13 +913,19 @@ function sendTagEmail(p) {
           '</table>' +
           '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
         '</div>' +
+        (uploadUrl
+          ? '<div style="padding:16px 20px;border-top:1px solid #eee;text-align:center">' +
+              '<p style="margin:0 0 12px;font-size:13px;color:#555">Une fois le problème résolu, ajoutez la photo après pour fermer ce tag :</p>' +
+              '<a href="' + uploadUrl + '" style="display:inline-block;background:#27ae60;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px">📸 Ajouter la photo après</a>' +
+            '</div>'
+          : '') +
+        photoHtml +
         '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
       '</div>';
 
     var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
     if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
     if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
-
     MailApp.sendEmail(mailOpts);
 
     // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"

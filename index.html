@@ -971,7 +971,29 @@ img{max-width:100%;display:block;}
         <input type="hidden" id="fRowIdx"/>
         <input type="hidden" id="fId"/>
         <div class="fg2">
-          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" required oninput="refreshSugg()"/></div>
+          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" list="dangerList" required oninput="refreshSugg()" autocomplete="off"/>
+            <datalist id="dangerList">
+              <option value="Risque électrique"/>
+              <option value="Fuite hydraulique"/>
+              <option value="Fuite de gaz"/>
+              <option value="Fuite d'eau"/>
+              <option value="Risque de chute"/>
+              <option value="Chute d'objet"/>
+              <option value="Sol glissant"/>
+              <option value="Incendie / Explosion"/>
+              <option value="Produit chimique / Corrosif"/>
+              <option value="Déversement / Pollution"/>
+              <option value="Bruit excessif"/>
+              <option value="Risque mécanique"/>
+              <option value="Défaut EPI"/>
+              <option value="Signalisation manquante"/>
+              <option value="Éclairage insuffisant"/>
+              <option value="Extincteur non identifié"/>
+              <option value="Caniveau cassé"/>
+              <option value="Équipement défectueux"/>
+              <option value="Risque ergonomique"/>
+              <option value="Autre"/>
+            </datalist></div>
           <div class="fg"><label class="fl">Gravité</label>
             <select class="fsel" id="fGravite">
               <option value="Élevée">🔴 Élevée</option>
@@ -1115,12 +1137,24 @@ img{max-width:100%;display:block;}
 <div class="ov" id="mailOv">
   <div class="sheet" style="max-width:480px;">
     <div class="sh-handle"></div>
-    <div class="sh-hdr"><span class="sh-title">📧 Notifier le responsable</span>
+    <div class="sh-hdr"><span class="sh-title">📧 Notifier par email</span>
       <button class="sh-close" onclick="closeSheet('mailOv')">✕</button></div>
     <div class="sh-body">
-      <div class="mail-to">Destinataire : <b id="mailToName">—</b></div>
-      <div class="fl" style="margin:14px 0 7px">Mettre en copie (CC)</div>
+      <div class="fl" style="margin-bottom:6px">À (Destinataires)</div>
+      <div id="mailToList" class="cc-list"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="fi" id="mailExtraTo" type="email" placeholder="Email destinataire libre" style="flex:1"/>
+        <button class="btn btn-p" style="padding:0 12px;flex-shrink:0" onclick="mailAddExtra('to')">+</button>
+      </div>
+      <div id="mailExtraToList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
+
+      <div class="fl" style="margin:16px 0 6px">CC (Copie)</div>
       <div id="mailCcList" class="cc-list"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="fi" id="mailExtraCc" type="email" placeholder="Email copie libre" style="flex:1"/>
+        <button class="btn btn-p" style="padding:0 12px;flex-shrink:0" onclick="mailAddExtra('cc')">+</button>
+      </div>
+      <div id="mailExtraCcList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('mailOv')">Annuler</button>
@@ -1742,7 +1776,7 @@ function openDetail(id){
     tlI('done','✓','Signalement créé',t.dateCreation||'—')+
     tlI(t.statut!=='Ouvert'?'done':'act','⚙','Prise en charge',t.responsable||'En attente')+
     (t.emailSent?tlI('done','📧','Email envoyé au responsable',t.emailSent):'')+
-    tlI(t.statut==='Fermé'?'done':'','✅','Résolu / Fermé',t.dateFerme||'—')+
+    (t.statut==='Fermé'?tlI('done','✅','Résolu / Fermé',t.dateFerme||'—'):'')+
     '</div>';
 
   var gb=t.gravite==='Élevée'?'<span class="badge ge">🔴 Élevée</span>':
@@ -1865,39 +1899,79 @@ function deletePhoto(which){
     .deletePhoto({ rowIndex:t.rowIndex, id:t.id, which:which, adminKey:S.adminKey });
 }
 
-/* Ouvre le modal d'envoi d'email avec sélection des responsables en CC */
+/* Ouvre le modal email avec deux sections TO / CC */
 function openMailModal(t){
   if(!t){ t=S.detailTag; }
   if(!t){ toast('Tag introuvable','err'); return; }
   if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
-  if(!t.responsable||!t.responsable.trim()){ toast('Aucun responsable assigné à ce tag','err'); return; }
   S.detailTag=t;
-  document.getElementById('mailToName').textContent=t.responsable;
-  var box=document.getElementById('mailCcList');
-  box.innerHTML='<div style="color:var(--t3);font-size:.8rem">Chargement…</div>';
+  ['mailExtraTo','mailExtraCc'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['mailExtraToList','mailExtraCcList'].forEach(function(id){ document.getElementById(id).innerHTML=''; });
+  var boxTo=document.getElementById('mailToList');
+  var boxCc=document.getElementById('mailCcList');
+  boxTo.innerHTML=boxCc.innerHTML='<div style="color:var(--t3);font-size:.8rem">Chargement…</div>';
   openSheet('mailOv');
   google.script.run
     .withSuccessHandler(function(r){
       var dir=(r&&r.success&&r.data)?r.data:[];
+      var rows=dir.filter(function(d){ return d.email; });
+      if(!rows.length){
+        var msg='<div style="color:var(--t3);font-size:.8rem">Aucun responsable avec email configuré.</div>';
+        boxTo.innerHTML=boxCc.innerHTML=msg; return;
+      }
       var rk=(t.responsable||'').trim().toLowerCase();
-      var rows=dir.filter(function(d){ return d.email && (d.name||'').trim().toLowerCase()!==rk; });
-      if(!rows.length){ box.innerHTML='<div style="color:var(--t3);font-size:.8rem">Aucun autre responsable avec email configuré.<br>Ajoutez des emails via « 👥 Gérer les responsables ».</div>'; return; }
-      box.innerHTML=rows.map(function(d){
-        return '<label class="cc-row"><input type="checkbox" value="'+esc(d.name)+'"/>'+
-               '<span class="cc-nm">'+esc(d.name)+'</span>'+
-               '<span class="cc-em">'+esc(d.email)+'</span></label>';
-      }).join('');
+      var toHtml='', ccHtml='';
+      rows.forEach(function(d){
+        var isPrimary=(d.name||'').trim().toLowerCase()===rk;
+        var badge=isPrimary?' <span style="font-size:.7rem;background:var(--accent);color:#000;padding:1px 6px;border-radius:99px;margin-left:4px">Responsable</span>':'';
+        var row='<label class="cc-row"><input type="checkbox" data-role="'+(isPrimary?'to':'cc')+'" value="'+esc(d.name)+'"'+(isPrimary?' checked':'')+'/>'
+               +'<span class="cc-nm">'+esc(d.name)+badge+'</span>'
+               +'<span class="cc-em">'+esc(d.email)+'</span></label>';
+        if(isPrimary) toHtml+=row; else ccHtml+=row;
+      });
+      // non-primary dans la liste TO aussi (décochés par défaut)
+      var toExtra=rows.filter(function(d){ return (d.name||'').trim().toLowerCase()!==rk; });
+      toExtra.forEach(function(d){
+        toHtml+='<label class="cc-row"><input type="checkbox" data-role="to" value="'+esc(d.name)+'"/>'+
+                '<span class="cc-nm">'+esc(d.name)+'</span>'+
+                '<span class="cc-em">'+esc(d.email)+'</span></label>';
+      });
+      boxTo.innerHTML=toHtml||'<div style="color:var(--t3);font-size:.8rem">—</div>';
+      boxCc.innerHTML=ccHtml||'<div style="color:var(--t3);font-size:.8rem">—</div>';
     })
-    .withFailureHandler(function(){ box.innerHTML='<div class="cc-em">Erreur de chargement</div>'; })
+    .withFailureHandler(function(){ boxTo.innerHTML=boxCc.innerHTML='<div class="cc-em">Erreur</div>'; })
     .getResponsables(S.adminKey);
 }
 
-/* Envoie l'email avec les CC sélectionnés */
+/* Ajoute un email libre dans la section TO ou CC */
+function mailAddExtra(section){
+  var inpId=section==='to'?'mailExtraTo':'mailExtraCc';
+  var listId=section==='to'?'mailExtraToList':'mailExtraCcList';
+  var inp=document.getElementById(inpId);
+  var em=(inp.value||'').trim();
+  if(!em||em.indexOf('@')<0){ toast('Email invalide','err'); return; }
+  var list=document.getElementById(listId);
+  var existing=list.querySelectorAll('[data-em]');
+  for(var i=0;i<existing.length;i++){ if(existing[i].getAttribute('data-em')===em) return; }
+  var tag=document.createElement('div');
+  tag.setAttribute('data-em',em);
+  tag.setAttribute('data-role',section);
+  tag.style.cssText='display:flex;align-items:center;gap:5px;background:var(--ink3);border-radius:99px;padding:3px 10px;font-size:.82rem';
+  tag.innerHTML='<span>'+esc(em)+'</span><button onclick="this.parentNode.remove()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:1rem;line-height:1">×</button>';
+  list.appendChild(tag);
+  inp.value='';
+}
+
+/* Envoie l'email avec TO et CC distincts */
 function sendMailWithCc(){
   var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
   if(S.offline){ toast('📵 Hors-ligne — email impossible','err'); return; }
-  var cc=[];
+  var toList=[], cc=[];
+  document.querySelectorAll('#mailToList input[type=checkbox]:checked').forEach(function(c){ toList.push(c.value); });
+  document.querySelectorAll('#mailExtraToList [data-em]').forEach(function(el){ toList.push(el.getAttribute('data-em')); });
   document.querySelectorAll('#mailCcList input[type=checkbox]:checked').forEach(function(c){ cc.push(c.value); });
+  document.querySelectorAll('#mailExtraCcList [data-em]').forEach(function(el){ cc.push(el.getAttribute('data-em')); });
+  if(!toList.length){ toast('Sélectionnez au moins un destinataire (À)','err'); return; }
   closeSheet('mailOv');
   showLoader('Envoi de l\'email au responsable…');
   google.script.run
@@ -1912,7 +1986,7 @@ function sendMailWithCc(){
       else toast('Erreur: '+((res&&res.error)||'?'),'err');
     })
     .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
-    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id, adminKey:S.adminKey, cc:cc });
+    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id, adminKey:S.adminKey, toList:toList, cc:cc });
 }
 function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
 function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
