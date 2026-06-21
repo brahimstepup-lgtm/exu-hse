@@ -896,6 +896,13 @@ function deletePhoto(p) {
     }
 
     sheet.getRange(ri, col + 1).setValue('');
+
+    // Si la photo après est supprimée, repasser le statut à "Ouvert"
+    if (which === 'apres') {
+      sheet.getRange(ri, C.STATUT + 1).setValue('🟥 Ouvert');
+      sheet.getRange(ri, C.DATE_FERME + 1).setValue('');
+    }
+
     return { success:true, status:'SUCCESS', which:which };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
