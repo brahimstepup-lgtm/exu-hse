@@ -62,6 +62,36 @@ function loginUser(p) {
     var mat = String(p.matricule||'').trim();
     var pwd = String(p.password||'').trim();
     if (!mat || !pwd) return { success:false, error:'Matricule et mot de passe requis' };
+
+    // ── Accès maître admin : ADMIN_PASSWORD comme mot de passe de bootstrap ──
+    var adminPwd = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+    if (adminPwd && String(pwd) === String(adminPwd)) {
+      var secret0 = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+      var expires0 = Date.now() + 8*3600*1000;
+      var payload0 = mat+'.admin.'+expires0;
+      var digest0 = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload0+secret0);
+      var sig0 = digest0.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
+      // Mettre à jour le rôle et actif dans la feuille si le matricule existe
+      var sh0 = getEdbSheet_();
+      var adminName = 'Administrateur';
+      if (sh0) {
+        var lr0 = sh0.getLastRow();
+        if (lr0 >= EDB_START) {
+          var rows0 = sh0.getRange(EDB_START, 1, lr0-EDB_START+1, 6).getValues();
+          for (var j=0; j<rows0.length; j++) {
+            if (String(rows0[j][EDB.MAT]).trim() === mat) {
+              adminName = String(rows0[j][EDB.NAME]).trim() || adminName;
+              sh0.getRange(EDB_START+j, EDB.ROLE+1).setValue('admin');
+              sh0.getRange(EDB_START+j, EDB.ACTIF+1).setValue(true);
+              break;
+            }
+          }
+        }
+      }
+      return { success:true, role:'admin', name:adminName, matricule:mat,
+               token: mat+'.admin.'+expires0+'.'+sig0 };
+    }
+
     var sh = getEdbSheet_();
     if (!sh) return { success:false, error:'Base employés introuvable' };
     var lr = sh.getLastRow();
@@ -75,9 +105,8 @@ function loginUser(p) {
       if (!r[EDB.PWD]) return { success:false, error:'Mot de passe non défini. Contactez l\'administrateur.' };
       if (String(r[EDB.PWD]) !== hash) return { success:false, error:'Mot de passe incorrect' };
       var role = String(r[EDB.ROLE]||'user').toLowerCase().trim();
-      // Build a signed session token
       var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
-      var expires = Date.now() + 8*3600*1000; // 8h
+      var expires = Date.now() + 8*3600*1000;
       var payload = mat+'.'+role+'.'+expires;
       var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
       var sig = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
