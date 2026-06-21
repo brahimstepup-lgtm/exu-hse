@@ -709,14 +709,30 @@ function sendTagEmail(p) {
     if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
 
     var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
-    var resp = txt_(row[C.RESP]);
-    if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
 
-    var to = respEmailFor_(resp);
-    if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
+    // Résoudre les destinataires principaux (toList) envoyés depuis le client
+    var toEmails = [];
+    if (p.toList && p.toList.length) {
+      for (var ti = 0; ti < p.toList.length; ti++) {
+        var tEntry = String(p.toList[ti] || '').trim();
+        if (!tEntry) continue;
+        var tEm = tEntry.indexOf('@') >= 0 ? tEntry : respEmailFor_(tEntry);
+        if (tEm && toEmails.indexOf(tEm) < 0) toEmails.push(tEm);
+      }
+    }
+    // Fallback : responsable du tag
+    if (!toEmails.length) {
+      var resp = txt_(row[C.RESP]);
+      if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
+      var fallbackTo = respEmailFor_(resp);
+      if (!fallbackTo) return { success:false, error:'Email non configuré pour « ' + resp + ' ».' };
+      toEmails.push(fallbackTo);
+    }
+    var to = toEmails[0];
+    var extraTo = toEmails.slice(1); // destinataires supplémentaires → ajoutés en CC
 
-    // Destinataires en copie (CC) — noms de responsables ou emails directs
-    var ccEmails = [];
+    // Destinataires en copie (CC)
+    var ccEmails = [].concat(extraTo);
     if (p.cc && p.cc.length) {
       for (var ci = 0; ci < p.cc.length; ci++) {
         var c = String(p.cc[ci] || '').trim();
