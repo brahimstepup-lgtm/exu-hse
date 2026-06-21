@@ -1286,6 +1286,7 @@ function filterUsers(q) {
 }
 
 function openUsersPanel() {
+  if (S_AUTH.role==='admin' && !S.adminKey) { S.role='admin'; S.adminKey=S_AUTH.token; }
   if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
   openSheet('usersOv');
   var list = document.getElementById('usersList');
@@ -1515,7 +1516,7 @@ function syncQueue(){
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
 
-function isAdmin(){ return S.role==='admin'; }
+function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 
 function openLogin(){
   if(S_AUTH.token){ if(confirm('Se déconnecter ?')) doLogout(); }
