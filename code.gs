@@ -286,6 +286,7 @@ function getTags() {
     loadFolderCache_();
 
     var tags = [];
+    var cellRepairs = []; // collect {row, col, url} to write back missing links
     for (var i = 0; i < vals.length; i++) {
       var row    = vals[i];
       var rawNum = row[C.NUM];
@@ -320,8 +321,14 @@ function getTags() {
 
       if (!avId || !apId) {
         var fp = getFolderPhotoFor_(num);
-        if (!avId && fp.avantId) avId = fp.avantId;
-        if (!apId && fp.apresId) apId = fp.apresId;
+        if (!avId && fp.avantId) {
+          avId = fp.avantId;
+          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AV + 1, fileId: avId });
+        }
+        if (!apId && fp.apresId) {
+          apId = fp.apresId;
+          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AP + 1, fileId: apId });
+        }
       }
 
       tags.push({
@@ -350,6 +357,17 @@ function getTags() {
         emailSent:    lc > 21 ? txt_(row[C.EMAIL_SENT]||'') : ''
       });
     }
+    // Write Drive URLs back to sheet for any cells that were missing
+    if (cellRepairs.length > 0) {
+      try {
+        for (var ci = 0; ci < cellRepairs.length; ci++) {
+          var rep = cellRepairs[ci];
+          var url = 'https://drive.google.com/uc?export=view&id=' + rep.fileId;
+          sheet.getRange(rep.rowIndex, rep.col).setValue(url);
+        }
+      } catch(repErr) { Logger.log('cellRepair error: ' + repErr.message); }
+    }
+
     tags.sort(function(a, b) { return b.id - a.id; });
     return { success: true, data: tags };
   } catch(e) { return { success: false, error: e.message }; }
@@ -619,8 +637,7 @@ function saveAfterPhoto(p) {
 //  après l'autorisation accordée.
 // ================================================================
 function testMailAuth() {
-  MailApp.sendEmail('brahimstepup@gmail.com', 'Test HSE Tags', 'Autorisation Mail OK.');
-}
+  MailApp.sendEmail('brahimstepup@gmail.com', 'Test HSE Tags', 'Autorisation Mail OK.');}
 
 // ================================================================
 //  EMAIL AU RESPONSABLE (bouton manuel dans la vue détail)
@@ -701,24 +718,12 @@ function sendTagEmail(p) {
 
     var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
 
-    // Récupération de la photo avant depuis Drive
-    var photoBlob = null;
-    try {
-      var photoUrl = String(row[C.PHOTO_AV] || '').trim();
-      var fileId   = extractFileId_(photoUrl, '');
-      if (fileId) photoBlob = DriveApp.getFileById(fileId).getBlob();
-    } catch(e) { photoBlob = null; }
-
     var line = function(k, v) {
       if (!v) return '';
       return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
              '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
     };
     var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
-
-    var photoBlock = photoBlob
-      ? '<div style="margin:16px 0;text-align:center"><img src="cid:photoAvant" style="max-width:100%;max-height:320px;border-radius:6px;border:1px solid #ddd" alt="Photo de l\'anomalie"/><div style="font-size:11px;color:#999;margin-top:4px">📷 Photo de l\'anomalie</div></div>'
-      : '';
 
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
@@ -729,7 +734,6 @@ function sendTagEmail(p) {
         '<div style="padding:16px 20px;color:#111">' +
           '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
           '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
-          photoBlock +
           '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
             line('N° Cas', '#' + id) +
             line('Type de danger', danger) +
