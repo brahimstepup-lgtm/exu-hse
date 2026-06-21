@@ -780,8 +780,6 @@ function sendTagEmail(p) {
 
     var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
     if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
-    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
-
     MailApp.sendEmail(mailOpts);
 
     // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
