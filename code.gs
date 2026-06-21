@@ -15,11 +15,31 @@ var C = {
   NUM:0, DATE_CR:1, DATE_CI:2, DANGER:3, GRAVITE:4,
   EMPLACE:5, ZONE:6, DESC:7, RISQUE:8, ACTION:9,
   PROPO:10, PHOTO_AV:11, STATUT:12, RESP:13, PHOTO_AP:14,
-  DATE_FERME:15, AUTEUR:16, ANON:17, LAT:18, LNG:19, QR:20
+  DATE_FERME:15, AUTEUR:16, ANON:17, LAT:18, LNG:19, QR:20,
+  EMAIL_SENT:21
 };
 
 var HEADER_ROW = 7;
 var DATA_START = 8;
+
+// ================================================================
+//  AUTHENTIFICATION / RÔLES
+//  Mot de passe admin stocké dans Propriétés du script : ADMIN_PASSWORD
+//  Les utilisateurs ordinaires (anonymes) peuvent uniquement :
+//    - ajouter un tag      (addTag)
+//    - ajouter une photo   (saveAfterPhoto)
+//  Toute action de modification/suppression/dashboard exige l'admin.
+// ================================================================
+function login(password) {
+  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  if (!stored) return { success:false, error:'ADMIN_PASSWORD non configuré dans les Propriétés du script' };
+  if (String(password) === String(stored)) return { success:true, role:'admin' };
+  return { success:false, error:'Mot de passe incorrect' };
+}
+function isAdmin_(key) {
+  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  return !!stored && key != null && String(key) === String(stored);
+}
 
 // ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
@@ -60,10 +80,18 @@ function insertTagWithAutoIncrement(payload) {
     var ref = 'Photo_' + String(nextId).padStart(3, '0');
 
     // Ordre 4 : appendRow avec ordre strict des colonnes
+    var dateCreation = payload.dateCreation ? new Date(payload.dateCreation) : new Date();
+    var dateCible;
+    if (payload.dateCible) {
+      dateCible = new Date(payload.dateCible);
+    } else {
+      dateCible = new Date(dateCreation.getTime());
+      dateCible.setDate(dateCible.getDate() + 3);
+    }
     sheet.appendRow([
-      nextId,                                                            // A
-      payload.dateCreation ? new Date(payload.dateCreation) : new Date(),// B
-      payload.dateCible ? new Date(payload.dateCible) : '',              // C
+      nextId,           // A
+      dateCreation,     // B
+      dateCible,        // C — défaut J+3 si non fourni
       payload.dangerType || payload.danger || '',                        // D
       toGraviteEmoji_(payload.gravity || payload.gravite),               // E
       payload.emplacement || '',                                         // F
@@ -247,7 +275,7 @@ function getTags() {
     if (lr < DATA_START) return { success: true, data: [] };
 
     var numRows = lr - DATA_START + 1;
-    var range   = sheet.getRange(DATA_START, 1, numRows, Math.min(lc, 21));
+    var range   = sheet.getRange(DATA_START, 1, numRows, Math.min(lc, 22));
     var vals     = range.getValues();
     var formulas = range.getFormulas();
 
@@ -325,7 +353,8 @@ function getTags() {
         anonymous:    lc > 17 ? String(row[C.ANON]||'').toLowerCase() === 'true' : false,
         lat:          lc > 18 ? (parseFloat(row[C.LAT])||0) : 0,
         lng:          lc > 19 ? (parseFloat(row[C.LNG])||0) : 0,
-        qrZone:       lc > 20 ? txt_(row[C.QR]||'') : ''
+        qrZone:       lc > 20 ? txt_(row[C.QR]||'') : '',
+        emailSent:    lc > 21 ? txt_(row[C.EMAIL_SENT]||'') : ''
       });
     }
     // Write Drive URLs back to sheet for any cells that were missing
@@ -368,13 +397,52 @@ function canonResp_(s, lookup) {
   return String(s || '').replace(/\s+/g, ' ').trim();
 }
 
+// ── Annuaire des responsables (noms + emails) ──────────────────
+// Modifiable par l'admin, stocké dans la propriété RESP_DIRECTORY (JSON).
+// À défaut, construit depuis RESP_LIST + RESP_EMAILS (valeurs par défaut).
+function getRespDirectory_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('RESP_DIRECTORY');
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && arr.length) {
+        return arr.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
+                  .filter(function(r){ return r.name; });
+      }
+    }
+  } catch(e) {}
+  return RESP_LIST.map(function(n){ return { name:n, email:(RESP_EMAILS[n]||'') }; });
+}
+
+// Public : noms seulement (pour les menus déroulants de l'app)
+function getResponsablesList() {
+  return { success:true, data: getRespDirectory_().map(function(r){ return r.name; }) };
+}
+
+// Admin : noms + emails (pour l'édition)
+function getResponsables(adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  return { success:true, data: getRespDirectory_() };
+}
+
+// Admin : enregistre l'annuaire (noms + emails)
+function saveResponsables(adminKey, list) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!Array.isArray(list)) return { success:false, error:'Liste invalide' };
+  var clean = list.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
+                  .filter(function(r){ return r.name; });
+  if (!clean.length) return { success:false, error:'Au moins un responsable requis' };
+  PropertiesService.getScriptProperties().setProperty('RESP_DIRECTORY', JSON.stringify(clean));
+  return { success:true, data:clean };
+}
+
 function getFilterOptions() {
   try {
     var res = getTags();
     if (!res.success) return res;
     // Table de correspondance clé normalisée -> nom officiel
     var lookup = {};
-    RESP_LIST.forEach(function(n){ lookup[normRespKey_(n)] = n; });
+    getRespDirectory_().forEach(function(r){ lookup[normRespKey_(r.name)] = r.name; });
 
     var zones = {}, resps = {};
     res.data.forEach(function(t) {
@@ -397,7 +465,8 @@ function getFilterOptions() {
 // ================================================================
 //  KPI
 // ================================================================
-function getKPIs() {
+function getKPIs(adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var res = getTags();
     if (!res.success) return res;
@@ -462,6 +531,7 @@ function getKPIs() {
 //  UPDATE / DELETE
 // ================================================================
 function updateTag(d) {
+  if (!isAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri    = parseInt(d.rowIndex, 10);
@@ -500,11 +570,38 @@ function updateTag(d) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-function deleteTag(rowIndex) {
+function deleteTag(rowIndex, adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     getSheet_().deleteRow(parseInt(rowIndex, 10));
     return { success: true, status: 'SUCCESS' };
   } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
+//  SUPPRESSION D'UNE PHOTO (avant / après) — Admin uniquement
+//  Vide la cellule correspondante et met le fichier Drive à la corbeille.
+// ================================================================
+function deletePhoto(p) {
+  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  try {
+    var sheet = getSheet_();
+    var ri = parseInt(p.rowIndex, 10);
+    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
+    var which = String(p.which || '').toLowerCase();
+    var col = which === 'apres' ? C.PHOTO_AP : which === 'avant' ? C.PHOTO_AV : -1;
+    if (col < 0) return { success:false, error:'Type de photo invalide (avant/apres)' };
+
+    // Met le fichier Drive à la corbeille (best-effort)
+    try {
+      var url = String(sheet.getRange(ri, col + 1).getValue() || '').trim();
+      var fileId = extractFileId_(url, '');
+      if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
+    } catch(e) {}
+
+    sheet.getRange(ri, col + 1).setValue('');
+    return { success:true, status:'SUCCESS', which:which };
+  } catch(e) { return { success:false, error:e.toString() }; }
 }
 
 // ================================================================
@@ -563,7 +660,12 @@ var RESP_EMAILS = {
 
 function respEmailFor_(name) {
   var k = normRespKey_(name);
-  // 1) Surcharge via Propriétés du script (JSON)
+  // 1) Annuaire (modifiable par l'admin) — source principale
+  var dir = getRespDirectory_();
+  for (var i = 0; i < dir.length; i++) {
+    if (normRespKey_(dir[i].name) === k && dir[i].email) return dir[i].email;
+  }
+  // 2) Surcharge héritée via propriété RESP_EMAILS (JSON)
   try {
     var raw = PropertiesService.getScriptProperties().getProperty('RESP_EMAILS');
     if (raw) {
@@ -573,14 +675,11 @@ function respEmailFor_(name) {
       }
     }
   } catch(e) {}
-  // 2) Table interne
-  for (var name2 in RESP_EMAILS) {
-    if (normRespKey_(name2) === k && RESP_EMAILS[name2]) return RESP_EMAILS[name2];
-  }
   return '';
 }
 
 function sendTagEmail(p) {
+  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);
@@ -592,6 +691,17 @@ function sendTagEmail(p) {
 
     var to = respEmailFor_(resp);
     if (!to) return { success:false, error:'Email non configuré pour « ' + resp + ' ». Ajoutez-le dans RESP_EMAILS.' };
+
+    // Destinataires en copie (CC) — noms de responsables ou emails directs
+    var ccEmails = [];
+    if (p.cc && p.cc.length) {
+      for (var ci = 0; ci < p.cc.length; ci++) {
+        var c = String(p.cc[ci] || '').trim();
+        if (!c) continue;
+        var em = c.indexOf('@') >= 0 ? c : respEmailFor_(c);
+        if (em && em.toLowerCase() !== to.toLowerCase() && ccEmails.indexOf(em) < 0) ccEmails.push(em);
+      }
+    }
 
     var id       = txt_(row[C.NUM]) || p.id || ri;
     var danger   = noFormula_(row[C.DANGER]);
@@ -644,14 +754,18 @@ function sendTagEmail(p) {
         '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
       '</div>';
 
-    MailApp.sendEmail({
-      to: to,
-      subject: subject,
-      htmlBody: html,
-      name: 'HSE Tags'
-    });
+    var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
+    if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
+    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
 
-    return { success:true, to:to, responsable:resp };
+    MailApp.sendEmail(mailOpts);
+
+    // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
+    var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+    var trace = stamp + ' → ' + to + (ccEmails.length ? ' (CC: ' + ccEmails.join(', ') + ')' : '');
+    try { sheet.getRange(ri, C.EMAIL_SENT + 1).setValue(trace); } catch(e) {}
+
+    return { success:true, to:to, cc:ccEmails.join(', '), responsable:resp, emailSent:trace };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
 
