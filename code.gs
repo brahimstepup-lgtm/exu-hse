@@ -44,6 +44,33 @@ function isAdmin_(key) {
 // ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
 // ================================================================
+// ================================================================
+//  TOKEN SIGNÉ POUR UPLOAD PHOTO APRÈS (sans PropertiesService)
+// ================================================================
+function makeApresToken_(tagId, rowIndex) {
+  var expires = Date.now() + 30 * 24 * 3600 * 1000;
+  var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+  var payload = tagId + '.' + rowIndex + '.' + expires;
+  var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
+  var hash    = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
+  return payload + '.' + hash;
+}
+
+function verifyApresToken_(token) {
+  try {
+    var parts = token.split('.');
+    if (parts.length !== 4) return null;
+    var tagId = parts[0], rowIndex = parts[1], expires = parseInt(parts[2], 10), hash = parts[3];
+    if (Date.now() > expires) return null;
+    var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+    var payload = tagId + '.' + rowIndex + '.' + expires;
+    var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
+    var expected = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
+    if (hash !== expected) return null;
+    return { tagId: tagId, rowIndex: parseInt(rowIndex, 10) };
+  } catch(e) { return null; }
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.img) {
     return serveImage_(e.parameter.img);
@@ -60,14 +87,11 @@ function doGet(e) {
 //  PAGE D'UPLOAD PHOTO APRÈS (lien dans l'email)
 // ================================================================
 function serveUploadApresPage_(token) {
-  var props = PropertiesService.getScriptProperties();
-  var raw   = props.getProperty('apres_token_' + token);
-  if (!raw) {
-    return HtmlService.createHtmlOutput('<h2 style="font-family:sans-serif;color:#e74c3c">Lien invalide ou expiré.</h2>');
+  var data = verifyApresToken_(token);
+  if (!data) {
+    return HtmlService.createHtmlOutput('<div style="font-family:sans-serif;text-align:center;padding:40px;color:#e74c3c"><h2>Lien invalide ou expiré.</h2><p style="color:#aaa">Ce lien a expiré ou a déjà été utilisé.</p></div>');
   }
-  var data = JSON.parse(raw);
   var tagId = data.tagId;
-  var appUrl = ScriptApp.getService().getUrl();
   var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>Photo après — Tag #' + tagId + '</title>'
@@ -96,25 +120,24 @@ function serveUploadApresPage_(token) {
     + '  var f=inp.files[0];if(!f)return;'
     + '  mime=f.type||"image/jpeg";'
     + '  var r=new FileReader();'
-    + '  r.onload=function(e){'
-    + '    b64=e.target.result.replace(/^data:[^;]+;base64,/,"");'
-    + '    var img=document.getElementById("prev");img.src=e.target.result;img.style.display="block";'
+    + '  r.onload=function(ev){'
+    + '    b64=ev.target.result.replace(/^data:[^;]+;base64,/,"");'
+    + '    var img=document.getElementById("prev");img.src=ev.target.result;img.style.display="block";'
     + '    document.getElementById("sendBtn").disabled=false;'
     + '  };r.readAsDataURL(f);'
     + '}'
     + 'function upload(){'
-    + '  var btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Envoi…";'
+    + '  var btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Envoi en cours…";'
     + '  var msg=document.getElementById("msg");msg.textContent="";'
     + '  google.script.run'
     + '    .withSuccessHandler(function(r){'
-    + '      if(r&&r.success){msg.className="msg ok";msg.textContent="✅ Photo enregistrée ! Le tag est maintenant fermé.";btn.textContent="Envoyé";}'
+    + '      if(r&&r.success){msg.className="msg ok";msg.textContent="✅ Photo enregistrée ! Le tag est maintenant fermé.";btn.textContent="Envoyé ✓";}'
     + '      else{msg.className="msg err";msg.textContent="Erreur : "+(r&&r.error||"?");btn.disabled=false;btn.textContent="Réessayer";}'
     + '    })'
-    + '    .withFailureHandler(function(e){msg.className="msg err";msg.textContent="Erreur réseau.";btn.disabled=false;btn.textContent="Réessayer";})'
+    + '    .withFailureHandler(function(e){msg.className="msg err";msg.textContent="Erreur réseau : "+e.message;btn.disabled=false;btn.textContent="Réessayer";})'
     + '    .submitApresFromEmail({token:"' + token + '",photo:b64,mime:mime});'
     + '}'
     + '<\/script>'
-    + '<script src="https://apis.google.com/js/api.js"></script>'
     + '</body></html>';
   return HtmlService.createHtmlOutput(html)
     .setTitle('Photo après — Tag #' + tagId)
@@ -126,17 +149,9 @@ function serveUploadApresPage_(token) {
 // ================================================================
 function submitApresFromEmail(p) {
   try {
-    var props = PropertiesService.getScriptProperties();
-    var raw   = props.getProperty('apres_token_' + p.token);
-    if (!raw) return { success:false, error:'Lien invalide ou expiré' };
-    var data = JSON.parse(raw);
-    if (Date.now() > data.expires) {
-      props.deleteProperty('apres_token_' + p.token);
-      return { success:false, error:'Lien expiré (30 jours)' };
-    }
-    var res = saveAfterPhoto({ rowIndex:data.rowIndex, id:data.tagId, photoApres:p.photo, mime:p.mime });
-    if (res.success) props.deleteProperty('apres_token_' + p.token);
-    return res;
+    var data = verifyApresToken_(p.token);
+    if (!data) return { success:false, error:'Lien invalide ou expiré' };
+    return saveAfterPhoto({ rowIndex:data.rowIndex, id:data.tagId, photoApres:p.photo, mime:p.mime });
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -844,16 +859,10 @@ function sendTagEmail(p) {
 
     var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
 
-    // Génère un token à usage unique valable 30 jours pour l'upload photo après
-    var token = Utilities.getUuid();
-    try {
-      PropertiesService.getScriptProperties().setProperty(
-        'apres_token_' + token,
-        JSON.stringify({ rowIndex: ri, tagId: id, expires: Date.now() + 30 * 24 * 3600 * 1000 })
-      );
-    } catch(e) { token = null; }
-    var appUrl   = ScriptApp.getService().getUrl();
-    var uploadUrl = token ? (appUrl + '?action=upload_apres&token=' + token) : null;
+    // Token signé (tagId.rowIndex.expires.hash) — valable 30 jours, sans PropertiesService
+    var token     = makeApresToken_(id, ri);
+    var appUrl    = ScriptApp.getService().getUrl();
+    var uploadUrl = appUrl + '?action=upload_apres&token=' + encodeURIComponent(token);
 
     var line = function(k, v) {
       if (!v) return '';
