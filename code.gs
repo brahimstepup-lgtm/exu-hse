@@ -48,9 +48,96 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.img) {
     return serveImage_(e.parameter.img);
   }
+  if (e && e.parameter && e.parameter.action === 'upload_apres' && e.parameter.token) {
+    return serveUploadApresPage_(e.parameter.token);
+  }
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('HSE Tags 2025/2026')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ================================================================
+//  PAGE D'UPLOAD PHOTO APRÈS (lien dans l'email)
+// ================================================================
+function serveUploadApresPage_(token) {
+  var props = PropertiesService.getScriptProperties();
+  var raw   = props.getProperty('apres_token_' + token);
+  if (!raw) {
+    return HtmlService.createHtmlOutput('<h2 style="font-family:sans-serif;color:#e74c3c">Lien invalide ou expiré.</h2>');
+  }
+  var data = JSON.parse(raw);
+  var tagId = data.tagId;
+  var appUrl = ScriptApp.getService().getUrl();
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>Photo après — Tag #' + tagId + '</title>'
+    + '<style>body{font-family:Arial,sans-serif;background:#111;color:#eee;display:flex;flex-direction:column;align-items:center;padding:30px 16px}'
+    + 'h2{color:#f5c518;margin-bottom:4px}p{color:#aaa;margin-bottom:24px;font-size:.9rem}'
+    + '.box{background:#1f2937;border-radius:12px;padding:24px;width:100%;max-width:420px}'
+    + 'label.btn{display:block;background:#f5c518;color:#000;font-weight:700;text-align:center;padding:14px;border-radius:8px;cursor:pointer;font-size:1rem}'
+    + 'img#prev{display:none;width:100%;border-radius:8px;margin:16px 0;max-height:300px;object-fit:cover}'
+    + 'button{width:100%;margin-top:12px;padding:14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}'
+    + 'button:disabled{background:#555;cursor:default}'
+    + '.msg{margin-top:16px;font-size:.9rem;text-align:center}'
+    + '.ok{color:#27ae60}.err{color:#e74c3c}'
+    + '</style></head><body>'
+    + '<h2>📸 Photo après — Tag #' + tagId + '</h2>'
+    + '<p>Ajoutez la photo de résolution pour fermer ce tag.</p>'
+    + '<div class="box">'
+    + '<label class="btn" for="photoInput">📷 Choisir / Prendre une photo</label>'
+    + '<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="preview(this)">'
+    + '<img id="prev">'
+    + '<button id="sendBtn" disabled onclick="upload()">✅ Envoyer la photo</button>'
+    + '<div id="msg" class="msg"></div>'
+    + '</div>'
+    + '<script>'
+    + 'var b64="",mime="image/jpeg";'
+    + 'function preview(inp){'
+    + '  var f=inp.files[0];if(!f)return;'
+    + '  mime=f.type||"image/jpeg";'
+    + '  var r=new FileReader();'
+    + '  r.onload=function(e){'
+    + '    b64=e.target.result.replace(/^data:[^;]+;base64,/,"");'
+    + '    var img=document.getElementById("prev");img.src=e.target.result;img.style.display="block";'
+    + '    document.getElementById("sendBtn").disabled=false;'
+    + '  };r.readAsDataURL(f);'
+    + '}'
+    + 'function upload(){'
+    + '  var btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Envoi…";'
+    + '  var msg=document.getElementById("msg");msg.textContent="";'
+    + '  google.script.run'
+    + '    .withSuccessHandler(function(r){'
+    + '      if(r&&r.success){msg.className="msg ok";msg.textContent="✅ Photo enregistrée ! Le tag est maintenant fermé.";btn.textContent="Envoyé";}'
+    + '      else{msg.className="msg err";msg.textContent="Erreur : "+(r&&r.error||"?");btn.disabled=false;btn.textContent="Réessayer";}'
+    + '    })'
+    + '    .withFailureHandler(function(e){msg.className="msg err";msg.textContent="Erreur réseau.";btn.disabled=false;btn.textContent="Réessayer";})'
+    + '    .submitApresFromEmail({token:"' + token + '",photo:b64,mime:mime});'
+    + '}'
+    + '<\/script>'
+    + '<script src="https://apis.google.com/js/api.js"></script>'
+    + '</body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('Photo après — Tag #' + tagId)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ================================================================
+//  SOUMISSION PHOTO APRÈS DEPUIS L'EMAIL
+// ================================================================
+function submitApresFromEmail(p) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var raw   = props.getProperty('apres_token_' + p.token);
+    if (!raw) return { success:false, error:'Lien invalide ou expiré' };
+    var data = JSON.parse(raw);
+    if (Date.now() > data.expires) {
+      props.deleteProperty('apres_token_' + p.token);
+      return { success:false, error:'Lien expiré (30 jours)' };
+    }
+    var res = saveAfterPhoto({ rowIndex:data.rowIndex, id:data.tagId, photoApres:p.photo, mime:p.mime });
+    if (res.success) props.deleteProperty('apres_token_' + p.token);
+    return res;
+  } catch(e) { return { success:false, error:e.message }; }
 }
 
 // ================================================================
@@ -757,6 +844,17 @@ function sendTagEmail(p) {
 
     var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
 
+    // Génère un token à usage unique valable 30 jours pour l'upload photo après
+    var token = Utilities.getUuid();
+    try {
+      PropertiesService.getScriptProperties().setProperty(
+        'apres_token_' + token,
+        JSON.stringify({ rowIndex: ri, tagId: id, expires: Date.now() + 30 * 24 * 3600 * 1000 })
+      );
+    } catch(e) { token = null; }
+    var appUrl   = ScriptApp.getService().getUrl();
+    var uploadUrl = token ? (appUrl + '?action=upload_apres&token=' + token) : null;
+
     var line = function(k, v) {
       if (!v) return '';
       return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
@@ -806,6 +904,12 @@ function sendTagEmail(p) {
           '</table>' +
           '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
         '</div>' +
+        (uploadUrl
+          ? '<div style="padding:16px 20px;border-top:1px solid #eee;text-align:center">' +
+              '<p style="margin:0 0 12px;font-size:13px;color:#555">Une fois le problème résolu, ajoutez la photo après pour fermer ce tag :</p>' +
+              '<a href="' + uploadUrl + '" style="display:inline-block;background:#27ae60;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px">📸 Ajouter la photo après</a>' +
+            '</div>'
+          : '') +
         photoHtml +
         '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
       '</div>';
