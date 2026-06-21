@@ -749,6 +749,22 @@ function sendTagEmail(p) {
     };
     var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
 
+    // Récupère la photo avant depuis Drive (best-effort)
+    var photoBlob = null;
+    try {
+      var avUrl = String(row[C.PHOTO_AV] || '').trim();
+      var avId  = extractFileId_(avUrl, '');
+      if (!avId) {
+        var fp = getFolderPhotoFor_(parseInt(id, 10));
+        avId = fp.avantId || '';
+      }
+      if (avId) photoBlob = DriveApp.getFileById(avId).getBlob().setName('photo_avant.jpg');
+    } catch(e) {}
+
+    var photoHtml = photoBlob
+      ? '<div style="padding:0 20px 16px"><img src="cid:photoAvant" style="max-width:100%;border-radius:6px;border:1px solid #eee"></div>'
+      : '';
+
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
         '<div style="background:#1f2937;color:#fff;padding:16px 20px">' +
@@ -775,11 +791,13 @@ function sendTagEmail(p) {
           '</table>' +
           '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
         '</div>' +
+        photoHtml +
         '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
       '</div>';
 
     var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
     if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
+    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
     MailApp.sendEmail(mailOpts);
 
     // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
