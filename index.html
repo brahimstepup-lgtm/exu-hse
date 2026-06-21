@@ -697,6 +697,28 @@ img{max-width:100%;display:block;}
 </style>
 </head>
 <body>
+<!-- ═══ AUTH WALL — shown before everything ═══ -->
+<div id="authWall" style="position:fixed;inset:0;z-index:9999;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:2.5rem;margin-bottom:8px">🔒</div>
+      <div style="font-size:1.4rem;font-weight:700;color:#f5c518">HSE Tags 2025/2026</div>
+      <div style="font-size:.85rem;color:#6b7280;margin-top:4px">Connexion requise</div>
+    </div>
+    <div style="background:#1f2937;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:.75rem;font-weight:600;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase">Matricule</label>
+        <input id="authMat" class="fi" type="text" placeholder="Ex: 1234" style="margin-top:6px;width:100%;box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('authPwd').focus()"/>
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:600;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase">Mot de passe</label>
+        <input id="authPwd" class="fi" type="password" placeholder="••••••••" style="margin-top:6px;width:100%;box-sizing:border-box" onkeydown="if(event.key==='Enter')doAuthLogin()"/>
+      </div>
+      <div id="authErr" style="color:#ef4444;font-size:.82rem;display:none"></div>
+      <button onclick="doAuthLogin()" style="background:#f5c518;color:#000;border:none;border-radius:8px;padding:13px;font-weight:700;font-size:1rem;cursor:pointer;width:100%">Se connecter</button>
+    </div>
+  </div>
+</div>
 
 <!-- SPLASH -->
 <div id="splash">
@@ -846,6 +868,7 @@ img{max-width:100%;display:block;}
       <div class="ph" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1>
         <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
+        <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -1096,6 +1119,20 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ SHEET: Gestion des accès ═══ -->
+<div class="ov" id="usersOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">👥 Gestion des accès</span>
+      <button class="sh-close" onclick="closeSheet('usersOv')">✕</button></div>
+    <div class="sh-body">
+      <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SHEET: Connexion Admin ═══ -->
 <div class="ov" id="loginOv">
   <div class="sheet" style="max-width:420px;">
@@ -1165,6 +1202,114 @@ img{max-width:100%;display:block;}
 
 <script>
 /* ══════════════════════════════════════════
+   AUTH WALL
+══════════════════════════════════════════ */
+var S_AUTH = { token:'', role:'', name:'', matricule:'' };
+
+function doAuthLogin() {
+  var mat = (document.getElementById('authMat').value||'').trim();
+  var pwd = (document.getElementById('authPwd').value||'').trim();
+  var errEl = document.getElementById('authErr');
+  errEl.style.display='none';
+  if (!mat||!pwd) { errEl.textContent='Matricule et mot de passe requis'; errEl.style.display='block'; return; }
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success) {
+        S_AUTH.token=r.token; S_AUTH.role=r.role; S_AUTH.name=r.name; S_AUTH.matricule=r.matricule;
+        try{ sessionStorage.setItem('hse_auth', JSON.stringify(S_AUTH)); }catch(e){}
+        if (r.role==='admin') { S.role='admin'; S.adminKey=r.token; try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',r.token); }catch(e){} }
+        else { S.role='user'; }
+        document.getElementById('authWall').style.display='none';
+        updateAuthUI();
+        bootApp();
+      } else {
+        errEl.textContent=r&&r.error||'Erreur de connexion';
+        errEl.style.display='block';
+      }
+    })
+    .withFailureHandler(function(e){ errEl.textContent='Erreur réseau'; errEl.style.display='block'; })
+    .loginUser({ matricule:mat, password:pwd });
+}
+
+function updateAuthUI() {
+  var admin = S_AUTH.role==='admin';
+  var lb = document.getElementById('loginBtn');
+  if (lb) { lb.innerHTML = S_AUTH.name ? ('👤 '+S_AUTH.name) : (admin?'🔓 Admin':'👤'); }
+}
+
+function doLogout() {
+  S_AUTH.token=''; S_AUTH.role=''; S_AUTH.name=''; S_AUTH.matricule='';
+  S.role='user'; S.adminKey='';
+  try{ sessionStorage.clear(); }catch(e){}
+  document.getElementById('authWall').style.display='flex';
+  document.getElementById('authMat').value='';
+  document.getElementById('authPwd').value='';
+}
+
+/* ══ USER MANAGEMENT (admin only) ══ */
+function openUsersPanel() {
+  if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
+  openSheet('usersOv');
+  var list = document.getElementById('usersList');
+  list.innerHTML = '<div style="color:var(--t3);font-size:.85rem">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { list.innerHTML='<div style="color:red">'+( r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) { list.innerHTML='<div style="color:var(--t3)">Aucun employé</div>'; return; }
+      list.innerHTML = r.data.map(function(u) {
+        var statusColor = u.actif ? '#22c55e' : '#ef4444';
+        var statusLabel = u.actif ? 'Actif' : 'Inactif';
+        var hasPwd = u.hasPassword ? '🔑' : '⚠️ Sans mot de passe';
+        return '<div style="background:var(--ink3);border-radius:10px;padding:12px 14px">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
+          + '<div><div style="font-weight:600">'+esc(u.name)+'</div>'
+          + '<div style="font-size:.78rem;color:var(--t3)">'+esc(u.matricule)+' · '+esc(u.dept)+'</div>'
+          + '<div style="font-size:.75rem;margin-top:3px"><span style="color:'+statusColor+'">●</span> '+statusLabel+' &nbsp; '+hasPwd+'</div></div>'
+          + '<div style="display:flex;flex-direction:column;gap:6px;min-width:120px">'
+          + '<select onchange="adminChangeRole(\''+esc(u.matricule)+'\',this.value)" style="background:var(--ink4);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:4px 8px;font-size:.8rem">'
+          + '<option value="user"'+(u.role==='user'?' selected':'')+'>👤 Utilisateur</option>'
+          + '<option value="admin"'+(u.role==='admin'?' selected':'')+'>🔧 Admin</option>'
+          + '</select>'
+          + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
+          + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
+          + '</div></div></div>';
+      }).join('');
+    })
+    .withFailureHandler(function(e){ list.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .adminGetUsers(S.adminKey);
+}
+
+function openSetPwd(mat, name) {
+  var pwd = prompt('Nouveau mot de passe pour '+name+' ('+mat+') :');
+  if (!pwd) return;
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success){ toast('✓ Mot de passe défini pour '+name,'ok'); openUsersPanel(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ toast('Erreur: '+e.message,'err'); })
+    .adminSetPassword({ adminKey:S.adminKey, matricule:mat, password:pwd });
+}
+
+function adminToggle(mat, actif) {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success){ toast(actif?'✓ Accès activé':'✓ Accès désactivé','ok'); openUsersPanel(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .adminToggleUser({ adminKey:S.adminKey, matricule:mat, actif:actif });
+}
+
+function adminChangeRole(mat, role) {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success) toast('✓ Rôle mis à jour','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .adminSetRole({ adminKey:S.adminKey, matricule:mat, role:role });
+}
+
+/* ══════════════════════════════════════════
    STATE
 ══════════════════════════════════════════ */
 var S = {
@@ -1185,11 +1330,32 @@ var _tt; // toast timer
    INIT
 ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function(){
-  // Nav binding
+  // ── Restaurer la session auth depuis sessionStorage ──
+  try {
+    var _sa = sessionStorage.getItem('hse_auth');
+    if (_sa) {
+      var _parsed = JSON.parse(_sa);
+      S_AUTH.token=_parsed.token; S_AUTH.role=_parsed.role;
+      S_AUTH.name=_parsed.name; S_AUTH.matricule=_parsed.matricule;
+      if (S_AUTH.role==='admin') { S.role='admin'; S.adminKey=S_AUTH.token; }
+      document.getElementById('authWall').style.display='none';
+      updateAuthUI();
+    }
+  } catch(e) {}
+
+  // Si pas de session, l'authWall reste visible et bloque tout
+  if (!S_AUTH.token) return; // ne pas charger l'app avant connexion
+
+  bootApp();
+});
+
+function bootApp() {
+
   document.querySelectorAll('[data-v]').forEach(function(b){
     b.addEventListener('click', function(){ goV(this.getAttribute('data-v'), this); });
   });
 
+  // Nav binding (suite — exécuté dans bootApp)
   document.getElementById('fDateCr').value = todayStr();
 
   // Rôle : appliquer l'état (admin/user) + vue par défaut
@@ -1210,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', function(){
   splashMsg('Chargement des données…');
   setTimeout(function(){ document.getElementById('spFill').style.width='70%'; },80);
   loadAll();
-});
+}
 
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function plusDaysStr(iso,n){
@@ -1324,10 +1490,8 @@ var ADMIN_ONLY_VIEWS = {home:true, admin:true};
 function isAdmin(){ return S.role==='admin'; }
 
 function openLogin(){
-  if(isAdmin()){ logout(); return; }
-  document.getElementById('loginPwd').value='';
-  openSheet('loginOv');
-  setTimeout(function(){ var i=document.getElementById('loginPwd'); if(i) i.focus(); }, 300);
+  if(S_AUTH.token){ if(confirm('Se déconnecter ?')) doLogout(); }
+  else { document.getElementById('authWall').style.display='flex'; }
 }
 function doLogin(){
   var pwd=document.getElementById('loginPwd').value;
