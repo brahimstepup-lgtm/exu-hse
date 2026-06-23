@@ -41,6 +41,187 @@ function isAdmin_(key) {
   return !!stored && key != null && String(key) === String(stored);
 }
 
+function loginSuperviseur(password) {
+  var stored = PropertiesService.getScriptProperties().getProperty('SUPERVISOR_PASSWORD');
+  if (!stored) return { success:false, error:'Compte Superviseur HSE non configuré. Contactez l\'administrateur.' };
+  if (String(password) === String(stored)) return { success:true, role:'superviseur' };
+  return { success:false, error:'Mot de passe incorrect' };
+}
+function isSuperviseur_(key) {
+  var stored = PropertiesService.getScriptProperties().getProperty('SUPERVISOR_PASSWORD');
+  return !!stored && key != null && String(key) === String(stored);
+}
+function isAuthorized_(key) {
+  return isAdmin_(key) || isSuperviseur_(key);
+}
+
+// ── Admin : définit/modifie le mot de passe superviseur ──────────
+function saveSupervisorPassword(adminKey, newPwd) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!newPwd || String(newPwd).trim().length < 4) return { success:false, error:'Mot de passe trop court (min 4 caractères)' };
+  PropertiesService.getScriptProperties().setProperty('SUPERVISOR_PASSWORD', String(newPwd).trim());
+  return { success:true };
+}
+
+// ── Thèmes de sensibilisation (admin configure, superviseur utilise) ──
+function getSensibilisationThemes() {
+  var raw = PropertiesService.getScriptProperties().getProperty('SENSIBILISATION_THEMES');
+  var themes = [];
+  try { if (raw) themes = JSON.parse(raw); } catch(e) {}
+  if (!themes.length) themes = [
+    'Sécurité incendie & évacuation',
+    'Équipements de Protection Individuelle (EPI)',
+    'Premiers secours & gestes d\'urgence',
+    'Risques chimiques & produits dangereux',
+    'Manutention manuelle & ergonomie',
+    'Travail en hauteur & chutes',
+    'Risques électriques',
+    'Ordre & propreté (5S)',
+    'Circulation & sécurité des déplacements'
+  ];
+  return { success:true, data:themes };
+}
+function saveSensibilisationThemes(adminKey, themes) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!Array.isArray(themes)) return { success:false, error:'Liste invalide' };
+  var clean = themes.map(function(t){ return String(t).trim(); }).filter(function(t){ return t; });
+  if (!clean.length) return { success:false, error:'Au moins un thème requis' };
+  PropertiesService.getScriptProperties().setProperty('SENSIBILISATION_THEMES', JSON.stringify(clean));
+  return { success:true, data:clean };
+}
+
+// ── Liste des employés (admin configure, superviseur utilise) ──────
+function getEmployeeList(key) {
+  if (!isAuthorized_(key)) return { success:false, error:'Accès non autorisé' };
+  var raw = PropertiesService.getScriptProperties().getProperty('EMPLOYEE_LIST');
+  var employees = [];
+  try { if (raw) employees = JSON.parse(raw); } catch(e) {}
+  return { success:true, data:employees };
+}
+function saveEmployeeList(adminKey, employees) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!Array.isArray(employees)) return { success:false, error:'Liste invalide' };
+  var clean = employees
+    .map(function(e){ return { name:String(e.name||'').trim(), matricule:String(e.matricule||'').trim() }; })
+    .filter(function(e){ return e.name || e.matricule; });
+  PropertiesService.getScriptProperties().setProperty('EMPLOYEE_LIST', JSON.stringify(clean));
+  return { success:true, data:clean };
+}
+
+// ── Campagnes de sensibilisation ──────────────────────────────────
+function saveCampagneSensibilisation(p) {
+  if (!isAuthorized_(p && p.superviseurKey)) return { success:false, error:'Accès réservé au Superviseur HSE ou à l\'administrateur' };
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName('sensibilisation');
+    if (!sheet) {
+      sheet = ss.insertSheet('sensibilisation');
+      sheet.appendRow(['ID','DATE_CAMPAGNE','THEME','PARTICIPANTS','FICHE_PRESENCE','SUPERVISEUR','DATE_CR']);
+    }
+    var lr   = sheet.getLastRow();
+    var nextId = lr >= 2 ? (parseInt(sheet.getRange(lr,1).getValue(),10)||0)+1 : 1;
+    var ficheUrl = '';
+    if (p.fiche && p.fiche.length > 10) {
+      var ext = (p.ficheMime === 'application/pdf') ? '.pdf' : '.jpg';
+      var fn  = 'Sensibilisation_' + nextId + '_' + nowHHMMSS_() + ext;
+      ficheUrl = saveFileToFolder_(p.fiche, fn, p.ficheMime || 'image/jpeg');
+    }
+    var participants = Array.isArray(p.participants) ? p.participants.join(', ') : String(p.participants || '');
+    sheet.appendRow([
+      nextId,
+      p.dateCampagne ? new Date(p.dateCampagne) : new Date(),
+      p.theme || '',
+      participants,
+      ficheUrl,
+      p.superviseurName || '',
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getCampagnes(key) {
+  if (!isAuthorized_(key)) return { success:false, error:'Accès non autorisé' };
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName('sensibilisation');
+    if (!sheet) return { success:true, data:[] };
+    var lr = sheet.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var vals = sheet.getRange(2, 1, lr-1, 7).getValues();
+    var data = vals.map(function(row){
+      return { id:row[0], dateCampagne:fmtDate_(row[1]), theme:txt_(row[2]),
+               participants:txt_(row[3]), ficheUrl:txt_(row[4]),
+               superviseur:txt_(row[5]), dateCr:fmtDate_(row[6]) };
+    }).filter(function(r){ return r.id; }).reverse();
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Suivi matériel incendie ───────────────────────────────────────
+function saveInspectionIncendie(p) {
+  if (!isAuthorized_(p && p.superviseurKey)) return { success:false, error:'Accès réservé au Superviseur HSE ou à l\'administrateur' };
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName('incendie');
+    if (!sheet) {
+      sheet = ss.insertSheet('incendie');
+      sheet.appendRow(['ID','DATE_INSPECTION','EXTINCTEURS_DATA','RIA_DATA','SCAN_CHECKLIST','SUPERVISEUR','OBSERVATIONS','DATE_CR']);
+    }
+    var lr     = sheet.getLastRow();
+    var nextId = lr >= 2 ? (parseInt(sheet.getRange(lr,1).getValue(),10)||0)+1 : 1;
+    var scanUrl = '';
+    if (p.scan && p.scan.length > 10) {
+      var sext = (p.scanMime === 'application/pdf') ? '.pdf' : '.jpg';
+      var sfn  = 'Checklist_Incendie_' + nextId + '_' + nowHHMMSS_() + sext;
+      scanUrl = saveFileToFolder_(p.scan, sfn, p.scanMime || 'image/jpeg');
+    }
+    sheet.appendRow([
+      nextId,
+      p.dateInspection ? new Date(p.dateInspection) : new Date(),
+      JSON.stringify(p.extincteursData || []),
+      JSON.stringify(p.riaData || []),
+      scanUrl,
+      p.superviseurName || '',
+      p.observations || '',
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getInspectionsIncendie(key) {
+  if (!isAuthorized_(key)) return { success:false, error:'Accès non autorisé' };
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName('incendie');
+    if (!sheet) return { success:true, data:[] };
+    var lr = sheet.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var vals = sheet.getRange(2, 1, lr-1, 8).getValues();
+    var data = vals.map(function(row){
+      var ext=[],ria=[];
+      try{ ext=JSON.parse(row[2]||'[]'); }catch(e){}
+      try{ ria=JSON.parse(row[3]||'[]'); }catch(e){}
+      return { id:row[0], dateInspection:fmtDate_(row[1]), extincteursData:ext, riaData:ria,
+               scanUrl:txt_(row[4]), superviseur:txt_(row[5]), observations:txt_(row[6]), dateCr:fmtDate_(row[7]) };
+    }).filter(function(r){ return r.id; }).reverse();
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Variante de savePhotoToFolder_ acceptant aussi les PDF
+function saveFileToFolder_(b64, name, mime) {
+  try {
+    var clean = b64.replace(/^data:[^;]+;base64,/, '');
+    var blob  = Utilities.newBlob(Utilities.base64Decode(clean), mime, name);
+    var folder= DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+    var file  = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return 'https://drive.google.com/uc?export=view&id=' + file.getId();
+  } catch(e) { Logger.log('saveFileToFolder_: ' + e.message); return ''; }
+}
+
 // ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
 // ================================================================

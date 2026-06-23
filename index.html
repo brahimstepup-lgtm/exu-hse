@@ -694,6 +694,92 @@ img{max-width:100%;display:block;}
 
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
 .fab{animation:fabPulse 2.4s ease-in-out infinite;}
+
+/* ══ SUPERVISEUR HSE ══════════════════════════════════════════ */
+/* Login role tabs */
+.role-tabs{display:flex;background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);
+  overflow:hidden;margin-bottom:14px;}
+.role-tab{flex:1;padding:11px 8px;text-align:center;font-size:.78rem;font-weight:600;
+  color:var(--t3);cursor:pointer;transition:all .2s;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;gap:6px;}
+.role-tab.on{background:var(--y2);color:var(--y);}
+.role-tab:active{transform:scale(.97);}
+
+/* Section header */
+.sv-sec{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:14px;flex-wrap:wrap;}
+.sv-sec-title{font-size:1.1rem;font-weight:700;letter-spacing:-.2px;}
+.sv-badge{background:var(--ink3);border:1px solid var(--line);border-radius:20px;
+  padding:3px 10px;font-size:.68rem;color:var(--t2);font-family:var(--fm);}
+
+/* Campaign / Inspection cards */
+.sv-cards{display:flex;flex-direction:column;gap:8px;}
+.sv-card{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 14px;transition:transform .15s;cursor:default;}
+.sv-card:hover{transform:translateY(-1px);}
+.sv-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;}
+.sv-card-title{font-weight:700;font-size:.88rem;line-height:1.3;flex:1;}
+.sv-card-date{font-size:.66rem;color:var(--t3);font-family:var(--fm);white-space:nowrap;}
+.sv-card-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.sv-chip{background:var(--ink3);border:1px solid var(--line);border-radius:20px;
+  padding:3px 9px;font-size:.66rem;color:var(--t2);}
+.sv-chip.ok{background:var(--grn2);border-color:rgba(46,213,115,.4);color:var(--grn);}
+.sv-chip.nok{background:var(--red2);border-color:rgba(255,71,87,.4);color:var(--red);}
+.sv-card-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;
+  font-size:.72rem;color:var(--blu);text-decoration:none;}
+.sv-card-link:hover{text-decoration:underline;}
+.sv-empty{text-align:center;padding:36px 16px;color:var(--t3);}
+.sv-empty-i{font-size:2.2rem;margin-bottom:7px;}
+.sv-empty-t{font-size:.88rem;color:var(--t2);}
+
+/* Employee search & chips */
+.emp-search-wrap{position:relative;margin-bottom:8px;}
+.emp-results{position:absolute;top:100%;left:0;right:0;background:var(--ink1);
+  border:1px solid var(--line);border-radius:0 0 var(--rs) var(--rs);z-index:50;
+  max-height:180px;overflow-y:auto;display:none;}
+.emp-results.on{display:block;}
+.emp-result-item{padding:9px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--line);}
+.emp-result-item:last-child{border:none;}
+.emp-result-item:hover{background:var(--ink3);}
+.emp-result-mat{font-size:.65rem;color:var(--t3);font-family:var(--fm);margin-left:5px;}
+.emp-tags{display:flex;flex-wrap:wrap;gap:5px;min-height:34px;
+  background:var(--ink3);border:1px solid var(--line);border-radius:var(--rs);padding:7px 9px;}
+.emp-tag{background:var(--y2);border:1px solid rgba(245,197,24,.4);border-radius:999px;
+  padding:3px 9px;font-size:.74rem;color:var(--t1);display:flex;align-items:center;gap:5px;}
+.emp-tag-x{background:none;border:none;color:var(--t3);cursor:pointer;font-size:.9rem;
+  padding:0;line-height:1;display:flex;}
+
+/* Checklist table */
+.cl-section{margin-bottom:14px;}
+.cl-section-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.82rem;
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+.cl-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.cl-table th{padding:6px 10px;text-align:left;color:var(--t3);font-size:.62rem;
+  text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--line);}
+.cl-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
+.cl-table tr:last-child td{border:none;}
+.cl-toggle{display:flex;gap:0;border-radius:var(--rs);overflow:hidden;border:1px solid var(--line);}
+.cl-opt{flex:1;padding:6px 4px;text-align:center;font-size:.7rem;font-weight:700;cursor:pointer;
+  border:none;background:var(--ink4);color:var(--t3);transition:all .15s;}
+.cl-opt.ok.sel{background:var(--grn2);color:var(--grn);}
+.cl-opt.nok.sel{background:var(--red2);color:var(--red);}
+.cl-opt:not(.sel):active{background:var(--ink3);}
+
+/* File upload zone (image + PDF) */
+.file-upload-zone{background:var(--ink3);border:2px dashed var(--line2);border-radius:var(--rm);
+  padding:20px;text-align:center;cursor:pointer;position:relative;transition:border-color .2s;}
+.file-upload-zone:hover,.file-upload-zone.has-file{border-color:var(--y);}
+.file-upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.file-upload-zone .fuz-ico{font-size:1.8rem;margin-bottom:5px;}
+.file-upload-zone .fuz-txt{font-size:.78rem;color:var(--t2);}
+.file-upload-zone .fuz-hint{font-size:.65rem;color:var(--t3);margin-top:2px;}
+.file-upload-zone .fuz-name{font-size:.75rem;color:var(--grn);margin-top:6px;font-weight:600;}
+
+/* Score summary bar */
+.cl-score{display:flex;align-items:center;gap:10px;background:var(--ink3);
+  border:1px solid var(--line);border-radius:var(--rm);padding:11px 13px;margin-bottom:10px;}
+.cl-score-val{font-family:var(--fm);font-size:1.3rem;font-weight:700;line-height:1;}
+.cl-score-lbl{font-size:.7rem;color:var(--t2);}
 </style>
 </head>
 <body>
@@ -729,6 +815,9 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="closed"><span class="snav-i">✅</span>Fermés</button>
   <div class="sb-sec">Admin KPI</div>
   <button class="snav" data-v="admin"><span class="snav-i">📊</span>Dashboard</button>
+  <div class="sb-sec sv-nav-sec">Superviseur HSE</div>
+  <button class="snav sv-nav-item" data-v="sensibilisation"><span class="snav-i">📚</span>Sensibilisation</button>
+  <button class="snav sv-nav-item" data-v="incendie"><span class="snav-i">🔥</span>Matériel Incendie</button>
 </nav>
 
 <!-- APP -->
@@ -841,20 +930,47 @@ img{max-width:100%;display:block;}
       <div class="tlist" id="tagsList"></div>
     </div>
 
+    <!-- SENSIBILISATION -->
+    <div class="view" id="view-sensibilisation">
+      <div class="sv-sec">
+        <h1 class="sv-sec-title">📚 Campagnes de Sensibilisation</h1>
+        <button class="btn btn-p" style="flex:0 0 auto;min-height:36px;padding:8px 14px;font-size:.78rem" onclick="openSensibilisationForm()">＋ Nouvelle</button>
+      </div>
+      <div id="campagnesList" class="sv-cards">
+        <div class="sv-empty"><div class="sv-empty-i">📋</div><div class="sv-empty-t">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- INCENDIE -->
+    <div class="view" id="view-incendie">
+      <div class="sv-sec">
+        <h1 class="sv-sec-title">🔥 Suivi Matériel Incendie</h1>
+        <button class="btn btn-p" style="flex:0 0 auto;min-height:36px;padding:8px 14px;font-size:.78rem" onclick="openIncendieForm()">＋ Inspection</button>
+      </div>
+      <div id="incendieList" class="sv-cards">
+        <div class="sv-empty"><div class="sv-empty-i">🧯</div><div class="sv-empty-t">Chargement…</div></div>
+      </div>
+    </div>
+
     <!-- ADMIN KPI -->
     <div class="view" id="view-admin">
       <div class="ph" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1>
-        <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn btn-b" onclick="openRespManager()">👥 Responsables</button>
+          <button class="btn btn-b" onclick="openAdminSupConfig()">👷 Superviseur HSE</button>
+        </div>
       </div>
       <div id="adminBody"></div>
     </div>
   </main>
 
-  <nav class="bnav">
+  <nav class="bnav" id="mainBnav">
     <button class="nb on" data-v="home"><span class="nb-icon">🏠</span><span>Accueil</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="all"><span class="nb-icon">🏷️</span><span>Tags</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="open"><span class="nb-icon">🟥</span><span>Ouverts</span><span class="nb-dot"></span></button>
+    <button class="nb sv-nav-item" data-v="sensibilisation"><span class="nb-icon">📚</span><span>Sensib.</span><span class="nb-dot"></span></button>
+    <button class="nb sv-nav-item" data-v="incendie"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="admin"><span class="nb-icon">📊</span><span>KPI</span><span class="nb-dot"></span></button>
   </nav>
 </div>
@@ -1100,15 +1216,19 @@ img{max-width:100%;display:block;}
 <div class="ov" id="loginOv">
   <div class="sheet" style="max-width:420px;">
     <div class="sh-handle"></div>
-    <div class="sh-hdr"><span class="sh-title" id="loginTitle">🔒 Connexion Administrateur</span>
+    <div class="sh-hdr"><span class="sh-title">🔒 Connexion</span>
       <button class="sh-close" onclick="closeSheet('loginOv')">✕</button></div>
-    <div class="sh-body">
+    <div class="sh-body" style="padding:14px 15px">
+      <div class="role-tabs">
+        <button class="role-tab on" id="loginTabAdmin" onclick="setLoginRole('admin')">🛡️ Administrateur</button>
+        <button class="role-tab" id="loginTabSup" onclick="setLoginRole('superviseur')">👷 Superviseur HSE</button>
+      </div>
       <div class="sform">
         <div class="srow"><label class="slabel">Mot de passe</label><div class="sval">
-          <input class="fi" id="loginPwd" type="password" placeholder="Mot de passe admin…" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <input class="fi" id="loginPwd" type="password" placeholder="Mot de passe…" onkeydown="if(event.key==='Enter')doLogin()"/>
         </div></div>
       </div>
-      <p style="font-size:.78rem;color:var(--t3);margin:10px 2px 0">Les utilisateurs ordinaires n'ont pas besoin de se connecter : ils peuvent ajouter des tags et des photos.</p>
+      <p style="font-size:.78rem;color:var(--t3);margin:6px 2px 0" id="loginHint">Les utilisateurs ordinaires n'ont pas besoin de se connecter.</p>
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('loginOv')">Annuler</button>
@@ -1163,6 +1283,142 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ SHEET: Nouvelle campagne de sensibilisation ═══ -->
+<div class="ov" id="sensibilisationOv">
+  <div class="sheet" style="max-width:560px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">📚 Nouvelle campagne</span>
+      <button class="sh-close" onclick="closeSheet('sensibilisationOv')">✕</button></div>
+    <div class="sh-body">
+      <div class="fw">
+        <div class="fg">
+          <label class="fl">Date de la campagne *</label>
+          <input class="fi" type="date" id="sensiDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Thème de sensibilisation *</label>
+          <select class="fsel" id="sensiTheme"><option value="">— Choisir un thème —</option></select>
+        </div>
+        <div class="fg">
+          <label class="fl">Participants</label>
+          <div class="emp-search-wrap">
+            <input class="fi" id="empSearch" placeholder="Rechercher par nom ou matricule…" oninput="searchEmployees(this.value)" autocomplete="off"/>
+            <div class="emp-results" id="empResults"></div>
+          </div>
+          <div class="emp-tags" id="empTags"><span style="color:var(--t3);font-size:.74rem">Aucun participant sélectionné</span></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Fiche de présence signée (photo / scan)</label>
+          <div class="file-upload-zone" id="sensiFileZone">
+            <input type="file" accept="image/*,application/pdf" onchange="onSensiFileChange(this)"/>
+            <div class="fuz-ico">📎</div>
+            <div class="fuz-txt">Appuyer pour choisir un fichier</div>
+            <div class="fuz-hint">Image (JPG, PNG) ou PDF</div>
+            <div class="fuz-name" id="sensiFuzName" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('sensibilisationOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitSensibilisation()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Inspection matériel incendie ═══ -->
+<div class="ov" id="incendieOv">
+  <div class="sheet" style="max-width:640px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">🔥 Inspection matériel incendie</span>
+      <button class="sh-close" onclick="closeSheet('incendieOv')">✕</button></div>
+    <div class="sh-body">
+      <div class="fw">
+        <div class="fg">
+          <label class="fl">Date d'inspection *</label>
+          <input class="fi" type="date" id="incDate"/>
+        </div>
+        <!-- Extincteurs checklist -->
+        <div class="cl-section">
+          <div class="cl-section-title">🧯 Extincteurs</div>
+          <table class="cl-table" id="clExtTable">
+            <thead><tr><th>Point de contrôle</th><th style="width:120px;text-align:center">État</th></tr></thead>
+            <tbody id="clExtBody"></tbody>
+          </table>
+        </div>
+        <!-- RIA checklist -->
+        <div class="cl-section">
+          <div class="cl-section-title">🚿 RIA (Robinets d'Incendie Armés)</div>
+          <table class="cl-table" id="clRiaTable">
+            <thead><tr><th>Point de contrôle</th><th style="width:120px;text-align:center">État</th></tr></thead>
+            <tbody id="clRiaBody"></tbody>
+          </table>
+        </div>
+        <!-- Score summary -->
+        <div class="cl-score" id="clScore" style="display:none">
+          <div>
+            <div class="cl-score-val" id="clScoreVal">—</div>
+            <div class="cl-score-lbl">Points conformes</div>
+          </div>
+          <div style="flex:1;height:6px;background:var(--ink4);border-radius:3px;overflow:hidden">
+            <div id="clScoreBar" style="height:100%;border-radius:3px;background:var(--grn);width:0%;transition:width .5s"></div>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Observations générales</label>
+          <textarea class="ft" id="incObs" placeholder="Remarques, anomalies observées…" rows="2"></textarea>
+        </div>
+        <div class="fg">
+          <label class="fl">Scan / Photo de la checklist signée</label>
+          <div class="file-upload-zone" id="incFileZone">
+            <input type="file" accept="image/*,application/pdf" onchange="onIncFileChange(this)"/>
+            <div class="fuz-ico">📎</div>
+            <div class="fuz-txt">Checklist physique signée (image ou PDF)</div>
+            <div class="fuz-hint">Facultatif — JPG, PNG ou PDF</div>
+            <div class="fuz-name" id="incFuzName" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('incendieOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitIncendie()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Admin — Gérer thèmes & employés ═══ -->
+<div class="ov" id="adminSupOv">
+  <div class="sheet" style="max-width:540px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">⚙️ Config. Superviseur HSE</span>
+      <button class="sh-close" onclick="closeSheet('adminSupOv')">✕</button></div>
+    <div class="sh-body" style="padding:14px 15px">
+      <!-- Mot de passe superviseur -->
+      <div class="fl" style="margin-bottom:6px">🔑 Mot de passe Superviseur HSE</div>
+      <div style="display:flex;gap:7px;margin-bottom:16px">
+        <input class="fi" type="password" id="supPwdIn" placeholder="Nouveau mot de passe…" style="flex:1"/>
+        <button class="btn btn-p" style="flex:0 0 auto;padding:0 14px" onclick="saveSupervisorPwd()">💾</button>
+      </div>
+      <!-- Thèmes -->
+      <div class="fl" style="margin-bottom:6px">📚 Thèmes de sensibilisation</div>
+      <div id="themesList" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:7px;margin-bottom:16px">
+        <input class="fi" id="newThemeIn" placeholder="Ajouter un thème…" style="flex:1" onkeydown="if(event.key==='Enter')addThemeRow()"/>
+        <button class="btn btn-b" style="flex:0 0 auto;padding:0 12px" onclick="addThemeRow()">＋</button>
+      </div>
+      <!-- Employés -->
+      <div class="fl" style="margin-bottom:6px">👷 Liste des employés</div>
+      <div id="employeeRows" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"></div>
+      <button class="btn btn-b" style="width:100%;margin-bottom:4px" onclick="addEmployeeRow()">＋ Ajouter un employé</button>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('adminSupOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveSupConfig()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════
    STATE
@@ -1173,11 +1429,19 @@ var S = {
   qStep:1, qDng:'', qGrav:'Élevée', qLat:0, qLng:0, qQR:'',
   camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null,
   booted:false, detailTag:null,
-  role:'user', adminKey:'', respList:[]
+  role:'user', adminKey:'', superviseurKey:'', superviseurName:'',
+  respList:[], empList:[], sensiThemes:[],
+  loginRole:'admin',
+  sensiB64:'', sensiBMime:'', incScanB64:'', incScanMime:'',
+  selectedEmps:[], campagnes:[], inspections:[]
 };
 try{
   var _sr=sessionStorage.getItem('hse_role'), _sk=sessionStorage.getItem('hse_key');
   if(_sr==='admin' && _sk){ S.role='admin'; S.adminKey=_sk; }
+  else if(_sr==='superviseur' && _sk){
+    S.role='superviseur'; S.superviseurKey=_sk;
+    S.superviseurName=sessionStorage.getItem('hse_supname')||'Superviseur';
+  }
 }catch(e){}
 var _tt; // toast timer
 
@@ -1192,10 +1456,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
   document.getElementById('fDateCr').value = todayStr();
 
-  // Rôle : appliquer l'état (admin/user) + vue par défaut
+  // Rôle : appliquer l'état (admin/user/superviseur) + vue par défaut
   applyRole();
   loadRespList();
-  goV(isAdmin()?'home':'all', null);
+  var defaultView = isAdmin()?'home': isSuperviseur()?'sensibilisation':'all';
+  goV(defaultView, null);
 
   // Offline detection
   window.addEventListener('online',  function(){ setOffline(false); });
@@ -1237,6 +1502,7 @@ function loadAll(){
         S.tags = r.data||[];
         splashMsg(S.tags.length + ' tags chargés ✓');
         populateMFilters();
+        if(isAuthorized()) loadSuperviseurData();
         if(isAdmin()) loadKPIs();
         else { hideSplash(); renderCurrent(); toast('✓ '+S.tags.length+' tags chargés','ok'); bootForm(); }
       } else {
@@ -1271,11 +1537,10 @@ function loadKPIs(){
     .getKPIs(S.adminKey);
 }
 
-/* Mobile-first : le formulaire d'ajout est la page d'accueil par défaut.
-   Au premier chargement, on ouvre directement le Signalement Rapide. */
 function bootForm(){
   if(S.booted) return;
   S.booted=true;
+  if(isAuthorized()) return; // admin/superviseur : pas d'ouverture auto
   setTimeout(function(){
     if(!document.querySelector('.ov.on')) openQuick();
   }, 500);
@@ -1320,11 +1585,29 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
+var SUPERVISEUR_ACCESS_VIEWS = {sensibilisation:true, incendie:true};
 
 function isAdmin(){ return S.role==='admin'; }
+function isSuperviseur(){ return S.role==='superviseur'; }
+function isAuthorized(){ return isAdmin() || isSuperviseur(); }
+function authKey(){ return isAdmin() ? S.adminKey : S.superviseurKey; }
+
+/* Sélection du rôle dans le modal de connexion */
+function setLoginRole(role){
+  S.loginRole = role;
+  document.getElementById('loginTabAdmin').classList.toggle('on', role==='admin');
+  document.getElementById('loginTabSup').classList.toggle('on', role==='superviseur');
+  var hint = document.getElementById('loginHint');
+  if(hint) hint.textContent = role==='superviseur'
+    ? 'Connectez-vous avec le mot de passe fourni par l\'administrateur.'
+    : 'Les utilisateurs ordinaires n\'ont pas besoin de se connecter.';
+  document.getElementById('loginPwd').placeholder = role==='superviseur' ? 'Mot de passe Superviseur HSE…' : 'Mot de passe admin…';
+}
 
 function openLogin(){
-  if(isAdmin()){ logout(); return; }
+  if(isAdmin()||isSuperviseur()){ logout(); return; }
+  S.loginRole='admin';
+  setLoginRole('admin');
   document.getElementById('loginPwd').value='';
   openSheet('loginOv');
   setTimeout(function(){ var i=document.getElementById('loginPwd'); if(i) i.focus(); }, 300);
@@ -1333,27 +1616,55 @@ function doLogin(){
   var pwd=document.getElementById('loginPwd').value;
   if(!pwd){ toast('Saisissez le mot de passe','err'); return; }
   showLoader('Connexion…');
-  google.script.run
-    .withSuccessHandler(function(r){
-      hideSplash();
-      if(r&&r.success){
-        S.role='admin'; S.adminKey=pwd;
-        try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',pwd); }catch(e){}
-        closeSheet('loginOv');
-        toast('✓ Connecté en tant qu\'administrateur','ok');
-        applyRole();
-        goV('home',null);
-        loadAll();
-      } else {
-        toast(r&&r.error?r.error:'Mot de passe incorrect','err');
-      }
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .login(pwd);
+  if(S.loginRole==='superviseur'){
+    google.script.run
+      .withSuccessHandler(function(r){
+        hideSplash();
+        if(r&&r.success){
+          S.role='superviseur'; S.superviseurKey=pwd; S.superviseurName='Superviseur HSE';
+          try{
+            sessionStorage.setItem('hse_role','superviseur');
+            sessionStorage.setItem('hse_key',pwd);
+            sessionStorage.setItem('hse_supname','Superviseur HSE');
+          }catch(e){}
+          closeSheet('loginOv');
+          toast('✓ Connecté en tant que Superviseur HSE','ok');
+          applyRole();
+          goV('sensibilisation',null);
+          loadAll();
+        } else {
+          toast(r&&r.error?r.error:'Mot de passe incorrect','err');
+        }
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .loginSuperviseur(pwd);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(r){
+        hideSplash();
+        if(r&&r.success){
+          S.role='admin'; S.adminKey=pwd;
+          try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',pwd); }catch(e){}
+          closeSheet('loginOv');
+          toast('✓ Connecté en tant qu\'administrateur','ok');
+          applyRole();
+          goV('home',null);
+          loadAll();
+        } else {
+          toast(r&&r.error?r.error:'Mot de passe incorrect','err');
+        }
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .login(pwd);
+  }
 }
 function logout(){
-  S.role='user'; S.adminKey='';
-  try{ sessionStorage.removeItem('hse_role'); sessionStorage.removeItem('hse_key'); }catch(e){}
+  S.role='user'; S.adminKey=''; S.superviseurKey=''; S.superviseurName='';
+  try{
+    sessionStorage.removeItem('hse_role');
+    sessionStorage.removeItem('hse_key');
+    sessionStorage.removeItem('hse_supname');
+  }catch(e){}
   toast('Déconnecté','info');
   applyRole();
   goV('all',null);
@@ -1361,20 +1672,31 @@ function logout(){
 
 /* Affiche/masque les éléments selon le rôle (et bloque côté serveur en plus) */
 function applyRole(){
-  var admin=isAdmin();
+  var admin=isAdmin(), sup=isSuperviseur(), authorized=isAuthorized();
   document.body.classList.toggle('is-admin', admin);
-  document.body.classList.toggle('is-user', !admin);
+  document.body.classList.toggle('is-superviseur', sup);
+  document.body.classList.toggle('is-user', !authorized);
   // Bouton login/logout
   var lb=document.getElementById('loginBtn');
-  if(lb){ lb.innerHTML = admin ? '🔓 Déconnexion' : '🔒 Log In'; lb.title = admin?'Se déconnecter':'Se connecter'; }
-  // Bouton KPI dans le header
+  if(lb){
+    if(admin) lb.innerHTML='🔓 Déconnexion';
+    else if(sup) lb.innerHTML='👷 Déconnexion';
+    else lb.innerHTML='🔒 Log In';
+    lb.title = authorized?'Se déconnecter':'Se connecter';
+  }
+  // Bouton KPI dans le header (admin seulement)
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
-  // Navigation : masquer Tableau de bord + Dashboard pour les non-admins
+  // Navigation Tableau de bord / Dashboard : admin seulement
   document.querySelectorAll('[data-v="home"],[data-v="admin"]').forEach(function(b){
     b.style.display = admin ? '' : 'none';
   });
-  // Si l'utilisateur est sur une vue interdite, rediriger vers les Tags
-  if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV('all',null);
+  // Navigation Superviseur : admin + superviseur
+  document.querySelectorAll('.sv-nav-item,.sv-nav-sec').forEach(function(b){
+    b.style.display = authorized ? '' : 'none';
+  });
+  // Redirection si vue interdite
+  if(ADMIN_ONLY_VIEWS[S.view] && !admin) goV(sup?'sensibilisation':'all',null);
+  if(SUPERVISEUR_ACCESS_VIEWS[S.view] && !authorized) goV('all',null);
 }
 
 /* ── Responsables : liste dynamique pour les menus déroulants ── */
@@ -1452,9 +1774,12 @@ function saveRespList(){
    NAVIGATION
 ══════════════════════════════════════════ */
 function goV(v, btn){
-  // Blocage d'accès (y compris via URL) : vues réservées à l'admin
   if(ADMIN_ONLY_VIEWS[v] && !isAdmin()){
     toast('🔒 Accès réservé à l\'administrateur','err');
+    v='all'; btn=null;
+  }
+  if(SUPERVISEUR_ACCESS_VIEWS[v] && !isAuthorized()){
+    toast('🔒 Accès réservé au Superviseur HSE','err');
     v='all'; btn=null;
   }
   S.view = v;
@@ -1465,7 +1790,7 @@ function goV(v, btn){
 
   var vmap = {home:'view-home',all:'view-all',open:'view-all',
               closed:'view-all',elevee:'view-all',moyenne:'view-all',faible:'view-all',
-              admin:'view-admin'};
+              admin:'view-admin',sensibilisation:'view-sensibilisation',incendie:'view-incendie'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -1479,6 +1804,8 @@ function goV(v, btn){
 function renderCurrent(){
   if(S.view==='home')  renderHome();
   else if(S.view==='admin') renderAdmin();
+  else if(S.view==='sensibilisation') renderCampagnes();
+  else if(S.view==='incendie') renderInspections();
   else renderTagsView();
 }
 
@@ -2553,6 +2880,427 @@ function updateMFCount(){
 
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ══════════════════════════════════════════
+   SUPERVISEUR HSE — Chargement des données
+══════════════════════════════════════════ */
+function loadSuperviseurData(){
+  if(!isAuthorized()) return;
+  // Charger thèmes (pour le formulaire)
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success){ S.sensiThemes=r.data; fillThemeSelect(); }
+    })
+    .withFailureHandler(function(){})
+    .getSensibilisationThemes();
+  // Charger liste employés
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success) S.empList=r.data||[];
+    })
+    .withFailureHandler(function(){})
+    .getEmployeeList(authKey());
+  // Charger campagnes
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success){ S.campagnes=r.data||[]; if(S.view==='sensibilisation') renderCampagnes(); }
+    })
+    .withFailureHandler(function(){})
+    .getCampagnes(authKey());
+  // Charger inspections
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success){ S.inspections=r.data||[]; if(S.view==='incendie') renderInspections(); }
+    })
+    .withFailureHandler(function(){})
+    .getInspectionsIncendie(authKey());
+}
+
+function fillThemeSelect(){
+  var sel=document.getElementById('sensiTheme'); if(!sel) return;
+  sel.innerHTML='<option value="">— Choisir un thème —</option>'+
+    S.sensiThemes.map(function(t){ return '<option value="'+esc(t)+'">'+esc(t)+'</option>'; }).join('');
+}
+
+/* ══════════════════════════════════════════
+   CAMPAGNES DE SENSIBILISATION
+══════════════════════════════════════════ */
+function renderCampagnes(){
+  if(!S.campagnes.length && isAuthorized()){ loadSuperviseurData(); }
+  var el=document.getElementById('campagnesList'); if(!el) return;
+  if(!S.campagnes.length){
+    el.innerHTML='<div class="sv-empty"><div class="sv-empty-i">📋</div>'+
+      '<div class="sv-empty-t">Aucune campagne enregistrée.<br>Créez la première !</div></div>';
+    return;
+  }
+  el.innerHTML=S.campagnes.map(function(c){
+    var parts=c.participants?c.participants.split(', ').filter(function(x){return x;}):[];
+    var pStr=parts.length>0?parts.length+' participant'+(parts.length>1?'s':''):'Aucun participant';
+    var ficheLnk=c.ficheUrl?'<a class="sv-card-link" href="'+esc(c.ficheUrl)+'" target="_blank">📄 Voir fiche de présence</a>':'';
+    return '<div class="sv-card">'+
+      '<div class="sv-card-top">'+
+        '<div class="sv-card-title">'+esc(c.theme||'Sans thème')+'</div>'+
+        '<div class="sv-card-date">'+esc(c.dateCampagne||c.dateCr||'—')+'</div>'+
+      '</div>'+
+      '<div class="sv-card-meta">'+
+        '<span class="sv-chip">👥 '+pStr+'</span>'+
+        (c.superviseur?'<span class="sv-chip">👷 '+esc(c.superviseur)+'</span>':'')+
+      '</div>'+
+      (parts.length?'<div style="font-size:.72rem;color:var(--t2);margin-top:5px;line-height:1.5">'+
+        parts.slice(0,5).map(esc).join(', ')+(parts.length>5?' +'+( parts.length-5)+' autres…':'')+'</div>':'')+
+      (ficheLnk?'<div>'+ficheLnk+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+function openSensibilisationForm(){
+  if(!isAuthorized()){ toast('🔒 Accès réservé au Superviseur HSE','err'); return; }
+  document.getElementById('sensiDate').value=todayStr();
+  S.selectedEmps=[];
+  S.sensiB64=''; S.sensiBMime='';
+  renderEmpTags();
+  document.getElementById('sensiFuzName').style.display='none';
+  document.getElementById('sensiFileZone').classList.remove('has-file');
+  if(S.sensiThemes.length) fillThemeSelect();
+  else google.script.run.withSuccessHandler(function(r){
+    if(r&&r.success){S.sensiThemes=r.data; fillThemeSelect();}
+  }).getSensibilisationThemes();
+  openSheet('sensibilisationOv');
+}
+
+function submitSensibilisation(){
+  var theme=document.getElementById('sensiTheme').value.trim();
+  var date=document.getElementById('sensiDate').value;
+  if(!date){ toast('Sélectionnez une date','err'); return; }
+  if(!theme){ toast('Sélectionnez un thème','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        toast('✓ Campagne #'+r.id+' enregistrée','ok');
+        closeSheet('sensibilisationOv');
+        google.script.run.withSuccessHandler(function(r2){
+          if(r2&&r2.success){ S.campagnes=r2.data||[]; renderCampagnes(); }
+        }).getCampagnes(authKey());
+      } else toast('Erreur: '+((r&&r.error)||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveCampagneSensibilisation({
+      superviseurKey: authKey(),
+      superviseurName: S.superviseurName || 'Admin',
+      dateCampagne: date,
+      theme: theme,
+      participants: S.selectedEmps.map(function(e){ return e.name+(e.matricule?' ('+e.matricule+')':''); }),
+      fiche: S.sensiB64,
+      ficheMime: S.sensiBMime||'image/jpeg'
+    });
+}
+
+/* ══ Recherche employés ══ */
+function searchEmployees(q){
+  var box=document.getElementById('empResults'); if(!box) return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){ box.classList.remove('on'); box.innerHTML=''; return; }
+  var matches=S.empList.filter(function(e){
+    return (e.name||'').toLowerCase().indexOf(q)!==-1 || (e.matricule||'').toLowerCase().indexOf(q)!==-1;
+  }).slice(0,8);
+  if(!matches.length){ box.classList.remove('on'); return; }
+  box.innerHTML=matches.map(function(e){
+    return '<div class="emp-result-item" onclick="selectEmployee(\''+esc(e.name)+'\',\''+esc(e.matricule||'')+'\')">'+
+      esc(e.name)+(e.matricule?'<span class="emp-result-mat">'+esc(e.matricule)+'</span>':'')+
+    '</div>';
+  }).join('');
+  box.classList.add('on');
+}
+function selectEmployee(name, matricule){
+  var already=S.selectedEmps.some(function(e){ return e.name===name; });
+  if(!already) S.selectedEmps.push({name:name, matricule:matricule||''});
+  document.getElementById('empSearch').value='';
+  document.getElementById('empResults').classList.remove('on');
+  renderEmpTags();
+}
+function removeEmployee(name){
+  S.selectedEmps=S.selectedEmps.filter(function(e){ return e.name!==name; });
+  renderEmpTags();
+}
+function renderEmpTags(){
+  var box=document.getElementById('empTags'); if(!box) return;
+  if(!S.selectedEmps.length){
+    box.innerHTML='<span style="color:var(--t3);font-size:.74rem">Aucun participant sélectionné</span>';
+    return;
+  }
+  box.innerHTML=S.selectedEmps.map(function(e){
+    return '<div class="emp-tag">'+esc(e.name)+
+      (e.matricule?' <span style="font-size:.65rem;opacity:.7">'+esc(e.matricule)+'</span>':'')+
+      '<button class="emp-tag-x" onclick="removeEmployee(\''+esc(e.name)+'\')">×</button>'+
+    '</div>';
+  }).join('');
+}
+
+/* ══ Upload fiche présence ══ */
+function onSensiFileChange(input){
+  if(!input.files||!input.files[0]) return;
+  var f=input.files[0];
+  S.sensiBMime=f.type||'image/jpeg';
+  var zone=document.getElementById('sensiFileZone'), nm=document.getElementById('sensiFuzName');
+  zone.classList.add('has-file'); nm.textContent=f.name; nm.style.display='block';
+  var r=new FileReader();
+  r.onload=function(e){ S.sensiB64=e.target.result.replace(/^data:[^;]+;base64,/,''); };
+  r.readAsDataURL(f);
+}
+
+/* ══════════════════════════════════════════
+   SUIVI MATÉRIEL INCENDIE
+══════════════════════════════════════════ */
+var CL_EXT=[
+  'Manomètre en zone verte (pression OK)',
+  'Goupille de sécurité en place',
+  'Corps de l\'extincteur sans dommage visible',
+  'Étiquette / signalétique lisible et à jour',
+  'Accès dégagé (pas d\'obstacle)',
+  'Fixation murale ou sur support conforme',
+  'Date de révision de moins de 1 an'
+];
+var CL_RIA=[
+  'Vanne d\'isolement ouverte',
+  'Tuyau en bon état (pas de fissure ni fuite)',
+  'Lance et raccord conformes et présents',
+  'Armoire / dévidoir accessible et non verrouillé',
+  'Dévidoir pivote librement',
+  'Pression de service suffisante',
+  'Date de révision de moins de 1 an'
+];
+
+function buildChecklistBody(items, prefix){
+  return items.map(function(item, i){
+    return '<tr>'+
+      '<td>'+esc(item)+'</td>'+
+      '<td>'+
+        '<div class="cl-toggle">'+
+          '<button type="button" class="cl-opt ok" id="'+prefix+i+'_ok" onclick="setClOpt(\''+prefix+'\','+i+',\'ok\')">✓ OK</button>'+
+          '<button type="button" class="cl-opt nok" id="'+prefix+i+'_nok" onclick="setClOpt(\''+prefix+'\','+i+',\'nok\')">✗ NOK</button>'+
+        '</div>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+}
+
+var _clState={};
+function setClOpt(prefix, i, val){
+  _clState[prefix+i]=val;
+  var ok=document.getElementById(prefix+i+'_ok');
+  var nok=document.getElementById(prefix+i+'_nok');
+  if(ok){ ok.classList.toggle('sel', val==='ok'); }
+  if(nok){ nok.classList.toggle('sel', val==='nok'); }
+  updateClScore();
+}
+function updateClScore(){
+  var total=CL_EXT.length+CL_RIA.length;
+  var okCount=0, answered=0;
+  Object.keys(_clState).forEach(function(k){ answered++; if(_clState[k]==='ok') okCount++; });
+  if(!answered){ document.getElementById('clScore').style.display='none'; return; }
+  document.getElementById('clScore').style.display='flex';
+  document.getElementById('clScoreVal').textContent=okCount+'/'+total;
+  var pct=total?Math.round(okCount/total*100):0;
+  var bar=document.getElementById('clScoreBar');
+  bar.style.width=pct+'%';
+  bar.style.background=pct>=80?'var(--grn)':pct>=50?'var(--ora)':'var(--red)';
+}
+
+function getChecklistData(prefix, items){
+  return items.map(function(item, i){
+    return { label:item, etat:_clState[prefix+i]||'nc' };
+  });
+}
+
+function renderInspections(){
+  if(!S.inspections.length && isAuthorized()){ loadSuperviseurData(); }
+  var el=document.getElementById('incendieList'); if(!el) return;
+  if(!S.inspections.length){
+    el.innerHTML='<div class="sv-empty"><div class="sv-empty-i">🧯</div>'+
+      '<div class="sv-empty-t">Aucune inspection enregistrée.<br>Créez la première !</div></div>';
+    return;
+  }
+  el.innerHTML=S.inspections.map(function(ins){
+    var nokExt=(ins.extincteursData||[]).filter(function(x){return x.etat==='nok';}).length;
+    var nokRia=(ins.riaData||[]).filter(function(x){return x.etat==='nok';}).length;
+    var totalNok=nokExt+nokRia;
+    var scanLink=ins.scanUrl?'<a class="sv-card-link" href="'+esc(ins.scanUrl)+'" target="_blank">📄 Voir checklist scannée</a>':'';
+    return '<div class="sv-card">'+
+      '<div class="sv-card-top">'+
+        '<div class="sv-card-title">Inspection #'+ins.id+'</div>'+
+        '<div class="sv-card-date">'+esc(ins.dateInspection||ins.dateCr||'—')+'</div>'+
+      '</div>'+
+      '<div class="sv-card-meta">'+
+        '<span class="sv-chip '+(totalNok>0?'nok':'ok')+'">'+(totalNok>0?'⚠ '+totalNok+' NOK':'✓ Tout OK')+'</span>'+
+        '<span class="sv-chip">🧯 '+(ins.extincteursData||[]).length+' ext.</span>'+
+        '<span class="sv-chip">🚿 '+(ins.riaData||[]).length+' RIA</span>'+
+        (ins.superviseur?'<span class="sv-chip">👷 '+esc(ins.superviseur)+'</span>':'')+
+      '</div>'+
+      (ins.observations?'<div style="font-size:.72rem;color:var(--t2);margin-top:5px">'+esc(ins.observations)+'</div>':'')+
+      (scanLink?'<div>'+scanLink+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+function openIncendieForm(){
+  if(!isAuthorized()){ toast('🔒 Accès réservé au Superviseur HSE','err'); return; }
+  document.getElementById('incDate').value=todayStr();
+  document.getElementById('incObs').value='';
+  _clState={};
+  document.getElementById('clExtBody').innerHTML=buildChecklistBody(CL_EXT,'ext');
+  document.getElementById('clRiaBody').innerHTML=buildChecklistBody(CL_RIA,'ria');
+  document.getElementById('clScore').style.display='none';
+  S.incScanB64=''; S.incScanMime='';
+  document.getElementById('incFuzName').style.display='none';
+  document.getElementById('incFileZone').classList.remove('has-file');
+  openSheet('incendieOv');
+}
+
+function submitIncendie(){
+  var date=document.getElementById('incDate').value;
+  if(!date){ toast('Sélectionnez une date','err'); return; }
+  var extData=getChecklistData('ext',CL_EXT);
+  var riaData=getChecklistData('ria',CL_RIA);
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        toast('✓ Inspection #'+r.id+' enregistrée','ok');
+        closeSheet('incendieOv');
+        google.script.run.withSuccessHandler(function(r2){
+          if(r2&&r2.success){ S.inspections=r2.data||[]; renderInspections(); }
+        }).getInspectionsIncendie(authKey());
+      } else toast('Erreur: '+((r&&r.error)||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveInspectionIncendie({
+      superviseurKey: authKey(),
+      superviseurName: S.superviseurName || 'Admin',
+      dateInspection: date,
+      extincteursData: extData,
+      riaData: riaData,
+      observations: document.getElementById('incObs').value.trim(),
+      scan: S.incScanB64,
+      scanMime: S.incScanMime||'image/jpeg'
+    });
+}
+
+function onIncFileChange(input){
+  if(!input.files||!input.files[0]) return;
+  var f=input.files[0];
+  S.incScanMime=f.type||'image/jpeg';
+  var zone=document.getElementById('incFileZone'), nm=document.getElementById('incFuzName');
+  zone.classList.add('has-file'); nm.textContent=f.name; nm.style.display='block';
+  var r=new FileReader();
+  r.onload=function(e){ S.incScanB64=e.target.result.replace(/^data:[^;]+;base64,/,''); };
+  r.readAsDataURL(f);
+}
+
+/* ══════════════════════════════════════════
+   ADMIN — Config Superviseur HSE
+══════════════════════════════════════════ */
+function openAdminSupConfig(){
+  if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
+  document.getElementById('supPwdIn').value='';
+  // Charger thèmes
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success){ S.sensiThemes=r.data; renderAdminThemes(); }
+    })
+    .getSensibilisationThemes();
+  // Charger employés
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success){ S.empList=r.data||[]; renderAdminEmployees(); }
+    })
+    .getEmployeeList(S.adminKey);
+  openSheet('adminSupOv');
+}
+
+function renderAdminThemes(){
+  var box=document.getElementById('themesList'); if(!box) return;
+  box.innerHTML=(S.sensiThemes||[]).map(function(t,i){
+    return '<div style="display:flex;gap:6px;align-items:center">'+
+      '<input class="fi adm-theme" value="'+esc(t)+'" style="flex:1;padding:7px 10px;font-size:.8rem"/>'+
+      '<button class="btn btn-r" style="padding:7px 10px;min-height:0" onclick="this.parentNode.remove()">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function addThemeRow(){
+  var inp=document.getElementById('newThemeIn');
+  var val=(inp.value||'').trim(); if(!val) return;
+  var box=document.getElementById('themesList');
+  var div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.innerHTML='<input class="fi adm-theme" value="'+esc(val)+'" style="flex:1;padding:7px 10px;font-size:.8rem"/>'+
+    '<button class="btn btn-r" style="padding:7px 10px;min-height:0" onclick="this.parentNode.remove()">✕</button>';
+  box.appendChild(div);
+  inp.value='';
+}
+
+function renderAdminEmployees(){
+  var box=document.getElementById('employeeRows'); if(!box) return;
+  box.innerHTML=(S.empList||[]).map(function(e){
+    return '<div class="resp-row">'+
+      '<input class="fi rr-name adm-emp-name" placeholder="Nom complet" value="'+esc(e.name||'')+'" style="flex:1"/>'+
+      '<input class="fi adm-emp-mat" placeholder="Matricule" value="'+esc(e.matricule||'')+'" style="flex:0 0 90px"/>'+
+      '<button class="btn btn-r rr-del" onclick="this.parentNode.remove()">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function addEmployeeRow(){
+  var box=document.getElementById('employeeRows');
+  var div=document.createElement('div'); div.className='resp-row';
+  div.innerHTML='<input class="fi rr-name adm-emp-name" placeholder="Nom complet" style="flex:1"/>'+
+    '<input class="fi adm-emp-mat" placeholder="Matricule" style="flex:0 0 90px"/>'+
+    '<button class="btn btn-r rr-del" onclick="this.parentNode.remove()">✕</button>';
+  box.appendChild(div);
+}
+
+function saveSupervisorPwd(){
+  var pwd=(document.getElementById('supPwdIn').value||'').trim();
+  if(!pwd){ toast('Saisissez un mot de passe','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success) toast('✓ Mot de passe superviseur mis à jour','ok');
+      else toast((r&&r.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveSupervisorPassword(S.adminKey, pwd);
+}
+
+function saveSupConfig(){
+  // Thèmes
+  var themes=[];
+  document.querySelectorAll('#themesList .adm-theme').forEach(function(inp){
+    var v=(inp.value||'').trim(); if(v) themes.push(v);
+  });
+  // Employés
+  var employees=[];
+  document.querySelectorAll('#employeeRows .resp-row').forEach(function(row){
+    var name=(row.querySelector('.adm-emp-name').value||'').trim();
+    var mat=(row.querySelector('.adm-emp-mat').value||'').trim();
+    if(name||mat) employees.push({name:name, matricule:mat});
+  });
+  var pending=2;
+  function done(ok,err){ pending--; if(!pending){ hideSplash(); if(ok) toast('✓ Configuration sauvegardée','ok'); else toast('Erreur: '+err,'err'); } }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){ if(r&&r.success){ S.sensiThemes=r.data; } done(true); })
+    .withFailureHandler(function(e){ done(false,e.message); })
+    .saveSensibilisationThemes(S.adminKey, themes);
+  google.script.run
+    .withSuccessHandler(function(r){ if(r&&r.success){ S.empList=r.data; } done(true); })
+    .withFailureHandler(function(e){ done(false,e.message); })
+    .saveEmployeeList(S.adminKey, employees);
+}
+
+
 </script>
 </body>
 </html>
