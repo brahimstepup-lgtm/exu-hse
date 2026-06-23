@@ -42,6 +42,177 @@ function isAdmin_(key) {
 }
 
 // ================================================================
+//  AUTH — Employees_DB
+// ================================================================
+var EDB = { MAT:0, NAME:1, DEPT:2, PWD:3, ROLE:4, ACTIF:5 };
+var EDB_SHEET = 'Employees_DB';
+var EDB_START = 9; // data starts row 9
+
+function hashPwd_(pwd) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(pwd));
+  return bytes.map(function(b){ return ('0'+(b&0xff).toString(16)).slice(-2); }).join('');
+}
+
+function getEdbSheet_() {
+  return SpreadsheetApp.openById(SHEET_ID).getSheetByName(EDB_SHEET);
+}
+
+function loginUser(p) {
+  try {
+    var mat = String(p.matricule||'').trim();
+    var pwd = String(p.password||'').trim();
+    if (!mat || !pwd) return { success:false, error:'Matricule et mot de passe requis' };
+
+    // ── Accès maître admin : ADMIN_PASSWORD comme mot de passe de bootstrap ──
+    var adminPwd = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+    if (adminPwd && String(pwd) === String(adminPwd)) {
+      var secret0 = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+      var expires0 = Date.now() + 8*3600*1000;
+      var payload0 = mat+'.admin.'+expires0;
+      var digest0 = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload0+secret0);
+      var sig0 = digest0.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
+      // Mettre à jour le rôle et actif dans la feuille si le matricule existe
+      var sh0 = getEdbSheet_();
+      var adminName = 'Administrateur';
+      if (sh0) {
+        var lr0 = sh0.getLastRow();
+        if (lr0 >= EDB_START) {
+          var rows0 = sh0.getRange(EDB_START, 1, lr0-EDB_START+1, 6).getValues();
+          for (var j=0; j<rows0.length; j++) {
+            if (String(rows0[j][EDB.MAT]).trim() === mat) {
+              adminName = String(rows0[j][EDB.NAME]).trim() || adminName;
+              sh0.getRange(EDB_START+j, EDB.ROLE+1).setValue('admin');
+              sh0.getRange(EDB_START+j, EDB.ACTIF+1).setValue(true);
+              break;
+            }
+          }
+        }
+      }
+      return { success:true, role:'admin', name:adminName, matricule:mat,
+               token: mat+'.admin.'+expires0+'.'+sig0 };
+    }
+
+    var sh = getEdbSheet_();
+    if (!sh) return { success:false, error:'Base employés introuvable' };
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:false, error:'Aucun employé enregistré' };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var hash = hashPwd_(pwd);
+    for (var i=0; i<rows.length; i++) {
+      var r = rows[i];
+      if (String(r[EDB.MAT]).trim() !== mat) continue;
+      if (String(r[EDB.ACTIF]).toLowerCase() !== 'true') return { success:false, error:'Accès désactivé. Contactez l\'administrateur.' };
+      if (!r[EDB.PWD]) return { success:false, error:'Mot de passe non défini. Contactez l\'administrateur.' };
+      if (String(r[EDB.PWD]) !== hash) return { success:false, error:'Mot de passe incorrect' };
+      var role = String(r[EDB.ROLE]||'user').toLowerCase().trim();
+      var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+      var expires = Date.now() + 8*3600*1000;
+      var payload = mat+'.'+role+'.'+expires;
+      var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
+      var sig = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
+      var token = payload+'.'+sig;
+      return { success:true, role:role, name:String(r[EDB.NAME]).trim(), matricule:mat, token:token };
+    }
+    return { success:false, error:'Matricule introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function verifySession_(token) {
+  try {
+    var parts = String(token||'').split('.');
+    if (parts.length !== 4) return null;
+    var mat=parts[0], role=parts[1], expires=parseInt(parts[2],10), sig=parts[3];
+    if (Date.now() > expires) return null;
+    var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+    var payload = mat+'.'+role+'.'+expires;
+    var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
+    var expected = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
+    if (sig !== expected) return null;
+    return { matricule:mat, role:role };
+  } catch(e) { return null; }
+}
+
+function isSessionAdmin_(token) {
+  var s = verifySession_(token);
+  return s && s.role === 'admin';
+}
+
+// Admin: list all employees with access status
+function adminGetUsers(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:true, data:[] };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var data = rows.filter(function(r){ return String(r[EDB.MAT]).trim(); }).map(function(r,i){
+      return {
+        rowIndex: EDB_START+i,
+        matricule: String(r[EDB.MAT]).trim(),
+        name: String(r[EDB.NAME]).trim(),
+        dept: String(r[EDB.DEPT]).trim(),
+        hasPassword: !!String(r[EDB.PWD]).trim(),
+        role: String(r[EDB.ROLE]||'user').trim(),
+        actif: String(r[EDB.ACTIF]).toLowerCase() === 'true'
+      };
+    });
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Admin: set password for an employee
+function adminSetPassword(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var mat = String(p.matricule||'').trim();
+    for (var i=0; i<rows.length; i++) {
+      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
+      var ri = EDB_START+i;
+      sh.getRange(ri, EDB.PWD+1).setValue(hashPwd_(p.password));
+      if (!String(rows[i][EDB.ROLE]).trim()) sh.getRange(ri, EDB.ROLE+1).setValue('user');
+      if (!String(rows[i][EDB.ACTIF]).trim()) sh.getRange(ri, EDB.ACTIF+1).setValue(true);
+      return { success:true };
+    }
+    return { success:false, error:'Matricule introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Admin: toggle active status
+function adminToggleUser(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var rows = sh.getRange(EDB_START, 1, sh.getLastRow()-EDB_START+1, 6).getValues();
+    var mat = String(p.matricule||'').trim();
+    for (var i=0; i<rows.length; i++) {
+      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
+      sh.getRange(EDB_START+i, EDB.ACTIF+1).setValue(!!p.actif);
+      return { success:true };
+    }
+    return { success:false, error:'Matricule introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Admin: set role
+function adminSetRole(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var rows = sh.getRange(EDB_START, 1, sh.getLastRow()-EDB_START+1, 6).getValues();
+    var mat = String(p.matricule||'').trim();
+    for (var i=0; i<rows.length; i++) {
+      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
+      sh.getRange(EDB_START+i, EDB.ROLE+1).setValue(p.role==='admin'?'admin':'user');
+      return { success:true };
+    }
+    return { success:false, error:'Matricule introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
 //  ENTRY POINT (Web App + Image endpoint)
 // ================================================================
 // ================================================================
@@ -522,13 +693,13 @@ function getResponsablesList() {
 
 // Admin : noms + emails (pour l'édition)
 function getResponsables(adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   return { success:true, data: getRespDirectory_() };
 }
 
 // Admin : enregistre l'annuaire (noms + emails)
 function saveResponsables(adminKey, list) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   if (!Array.isArray(list)) return { success:false, error:'Liste invalide' };
   var clean = list.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
                   .filter(function(r){ return r.name; });
@@ -567,7 +738,7 @@ function getFilterOptions() {
 //  KPI
 // ================================================================
 function getKPIs(adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var res = getTags();
     if (!res.success) return res;
@@ -632,7 +803,7 @@ function getKPIs(adminKey) {
 //  UPDATE / DELETE
 // ================================================================
 function updateTag(d) {
-  if (!isAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(d && d.adminKey) && !isSessionAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri    = parseInt(d.rowIndex, 10);
@@ -672,7 +843,7 @@ function updateTag(d) {
 }
 
 function deleteTag(rowIndex, adminKey) {
-  if (!isAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     getSheet_().deleteRow(parseInt(rowIndex, 10));
     return { success: true, status: 'SUCCESS' };
@@ -684,7 +855,7 @@ function deleteTag(rowIndex, adminKey) {
 //  Vide la cellule correspondante et met le fichier Drive à la corbeille.
 // ================================================================
 function deletePhoto(p) {
-  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);
@@ -725,6 +896,13 @@ function deletePhoto(p) {
     }
 
     sheet.getRange(ri, col + 1).setValue('');
+
+    // Si la photo après est supprimée, repasser le statut à "Ouvert"
+    if (which === 'apres') {
+      sheet.getRange(ri, C.STATUT + 1).setValue('🟥 Ouvert');
+      sheet.getRange(ri, C.DATE_FERME + 1).setValue('');
+    }
+
     return { success:true, status:'SUCCESS', which:which };
   } catch(e) { return { success:false, error:e.toString() }; }
 }
@@ -804,7 +982,7 @@ function respEmailFor_(name) {
 }
 
 function sendTagEmail(p) {
-  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
   try {
     var sheet = getSheet_();
     var ri = parseInt(p.rowIndex, 10);
