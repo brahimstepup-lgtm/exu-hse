@@ -994,6 +994,7 @@ function sendTagEmail(p) {
     var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
 
     // Résoudre les destinataires principaux (toList) envoyés depuis le client
+    var resp = txt_(row[C.RESP]);
     var toEmails = [];
     if (p.toList && p.toList.length) {
       for (var ti = 0; ti < p.toList.length; ti++) {
@@ -1005,7 +1006,6 @@ function sendTagEmail(p) {
     }
     // Fallback : responsable du tag
     if (!toEmails.length) {
-      var resp = txt_(row[C.RESP]);
       if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
       var fallbackTo = respEmailFor_(resp);
       if (!fallbackTo) return { success:false, error:'Email non configuré pour « ' + resp + ' ».' };

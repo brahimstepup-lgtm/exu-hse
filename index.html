@@ -3287,15 +3287,23 @@ function saveSupConfig(){
     var mat=(row.querySelector('.adm-emp-mat').value||'').trim();
     if(name||mat) employees.push({name:name, matricule:mat});
   });
-  var pending=2;
-  function done(ok,err){ pending--; if(!pending){ hideSplash(); if(ok) toast('✓ Configuration sauvegardée','ok'); else toast('Erreur: '+err,'err'); } }
+  var pending=2, _supErr=false, _supErrMsg='';
+  function done(ok,err){
+    if(!ok){ _supErr=true; _supErrMsg=err||'Erreur'; }
+    pending--;
+    if(!pending){
+      hideSplash();
+      if(!_supErr){ closeSheet('adminSupOv'); toast('✓ Configuration sauvegardée','ok'); }
+      else toast('Erreur: '+_supErrMsg,'err');
+    }
+  }
   showLoader('Enregistrement…');
   google.script.run
-    .withSuccessHandler(function(r){ if(r&&r.success){ S.sensiThemes=r.data; } done(true); })
+    .withSuccessHandler(function(r){ if(r&&r.success){ S.sensiThemes=r.data; } done(r&&r.success,r&&r.error); })
     .withFailureHandler(function(e){ done(false,e.message); })
     .saveSensibilisationThemes(S.adminKey, themes);
   google.script.run
-    .withSuccessHandler(function(r){ if(r&&r.success){ S.empList=r.data; } done(true); })
+    .withSuccessHandler(function(r){ if(r&&r.success){ S.empList=r.data; } done(r&&r.success,r&&r.error); })
     .withFailureHandler(function(e){ done(false,e.message); })
     .saveEmployeeList(S.adminKey, employees);
 }
