@@ -137,6 +137,16 @@ function isSessionAdmin_(token) {
   return s && s.role === 'admin';
 }
 
+function isSessionSupervisor_(token) {
+  var s = verifySession_(token);
+  return s && s.role === 'hse_supervisor';
+}
+
+function isSessionSuperOrAdmin_(token) {
+  var s = verifySession_(token);
+  return s && (s.role === 'admin' || s.role === 'hse_supervisor');
+}
+
 // Admin: list all employees with access status
 function adminGetUsers(adminKey) {
   if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
@@ -203,9 +213,11 @@ function adminSetRole(p) {
     var sh = getEdbSheet_();
     var rows = sh.getRange(EDB_START, 1, sh.getLastRow()-EDB_START+1, 6).getValues();
     var mat = String(p.matricule||'').trim();
+    var validRoles = ['admin','user','hse_supervisor'];
+    var newRole = validRoles.indexOf(p.role)!==-1 ? p.role : 'user';
     for (var i=0; i<rows.length; i++) {
       if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
-      sh.getRange(EDB_START+i, EDB.ROLE+1).setValue(p.role==='admin'?'admin':'user');
+      sh.getRange(EDB_START+i, EDB.ROLE+1).setValue(newRole);
       return { success:true };
     }
     return { success:false, error:'Matricule introuvable' };
@@ -1252,4 +1264,275 @@ function debugPhotoMapping() {
       'avantId=' + (t.photoAvantId || '∅') + ' | ' +
       'apresId=' + (t.photoApresId || '∅'));
   });
+}
+
+// ================================================================
+//  SUPERVISEUR HSE — Feuilles Sensibilisation & Suivi Incendie
+// ================================================================
+
+var SENSI_SHEET    = 'Sensibilisation';
+var INCENDIE_SHEET = 'Suivi_Incendie';
+
+function getSensiSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(SENSI_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(SENSI_SHEET);
+    sh.getRange(1,1,1,9).setValues([[
+      'ID','Date Campagne','Thème','Matricule Animateur','Nom Animateur',
+      'Participants (JSON)','Fiche de présence (URL)','Notes','Date Création'
+    ]]);
+    sh.getRange(1,1,1,9).setFontWeight('bold').setBackground('#f5c518').setFontColor('#000000');
+    sh.setColumnWidth(6, 300);
+    sh.setColumnWidth(7, 200);
+  }
+  return sh;
+}
+
+function getIncendieSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(INCENDIE_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(INCENDIE_SHEET);
+    sh.getRange(1,1,1,13).setValues([[
+      'ID','Date Inspection','Matricule Superviseur','Nom Superviseur',
+      'Type','ID Équipement','Zone','Checklist (JSON)','État Global',
+      'Observations','Prochaine Inspection','Photo Checklist (URL)','Date Création'
+    ]]);
+    sh.getRange(1,1,1,13).setFontWeight('bold').setBackground('#e74c3c').setFontColor('#ffffff');
+    sh.setColumnWidth(8, 300);
+    sh.setColumnWidth(12, 200);
+  }
+  return sh;
+}
+
+// ── Recherche d'employés pour sélection des participants (tous les employés du registre) ──
+function searchEmployeesHSE(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var q = String(p.query||'').trim().toLowerCase();
+    var sh = getEdbSheet_();
+    if (!sh) return { success:true, data:[] };
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:true, data:[] };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var results = [];
+    for (var i=0; i<rows.length; i++) {
+      var r = rows[i];
+      var mat  = String(r[EDB.MAT]).trim();
+      var name = String(r[EDB.NAME]).trim();
+      var dept = String(r[EDB.DEPT]).trim();
+      if (!mat) continue;
+      if (!q || mat.toLowerCase().indexOf(q)!==-1 || name.toLowerCase().indexOf(q)!==-1) {
+        results.push({ matricule:mat, name:name, dept:dept });
+      }
+      if (results.length >= 30) break;
+    }
+    return { success:true, data:results };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Thèmes de sensibilisation (configurés par l'admin) ──
+function getSensibilisationThemes(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('SENSI_THEMES')||'[]';
+    return { success:true, data:JSON.parse(raw) };
+  } catch(e) { return { success:true, data:[] }; }
+}
+
+function saveSensibilisationThemes(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var themes = (p.themes||[]).filter(function(t){ return String(t).trim(); });
+    PropertiesService.getScriptProperties().setProperty('SENSI_THEMES', JSON.stringify(themes));
+    return { success:true, data:themes };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Enregistrer une campagne de sensibilisation ──
+function saveCampagne(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess = verifySession_(p.token);
+    var sh = getSensiSheet_();
+    var lr = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+
+    var ficheUrl = '';
+    if (p.fichePhoto && String(p.fichePhoto).length > 10) {
+      var ext  = (p.fiche_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
+      var fname = 'Sensi_' + nextId + '_' + new Date().getTime() + '.' + ext;
+      ficheUrl = savePhotoToFolder_(p.fichePhoto, fname, p.fiche_mime||'image/jpeg');
+    }
+
+    sh.appendRow([
+      nextId,
+      p.dateCampagne ? new Date(p.dateCampagne) : new Date(),
+      String(p.theme||''),
+      sess.matricule,
+      String(p.animateurNom||sess.matricule),
+      JSON.stringify(p.participants||[]),
+      ficheUrl,
+      String(p.notes||''),
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire toutes les campagnes de sensibilisation ──
+function getCampagnes(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getSensiSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2, 1, lr-1, 9).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var parts = [];
+      try { parts = JSON.parse(r[5]||'[]'); } catch(e) { parts = []; }
+      return {
+        id: r[0],
+        dateCampagne: fmtDate_(r[1]),
+        theme: String(r[2]),
+        animateurMatricule: String(r[3]),
+        animateurNom: String(r[4]),
+        participants: parts,
+        ficheUrl: String(r[6]),
+        ficheId: extractFileId_(r[6]),
+        notes: String(r[7]),
+        dateCreation: fmtDate_(r[8])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Profil employé : campagnes dont il a bénéficié ──
+function getEmployeeSensibilisations(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var mat = String(p.matricule||'').trim();
+    if (!mat) return { success:false, error:'Matricule requis' };
+
+    // Profil depuis Employees_DB
+    var employee = null;
+    var sh = getEdbSheet_();
+    if (sh) {
+      var lr = sh.getLastRow();
+      if (lr >= EDB_START) {
+        var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+        for (var i=0; i<rows.length; i++) {
+          if (String(rows[i][EDB.MAT]).trim() === mat) {
+            employee = {
+              matricule: mat,
+              name:  String(rows[i][EDB.NAME]).trim(),
+              dept:  String(rows[i][EDB.DEPT]).trim(),
+              role:  String(rows[i][EDB.ROLE]).trim(),
+              actif: String(rows[i][EDB.ACTIF]).toLowerCase() === 'true'
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    // Campagnes de la feuille Sensibilisation
+    var sensiSh = getSensiSheet_();
+    var lr2 = sensiSh.getLastRow();
+    var campagnes = [];
+    if (lr2 >= 2) {
+      var rows2 = sensiSh.getRange(2, 1, lr2-1, 9).getValues();
+      for (var j=0; j<rows2.length; j++) {
+        var r = rows2[j];
+        if (!r[0]) continue;
+        var parts = [];
+        try { parts = JSON.parse(r[5]||'[]'); } catch(e2) { parts = []; }
+        var wasParticipant = parts.some(function(pp){ return String(pp.matricule).trim() === mat; });
+        var wasAnimateur   = String(r[3]).trim() === mat;
+        if (wasParticipant || wasAnimateur) {
+          campagnes.push({
+            id:             r[0],
+            dateCampagne:   fmtDate_(r[1]),
+            theme:          String(r[2]),
+            animateurNom:   String(r[4]),
+            nbParticipants: parts.length,
+            wasAnimateur:   wasAnimateur,
+            ficheId:        extractFileId_(r[6]),
+            notes:          String(r[7])
+          });
+        }
+      }
+    }
+
+    return { success:true, employee:employee, campagnes:campagnes.reverse(), total:campagnes.length };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Enregistrer une inspection incendie (extincteur / RIA) ──
+function saveChecklist(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess = verifySession_(p.token);
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+
+    var photoUrl = '';
+    if (p.photoChecklist && String(p.photoChecklist).length > 10) {
+      var ext2 = (p.photo_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
+      var fname2 = 'Incendie_' + nextId + '_' + new Date().getTime() + '.' + ext2;
+      photoUrl = savePhotoToFolder_(p.photoChecklist, fname2, p.photo_mime||'image/jpeg');
+    }
+
+    sh.appendRow([
+      nextId,
+      p.dateInspection ? new Date(p.dateInspection) : new Date(),
+      sess.matricule,
+      String(p.superviseurNom||sess.matricule),
+      String(p.type||'Extincteur'),
+      String(p.idEquipement||''),
+      String(p.zone||''),
+      JSON.stringify(p.checklist||{}),
+      String(p.etatGlobal||'Conforme'),
+      String(p.observations||''),
+      p.prochaineInspection ? new Date(p.prochaineInspection) : '',
+      photoUrl,
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire toutes les inspections incendie ──
+function getChecklists(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2, 1, lr-1, 13).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var checks = {};
+      try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
+      return {
+        id: r[0],
+        dateInspection: fmtDate_(r[1]),
+        superviseurMatricule: String(r[2]),
+        superviseurNom: String(r[3]),
+        type: String(r[4]),
+        idEquipement: String(r[5]),
+        zone: String(r[6]),
+        checklist: checks,
+        etatGlobal: String(r[8]),
+        observations: String(r[9]),
+        prochaineInspection: fmtDate_(r[10]),
+        photoId: extractFileId_(r[11]),
+        photoUrl: String(r[11]),
+        dateCreation: fmtDate_(r[12])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
 }

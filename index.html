@@ -694,6 +694,74 @@ img{max-width:100%;display:block;}
 
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
 .fab{animation:fabPulse 2.4s ease-in-out infinite;}
+
+/* ═══ SUPERVISEUR HSE ═══ */
+.hse-section{margin-bottom:20px;}
+.hse-section-title{font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.hse-card{background:var(--ink2);border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--line2);}
+.hse-card-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.hse-card-title{font-size:.95rem;font-weight:600;color:var(--t1);}
+.hse-card-badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;}
+.badge-ok{background:rgba(34,197,94,.2);color:#22c55e;}
+.badge-nok{background:rgba(239,68,68,.2);color:#ef4444;}
+.badge-partial{background:rgba(245,197,24,.2);color:#f5c518;}
+.hse-card-meta{font-size:.78rem;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap;}
+.hse-card-meta span::before{content:'';margin-right:4px;}
+.emp-chip{display:inline-flex;align-items:center;gap:5px;background:var(--ink3);border-radius:20px;padding:4px 10px;font-size:.78rem;margin:3px;}
+.emp-chip .rm-emp{background:none;border:none;color:var(--t3);cursor:pointer;padding:0;font-size:.8rem;line-height:1;}
+.emp-search-res{background:var(--ink3);border-radius:8px;margin-top:4px;overflow:hidden;max-height:220px;overflow-y:auto;}
+.emp-search-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line2);}
+.emp-search-item:hover{background:var(--ink4);}
+.emp-search-item .em-mat{font-size:.75rem;color:var(--t3);}
+.chk-group{margin-bottom:16px;}
+.chk-group-title{font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--line2);}
+.chk-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);}
+.chk-item:last-child{border-bottom:none;}
+.chk-item label{flex:1;font-size:.88rem;color:var(--t1);cursor:pointer;}
+.chk-item input[type=checkbox]{width:18px;height:18px;accent-color:#f5c518;cursor:pointer;flex-shrink:0;}
+.hse-upload-area{border:2px dashed var(--line2);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.hse-upload-area:hover{border-color:#f5c518;}
+.hse-upload-area.has-file{border-color:#22c55e;border-style:solid;}
+.hse-upload-label{font-size:.85rem;color:var(--t3);margin-top:6px;}
+.hse-upload-preview{font-size:.8rem;color:#22c55e;margin-top:6px;font-weight:600;}
+.themes-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.themes-row input{flex:1;}
+.themes-row button{flex-shrink:0;}
+.stat-pill{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:6px;}
+.stat-conforme{background:rgba(34,197,94,.18);color:#22c55e;}
+.stat-nonconforme{background:rgba(239,68,68,.18);color:#ef4444;}
+.stat-partiel{background:rgba(245,197,24,.18);color:#f5c518;}
+.hse-empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:.9rem;}
+.hse-empty .hse-empty-ico{font-size:2.5rem;margin-bottom:10px;}
+.hse-fab-wrap{position:sticky;bottom:80px;display:flex;justify-content:flex-end;padding:0 16px;z-index:10;}
+.hse-fab-btn{background:#f5c518;color:#000;border:none;border-radius:50px;padding:14px 22px;font-weight:700;font-size:.95rem;cursor:pointer;box-shadow:0 4px 18px rgba(245,197,24,.4);}
+.view-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.equip-drop-item{padding:10px 14px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line2);}
+.equip-drop-item:last-child{border-bottom:none;}
+.equip-drop-item:hover,.equip-drop-item.active{background:var(--ink4);}
+.equip-drop-item mark{background:rgba(245,197,24,.3);color:var(--t1);border-radius:2px;}
+.sensi-tab{flex:1;background:none;border:none;color:var(--t3);border-radius:7px;padding:10px 8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;}
+.sensi-tab.on{background:var(--ink4);color:var(--t1);}
+.profil-card{background:var(--ink2);border-radius:14px;padding:18px;border:1px solid var(--line2);margin-bottom:16px;}
+.profil-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#e67e22);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#000;flex-shrink:0;}
+.profil-name{font-size:1.05rem;font-weight:700;color:var(--t1);}
+.profil-meta{font-size:.8rem;color:var(--t3);margin-top:3px;}
+.profil-stats{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.profil-stat{flex:1;min-width:80px;background:var(--ink3);border-radius:10px;padding:12px;text-align:center;}
+.profil-stat-val{font-size:1.5rem;font-weight:700;color:#f5c518;}
+.profil-stat-lbl{font-size:.72rem;color:var(--t3);margin-top:2px;}
+.profil-history{margin-top:16px;}
+.profil-history-title{font-size:.78rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.profil-hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);}
+.profil-hist-item:last-child{border-bottom:none;}
+.profil-hist-dot{width:10px;height:10px;border-radius:50%;background:#f5c518;flex-shrink:0;margin-top:4px;}
+.profil-hist-dot.anim{background:#3b82f6;}
+.profil-hist-theme{font-size:.88rem;font-weight:600;color:var(--t1);}
+.profil-hist-meta{font-size:.75rem;color:var(--t3);margin-top:2px;}
+.role-badge{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;}
+.role-admin{background:rgba(239,68,68,.2);color:#ef4444;}
+.role-super{background:rgba(245,197,24,.2);color:#f5c518;}
+.role-user{background:rgba(107,114,128,.2);color:#9ca3af;}
 </style>
 </head>
 <body>
@@ -751,6 +819,9 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="closed"><span class="snav-i">✅</span>Fermés</button>
   <div class="sb-sec">Admin KPI</div>
   <button class="snav" data-v="admin"><span class="snav-i">📊</span>Dashboard</button>
+  <div class="sb-sec" id="sbSecSuper" style="display:none">Superviseur HSE</div>
+  <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
+  <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
 </nav>
 
 <!-- APP -->
@@ -869,19 +940,204 @@ img{max-width:100%;display:block;}
         <h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1>
         <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
+        <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
       </div>
       <div id="adminBody"></div>
     </div>
+
+    <!-- SENSIBILISATION -->
+    <div class="view" id="view-sensibilisation">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">📋 Sensibilisation</h1>
+        <button class="btn btn-p" id="sensiNewBtn" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
+      </div>
+      <!-- Onglets -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;background:var(--ink2);border-radius:10px;padding:4px">
+        <button class="sensi-tab on" id="stab-campagnes" onclick="switchSensiTab('campagnes',this)">📋 Campagnes</button>
+        <button class="sensi-tab" id="stab-profil" onclick="switchSensiTab('profil',this)">👤 Profil employé</button>
+      </div>
+      <!-- Campagnes -->
+      <div id="sensiTabCampagnes">
+        <div id="sensiBody"></div>
+      </div>
+      <!-- Profil employé -->
+      <div id="sensiTabProfil" style="display:none">
+        <div style="position:relative;margin-bottom:4px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:1rem">🔍</span>
+          <input class="fi" id="sensiProfilSearch" placeholder="Rechercher un employé par nom ou matricule…"
+            oninput="searchProfilEmp(this.value)"
+            style="padding-left:36px"/>
+        </div>
+        <div id="sensiProfilResults" class="emp-search-res" style="margin-top:2px"></div>
+        <div id="sensiProfilCard" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- INCENDIE -->
+    <div class="view" id="view-incendie">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🧯 Suivi Incendie</h1>
+        <button class="btn btn-p" onclick="openIncendieForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle inspection</button>
+      </div>
+      <div id="incendieBody"></div>
+    </div>
   </main>
 
-  <nav class="bnav">
-    <button class="nb on" data-v="home"><span class="nb-icon">🏠</span><span>Accueil</span><span class="nb-dot"></span></button>
+  <nav class="bnav" id="mainBnav">
+    <button class="nb on" data-v="home" id="nbHome"><span class="nb-icon">🏠</span><span>Accueil</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="all"><span class="nb-icon">🏷️</span><span>Tags</span><span class="nb-dot"></span></button>
-    <button class="nb" data-v="open"><span class="nb-icon">🟥</span><span>Ouverts</span><span class="nb-dot"></span></button>
-    <button class="nb" data-v="admin"><span class="nb-icon">📊</span><span>KPI</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="open" id="nbOpen"><span class="nb-icon">🟥</span><span>Ouverts</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="admin" id="nbAdmin"><span class="nb-icon">📊</span><span>KPI</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
+
+<!-- ═══ OVERLAY: Formulaire Sensibilisation ═══ -->
+<div class="ov" id="sensiFormOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 Nouvelle Campagne de Sensibilisation</div>
+      <button class="sh-x" onclick="closeSheet('sensiFormOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div class="fg">
+        <label class="fl">Date de la campagne</label>
+        <input class="fi" type="date" id="sensiDate"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Thème de sensibilisation</label>
+        <select class="fi" id="sensiTheme">
+          <option value="">— Sélectionner un thème —</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Participants</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="sensiEmpSearch" placeholder="Rechercher par nom ou matricule…" oninput="searchEmpHSE(this.value)" style="flex:1"/>
+          <button onclick="clearEmpSearch()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--t2);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:.85rem;white-space:nowrap">✕ Vider</button>
+        </div>
+        <div id="sensiEmpResults" class="emp-search-res" style="display:none"></div>
+        <div id="sensiParticipants" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;min-height:32px;background:var(--ink3);border-radius:8px;padding:8px;"></div>
+        <div style="font-size:.75rem;color:var(--t3);margin-top:4px"><span id="sensiPartCount">0</span> participant(s) sélectionné(s)</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Fiche de présence signée (photo ou PDF)</label>
+        <div class="hse-upload-area" id="senficheArea" onclick="document.getElementById('senficheInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="senfichePreview" style="display:none"></div>
+        </div>
+        <input type="file" id="senficheInput" accept="image/*,.pdf" style="display:none" onchange="onSenficheChange(this)"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Notes (optionnel)</label>
+        <textarea class="fi" id="sensiNotes" rows="3" placeholder="Remarques, observations…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('sensiFormOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitCampagne()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Formulaire Inspection Incendie ═══ -->
+<div class="ov" id="incendieFormOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🧯 Inspection Matériel Incendie</div>
+      <button class="sh-x" onclick="closeSheet('incendieFormOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="incDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Type d'équipement</label>
+          <select class="fi" id="incType" onchange="updateIncChecklist()">
+            <option value="Extincteur">🔴 Extincteur</option>
+            <option value="RIA">💧 RIA</option>
+          </select>
+        </div>
+        <div class="fg" style="position:relative">
+          <label class="fl">ID / N° Équipement</label>
+          <div style="position:relative">
+            <input class="fi" type="text" id="incIdEquip" placeholder="Tapez ou choisissez (1–100)…" autocomplete="off"
+              oninput="filterEquipList(this.value)"
+              onfocus="openEquipList()"
+              onkeydown="equipKeyNav(event)"/>
+            <button type="button" onclick="toggleEquipList()" tabindex="-1"
+              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:1rem;padding:4px">▼</button>
+          </div>
+          <div id="equipDropdown" class="emp-search-res" style="display:none;position:absolute;z-index:200;left:0;right:0;max-height:200px;overflow-y:auto;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);"></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Zone / Emplacement</label>
+          <input class="fi" type="text" id="incZone" placeholder="Ex: Atelier B"/>
+        </div>
+      </div>
+
+      <!-- Checklist dynamique -->
+      <div id="incChecklistContainer" style="margin-top:4px"></div>
+
+      <div class="fg" style="margin-top:8px">
+        <label class="fl">État global</label>
+        <select class="fi" id="incEtat">
+          <option value="Conforme">✅ Conforme</option>
+          <option value="Partiel">⚠️ Partiellement conforme</option>
+          <option value="Non conforme">❌ Non conforme</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Prochaine inspection prévue</label>
+        <input class="fi" type="date" id="incProchaine"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Observations</label>
+        <textarea class="fi" id="incObs" rows="3" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Photo de la checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="incPhotoArea" onclick="document.getElementById('incPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="incPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="incPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onIncPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('incendieFormOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitChecklist()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Admin — Thèmes de Sensibilisation ═══ -->
+<div class="ov" id="themesAdminOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 Thèmes de Sensibilisation</div>
+      <button class="sh-x" onclick="closeSheet('themesAdminOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="font-size:.82rem;color:var(--t3);margin-bottom:14px">Configurez les thèmes disponibles dans le formulaire de sensibilisation.</div>
+      <div id="themesList"></div>
+      <button onclick="addThemeRow()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--t2);border-radius:8px;padding:10px 16px;width:100%;margin-top:8px;cursor:pointer;font-size:.88rem">＋ Ajouter un thème</button>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('themesAdminOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveThemes()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ SHEET: Quick Add (3 étapes) ═══ -->
 <div class="ov" id="quickOv">
@@ -927,6 +1183,10 @@ img{max-width:100%;display:block;}
               <option>magasin mp</option><option>autre</option>
             </select>
           </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Emplacement</label>
+          <div class="sval"><input class="fi" id="qEmplace" placeholder="Précisez l'emplacement exact…"/></div>
         </div>
         <div class="srow req">
           <label class="slabel">Description</label>
@@ -1223,6 +1483,7 @@ function doAuthLogin() {
         S_AUTH.token=r.token; S_AUTH.role=r.role; S_AUTH.name=r.name; S_AUTH.matricule=r.matricule;
         try{ sessionStorage.setItem('hse_auth', JSON.stringify(S_AUTH)); }catch(e){}
         if (r.role==='admin') { S.role='admin'; S.adminKey=r.token; try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',r.token); }catch(e){} }
+        else if (r.role==='hse_supervisor') { S.role='hse_supervisor'; S.adminKey=r.token; try{ sessionStorage.setItem('hse_role','hse_supervisor'); sessionStorage.setItem('hse_key',r.token); }catch(e){} }
         else { S.role='user'; }
         document.getElementById('authWall').style.display='none';
         updateAuthUI();
@@ -1238,14 +1499,19 @@ function doAuthLogin() {
 
 function updateAuthUI() {
   var admin = S_AUTH.role==='admin';
+  var super_ = S_AUTH.role==='hse_supervisor';
   var lb = document.getElementById('loginBtn');
-  if (lb) { lb.innerHTML = S_AUTH.name ? ('👤 '+S_AUTH.name) : (admin?'🔓 Admin':'👤'); }
+  if (lb) {
+    var ico = admin ? '🔓' : (super_ ? '🦺' : '👤');
+    lb.innerHTML = S_AUTH.name ? (ico+' '+S_AUTH.name) : (admin?'🔓 Admin':'👤');
+  }
 }
 
 function doLogout() {
   S_AUTH.token=''; S_AUTH.role=''; S_AUTH.name=''; S_AUTH.matricule='';
   S.role='user'; S.adminKey='';
   try{ sessionStorage.clear(); }catch(e){}
+  applyRole();
   document.getElementById('authWall').style.display='flex';
   document.getElementById('authMat').value='';
   document.getElementById('authPwd').value='';
@@ -1269,6 +1535,7 @@ function renderUsersList(data) {
       + '<div style="display:flex;flex-direction:column;gap:6px;min-width:120px">'
       + '<select onchange="adminChangeRole(\''+esc(u.matricule)+'\',this.value)" style="background:var(--ink4);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:4px 8px;font-size:.8rem">'
       + '<option value="user"'+(u.role==='user'?' selected':'')+'>👤 Utilisateur</option>'
+      + '<option value="hse_supervisor"'+(u.role==='hse_supervisor'?' selected':'')+'>🦺 Superviseur HSE</option>'
       + '<option value="admin"'+(u.role==='admin'?' selected':'')+'>🔧 Admin</option>'
       + '</select>'
       + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
@@ -1347,7 +1614,7 @@ var S = {
 };
 try{
   var _sr=sessionStorage.getItem('hse_role'), _sk=sessionStorage.getItem('hse_key');
-  if(_sr==='admin' && _sk){ S.role='admin'; S.adminKey=_sk; }
+  if((_sr==='admin'||_sr==='hse_supervisor') && _sk){ S.role=_sr; S.adminKey=_sk; }
 }catch(e){}
 var _tt; // toast timer
 
@@ -1363,6 +1630,7 @@ document.addEventListener('DOMContentLoaded', function(){
       S_AUTH.token=_parsed.token; S_AUTH.role=_parsed.role;
       S_AUTH.name=_parsed.name; S_AUTH.matricule=_parsed.matricule;
       if (S_AUTH.role==='admin') { S.role='admin'; S.adminKey=S_AUTH.token; }
+      else if (S_AUTH.role==='hse_supervisor') { S.role='hse_supervisor'; S.adminKey=S_AUTH.token; }
       document.getElementById('authWall').style.display='none';
       updateAuthUI();
     }
@@ -1387,10 +1655,10 @@ function bootApp() {
   // Nav binding (suite — exécuté dans bootApp)
   document.getElementById('fDateCr').value = todayStr();
 
-  // Rôle : appliquer l'état (admin/user) + vue par défaut
+  // Rôle : appliquer l'état (admin/supervisor/user) + vue par défaut
   applyRole();
   loadRespList();
-  goV(isAdmin()?'home':'all', null);
+  goV(isAdmin()?'home': isSupervisor()?'sensibilisation' :'all', null);
 
   // Offline detection
   window.addEventListener('online',  function(){ setOffline(false); });
@@ -1515,8 +1783,11 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
+function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
+function isSuperOrAdmin(){ return isAdmin() || isSupervisor(); }
 
 function openLogin(){
   if(S_AUTH.token){ if(confirm('Se déconnecter ?')) doLogout(); }
@@ -1555,19 +1826,30 @@ function logout(){
 /* Affiche/masque les éléments selon le rôle (et bloque côté serveur en plus) */
 function applyRole(){
   var admin=isAdmin();
+  var super_=isSupervisor();
   document.body.classList.toggle('is-admin', admin);
-  document.body.classList.toggle('is-user', !admin);
+  document.body.classList.toggle('is-supervisor', super_);
+  document.body.classList.toggle('is-user', !admin && !super_);
   // Bouton login/logout
   var lb=document.getElementById('loginBtn');
-  if(lb){ lb.innerHTML = admin ? '🔓 Déconnexion' : '🔒 Log In'; lb.title = admin?'Se déconnecter':'Se connecter'; }
+  if(lb){
+    lb.innerHTML = (S_AUTH.name) ? ((admin?'🔓':super_?'🦺':'👤')+' '+S_AUTH.name) : (admin?'🔓 Admin':'🔒 Log In');
+    lb.title = (S_AUTH.token)?'Se déconnecter':'Se connecter';
+  }
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
-  // Navigation : masquer Tableau de bord + Dashboard pour les non-admins
+  // Navigation admin : masquer pour non-admins
   document.querySelectorAll('[data-v="home"],[data-v="admin"]').forEach(function(b){
     b.style.display = admin ? '' : 'none';
   });
-  // Si l'utilisateur est sur une vue interdite, rediriger vers les Tags
-  if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV('all',null);
+  // Navigation superviseur
+  var showSuper = admin || super_;
+  ['sbSecSuper','sbSensi','sbIncendie','nbSensi','nbIncendie'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
+  });
+  // Redirige si vue interdite
+  if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV(super_?'sensibilisation':'all', null);
+  if(!showSuper && SUPERVISOR_VIEWS[S.view]) goV('all', null);
 }
 
 /* ── Responsables : liste dynamique pour les menus déroulants ── */
@@ -1645,9 +1927,12 @@ function saveRespList(){
    NAVIGATION
 ══════════════════════════════════════════ */
 function goV(v, btn){
-  // Blocage d'accès (y compris via URL) : vues réservées à l'admin
   if(ADMIN_ONLY_VIEWS[v] && !isAdmin()){
     toast('🔒 Accès réservé à l\'administrateur','err');
+    v=isSupervisor()?'sensibilisation':'all'; btn=null;
+  }
+  if(SUPERVISOR_VIEWS[v] && !isSuperOrAdmin()){
+    toast('🔒 Accès réservé au Superviseur HSE','err');
     v='all'; btn=null;
   }
   S.view = v;
@@ -1658,7 +1943,9 @@ function goV(v, btn){
 
   var vmap = {home:'view-home',all:'view-all',open:'view-all',
               closed:'view-all',elevee:'view-all',moyenne:'view-all',faible:'view-all',
-              admin:'view-admin'};
+              admin:'view-admin',
+              sensibilisation:'view-sensibilisation',
+              incendie:'view-incendie'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -1672,6 +1959,8 @@ function goV(v, btn){
 function renderCurrent(){
   if(S.view==='home')  renderHome();
   else if(S.view==='admin') renderAdmin();
+  else if(S.view==='sensibilisation') renderSensibilisation();
+  else if(S.view==='incendie') renderIncendie();
   else renderTagsView();
 }
 
@@ -2204,6 +2493,7 @@ function openQuick(){
   document.getElementById('qNum').value=(maxId+1);
   document.getElementById('qGravSel').value='Élevée';
   document.getElementById('qZone').value='étage 0';
+  document.getElementById('qEmplace').value='';
   document.getElementById('qDesc').value='';
   document.getElementById('qRisque').value='';
   document.getElementById('qPropo').value='';
@@ -2222,6 +2512,7 @@ function submitQuick(){
     danger:S.qDng||'',
     gravite:document.getElementById('qGravSel').value,
     zone:document.getElementById('qZone').value,
+    emplacement:document.getElementById('qEmplace').value.trim(),
     description:desc,
     risque:document.getElementById('qRisque').value.trim(),
     propositions:document.getElementById('qPropo').value.trim(),
@@ -2750,6 +3041,588 @@ function updateMFCount(){
 
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ══════════════════════════════════════════
+   SUPERVISEUR HSE — SENSIBILISATION
+══════════════════════════════════════════ */
+
+var _sensiParticipants = [];
+var _senficheB64 = '';
+var _senficheMime = '';
+var _sensiThemes = [];
+
+var _sensiActiveTab = 'campagnes';
+
+function switchSensiTab(tab, btn) {
+  _sensiActiveTab = tab;
+  document.querySelectorAll('.sensi-tab').forEach(function(b){ b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  document.getElementById('sensiTabCampagnes').style.display = tab==='campagnes' ? '' : 'none';
+  document.getElementById('sensiTabProfil').style.display    = tab==='profil'    ? '' : 'none';
+  var newBtn = document.getElementById('sensiNewBtn');
+  if (newBtn) newBtn.style.display = tab==='campagnes' ? '' : 'none';
+  if (tab==='campagnes') renderSensibilisation();
+}
+
+function renderSensibilisation() {
+  var body = document.getElementById('sensiBody');
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">📋</div><div>Aucune campagne enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouvelle campagne » pour commencer.</div></div>';
+        return;
+      }
+      body.innerHTML = r.data.map(function(c) {
+        var nbPart = (c.participants||[]).length;
+        var partNames = (c.participants||[]).slice(0,3).map(function(p){ return esc(p.name); }).join(', ');
+        if (nbPart>3) partNames += ' +' + (nbPart-3);
+        var animInitials = (c.animateurNom||'?').split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase()||'?';
+        return '<div class="hse-card">'
+          // En-tête : thème + badge participants
+          + '<div class="hse-card-header">'
+          + '<div><div class="hse-card-title">'+esc(c.theme||'—')+'</div>'
+          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateCampagne)+'</span></div></div>'
+          + '<span class="hse-card-badge badge-ok">'+nbPart+' part.</span>'
+          + '</div>'
+          // Superviseur bien visible
+          + '<div style="display:flex;align-items:center;gap:10px;background:var(--ink3);border-radius:8px;padding:9px 12px;margin-bottom:10px">'
+          + '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#e67e22);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#000;flex-shrink:0">'+animInitials+'</div>'
+          + '<div><div style="font-size:.8rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Superviseur / Animateur</div>'
+          + '<div style="font-size:.9rem;font-weight:700;color:var(--t1)">'+esc(c.animateurNom||'—')+'</div>'
+          + (c.animateurMatricule ? '<div style="font-size:.72rem;color:var(--t3)">Matricule : '+esc(c.animateurMatricule)+'</div>' : '')
+          + '</div></div>'
+          // Participants
+          + (partNames ? '<div style="font-size:.78rem;color:var(--t2);margin-bottom:8px">👥 '+partNames+'</div>' : '')
+          + (c.notes ? '<div style="font-size:.8rem;color:var(--t3);margin-bottom:8px">📝 '+esc(c.notes)+'</div>' : '')
+          + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir fiche de présence</a>' : '<span style="font-size:.78rem;color:var(--t3)">Pas de fiche jointe</span>')
+          + '</div>';
+      }).join('');
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getCampagnes(S.adminKey);
+}
+
+/* ── Onglet Profil employé ── */
+var _profilSearchTimer = null;
+
+function searchProfilEmp(q) {
+  clearTimeout(_profilSearchTimer);
+  var res = document.getElementById('sensiProfilResults');
+  var card = document.getElementById('sensiProfilCard');
+  q = (q||'').trim();
+  if (!q) { res.innerHTML=''; res.style.display='none'; return; }
+  res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Recherche…</div>';
+  res.style.display = 'block';
+  _profilSearchTimer = setTimeout(function() {
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (!r||!r.success||!r.data.length) {
+          res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Aucun employé trouvé</div>';
+          return;
+        }
+        res.innerHTML = r.data.map(function(e) {
+          return '<div class="emp-search-item" onclick="loadProfilEmp(\''+esc(e.matricule)+'\',\''+esc(e.name)+'\')">'
+            + '<div style="font-weight:600">'+esc(e.name)+'</div>'
+            + '<div class="em-mat">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+            + '</div>';
+        }).join('');
+      })
+      .withFailureHandler(function(){
+        res.innerHTML = '<div style="padding:8px 14px;color:red;font-size:.82rem">Erreur réseau</div>';
+      })
+      .searchEmployeesHSE({ token:S.adminKey, query:q });
+  }, 300);
+}
+
+function loadProfilEmp(mat, name) {
+  document.getElementById('sensiProfilResults').style.display = 'none';
+  document.getElementById('sensiProfilSearch').value = name + ' (' + mat + ')';
+  var card = document.getElementById('sensiProfilCard');
+  card.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:12px 0">Chargement du profil…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { card.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      renderProfilCard(r.employee, r.campagnes, r.total, mat, name);
+    })
+    .withFailureHandler(function(e){ card.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getEmployeeSensibilisations({ token:S.adminKey, matricule:mat });
+}
+
+function renderProfilCard(emp, campagnes, total, mat, fallbackName) {
+  var card = document.getElementById('sensiProfilCard');
+  var e = emp || { matricule:mat, name:fallbackName||mat, dept:'', role:'user', actif:false };
+  var initials = (e.name||'?').split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase() || '?';
+  var roleLbl = e.role==='admin' ? '<span class="role-badge role-admin">Admin</span>'
+              : e.role==='hse_supervisor' ? '<span class="role-badge role-super">Superviseur HSE</span>'
+              : '<span class="role-badge role-user">Utilisateur</span>';
+  var lastDate = campagnes.length ? campagnes[0].dateCampagne : '—';
+  var asAnim = campagnes.filter(function(c){ return c.wasAnimateur; }).length;
+
+  var html = '<div class="profil-card">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div class="profil-avatar">'+initials+'</div>'
+    + '<div><div class="profil-name">'+esc(e.name)+roleLbl+'</div>'
+    + '<div class="profil-meta">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+    + '<div class="profil-meta" style="margin-top:2px">'+(e.actif?'<span style="color:#22c55e">● Accès actif</span>':'<span style="color:#6b7280">● Pas d\'accès app</span>')+'</div>'
+    + '</div></div>'
+    + '<div class="profil-stats">'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+total+'</div><div class="profil-stat-lbl">Sensibilisations</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+asAnim+'</div><div class="profil-stat-lbl">Animées</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val" style="font-size:1rem">'+esc(lastDate)+'</div><div class="profil-stat-lbl">Dernière session</div></div>'
+    + '</div>'
+    + '</div>';
+
+  if (!campagnes.length) {
+    html += '<div class="hse-empty" style="margin-top:12px"><div class="hse-empty-ico">📭</div><div>Aucune sensibilisation enregistrée pour cet employé.</div></div>';
+  } else {
+    html += '<div class="profil-history"><div class="profil-history-title">Historique ('+total+')</div>'
+      + campagnes.map(function(c) {
+          return '<div class="profil-hist-item">'
+            + '<div class="profil-hist-dot'+(c.wasAnimateur?' anim':'')+'"></div>'
+            + '<div style="flex:1"><div class="profil-hist-theme">'+esc(c.theme)+'</div>'
+            + '<div class="profil-hist-meta">'+esc(c.dateCampagne)+' · '+esc(c.nbParticipants)+' participants</div>'
+            + (c.wasAnimateur
+                ? '<div style="font-size:.73rem;margin-top:2px"><span style="background:rgba(59,130,246,.15);color:#3b82f6;font-weight:700;padding:2px 7px;border-radius:8px">🎤 A animé cette session</span></div>'
+                : (c.animateurNom ? '<div style="font-size:.73rem;color:var(--t3);margin-top:2px">Superviseur : <span style="color:var(--t2);font-weight:600">'+esc(c.animateurNom)+'</span></div>' : ''))
+            + (c.notes ? '<div style="font-size:.75rem;color:var(--t3);margin-top:2px">'+esc(c.notes)+'</div>' : '')
+            + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.75rem;color:#3b82f6;cursor:pointer;white-space:nowrap">📎 Fiche</a>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  card.innerHTML = html;
+}
+
+function openSensiForm() {
+  _sensiParticipants = [];
+  _senficheB64 = '';
+  _senficheMime = '';
+  document.getElementById('sensiDate').value = todayStr();
+  document.getElementById('sensiNotes').value = '';
+  document.getElementById('sensiEmpSearch').value = '';
+  document.getElementById('sensiEmpResults').style.display = 'none';
+  document.getElementById('sensiEmpResults').innerHTML = '';
+  renderParticipants();
+  document.getElementById('senfichePreview').style.display = 'none';
+  document.getElementById('senficheArea').classList.remove('has-file');
+  document.getElementById('senficheInput').value = '';
+  // Load themes
+  google.script.run
+    .withSuccessHandler(function(r) {
+      _sensiThemes = (r&&r.success&&r.data)||[];
+      var sel = document.getElementById('sensiTheme');
+      sel.innerHTML = '<option value="">— Sélectionner un thème —</option>'
+        + _sensiThemes.map(function(t){ return '<option>'+esc(t)+'</option>'; }).join('');
+    })
+    .withFailureHandler(function(){})
+    .getSensibilisationThemes(S.adminKey);
+  openSheet('sensiFormOv');
+}
+
+var _empSearchTimer = null;
+function searchEmpHSE(q) {
+  clearTimeout(_empSearchTimer);
+  var res = document.getElementById('sensiEmpResults');
+  if (!q.trim()) { res.style.display='none'; res.innerHTML=''; return; }
+  _empSearchTimer = setTimeout(function() {
+    res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Recherche…</div>';
+    res.style.display = 'block';
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (!r||!r.success||!r.data.length) {
+          res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Aucun résultat</div>';
+          return;
+        }
+        res.innerHTML = r.data.map(function(e) {
+          var already = _sensiParticipants.some(function(p){ return p.matricule===e.matricule; });
+          return '<div class="emp-search-item'+(already?' already':'') +'" onclick="addParticipant(\''+esc(e.matricule)+'\',\''+esc(e.name)+'\',\''+esc(e.dept)+'\')" style="'+(already?'opacity:.5;pointer-events:none':'')+'"><div>'+esc(e.name)+'</div><div class="em-mat">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div></div>';
+        }).join('');
+      })
+      .withFailureHandler(function(){})
+      .searchEmployeesHSE({ token:S.adminKey, query:q });
+  }, 300);
+}
+
+function clearEmpSearch() {
+  document.getElementById('sensiEmpSearch').value = '';
+  var res = document.getElementById('sensiEmpResults');
+  res.style.display = 'none';
+  res.innerHTML = '';
+}
+
+function addParticipant(mat, name, dept) {
+  if (_sensiParticipants.some(function(p){ return p.matricule===mat; })) return;
+  _sensiParticipants.push({ matricule:mat, name:name, dept:dept });
+  renderParticipants();
+  document.getElementById('sensiEmpSearch').value = '';
+  document.getElementById('sensiEmpResults').style.display = 'none';
+}
+
+function removeParticipant(mat) {
+  _sensiParticipants = _sensiParticipants.filter(function(p){ return p.matricule!==mat; });
+  renderParticipants();
+}
+
+function renderParticipants() {
+  var el = document.getElementById('sensiParticipants');
+  var cnt = document.getElementById('sensiPartCount');
+  cnt.textContent = _sensiParticipants.length;
+  el.innerHTML = _sensiParticipants.map(function(p) {
+    return '<span class="emp-chip">'+esc(p.name)+' <span style="color:var(--t3);font-size:.72rem">'+esc(p.matricule)+'</span>'
+      +'<button class="rm-emp" onclick="removeParticipant(\''+esc(p.matricule)+'\')">✕</button></span>';
+  }).join('');
+}
+
+function onSenficheChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _senficheB64 = e.target.result;
+    _senficheMime = file.type;
+    var area = document.getElementById('senficheArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('senfichePreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitCampagne() {
+  var theme = document.getElementById('sensiTheme').value;
+  var date  = document.getElementById('sensiDate').value;
+  if (!theme) { toast('Sélectionnez un thème','err'); return; }
+  if (!date)  { toast('Saisissez une date','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Campagne #'+r.id+' enregistrée','ok');
+        closeSheet('sensiFormOv');
+        renderSensibilisation();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .saveCampagne({
+      token: S.adminKey,
+      dateCampagne: date,
+      theme: theme,
+      animateurNom: S_AUTH.name||S_AUTH.matricule,
+      participants: _sensiParticipants,
+      fichePhoto: _senficheB64,
+      fiche_mime: _senficheMime,
+      notes: document.getElementById('sensiNotes').value
+    });
+}
+
+/* ══════════════════════════════════════════
+   SUPERVISEUR HSE — SUIVI INCENDIE
+══════════════════════════════════════════ */
+
+var _incPhotoB64 = '';
+var _incPhotoMime = '';
+
+var CHECKLIST_EXTINCTEUR = [
+  { key:'pression',   label:'Pression dans la zone verte (manomètre)' },
+  { key:'goupille',   label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette',  label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',      label:'Accès dégagé (1 m autour de l\'appareil)' },
+  { key:'aspect',     label:'Aspect général correct (pas de rouille/dommage)' },
+  { key:'position',   label:'Position et hauteur réglementaires (≤ 1,2 m)' },
+  { key:'signalet',   label:'Signalétique visible et lisible' }
+];
+
+var CHECKLIST_RIA = [
+  { key:'robinet',    label:'Robinet de fermeture opérationnel' },
+  { key:'tuyau',      label:'Tuyau en bon état (pas de fissure ni détérioration)' },
+  { key:'lance',      label:'Lance/diffuseur présent et intact' },
+  { key:'devidoir',   label:'Dévidoir fonctionne correctement (déroulement libre)' },
+  { key:'etiquette',  label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',      label:'Accès dégagé et non encombré' },
+  { key:'signalet',   label:'Signalétique visible et lisible' }
+];
+
+function renderIncendie() {
+  var body = document.getElementById('incendieBody');
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🧯</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouvelle inspection » pour commencer.</div></div>';
+        return;
+      }
+      body.innerHTML = r.data.map(function(c) {
+        var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+        var checks = c.checklist||{};
+        var total = Object.keys(checks).length;
+        var ok    = Object.values ? Object.values(checks).filter(Boolean).length
+                  : Object.keys(checks).filter(function(k){ return checks[k]; }).length;
+        return '<div class="hse-card">'
+          + '<div class="hse-card-header">'
+          + '<div><div class="hse-card-title">'+(c.type==='RIA'?'💧 RIA':'🔴 Extincteur')+' — '+esc(c.idEquipement||'—')+'</div>'
+          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span><span>📍 '+esc(c.zone||'—')+'</span><span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+          + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+          + '</div>'
+          + (total ? '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok+'/'+total+' points OK</div>' : '')
+          + (c.observations ? '<div style="font-size:.8rem;color:var(--t3);margin-bottom:6px">📝 '+esc(c.observations)+'</div>' : '')
+          + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+          + (c.photoId ? '<div style="margin-top:8px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>' : '')
+          + '</div>';
+      }).join('');
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getChecklists(S.adminKey);
+}
+
+function openIncendieForm() {
+  _incPhotoB64 = '';
+  _incPhotoMime = '';
+  document.getElementById('incDate').value = todayStr();
+  document.getElementById('incIdEquip').value = '';
+  document.getElementById('equipDropdown').style.display = 'none';
+  document.getElementById('incZone').value = '';
+  document.getElementById('incObs').value = '';
+  document.getElementById('incProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('incEtat').value = 'Conforme';
+  document.getElementById('incType').value = 'Extincteur';
+  document.getElementById('incPhotoPreview').style.display = 'none';
+  document.getElementById('incPhotoArea').classList.remove('has-file');
+  document.getElementById('incPhotoInput').value = '';
+  updateIncChecklist();
+  openSheet('incendieFormOv');
+}
+
+function updateIncChecklist() {
+  var type = document.getElementById('incType').value;
+  var items = type==='RIA' ? CHECKLIST_RIA : CHECKLIST_EXTINCTEUR;
+  var container = document.getElementById('incChecklistContainer');
+  container.innerHTML = '<div class="chk-group"><div class="chk-group-title">Contrôles '+esc(type)+'</div>'
+    + items.map(function(it) {
+      return '<div class="chk-item">'
+        + '<input type="checkbox" id="chk_'+it.key+'" value="'+it.key+'" checked/>'
+        + '<label for="chk_'+it.key+'">'+esc(it.label)+'</label>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+}
+
+function onIncPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _incPhotoB64 = e.target.result;
+    _incPhotoMime = file.type;
+    var area = document.getElementById('incPhotoArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('incPhotoPreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function collectChecklist() {
+  var checks = {};
+  var type = document.getElementById('incType').value;
+  var items = type==='RIA' ? CHECKLIST_RIA : CHECKLIST_EXTINCTEUR;
+  items.forEach(function(it) {
+    var el = document.getElementById('chk_'+it.key);
+    if (el) checks[it.key] = el.checked;
+  });
+  return checks;
+}
+
+function submitChecklist() {
+  var date = document.getElementById('incDate').value;
+  var idEq = document.getElementById('incIdEquip').value.trim();
+  var zone = document.getElementById('incZone').value.trim();
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  if (!idEq) { toast('Saisissez l\'ID de l\'équipement','err'); return; }
+  var checks = collectChecklist();
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection #'+r.id+' enregistrée','ok');
+        closeSheet('incendieFormOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: document.getElementById('incType').value,
+      idEquipement: idEq,
+      zone: zone,
+      checklist: checks,
+      etatGlobal: document.getElementById('incEtat').value,
+      observations: document.getElementById('incObs').value,
+      prochaineInspection: document.getElementById('incProchaine').value,
+      photoChecklist: _incPhotoB64,
+      photo_mime: _incPhotoMime
+    });
+}
+
+/* ══════════════════════════════════════════
+   ADMIN — GESTION DES THÈMES
+══════════════════════════════════════════ */
+
+function openThemesAdmin() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      var themes = (r&&r.success&&r.data)||[];
+      var list = document.getElementById('themesList');
+      list.innerHTML = '';
+      if (themes.length) {
+        themes.forEach(function(t){ addThemeRow(t); });
+      } else {
+        addThemeRow('Sécurité incendie');
+        addThemeRow('Risques chimiques');
+        addThemeRow('Port des EPI');
+        addThemeRow('Gestes et postures');
+      }
+      openSheet('themesAdminOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getSensibilisationThemes(S.adminKey);
+}
+
+function addThemeRow(val) {
+  var list = document.getElementById('themesList');
+  var row = document.createElement('div');
+  row.className = 'themes-row';
+  row.innerHTML = '<input class="fi theme-input" value="'+(val?esc(val):'')+'"/>'
+    + '<button onclick="this.parentNode.remove()" style="background:var(--ink3);border:1px solid var(--line2);color:#ef4444;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.88rem">✕</button>';
+  list.appendChild(row);
+  if (!val) row.querySelector('input').focus();
+}
+
+function saveThemes() {
+  var themes = [];
+  document.querySelectorAll('#themesList .theme-input').forEach(function(inp){
+    var v = inp.value.trim();
+    if (v) themes.push(v);
+  });
+  if (!themes.length) { toast('Ajoutez au moins un thème','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ '+(r.data.length)+' thèmes enregistrés','ok');
+        closeSheet('themesAdminOv');
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveSensibilisationThemes({ adminKey:S.adminKey, themes:themes });
+}
+
+/* ══════════════════════════════════════════
+   DROPDOWN ÉQUIPEMENT 1–100
+══════════════════════════════════════════ */
+
+var _equipAll = (function(){
+  var a = [];
+  for (var i=1; i<=100; i++) a.push(String(i));
+  return a;
+})();
+var _equipIdx = -1;
+
+function _renderEquipItems(items, q) {
+  if (!items.length) return '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
+  return items.map(function(v, i) {
+    var label = q ? v.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>') : v;
+    return '<div class="equip-drop-item" data-val="'+v+'" data-idx="'+i+'" onmousedown="selectEquipItem(\''+v+'\')">'+label+'</div>';
+  }).join('');
+}
+
+function openEquipList() {
+  _equipIdx = -1;
+  var q = (document.getElementById('incIdEquip').value||'').trim();
+  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
+  var dd = document.getElementById('equipDropdown');
+  dd.innerHTML = _renderEquipItems(filtered, q);
+  dd.style.display = filtered.length ? 'block' : 'none';
+}
+
+function filterEquipList(q) {
+  _equipIdx = -1;
+  q = (q||'').trim();
+  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
+  var dd = document.getElementById('equipDropdown');
+  dd.innerHTML = _renderEquipItems(filtered, q);
+  dd.style.display = filtered.length ? 'block' : 'none';
+}
+
+function toggleEquipList() {
+  var dd = document.getElementById('equipDropdown');
+  if (dd.style.display==='block') { dd.style.display='none'; }
+  else { document.getElementById('incIdEquip').focus(); openEquipList(); }
+}
+
+function selectEquipItem(val) {
+  document.getElementById('incIdEquip').value = val;
+  document.getElementById('equipDropdown').style.display = 'none';
+  _equipIdx = -1;
+}
+
+function equipKeyNav(e) {
+  var dd = document.getElementById('equipDropdown');
+  var items = dd.querySelectorAll('.equip-drop-item');
+  if (!items.length) return;
+  if (e.key==='ArrowDown') {
+    e.preventDefault();
+    _equipIdx = Math.min(_equipIdx+1, items.length-1);
+  } else if (e.key==='ArrowUp') {
+    e.preventDefault();
+    _equipIdx = Math.max(_equipIdx-1, 0);
+  } else if (e.key==='Enter') {
+    e.preventDefault();
+    if (_equipIdx>=0 && items[_equipIdx]) selectEquipItem(items[_equipIdx].getAttribute('data-val'));
+    else dd.style.display='none';
+    return;
+  } else if (e.key==='Escape') {
+    dd.style.display='none'; _equipIdx=-1; return;
+  } else { return; }
+  items.forEach(function(el){ el.classList.remove('active'); });
+  if (_equipIdx>=0 && items[_equipIdx]) {
+    items[_equipIdx].classList.add('active');
+    items[_equipIdx].scrollIntoView({ block:'nearest' });
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('equipDropdown');
+  if (dd && !dd.contains(e.target) && e.target.id!=='incIdEquip') {
+    dd.style.display='none';
+  }
+});
+
+/* ── Helper: ouvrir une image Drive depuis son fileId ── */
+function openIfsId(fileId) {
+  if (!fileId) return;
+  var ifs = document.getElementById('ifs');
+  var img = document.getElementById('ifsImg');
+  img.src = '';
+  ifs.classList.add('on');
+  google.script.run
+    .withSuccessHandler(function(r){ if(r&&r.success) img.src=r.data; })
+    .withFailureHandler(function(){})
+    .getImageBase64(fileId);
+}
 </script>
 </body>
 </html>
