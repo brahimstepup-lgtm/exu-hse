@@ -1306,7 +1306,7 @@ function getIncendieSheet_() {
   return sh;
 }
 
-// ── Recherche d'employés pour sélection des participants ──
+// ── Recherche d'employés pour sélection des participants (tous les employés du registre) ──
 function searchEmployeesHSE(p) {
   if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
   try {
@@ -1319,7 +1319,6 @@ function searchEmployeesHSE(p) {
     var results = [];
     for (var i=0; i<rows.length; i++) {
       var r = rows[i];
-      if (String(r[EDB.ACTIF]).toLowerCase() !== 'true') continue;
       var mat  = String(r[EDB.MAT]).trim();
       var name = String(r[EDB.NAME]).trim();
       var dept = String(r[EDB.DEPT]).trim();
@@ -1327,7 +1326,7 @@ function searchEmployeesHSE(p) {
       if (!q || mat.toLowerCase().indexOf(q)!==-1 || name.toLowerCase().indexOf(q)!==-1) {
         results.push({ matricule:mat, name:name, dept:dept });
       }
-      if (results.length >= 20) break;
+      if (results.length >= 30) break;
     }
     return { success:true, data:results };
   } catch(e) { return { success:false, error:e.message }; }
