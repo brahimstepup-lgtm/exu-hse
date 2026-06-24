@@ -740,6 +740,28 @@ img{max-width:100%;display:block;}
 .equip-drop-item:last-child{border-bottom:none;}
 .equip-drop-item:hover,.equip-drop-item.active{background:var(--ink4);}
 .equip-drop-item mark{background:rgba(245,197,24,.3);color:var(--t1);border-radius:2px;}
+.sensi-tab{flex:1;background:none;border:none;color:var(--t3);border-radius:7px;padding:10px 8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;}
+.sensi-tab.on{background:var(--ink4);color:var(--t1);}
+.profil-card{background:var(--ink2);border-radius:14px;padding:18px;border:1px solid var(--line2);margin-bottom:16px;}
+.profil-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#e67e22);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#000;flex-shrink:0;}
+.profil-name{font-size:1.05rem;font-weight:700;color:var(--t1);}
+.profil-meta{font-size:.8rem;color:var(--t3);margin-top:3px;}
+.profil-stats{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.profil-stat{flex:1;min-width:80px;background:var(--ink3);border-radius:10px;padding:12px;text-align:center;}
+.profil-stat-val{font-size:1.5rem;font-weight:700;color:#f5c518;}
+.profil-stat-lbl{font-size:.72rem;color:var(--t3);margin-top:2px;}
+.profil-history{margin-top:16px;}
+.profil-history-title{font-size:.78rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.profil-hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);}
+.profil-hist-item:last-child{border-bottom:none;}
+.profil-hist-dot{width:10px;height:10px;border-radius:50%;background:#f5c518;flex-shrink:0;margin-top:4px;}
+.profil-hist-dot.anim{background:#3b82f6;}
+.profil-hist-theme{font-size:.88rem;font-weight:600;color:var(--t1);}
+.profil-hist-meta{font-size:.75rem;color:var(--t3);margin-top:2px;}
+.role-badge{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;}
+.role-admin{background:rgba(239,68,68,.2);color:#ef4444;}
+.role-super{background:rgba(245,197,24,.2);color:#f5c518;}
+.role-user{background:rgba(107,114,128,.2);color:#9ca3af;}
 </style>
 </head>
 <body>
@@ -927,9 +949,28 @@ img{max-width:100%;display:block;}
     <div class="view" id="view-sensibilisation">
       <div class="ph view-hdr">
         <h1 class="ph-title">📋 Sensibilisation</h1>
-        <button class="btn btn-p" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
+        <button class="btn btn-p" id="sensiNewBtn" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
       </div>
-      <div id="sensiBody"></div>
+      <!-- Onglets -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;background:var(--ink2);border-radius:10px;padding:4px">
+        <button class="sensi-tab on" id="stab-campagnes" onclick="switchSensiTab('campagnes',this)">📋 Campagnes</button>
+        <button class="sensi-tab" id="stab-profil" onclick="switchSensiTab('profil',this)">👤 Profil employé</button>
+      </div>
+      <!-- Campagnes -->
+      <div id="sensiTabCampagnes">
+        <div id="sensiBody"></div>
+      </div>
+      <!-- Profil employé -->
+      <div id="sensiTabProfil" style="display:none">
+        <div style="position:relative;margin-bottom:4px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:1rem">🔍</span>
+          <input class="fi" id="sensiProfilSearch" placeholder="Rechercher un employé par nom ou matricule…"
+            oninput="searchProfilEmp(this.value)"
+            style="padding-left:36px"/>
+        </div>
+        <div id="sensiProfilResults" class="emp-search-res" style="margin-top:2px"></div>
+        <div id="sensiProfilCard" style="margin-top:16px"></div>
+      </div>
     </div>
 
     <!-- INCENDIE -->
@@ -3004,6 +3045,19 @@ var _senficheB64 = '';
 var _senficheMime = '';
 var _sensiThemes = [];
 
+var _sensiActiveTab = 'campagnes';
+
+function switchSensiTab(tab, btn) {
+  _sensiActiveTab = tab;
+  document.querySelectorAll('.sensi-tab').forEach(function(b){ b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  document.getElementById('sensiTabCampagnes').style.display = tab==='campagnes' ? '' : 'none';
+  document.getElementById('sensiTabProfil').style.display    = tab==='profil'    ? '' : 'none';
+  var newBtn = document.getElementById('sensiNewBtn');
+  if (newBtn) newBtn.style.display = tab==='campagnes' ? '' : 'none';
+  if (tab==='campagnes') renderSensibilisation();
+}
+
 function renderSensibilisation() {
   var body = document.getElementById('sensiBody');
   body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
@@ -3032,6 +3086,99 @@ function renderSensibilisation() {
     })
     .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
     .getCampagnes(S.adminKey);
+}
+
+/* ── Onglet Profil employé ── */
+var _profilSearchTimer = null;
+
+function searchProfilEmp(q) {
+  clearTimeout(_profilSearchTimer);
+  var res = document.getElementById('sensiProfilResults');
+  var card = document.getElementById('sensiProfilCard');
+  q = (q||'').trim();
+  if (!q) { res.innerHTML=''; res.style.display='none'; return; }
+  res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Recherche…</div>';
+  res.style.display = 'block';
+  _profilSearchTimer = setTimeout(function() {
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (!r||!r.success||!r.data.length) {
+          res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Aucun employé trouvé</div>';
+          return;
+        }
+        res.innerHTML = r.data.map(function(e) {
+          return '<div class="emp-search-item" onclick="loadProfilEmp(\''+esc(e.matricule)+'\',\''+esc(e.name)+'\')">'
+            + '<div style="font-weight:600">'+esc(e.name)+'</div>'
+            + '<div class="em-mat">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+            + '</div>';
+        }).join('');
+      })
+      .withFailureHandler(function(){
+        res.innerHTML = '<div style="padding:8px 14px;color:red;font-size:.82rem">Erreur réseau</div>';
+      })
+      .searchEmployeesHSE({ token:S.adminKey, query:q });
+  }, 300);
+}
+
+function loadProfilEmp(mat, name) {
+  document.getElementById('sensiProfilResults').style.display = 'none';
+  document.getElementById('sensiProfilSearch').value = name + ' (' + mat + ')';
+  var card = document.getElementById('sensiProfilCard');
+  card.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:12px 0">Chargement du profil…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { card.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      renderProfilCard(r.employee, r.campagnes, r.total, mat, name);
+    })
+    .withFailureHandler(function(e){ card.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getEmployeeSensibilisations({ token:S.adminKey, matricule:mat });
+}
+
+function renderProfilCard(emp, campagnes, total, mat, fallbackName) {
+  var card = document.getElementById('sensiProfilCard');
+  var e = emp || { matricule:mat, name:fallbackName||mat, dept:'', role:'user', actif:false };
+  var initials = (e.name||'?').split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase() || '?';
+  var roleLbl = e.role==='admin' ? '<span class="role-badge role-admin">Admin</span>'
+              : e.role==='hse_supervisor' ? '<span class="role-badge role-super">Superviseur HSE</span>'
+              : '<span class="role-badge role-user">Utilisateur</span>';
+  var lastDate = campagnes.length ? campagnes[0].dateCampagne : '—';
+  var asAnim = campagnes.filter(function(c){ return c.wasAnimateur; }).length;
+
+  var html = '<div class="profil-card">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div class="profil-avatar">'+initials+'</div>'
+    + '<div><div class="profil-name">'+esc(e.name)+roleLbl+'</div>'
+    + '<div class="profil-meta">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+    + '<div class="profil-meta" style="margin-top:2px">'+(e.actif?'<span style="color:#22c55e">● Accès actif</span>':'<span style="color:#6b7280">● Pas d\'accès app</span>')+'</div>'
+    + '</div></div>'
+    + '<div class="profil-stats">'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+total+'</div><div class="profil-stat-lbl">Sensibilisations</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+asAnim+'</div><div class="profil-stat-lbl">Animées</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val" style="font-size:1rem">'+esc(lastDate)+'</div><div class="profil-stat-lbl">Dernière session</div></div>'
+    + '</div>'
+    + '</div>';
+
+  if (!campagnes.length) {
+    html += '<div class="hse-empty" style="margin-top:12px"><div class="hse-empty-ico">📭</div><div>Aucune sensibilisation enregistrée pour cet employé.</div></div>';
+  } else {
+    html += '<div class="profil-history"><div class="profil-history-title">Historique ('+total+')</div>'
+      + campagnes.map(function(c) {
+          return '<div class="profil-hist-item">'
+            + '<div class="profil-hist-dot'+(c.wasAnimateur?' anim':'')+'"></div>'
+            + '<div style="flex:1"><div class="profil-hist-theme">'+esc(c.theme)+'</div>'
+            + '<div class="profil-hist-meta">'+esc(c.dateCampagne)+' · '+esc(c.nbParticipants)+' participants'
+            + (c.wasAnimateur ? ' · <span style="color:#3b82f6;font-weight:600">Animateur</span>' : '')
+            + (c.animateurNom && !c.wasAnimateur ? ' · <span>par '+esc(c.animateurNom)+'</span>' : '')
+            + '</div>'
+            + (c.notes ? '<div style="font-size:.75rem;color:var(--t3);margin-top:2px">'+esc(c.notes)+'</div>' : '')
+            + '</div>'
+            + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.75rem;color:#3b82f6;cursor:pointer;white-space:nowrap">📎 Fiche</a>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  card.innerHTML = html;
 }
 
 function openSensiForm() {

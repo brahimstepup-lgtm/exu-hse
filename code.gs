@@ -1409,6 +1409,67 @@ function getCampagnes(token) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Profil employé : campagnes dont il a bénéficié ──
+function getEmployeeSensibilisations(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var mat = String(p.matricule||'').trim();
+    if (!mat) return { success:false, error:'Matricule requis' };
+
+    // Profil depuis Employees_DB
+    var employee = null;
+    var sh = getEdbSheet_();
+    if (sh) {
+      var lr = sh.getLastRow();
+      if (lr >= EDB_START) {
+        var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+        for (var i=0; i<rows.length; i++) {
+          if (String(rows[i][EDB.MAT]).trim() === mat) {
+            employee = {
+              matricule: mat,
+              name:  String(rows[i][EDB.NAME]).trim(),
+              dept:  String(rows[i][EDB.DEPT]).trim(),
+              role:  String(rows[i][EDB.ROLE]).trim(),
+              actif: String(rows[i][EDB.ACTIF]).toLowerCase() === 'true'
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    // Campagnes de la feuille Sensibilisation
+    var sensiSh = getSensiSheet_();
+    var lr2 = sensiSh.getLastRow();
+    var campagnes = [];
+    if (lr2 >= 2) {
+      var rows2 = sensiSh.getRange(2, 1, lr2-1, 9).getValues();
+      for (var j=0; j<rows2.length; j++) {
+        var r = rows2[j];
+        if (!r[0]) continue;
+        var parts = [];
+        try { parts = JSON.parse(r[5]||'[]'); } catch(e2) { parts = []; }
+        var wasParticipant = parts.some(function(pp){ return String(pp.matricule).trim() === mat; });
+        var wasAnimateur   = String(r[3]).trim() === mat;
+        if (wasParticipant || wasAnimateur) {
+          campagnes.push({
+            id:             r[0],
+            dateCampagne:   fmtDate_(r[1]),
+            theme:          String(r[2]),
+            animateurNom:   String(r[4]),
+            nbParticipants: parts.length,
+            wasAnimateur:   wasAnimateur,
+            ficheId:        extractFileId_(r[6]),
+            notes:          String(r[7])
+          });
+        }
+      }
+    }
+
+    return { success:true, employee:employee, campagnes:campagnes.reverse(), total:campagnes.length };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Enregistrer une inspection incendie (extincteur / RIA) ──
 function saveChecklist(p) {
   if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
