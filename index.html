@@ -1184,6 +1184,10 @@ img{max-width:100%;display:block;}
             </select>
           </div>
         </div>
+        <div class="srow">
+          <label class="slabel">Emplacement</label>
+          <div class="sval"><input class="fi" id="qEmplace" placeholder="Précisez l'emplacement exact…"/></div>
+        </div>
         <div class="srow req">
           <label class="slabel">Description</label>
           <div class="sval">
@@ -2489,6 +2493,7 @@ function openQuick(){
   document.getElementById('qNum').value=(maxId+1);
   document.getElementById('qGravSel').value='Élevée';
   document.getElementById('qZone').value='étage 0';
+  document.getElementById('qEmplace').value='';
   document.getElementById('qDesc').value='';
   document.getElementById('qRisque').value='';
   document.getElementById('qPropo').value='';
@@ -2507,6 +2512,7 @@ function submitQuick(){
     danger:S.qDng||'',
     gravite:document.getElementById('qGravSel').value,
     zone:document.getElementById('qZone').value,
+    emplacement:document.getElementById('qEmplace').value.trim(),
     description:desc,
     risque:document.getElementById('qRisque').value.trim(),
     propositions:document.getElementById('qPropo').value.trim(),
