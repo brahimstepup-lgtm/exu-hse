@@ -1281,6 +1281,18 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ OVERLAY: Détail inspection incendie ═══ -->
+<div class="ov" id="incendieDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="idetTitle">Détail inspection</div>
+      <button class="sh-x" onclick="closeSheet('incendieDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="idetBody"></div>
+  </div>
+</div>
+
 <!-- ═══ OVERLAY: Admin — Thèmes de Sensibilisation ═══ -->
 <div class="ov" id="themesAdminOv">
   <div class="sheet">
@@ -3961,7 +3973,7 @@ function submitGlobalInspection() {
     if (!exts.length) return;
     sections[type] = {
       extincteurs: exts.map(function(c){
-        return { num:c.num, zone:c.zone||'', checks:_globalChecks[c.num]||{}, statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
+        return { num:c.num, zone:c.zone||'', emplacement:c.emplacement||'', checks:_globalChecks[c.num]||{}, statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
       })
     };
   });
@@ -4008,6 +4020,130 @@ function onGlobalPhotoChange(input) {
   reader.readAsDataURL(file);
 }
 
+var _incendieRecords = [];
+
+function openIncendieDetail(idx) {
+  var c = _incendieRecords[idx];
+  if (!c) return;
+  var isGlobal = c.type === 'Inspection Globale';
+  document.getElementById('idetTitle').textContent =
+    (isGlobal ? '🌍 Inspection Globale' : '🔴 Inspection') + ' — ' + (c.dateInspection||'');
+  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c);
+  openSheet('incendieDetailOv');
+}
+
+function toggleIdetExt(detId) {
+  var el  = document.getElementById(detId);
+  var chev = document.getElementById('chev_'+detId);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function _buildDetailHTML(c) {
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var badgeCls  = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+  var isGlobal  = c.type === 'Inspection Globale';
+  var html = '';
+
+  /* ── Header ── */
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+    + '<div style="font-size:.82rem;color:var(--t2);line-height:1.6">'
+    + '<div>📅 '+esc(c.dateInspection)+'</div>'
+    + '<div>🦺 '+esc(c.superviseurNom)+'</div>'
+    + '</div>'
+    + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+    + '</div>';
+
+  if (c.prochaineInspection)
+    html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+
+  if (c.observations)
+    html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+
+  if (c.photoId)
+    html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>';
+
+  html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
+
+  /* ── Global inspection: per-type accordion ── */
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.extincteurs || !sec.extincteurs.length) return;
+      var exts = sec.extincteurs;
+      var confCnt = exts.filter(function(e){ return e.statut==='Conforme'; }).length;
+      var cl = _checklistByType(type);
+
+      html += '<div class="global-type-section" style="margin-bottom:10px">'
+        + '<div class="global-type-title">'
+        + '<span style="color:'+TY_COLORS[type]+'">'+TY_ICONS[type]+'</span> '+esc(type)
+        + ' <span class="global-type-count">'+confCnt+'/'+exts.length+' conformes</span>'
+        + '</div>'
+        + '<div class="global-ext-list">';
+
+      exts.forEach(function(e) {
+        var isOk  = e.statut === 'Conforme';
+        var okCnt = cl.filter(function(it){ return e.checks && e.checks[it.key]; }).length;
+        var detId = 'idet_'+type.replace(/ /g,'_')+'_'+e.num;
+
+        html += '<div class="global-ext-accordion">'
+          + '<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+          + '<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(e.num).padStart(2,'0')+'</span>'
+          + (e.zone ? '<span style="font-size:.72rem;color:var(--t3)">'+esc(e.zone)+'</span>' : '')
+          + (e.emplacement ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(e.emplacement)+'</span>' : '')
+          + '<span style="flex:1"></span>'
+          + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+          + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+          + '</div>'
+          + '<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+
+        cl.forEach(function(it) {
+          var checked = e.checks && e.checks[it.key];
+          html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+            + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+            + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+            + '</div>';
+        });
+
+        if (e.note)
+          html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(e.note)+'</div>';
+
+        html += '</div></div>';
+      });
+
+      html += '</div></div>';
+    });
+
+  /* ── Unit inspection: flat checklist ── */
+  } else {
+    if (!isGlobal) {
+      html += '<div style="margin-bottom:8px;font-size:.85rem;font-weight:600;color:var(--t1)">🔴 '+esc(c.idEquipement||'—')+'</div>';
+      if (c.zone) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:10px">📍 '+esc(c.zone)+'</div>';
+    }
+    var checks = c.checklist || {};
+    var keys = Object.keys(checks);
+    if (keys.length) {
+      var allCL = CHECKLIST_POUDRE_ABC.concat(CHECKLIST_CO2).concat(CHECKLIST_EAU_EXT);
+      var lmap = {};
+      allCL.forEach(function(it){ lmap[it.key]=it.label; });
+      html += '<div class="chk-group">';
+      keys.forEach(function(k) {
+        var checked = checks[k];
+        html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+          + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+          + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+(lmap[k]||esc(k))+'</label>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  return html;
+}
+
 function renderIncendie() {
   var body = document.getElementById('incendieBody');
   body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
@@ -4018,7 +4154,8 @@ function renderIncendie() {
         body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🧯</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouvelle inspection » pour commencer.</div></div>';
         return;
       }
-      body.innerHTML = r.data.map(function(c) {
+      _incendieRecords = r.data;
+      body.innerHTML = r.data.map(function(c, idx) {
         var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
         var isGlobal = c.type==='Inspection Globale';
         var typeIcon = c.type==='RIA' ? '💧 RIA' : isGlobal ? '🌍 Inspection Globale' : '🔴 Extincteur';
@@ -4042,7 +4179,7 @@ function renderIncendie() {
                     : Object.keys(checks).filter(function(k){ return checks[k]; }).length;
           if (total) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok+'/'+total+' points OK</div>';
         }
-        return '<div class="hse-card">'
+        return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" style="cursor:pointer">'
           + '<div class="hse-card-header">'
           + '<div><div class="hse-card-title">'+typeIcon+(isGlobal?'':' — '+esc(c.idEquipement||'—'))+'</div>'
           + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
@@ -4050,7 +4187,8 @@ function renderIncendie() {
           + '</div>'
           + statsLine
           + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
-          + (c.photoId ? '<div style="margin-top:8px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>' : '')
+          + (c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
+          + '<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
           + '</div>';
       }).join('');
     })
