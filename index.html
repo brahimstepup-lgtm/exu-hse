@@ -750,16 +750,16 @@ img{max-width:100%;display:block;}
 .global-type-section{background:var(--ink2);border-radius:10px;padding:14px 14px 10px;margin-bottom:14px;border:1px solid var(--line);}
 .global-type-title{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .global-type-count{font-size:.78rem;font-weight:400;color:var(--t3);background:var(--ink3);border-radius:10px;padding:1px 7px;}
-.global-ext-list{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
-.global-ext-row{display:flex;align-items:center;gap:7px;background:var(--ink3);border-radius:7px;padding:5px 9px;flex-wrap:wrap;}
-.global-ext-num{font-size:.8rem;color:var(--t1);font-weight:600;min-width:72px;}
-.global-ext-zone{font-size:.7rem;color:var(--t3);font-weight:400;}
-.global-ext-btn{padding:3px 10px;border-radius:20px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;transition:background .15s,color .15s;white-space:nowrap;}
-.global-ext-btn.ok{background:rgba(39,174,96,.18);color:#2ecc71;border:1px solid rgba(39,174,96,.3);}
-.global-ext-btn.ok:hover{background:rgba(39,174,96,.30);}
-.global-ext-btn.nok{background:rgba(231,76,60,.18);color:#e74c3c;border:1px solid rgba(231,76,60,.3);}
-.global-ext-btn.nok:hover{background:rgba(231,76,60,.30);}
-.global-ext-note{margin:0!important;padding:3px 8px!important;height:28px!important;font-size:.75rem!important;flex:1;min-width:70px;}
+.global-ext-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.global-ext-accordion{border-radius:8px;overflow:hidden;border:1px solid var(--line2);}
+.global-ext-header{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--ink3);transition:background .15s;user-select:none;}
+.global-ext-header:hover{background:var(--ink4);}
+.global-ext-header.open{background:var(--ink4);}
+.global-ext-detail{background:var(--ink2);padding:10px 14px 10px;border-top:1px solid var(--line2);}
+.global-ext-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap;}
+.global-ext-badge.ok{background:rgba(39,174,96,.18);color:#2ecc71;border:1px solid rgba(39,174,96,.3);}
+.global-ext-badge.nok{background:rgba(231,76,60,.18);color:#e74c3c;border:1px solid rgba(231,76,60,.3);}
+.global-ext-note{margin:4px 0 0!important;padding:4px 9px!important;height:30px!important;font-size:.78rem!important;width:100%;box-sizing:border-box;}
 /* Config table */
 .ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
 .ext-cfg-row:nth-child(even){background:rgba(255,255,255,.018);border-radius:4px;}
@@ -3618,9 +3618,9 @@ function saveExtConfigLocal() {
 /* ══════════════════════════════════════════
    INSPECTION GLOBALE (tous extincteurs)
 ══════════════════════════════════════════ */
-var _globalStatuts  = {};
-var _globalNotes    = {};
-var _globalCriteres = {};
+var _globalStatuts = {};  // {num: 'Conforme'|'Non conforme'}
+var _globalNotes   = {};  // {num: string}
+var _globalChecks  = {};  // {num: {key: bool}} — points cochés par extincteur
 
 function openGlobalInspection() {
   showLoader('Chargement…');
@@ -3637,12 +3637,15 @@ function openGlobalInspection() {
 }
 
 function _initGlobalForm() {
-  _globalStatuts  = {};
-  _globalNotes    = {};
-  _globalCriteres = {};
+  _globalStatuts = {};
+  _globalNotes   = {};
+  _globalChecks  = {};
   _extConfig.forEach(function(c){
     _globalStatuts[c.num] = 'Conforme';
     _globalNotes[c.num]   = '';
+    var cl = _checklistByType(c.type);
+    _globalChecks[c.num]  = {};
+    cl.forEach(function(it){ _globalChecks[c.num][it.key] = true; });
   });
   document.getElementById('globalIncDate').value = todayStr();
   document.getElementById('globalIncProchaine').value = plusDaysStr(todayStr(), 365);
@@ -3661,56 +3664,93 @@ function _renderGlobalSections() {
   container.innerHTML = types.map(function(type) {
     var exts = _extConfig.filter(function(c){ return c.type===type; });
     if (!exts.length) return '';
-    var safeType  = type.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'');
     var checklist = _checklistByType(type);
-    if (!_globalCriteres[type]) {
-      _globalCriteres[type] = {};
-      checklist.forEach(function(it){ _globalCriteres[type][it.key]=true; });
-    }
-    var checkItems = checklist.map(function(it) {
-      return '<div class="chk-item">'
-        +'<input type="checkbox" id="gcrit_'+safeType+'_'+it.key+'" '
-        +(_globalCriteres[type][it.key]?'checked':'')+' '
-        +'onchange="_globalCriteres[\''+type+'\'][\''+it.key+'\']=this.checked"/>'
-        +'<label for="gcrit_'+safeType+'_'+it.key+'">'+esc(it.label)+'</label>'
-        +'</div>';
-    }).join('');
+
     var extItems = exts.map(function(c) {
-      var isOk = (_globalStatuts[c.num]||'Conforme')==='Conforme';
-      return '<div class="global-ext-row" id="grow_'+c.num+'">'
-        +'<div class="global-ext-num">EXT-'+String(c.num).padStart(2,'0')+''
-        +(c.zone?' <span class="global-ext-zone">'+esc(c.zone)+'</span>':'')+'</div>'
-        +'<button type="button" class="global-ext-btn '+(isOk?'ok':'nok')+'" onclick="toggleGlobalStatut('+c.num+')">'
-        +(isOk?'✅ Conforme':'❌ Non conforme')+'</button>'
-        +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note…" '
+      var checks  = _globalChecks[c.num]||{};
+      var total   = checklist.length;
+      var okCount = checklist.filter(function(it){ return checks[it.key]; }).length;
+      var isOk    = okCount===total;
+
+      var checkItems = checklist.map(function(it) {
+        return '<div class="chk-item">'
+          +'<input type="checkbox" id="gchk_'+c.num+'_'+it.key+'" '
+          +(checks[it.key]?'checked':'')+' '
+          +'onchange="onExtCheckChange('+c.num+',\''+it.key+'\',this.checked)"/>'
+          +'<label for="gchk_'+c.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+          +'</div>';
+      }).join('');
+
+      return '<div class="global-ext-accordion">'
+        +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
+        +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
+        +(c.zone?'<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>':'<span style="flex:1"></span>')
+        +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
+        +(isOk?'✅':'❌')+' '+okCount+'/'+total
+        +'</span>'
+        +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+        +'</div>'
+        +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
+        +'<div class="chk-group">'+checkItems+'</div>'
+        +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation pour cet extincteur…" '
         +'onchange="_globalNotes['+c.num+']=this.value"/>'
+        +'</div>'
         +'</div>';
     }).join('');
+
     return '<div class="global-type-section">'
       +'<div class="global-type-title"><span style="color:'+colors[type]+'">'+icons[type]+'</span> '+esc(type)
       +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
-      +'<div class="chk-group" style="margin-bottom:10px">'+checkItems+'</div>'
       +'<div class="global-ext-list">'+extItems+'</div>'
       +'</div>';
   }).join('');
 }
 
-function toggleGlobalStatut(num) {
-  _globalStatuts[num] = (_globalStatuts[num]||'Conforme')==='Conforme' ? 'Non conforme' : 'Conforme';
-  var row  = document.getElementById('grow_'+num);
-  if (!row) return;
-  var btn  = row.querySelector('.global-ext-btn');
-  var isOk = _globalStatuts[num]==='Conforme';
-  btn.className = 'global-ext-btn '+(isOk?'ok':'nok');
-  btn.innerHTML = isOk?'✅ Conforme':'❌ Non conforme';
+function toggleExtAccordion(num) {
+  var det  = document.getElementById('gdet_'+num);
+  var hdr  = document.getElementById('ghdr_'+num);
+  var chev = document.getElementById('gchev_'+num);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (hdr)  hdr.classList.toggle('open', !open);
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function onExtCheckChange(num, key, checked) {
+  if (!_globalChecks[num]) _globalChecks[num] = {};
+  _globalChecks[num][key] = checked;
+  var extConf = null;
+  for (var i=0; i<_extConfig.length; i++) { if (_extConfig[i].num===num){ extConf=_extConfig[i]; break; } }
+  if (!extConf) return;
+  var cl      = _checklistByType(extConf.type);
+  var total   = cl.length;
+  var okCount = cl.filter(function(it){ return (_globalChecks[num]||{})[it.key]; }).length;
+  var isOk    = okCount===total;
+  _globalStatuts[num] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('gbadge_'+num);
+  if (badge) {
+    badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+    badge.innerHTML = (isOk?'✅':'❌')+' '+okCount+'/'+total;
+  }
 }
 
 function setAllGlobalStatut(statut) {
-  _extConfig.forEach(function(c){ _globalStatuts[c.num]=statut; });
   var isOk = statut==='Conforme';
-  document.querySelectorAll('.global-ext-btn').forEach(function(btn){
-    btn.className = 'global-ext-btn '+(isOk?'ok':'nok');
-    btn.innerHTML = isOk?'✅ Conforme':'❌ Non conforme';
+  _extConfig.forEach(function(c){
+    var cl = _checklistByType(c.type);
+    if (!_globalChecks[c.num]) _globalChecks[c.num]={};
+    cl.forEach(function(it){
+      _globalChecks[c.num][it.key] = isOk;
+      var el = document.getElementById('gchk_'+c.num+'_'+it.key);
+      if (el) el.checked = isOk;
+    });
+    _globalStatuts[c.num] = statut;
+    var badge = document.getElementById('gbadge_'+c.num);
+    if (badge) {
+      badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+      badge.innerHTML = (isOk?'✅':'❌')+' '+(isOk?cl.length:0)+'/'+cl.length;
+    }
   });
 }
 
@@ -3718,7 +3758,6 @@ function submitGlobalInspection() {
   var date = document.getElementById('globalIncDate').value;
   if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
   if (!_extConfig.length) { toast('Configurez les extincteurs d\'abord','err'); return; }
-  /* Sync notes depuis les inputs */
   _extConfig.forEach(function(c){
     var el = document.getElementById('gnote_'+c.num);
     if (el) _globalNotes[c.num] = el.value;
@@ -3732,9 +3771,8 @@ function submitGlobalInspection() {
     var exts = _extConfig.filter(function(c){ return c.type===type; });
     if (!exts.length) return;
     sections[type] = {
-      criteres: _globalCriteres[type]||{},
       extincteurs: exts.map(function(c){
-        return { num:c.num, zone:c.zone||'', statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
+        return { num:c.num, zone:c.zone||'', checks:_globalChecks[c.num]||{}, statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
       })
     };
   });
