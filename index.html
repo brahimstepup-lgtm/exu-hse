@@ -1036,8 +1036,16 @@ img{max-width:100%;display:block;}
         <h1 class="ph-title">🪲 Contrôle Nuisibles</h1>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button id="configPestBtn" class="btn btn-g" onclick="openConfigPest()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
-          <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Insp. Globale</button>
+          <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Globale</button>
         </div>
+      </div>
+      <!-- Boutons d'inspection par type -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--t3);align-self:center;white-space:nowrap">Inspecter :</span>
+        <button class="btn" onclick="openGlobalPestInspection('DEI')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:var(--rs)">⚡ DEI</button>
+        <button class="btn" onclick="openGlobalPestInspection('BAP')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:var(--rs)">🐭 Boîtes d'appât</button>
+        <button class="btn" onclick="openGlobalPestInspection('PM')"  style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(230,126,34,.15);border:1px solid rgba(230,126,34,.4);color:#e67e22;border-radius:var(--rs)">🪤 Pièges méc.</button>
+        <button class="btn" onclick="openGlobalPestInspection('PGG')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.4);color:#9b59b6;border-radius:var(--rs)">📋 Plaques glu</button>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
         <button class="gsort-tab on" id="pftab_all" onclick="setPestFilter('all')">Tous</button>
@@ -1533,7 +1541,7 @@ img{max-width:100%;display:block;}
   <div class="sheet">
     <div class="sh-handle"></div>
     <div class="sh-head">
-      <div class="sh-title">🔍 Inspection Globale — Dispositifs Nuisibles</div>
+      <div class="sh-title" id="globalPestOvTitle">🔍 Inspection Globale — Dispositifs Nuisibles</div>
       <button class="sh-x" onclick="closeSheet('globalPestOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
@@ -5331,12 +5339,13 @@ function savePestChecklistConfig() {
 /* ══════════════════════════════════════════
    INSPECTION GLOBALE NUISIBLES
 ══════════════════════════════════════════ */
-var _pestInspChecks    = {};
-var _pestInspStatuts   = {};
-var _pestInspNotes     = {};
-var _pestInspPhotoB64  = '';
-var _pestInspPhotoMime = '';
-var _pestInspSortMode  = 'type';
+var _pestInspChecks     = {};
+var _pestInspStatuts    = {};
+var _pestInspNotes      = {};
+var _pestInspPhotoB64   = '';
+var _pestInspPhotoMime  = '';
+var _pestInspSortMode   = 'type';
+var _pestInspTypeFilter = null;  // null = tous les types
 
 function _pkey(type, num) { return type+'_'+num; }
 
@@ -5347,7 +5356,8 @@ function _getPestItemCfg(type, num) {
   return { num:num, zone:'', emplacement:'' };
 }
 
-function openGlobalPestInspection() {
+function openGlobalPestInspection(pestType) {
+  _pestInspTypeFilter = pestType || null;
   showLoader('Chargement…');
   google.script.run
     .withSuccessHandler(function(r) {
@@ -5357,8 +5367,13 @@ function openGlobalPestInspection() {
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
       _pestChecklistConfig = hasConfig ? _cl : {};
-      var hasDevices = PEST_TYPES.some(function(t){ return (_pestConfig[t]&&(_pestConfig[t].count||0))>0; });
-      if (!hasDevices) { toast('Configurez d\'abord les dispositifs (⚙ Configurer)','err'); return; }
+      var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+      var hasDevices  = activeTypes.some(function(t){ return (_pestConfig[t]&&(_pestConfig[t].count||0))>0; });
+      if (!hasDevices) {
+        var lbl = _pestInspTypeFilter ? PEST_LABELS[_pestInspTypeFilter] : 'nuisibles';
+        toast('Configurez d\'abord les dispositifs '+lbl+' (⚙ Configurer)','err');
+        return;
+      }
       _initGlobalPestForm();
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
@@ -5368,8 +5383,9 @@ function openGlobalPestInspection() {
 function _initGlobalPestForm() {
   _pestInspChecks = {}; _pestInspStatuts = {}; _pestInspNotes = {};
   _pestInspPhotoB64 = ''; _pestInspPhotoMime = '';
-  _pestInspSortMode = 'type';
-  PEST_TYPES.forEach(function(type) {
+  _pestInspSortMode = _pestInspTypeFilter ? 'num' : 'type';
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  activeTypes.forEach(function(type) {
     var cfg   = _pestConfig[type] || { count:0 };
     var count = cfg.count || 0;
     var cl    = _pestChecklistByType(type);
@@ -5386,9 +5402,20 @@ function _initGlobalPestForm() {
   document.getElementById('globalPestObs').value       = '';
   var prev = document.getElementById('globalPestPhotoPreview');
   if (prev) { prev.style.display='none'; prev.innerHTML=''; }
+  // Titre dynamique
+  var titleEl = document.getElementById('globalPestOvTitle');
+  if (titleEl) {
+    titleEl.textContent = _pestInspTypeFilter
+      ? PEST_ICONS[_pestInspTypeFilter]+' Inspection '+PEST_LABELS[_pestInspTypeFilter]
+      : '🔍 Inspection Globale — Dispositifs Nuisibles';
+  }
+  // Tabs de tri : masquer "Type" quand un seul type
+  var sortTypeBtn = document.getElementById('pgsort_type');
+  if (sortTypeBtn) sortTypeBtn.style.display = _pestInspTypeFilter ? 'none' : '';
   ['pgsort_type','pgsort_zone','pgsort_num'].forEach(function(id){
     var el = document.getElementById(id);
-    if (el) el.className = 'gsort-tab'+(id==='pgsort_type'?' on':'');
+    var active = _pestInspTypeFilter ? (id==='pgsort_num') : (id==='pgsort_type');
+    if (el) el.className = 'gsort-tab'+(active?' on':'');
   });
   _renderPestInspSections();
   openSheet('globalPestOv');
@@ -5416,12 +5443,13 @@ function _syncPestInspNotes() {
 }
 
 function _renderPestInspSections() {
-  var container = document.getElementById('globalPestSectionsContainer');
+  var container   = document.getElementById('globalPestSectionsContainer');
   if (!container) return;
-  var by = _pestInspSortMode;
+  var by          = _pestInspSortMode;
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
 
   if (by === 'type') {
-    container.innerHTML = PEST_TYPES.map(function(type) {
+    container.innerHTML = activeTypes.map(function(type) {
       var cfg   = _pestConfig[type] || { count:0 };
       var count = cfg.count || 0;
       if (!count) return '';
@@ -5436,7 +5464,7 @@ function _renderPestInspSections() {
 
   } else if (by === 'zone') {
     var zoneMap = {};
-    PEST_TYPES.forEach(function(type) {
+    activeTypes.forEach(function(type) {
       var cfg = _pestConfig[type] || { count:0 };
       for (var i=1; i<=(cfg.count||0); i++) {
         var it = _getPestItemCfg(type, i);
@@ -5450,20 +5478,23 @@ function _renderPestInspSections() {
       return '<div class="global-type-section">'
         +'<div class="global-type-title"><span>📍</span> '+esc(zone)
         +' <span class="global-type-count">'+devs.length+' dispositif'+(devs.length>1?'s':'')+'</span></div>'
-        +'<div class="global-ext-list">'+devs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,true); }).join('')+'</div>'
+        +'<div class="global-ext-list">'+devs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,!!_pestInspTypeFilter); }).join('')+'</div>'
         +'</div>';
     }).join('');
 
   } else {
     var allDevs = [];
-    PEST_TYPES.forEach(function(type) {
+    activeTypes.forEach(function(type) {
       var cfg = _pestConfig[type] || { count:0 };
       for (var i=1; i<=(cfg.count||0); i++) allDevs.push({ type:type, item:_getPestItemCfg(type,i) });
     });
+    var sectionTitle = _pestInspTypeFilter
+      ? PEST_ICONS[_pestInspTypeFilter]+' '+esc(PEST_LABELS[_pestInspTypeFilter])
+      : '🔢 Tous les dispositifs';
     container.innerHTML = '<div class="global-type-section">'
-      +'<div class="global-type-title"><span>🔢</span> Tous les dispositifs'
+      +'<div class="global-type-title" style="color:'+(_pestInspTypeFilter?PEST_COLORS[_pestInspTypeFilter]:'inherit')+'"><span>'+sectionTitle+'</span>'
       +' <span class="global-type-count">'+allDevs.length+' unité'+(allDevs.length>1?'s':'')+'</span></div>'
-      +'<div class="global-ext-list">'+allDevs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,true); }).join('')+'</div>'
+      +'<div class="global-ext-list">'+allDevs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,!_pestInspTypeFilter); }).join('')+'</div>'
       +'</div>';
   }
 }
@@ -5541,7 +5572,8 @@ function onPestCheckChange(k, type, key, checked) {
 
 function setAllPestStatut(statut) {
   var isOk = statut === 'Conforme';
-  PEST_TYPES.forEach(function(type) {
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  activeTypes.forEach(function(type) {
     var cfg = _pestConfig[type] || { count:0 };
     var cl  = _pestChecklistByType(type);
     for (var i=1; i<=(cfg.count||0); i++) {
@@ -5563,10 +5595,11 @@ function submitGlobalPestInspection() {
   var date = document.getElementById('globalPestDate').value;
   if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
   _syncPestInspNotes();
+  var activeTypes  = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
   var result       = {};
   var totalNonConf = 0;
   var totalDevs    = 0;
-  PEST_TYPES.forEach(function(type) {
+  activeTypes.forEach(function(type) {
     var cfg   = _pestConfig[type] || { count:0, items:[] };
     var count = cfg.count || 0;
     if (!count) return;
@@ -5581,7 +5614,13 @@ function submitGlobalPestInspection() {
     }
     result[type] = { units:units };
   });
-  var etatGlobal = totalNonConf===0 ? 'Conforme' : totalNonConf < totalDevs/2 ? 'Partiel' : 'Non conforme';
+  var etatGlobal  = totalNonConf===0 ? 'Conforme' : totalNonConf < totalDevs/2 ? 'Partiel' : 'Non conforme';
+  var typeLabel   = _pestInspTypeFilter
+    ? ('Inspection '+PEST_LABELS[_pestInspTypeFilter])
+    : 'Inspection Globale Nuisibles';
+  var idLabel     = _pestInspTypeFilter
+    ? (PEST_ICONS[_pestInspTypeFilter]+' '+PEST_LABELS[_pestInspTypeFilter]+' — '+totalDevs+' dispositif'+(totalDevs>1?'s':''))
+    : ('GLOBAL — '+totalDevs+' dispositifs');
   showLoader('Enregistrement…');
   google.script.run
     .withSuccessHandler(function(r){
@@ -5597,8 +5636,8 @@ function submitGlobalPestInspection() {
       token:              S.adminKey,
       dateInspection:     date,
       superviseurNom:     S_AUTH.name||S_AUTH.matricule,
-      type:               'Inspection Globale Nuisibles',
-      idEquipement:       'GLOBAL — '+totalDevs+' dispositifs',
+      type:               typeLabel,
+      idEquipement:       idLabel,
       zone:               '',
       checklist:          result,
       etatGlobal:         etatGlobal,
