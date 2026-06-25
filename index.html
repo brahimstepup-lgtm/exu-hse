@@ -1236,6 +1236,15 @@ img{max-width:100%;display:block;}
         <label class="fl">Observations générales</label>
         <textarea class="fi" id="globalIncObs" rows="2" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
       </div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalPhotoArea" onclick="document.getElementById('globalPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="globalPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onGlobalPhotoChange(this)"/>
+      </div>
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('globalInspOv')">Annuler</button>
@@ -3618,9 +3627,11 @@ function saveExtConfigLocal() {
 /* ══════════════════════════════════════════
    INSPECTION GLOBALE (tous extincteurs)
 ══════════════════════════════════════════ */
-var _globalStatuts = {};  // {num: 'Conforme'|'Non conforme'}
-var _globalNotes   = {};  // {num: string}
-var _globalChecks  = {};  // {num: {key: bool}} — points cochés par extincteur
+var _globalStatuts  = {};  // {num: 'Conforme'|'Non conforme'}
+var _globalNotes    = {};  // {num: string}
+var _globalChecks   = {};  // {num: {key: bool}} — points cochés par extincteur
+var _globalPhotoB64 = '';
+var _globalPhotoMime = '';
 
 function openGlobalInspection() {
   showLoader('Chargement…');
@@ -3637,9 +3648,11 @@ function openGlobalInspection() {
 }
 
 function _initGlobalForm() {
-  _globalStatuts = {};
-  _globalNotes   = {};
-  _globalChecks  = {};
+  _globalStatuts   = {};
+  _globalNotes     = {};
+  _globalChecks    = {};
+  _globalPhotoB64  = '';
+  _globalPhotoMime = '';
   _extConfig.forEach(function(c){
     _globalStatuts[c.num] = 'Conforme';
     _globalNotes[c.num]   = '';
@@ -3650,6 +3663,9 @@ function _initGlobalForm() {
   document.getElementById('globalIncDate').value = todayStr();
   document.getElementById('globalIncProchaine').value = plusDaysStr(todayStr(), 365);
   document.getElementById('globalIncObs').value = '';
+  document.getElementById('globalPhotoPreview').style.display = 'none';
+  document.getElementById('globalPhotoArea').classList.remove('has-file');
+  document.getElementById('globalPhotoInput').value = '';
   _renderGlobalSections();
   openSheet('globalInspOv');
 }
@@ -3662,7 +3678,8 @@ function _renderGlobalSections() {
   var colors = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
 
   container.innerHTML = types.map(function(type) {
-    var exts = _extConfig.filter(function(c){ return c.type===type; });
+    var exts = _extConfig.filter(function(c){ return c.type===type; })
+                         .sort(function(a,b){ return a.num-b.num; });
     if (!exts.length) return '';
     var checklist = _checklistByType(type);
 
@@ -3768,7 +3785,8 @@ function submitGlobalInspection() {
   var types = ['Poudre ABC','CO2','Eau'];
   var sections = {};
   types.forEach(function(type) {
-    var exts = _extConfig.filter(function(c){ return c.type===type; });
+    var exts = _extConfig.filter(function(c){ return c.type===type; })
+                         .sort(function(a,b){ return a.num-b.num; });
     if (!exts.length) return;
     sections[type] = {
       extincteurs: exts.map(function(c){
@@ -3798,9 +3816,25 @@ function submitGlobalInspection() {
       etatGlobal: etatGlobal,
       observations: document.getElementById('globalIncObs').value,
       prochaineInspection: document.getElementById('globalIncProchaine').value,
-      photoChecklist: '',
-      photo_mime: ''
+      photoChecklist: _globalPhotoB64,
+      photo_mime: _globalPhotoMime
     });
+}
+
+function onGlobalPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _globalPhotoB64  = e.target.result;
+    _globalPhotoMime = file.type;
+    var area = document.getElementById('globalPhotoArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('globalPhotoPreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
 
 function renderIncendie() {
