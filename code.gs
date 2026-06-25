@@ -1548,7 +1548,8 @@ function getExtConfig(token) {
       for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
     var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
-    return { success:true, data:config, extDocCode:extDocCode };
+    var logoUrl    = props.getProperty('HSE_LOGO_URL') || '';
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1594,7 +1595,8 @@ function getConfigData(adminKey) {
     if (!riaConfig.count)  riaConfig.count = 20;
     var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
     var riaDocCode = props.getProperty('RIA_DOC_CODE') || 'ENR-HSE 2';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode };
+    var logoUrl    = props.getProperty('HSE_LOGO_URL') || '';
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1657,7 +1659,8 @@ function getPestConfigData(adminKey) {
       if (!pestConfig[t].count)  pestConfig[t].count  = 5;
     });
     if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists };
+    var logoUrl = props.getProperty('HSE_LOGO_URL') || '';
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1743,5 +1746,38 @@ function getPestChecklists(token) {
       };
     });
     return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LOGO DE L'ENTREPRISE (stocké dans Drive, URL dans PropertiesService)
+// ══════════════════════════════════════════════════════════════════
+function saveLogoConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var bytes  = Utilities.base64Decode(p.logoBase64);
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-logo.png');
+    var file   = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/uc?export=view&id=' + fileId;
+    props.setProperty('HSE_LOGO_FILE_ID', fileId);
+    props.setProperty('HSE_LOGO_URL', url);
+    return { success:true, logoUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteLogoConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('HSE_LOGO_FILE_ID');
+    props.deleteProperty('HSE_LOGO_URL');
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
