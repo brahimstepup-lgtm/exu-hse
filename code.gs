@@ -1537,14 +1537,14 @@ function getChecklists(token) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-// ── Configuration des extincteurs (type + zone par numéro) ──
+// ── Configuration des extincteurs (type + zone + emplacement par numéro) ──
 function getExtConfig(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
   try {
     var raw = PropertiesService.getScriptProperties().getProperty('EXTINCTEUR_CONFIG')||'[]';
     var config = JSON.parse(raw);
     if (!config.length) {
-      for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'' });
+      for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
     return { success:true, data:config };
   } catch(e) { return { success:false, error:e.message }; }
@@ -1554,9 +1554,33 @@ function saveExtConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
     var config = (p.config||[]).map(function(c){
-      return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||'') };
+      return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||''), emplacement:String(c.emplacement||'') };
     }).filter(function(c){ return c.num>=1 && c.num<=200; });
     PropertiesService.getScriptProperties().setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
     return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveZones(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var zones = (p.zones||[]).map(function(z){ return String(z).trim(); }).filter(Boolean);
+    PropertiesService.getScriptProperties().setProperty('ZONES_CONFIG', JSON.stringify(zones));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getConfigData(adminKey) {
+  if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var rawExt   = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
+    var rawZones = props.getProperty('ZONES_CONFIG')||'[]';
+    var extConfig = JSON.parse(rawExt);
+    var zones     = JSON.parse(rawZones);
+    if (!extConfig.length) {
+      for (var i=1; i<=100; i++) extConfig.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
+    }
+    return { success:true, extConfig:extConfig, zones:zones };
   } catch(e) { return { success:false, error:e.message }; }
 }

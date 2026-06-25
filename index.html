@@ -765,9 +765,13 @@ img{max-width:100%;display:block;}
 .gsort-tab.on{background:var(--y2);border-color:rgba(245,197,24,.4);color:var(--y);font-weight:600;}
 .gsort-tab:hover:not(.on){background:var(--ink4);}
 /* Config table */
-.ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
+.ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
 .ext-cfg-row:nth-child(even){background:rgba(255,255,255,.018);border-radius:4px;}
 .ext-cfg-label{font-size:.78rem;color:var(--t3);font-weight:600;text-align:center;}
+/* Zone chips */
+.zone-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.3);border-radius:12px;padding:3px 9px;font-size:.8rem;color:#3498db;margin:2px;}
+.zone-chip .zrm{cursor:pointer;opacity:.55;font-size:.75em;line-height:1;}
+.zone-chip .zrm:hover{opacity:1;}
 /* Quick range config */
 .range-cfg-row{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2);}
 .range-cfg-row:last-child{border-bottom:none;}
@@ -1173,33 +1177,46 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('extConfigOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
-      <!-- Affectation rapide par plage -->
+      <!-- ① Gestion des zones -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">Affectation rapide par plage</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="fi" id="newZoneInput" placeholder="Nouvelle zone (ex: Atelier A)…"
+            style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addConfigZone();}"/>
+          <button type="button" class="btn btn-g" onclick="addConfigZone()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+          <button type="button" class="btn btn-p" onclick="saveZonesConfig()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">💾 Zones</button>
+        </div>
+        <div id="zoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
+      </div>
+      <!-- ② Affectation rapide par plage -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:6px">Affectation rapide par plage</div>
         <div style="font-size:.75rem;color:var(--t3);margin-bottom:8px">Ex: <b>1-30</b> ou <b>1,5,10-20</b></div>
         <div class="range-cfg-row">
           <span style="font-size:.82rem;font-weight:600;color:#e67e22;min-width:90px">🔴 Poudre ABC</span>
           <input class="fi" id="rangePoudre" placeholder="Ex: 1-35" style="height:34px;font-size:.82rem"/>
-          <input class="fi" id="zonePoudre"  placeholder="Zone commune (opt.)" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zonePoudre" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
         </div>
         <div class="range-cfg-row">
           <span style="font-size:.82rem;font-weight:600;color:#3498db;min-width:90px">🔵 CO2</span>
-          <input class="fi" id="rangeCO2"    placeholder="Ex: 36-60" style="height:34px;font-size:.82rem"/>
-          <input class="fi" id="zoneCO2"     placeholder="Zone commune (opt.)" style="height:34px;font-size:.82rem"/>
+          <input class="fi" id="rangeCO2" placeholder="Ex: 36-60" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zoneCO2" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
         </div>
         <div class="range-cfg-row">
           <span style="font-size:.82rem;font-weight:600;color:#27ae60;min-width:90px">💧 Eau</span>
-          <input class="fi" id="rangeEau"    placeholder="Ex: 61-100" style="height:34px;font-size:.82rem"/>
-          <input class="fi" id="zoneEau"     placeholder="Zone commune (opt.)" style="height:34px;font-size:.82rem"/>
+          <input class="fi" id="rangeEau" placeholder="Ex: 61-100" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zoneEau" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
         </div>
         <button class="btn btn-p" onclick="applyRangeConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">Appliquer au tableau ↓</button>
       </div>
-      <!-- Tableau détaillé -->
+      <!-- ③ Tableau détaillé -->
       <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail extincteur par extincteur</div>
-      <div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+      <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
         <div style="font-size:.72rem;color:var(--t3);text-align:center">N°</div>
         <div style="font-size:.72rem;color:var(--t3)">Type</div>
-        <div style="font-size:.72rem;color:var(--t3)">Zone / Emplacement</div>
+        <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+        <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
       </div>
       <div id="extConfigBody"></div>
     </div>
@@ -3528,22 +3545,89 @@ function _checklistByType(type) {
 }
 
 /* ══════════════════════════════════════════
-   CONFIG EXTINCTEURS
+   CONFIG EXTINCTEURS + ZONES
 ══════════════════════════════════════════ */
-var _extConfig = [];
+var _extConfig       = [];
+var _configuredZones = [];
 
+/* ─── Helpers zones ─── */
+function _zoneOptions(current) {
+  var opts = '<option value="">— Zone —</option>';
+  _configuredZones.forEach(function(z){
+    opts += '<option value="'+esc(z)+'"'+(z===current?' selected':'')+'>'+esc(z)+'</option>';
+  });
+  return opts;
+}
+
+function _renderZoneChips() {
+  var el = document.getElementById('zoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removeConfigZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+
+function _refreshZoneSelects() {
+  /* met à jour les selects de plage ET du tableau */
+  ['zonePoudre','zoneCO2','zoneEau'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (sel && sel.tagName==='SELECT') { var v=sel.value; sel.innerHTML=_zoneOptions(v); }
+  });
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  for (var i=1; i<=100; i++) {
+    var sel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    if (sel && sel.tagName==='SELECT') { var v2=sel.value; sel.innerHTML=_zoneOptions(v2); }
+  }
+}
+
+function addConfigZone() {
+  var inp = document.getElementById('newZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderZoneChips();
+  _refreshZoneSelects();
+}
+
+function removeConfigZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderZoneChips();
+  _refreshZoneSelects();
+}
+
+function saveZonesConfig() {
+  showLoader('Sauvegarde des zones…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Zones sauvegardées','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveZones({ adminKey:S.adminKey, zones:_configuredZones });
+}
+
+/* ─── Ouverture config panel ─── */
 function openConfigExt() {
   showLoader('Chargement de la configuration…');
   google.script.run
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _extConfig = r.data||[];
+      _configuredZones = r.zones||[];
+      _extConfig       = r.extConfig||[];
+      _renderZoneChips();
       _renderExtConfigTable();
+      _refreshZoneSelects();
       openSheet('extConfigOv');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .getExtConfig(S.adminKey);
+    .getConfigData(S.adminKey);
 }
 
 function _renderExtConfigTable() {
@@ -3553,7 +3637,7 @@ function _renderExtConfigTable() {
   for (var i=1; i<=100; i++) {
     var conf = null;
     for (var j=0; j<_extConfig.length; j++) { if (_extConfig[j].num===i) { conf=_extConfig[j]; break; } }
-    if (!conf) conf = { num:i, type:'Poudre ABC', zone:'' };
+    if (!conf) conf = { num:i, type:'Poudre ABC', zone:'', emplacement:'' };
     rows.push(
       '<div class="ext-cfg-row">'
       +'<div class="ext-cfg-label" style="color:var(--t3)">EXT-'+String(i).padStart(2,'0')+'</div>'
@@ -3562,7 +3646,10 @@ function _renderExtConfigTable() {
       +'<option value="CO2"'+(conf.type==='CO2'?' selected':'')+'>🔵 CO2</option>'
       +'<option value="Eau"'+(conf.type==='Eau'?' selected':'')+'>💧 Eau</option>'
       +'</select>'
-      +'<input class="fi" type="text" data-num="'+i+'" data-field="zone" value="'+esc(conf.zone)+'" placeholder="Zone…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+      +'<select class="fi" data-num="'+i+'" data-field="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +_zoneOptions(conf.zone||'')
+      +'</select>'
+      +'<input class="fi" type="text" data-num="'+i+'" data-field="emplacement" value="'+esc(conf.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
       +'</div>'
     );
   }
@@ -3578,7 +3665,8 @@ function applyRangeConfig() {
   var assignments = {};
   specs.forEach(function(sp) {
     var rangeStr = (document.getElementById(sp.rangeId).value||'').trim();
-    var zone     = (document.getElementById(sp.zoneId).value||'').trim();
+    var zoneEl   = document.getElementById(sp.zoneId);
+    var zone     = zoneEl ? (zoneEl.value||'').trim() : '';
     if (!rangeStr) return;
     _parseRanges(rangeStr).forEach(function(n){ assignments[n] = { type:sp.type, zone:zone }; });
   });
@@ -3588,8 +3676,8 @@ function applyRangeConfig() {
     var n = parseInt(sel.getAttribute('data-num'),10);
     if (assignments[n]) {
       sel.value = assignments[n].type;
-      var zoneInput = body.querySelector('[data-num="'+n+'"][data-field="zone"]');
-      if (zoneInput && assignments[n].zone) zoneInput.value = assignments[n].zone;
+      var zSel = body.querySelector('[data-num="'+n+'"][data-field="zone"]');
+      if (zSel && assignments[n].zone) zSel.value = assignments[n].zone;
     }
   });
   toast('Plages appliquées au tableau','ok');
@@ -3619,9 +3707,10 @@ function saveExtConfigLocal() {
   var config = [];
   for (var i=1; i<=100; i++) {
     var sel  = body.querySelector('[data-num="'+i+'"][data-field="type"]');
-    var inp  = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    var zsel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    var emp  = body.querySelector('[data-num="'+i+'"][data-field="emplacement"]');
     if (!sel) continue;
-    config.push({ num:i, type:sel.value, zone:(inp?inp.value.trim():'') });
+    config.push({ num:i, type:sel.value, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
   }
   _extConfig = config;
   showLoader('Sauvegarde…');
@@ -3729,15 +3818,29 @@ function _renderExtAccordionItem(c) {
     ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>'
     : '<span style="flex:1"></span>';
 
+  /* Emplacement pill in header if set */
+  var emplacePill = c.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(c.emplacement)+'</span>'
+    : '';
+
+  /* Meta line inside detail: zone + emplacement */
+  var detailMeta = (c.zone||c.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(c.zone ? '<span>🏷 '+esc(c.zone)+'</span>' : '')
+      +(c.emplacement ? '<span>📌 '+esc(c.emplacement)+'</span>' : '')
+      +'</div>'
+    : '';
+
   return '<div class="global-ext-accordion">'
     +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
     +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
-    +typePill+zoneSpan
+    +typePill+zoneSpan+emplacePill
     +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
     +(isOk?'✅':'❌')+' '+okCount+'/'+total+'</span>'
     +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
     +'</div>'
     +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
+    +detailMeta
     +'<div class="chk-group">'+checkItems+'</div>'
     +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation…" '
     +'value="'+esc(_globalNotes[c.num]||'')+'" onchange="_globalNotes['+c.num+']=this.value"/>'
