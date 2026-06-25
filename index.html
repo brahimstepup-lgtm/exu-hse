@@ -1214,6 +1214,14 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('extConfigOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
+      <!-- Code document -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="extDocCodeInput" value="ENR-HSE 1" placeholder="ex. : ENR-HSE 1" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
+          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
       <!-- ① Gestion des zones -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
@@ -1315,7 +1323,8 @@ img{max-width:100%;display:block;}
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('globalInspOv')">Annuler</button>
-      <button class="btn btn-p" onclick="submitGlobalInspection()">✓ Enregistrer tout</button>
+      <button class="btn btn-g" onclick="printBlankExtChecklist()">🖨 Imprimer vierge</button>
+      <button class="btn btn-p" onclick="submitGlobalInspection()">✓ Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1329,6 +1338,14 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('riaConfigOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
+      <!-- Code document -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="riaDocCodeInput" value="ENR-HSE 2" placeholder="ex. : ENR-HSE 2" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
+          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
       <!-- Nombre de RIA -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">Nombre de RIA dans l'usine</div>
@@ -1397,7 +1414,8 @@ img{max-width:100%;display:block;}
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('globalRiaOv')">Annuler</button>
-      <button class="btn btn-p" onclick="submitGlobalInspectionRIA()">✓ Enregistrer tout</button>
+      <button class="btn btn-g" onclick="printBlankRiaChecklist()">🖨 Imprimer vierge</button>
+      <button class="btn btn-p" onclick="submitGlobalInspectionRIA()">✓ Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1411,6 +1429,10 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('incendieDetailOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto" id="idetBody"></div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('incendieDetailOv')">Fermer</button>
+      <button class="btn btn-g" onclick="printIncendieRecord(_incendieCurrentDetailIdx)">🖨 Imprimer le rapport</button>
+    </div>
   </div>
 </div>
 
@@ -4037,6 +4059,9 @@ function openConfigExt() {
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _configuredZones = r.zones||[];
       _extConfig       = r.extConfig||[];
+      _extDocCode      = r.extDocCode || 'ENR-HSE 1';
+      var dcEl = document.getElementById('extDocCodeInput');
+      if (dcEl) dcEl.value = _extDocCode;
       var _cl = r.checklists || {};
       var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
       _checklistConfig = _hasConfig ? _cl : {
@@ -4137,6 +4162,8 @@ function saveExtConfigLocal() {
     config.push({ num:i, type:sel.value, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
   }
   _extConfig = config;
+  var dcEl = document.getElementById('extDocCodeInput');
+  _extDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 1';
   showLoader('Sauvegarde…');
   google.script.run
     .withSuccessHandler(function(r){
@@ -4145,12 +4172,15 @@ function saveExtConfigLocal() {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveExtConfig({ adminKey:S.adminKey, config:config });
+    .saveExtConfig({ adminKey:S.adminKey, config:config, docCode:_extDocCode });
 }
 
 /* ══════════════════════════════════════════
    INSPECTION GLOBALE (tous extincteurs)
 ══════════════════════════════════════════ */
+var _extDocCode    = 'ENR-HSE 1';
+var _riaDocCode    = 'ENR-HSE 2';
+var _incendieCurrentDetailIdx = -1;
 var _globalStatuts  = {};  // {num: 'Conforme'|'Non conforme'}
 var _globalNotes    = {};  // {num: string}
 var _globalChecks   = {};  // {num: {key: bool}} — points cochés par extincteur
@@ -4163,7 +4193,8 @@ function openGlobalInspection() {
     .withSuccessHandler(function(r){
       hideSplash();
       if (!r||!r.success) { toast('Erreur config: '+(r&&r.error||'?'),'err'); return; }
-      _extConfig = r.data||[];
+      _extConfig  = r.data||[];
+      _extDocCode = r.extDocCode || _extDocCode;
       if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
       _initGlobalForm();
     })
@@ -4521,8 +4552,11 @@ function openConfigRIA() {
       _riaConfig = r.riaConfig || { count:20, items:[] };
       if (!_riaConfig.items) _riaConfig.items = [];
       if (!_riaConfig.count) _riaConfig.count = 20;
+      _riaDocCode = r.riaDocCode || 'ENR-HSE 2';
       _configuredZones = r.zones || [];
       document.getElementById('riaCountInput').value = _riaConfig.count || 20;
+      var dcEl = document.getElementById('riaDocCodeInput');
+      if (dcEl) dcEl.value = _riaDocCode;
       _renderRiaConfigTable();
       openSheet('riaConfigOv');
     })
@@ -4568,6 +4602,8 @@ function saveRiaConfigLocal() {
     items.push({ num:i, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
   }
   _riaConfig = { count:count, items:items };
+  var dcEl = document.getElementById('riaDocCodeInput');
+  _riaDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 2';
   showLoader('Sauvegarde…');
   google.script.run
     .withSuccessHandler(function(r){
@@ -4576,7 +4612,7 @@ function saveRiaConfigLocal() {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveRiaConfig({ adminKey:S.adminKey, riaConfig:_riaConfig });
+    .saveRiaConfig({ adminKey:S.adminKey, riaConfig:_riaConfig, riaDocCode:_riaDocCode });
 }
 
 /* ══════════════════════════════════════════
@@ -4595,9 +4631,10 @@ function openGlobalInspectionRIA() {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _riaConfig = r.riaConfig || { count:20, items:[] };
+      _riaConfig  = r.riaConfig || { count:20, items:[] };
       if (!_riaConfig.items) _riaConfig.items = [];
       if (!_riaConfig.count) _riaConfig.count = 20;
+      _riaDocCode = r.riaDocCode || _riaDocCode;
       _initGlobalFormRIA();
       openSheet('globalRiaOv');
     })
@@ -4820,9 +4857,10 @@ function onRiaPhotoChange(input) {
 function openIncendieDetail(idx) {
   var c = _incendieRecords[idx];
   if (!c) return;
+  _incendieCurrentDetailIdx = idx;
   var isGlobal = c.type === 'Inspection Globale';
   document.getElementById('idetTitle').textContent =
-    (isGlobal ? '🌍 Inspection Globale' : '🔴 Inspection') + ' — ' + (c.dateInspection||'');
+    (isGlobal ? '🌍 Inspection Globale' : (c.type==='Inspection Globale RIA'?'🌊 Inspection Globale RIA':'🔴 Inspection')) + ' — ' + (c.dateInspection||'');
   document.getElementById('idetBody').innerHTML = _buildDetailHTML(c);
   openSheet('incendieDetailOv');
 }
@@ -4974,6 +5012,97 @@ function _buildDetailHTML(c) {
   }
 
   return html;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   IMPRESSION — Fiches de contrôle Incendie (ISO 9001)
+────────────────────────────────────────────────────────────────── */
+function _openPrintWin(html) {
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+function printBlankExtChecklist() {
+  if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs','err'); return; }
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var sections  = [];
+  ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+    var items = _extConfig.filter(function(c){ return c.type===type; }).sort(function(a,b){ return a.num-b.num; });
+    if (!items.length) return;
+    sections.push({ sectionTitle:TY_ICONS[type]+' '+type, prefix:'EXT', items:items, checklist:_checklistByType(type) });
+  });
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     _extDocCode,
+    title:       'Inspection Globale Extincteurs',
+    subtitle:    'Sécurité Incendie — Extincteurs',
+    date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
+    superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+    prochaine:   _fmtDate(document.getElementById('globalIncProchaine')&&document.getElementById('globalIncProchaine').value||''),
+    obs: '', mode:'blank', sections:sections
+  }));
+}
+
+function printBlankRiaChecklist() {
+  if (!_riaConfig.count) { toast('Configurez d\'abord les RIA','err'); return; }
+  var count = _riaConfig.count || 20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var it = (_riaConfig.items||[]).filter(function(x){ return x.num===i; })[0] || {num:i,zone:'',emplacement:''};
+    items.push(it);
+  }
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     _riaDocCode,
+    title:       'Inspection Globale RIA',
+    subtitle:    'Sécurité Incendie — Robinets Incendie Armés',
+    date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
+    superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+    prochaine:   _fmtDate(document.getElementById('globalRiaProchaine')&&document.getElementById('globalRiaProchaine').value||''),
+    obs: '', mode:'blank',
+    sections: [{ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:items, checklist:CHECKLIST_RIA }]
+  }));
+}
+
+function printIncendieRecord(idx) {
+  var c = _incendieRecords[idx];
+  if (!c) return;
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+  var sections    = [];
+  var docCode     = _extDocCode;
+
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    docCode = _extDocCode;
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec||!sec.extincteurs||!sec.extincteurs.length) return;
+      sections.push({ sectionTitle:TY_ICONS[type]+' '+type, prefix:'EXT', items:sec.extincteurs, checklist:_checklistByType(type) });
+    });
+  } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+    docCode = _riaDocCode;
+    sections.push({ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:c.checklist, checklist:CHECKLIST_RIA });
+  } else {
+    var cl = _checklistByType(c.type==='RIA'?'RIA':'Poudre ABC');
+    var checks = c.checklist||{};
+    var fakeItem = { num:1, zone:c.zone||'', emplacement:'', checks:checks, statut:c.etatGlobal||'', note:c.observations||'' };
+    docCode = c.type==='RIA' ? _riaDocCode : _extDocCode;
+    sections.push({ sectionTitle:(c.type==='RIA'?'💧':'🔴')+' '+esc(c.idEquipement||c.type||''), prefix:(c.type==='RIA'?'RIA':'EXT'), items:[fakeItem], checklist:cl });
+  }
+
+  if (!sections.length) { toast('Aucune donnée à imprimer','err'); return; }
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     docCode,
+    title:       c.type || 'Inspection Sécurité Incendie',
+    subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
+    date:        _fmtDate(c.dateInspection||''),
+    superviseur: c.superviseurNom||'',
+    prochaine:   _fmtDate(c.prochaineInspection||''),
+    obs:         c.observations||'',
+    etatGlobal:  c.etatGlobal||'',
+    mode:        'record',
+    sections:    sections
+  }));
 }
 
 function renderIncendie() {
@@ -5816,44 +5945,43 @@ function _fmtDate(s) {
   return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s;
 }
 
-function _buildPestPrintHTML(opts) {
-  // opts: { title, date, superviseur, prochaine, obs, types[], typeData{}, docCode, mode:'blank'|'record' }
-  var docCode = opts.docCode || 'ENR-HSE 7';
-  var now = new Date();
-  var editionDate = now.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'});
+/* ──────────────────────────────────────────────────────────────────
+   GÉNÉRATEUR HTML COMMUN — ISO 9001 (Extincteurs + RIA + Nuisibles)
+   opts.sections = [{sectionTitle, prefix, items:[{num,zone,emplacement,checks,statut,note}], checklist:[{key,label}]}]
+────────────────────────────────────────────────────────────────── */
+function _buildHSEPrintHTML(opts) {
+  var docCode     = opts.docCode || 'ENR-HSE';
+  var now         = new Date();
+  var editionDate = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
 
   var typeTables = '';
-  opts.types.forEach(function(type) {
-    var td = opts.typeData[type];
-    if (!td || !td.items || !td.items.length) return;
-    var cl = td.checklist || [];
-    if (!cl.length) return;
+  (opts.sections||[]).forEach(function(sec) {
+    var items = sec.items || [];
+    var cl    = sec.checklist || [];
+    if (!items.length || !cl.length) return;
     typeTables += '<div class="type-section"><div class="type-header">'
-      + type + ' — ' + (PEST_LABELS[type]||type)
+      + esc(sec.sectionTitle||sec.prefix)
       + '</div><table class="check-table"><thead><tr>'
       + '<th style="width:54px">N°</th><th style="width:72px">Zone</th>'
       + '<th style="width:110px">Emplacement</th><th>Points de contrôle</th>'
       + '<th style="width:36px">✓/✗</th><th>Observations</th></tr></thead><tbody>';
-    td.items.forEach(function(item) {
+    items.forEach(function(item) {
       cl.forEach(function(pt, pi) {
-        var isFirst = pi === 0;
-        var isOk    = (opts.mode === 'blank') ? null : !!(item.checks && item.checks[pt.key]);
+        var isFirst    = pi === 0;
+        var isOk       = (opts.mode === 'blank') ? null : !!(item.checks && item.checks[pt.key]);
+        var devId      = esc(sec.prefix)+'-'+String(item.num).padStart(2,'0');
         var firstCells = isFirst
-          ? '<td class="dev-num" rowspan="'+cl.length+'">'
-              + type+'-'+String(item.num).padStart(2,'0')+'</td>'
-            + '<td class="dev-zone" rowspan="'+cl.length+'">'+(item.zone||'')+'</td>'
-            + '<td class="dev-empl" rowspan="'+cl.length+'">'+(item.emplacement||'')+'</td>'
+          ? '<td class="dev-num" rowspan="'+cl.length+'">'+devId+'</td>'
+            +'<td class="dev-zone" rowspan="'+cl.length+'">'+(item.zone||'')+'</td>'
+            +'<td class="dev-empl" rowspan="'+cl.length+'">'+(item.emplacement||'')+'</td>'
           : '';
-        var checkCell = opts.mode === 'blank'
+        var checkCell  = opts.mode === 'blank'
           ? '<td class="check-cell chk-box">☐</td>'
           : '<td class="check-cell '+(isOk?'ok':'nok')+'">'+(isOk?'✓':'✗')+'</td>';
-        var obsCell = (isFirst && item.note)
-          ? '<td class="obs-cell" rowspan="'+cl.length+'" style="border-left:1px solid #ccc">'
-              + esc(item.note) + '</td>'
-          : (isFirst ? '<td class="obs-cell" rowspan="'+cl.length+'" style="border-left:1px solid #ccc"></td>' : '');
-        typeTables += '<tr>' + firstCells
-          + '<td class="pt-label">'+esc(pt.label)+'</td>'
-          + checkCell + obsCell + '</tr>';
+        var obsCell    = isFirst
+          ? '<td class="obs-cell" rowspan="'+cl.length+'" style="border-left:1px solid #ccc">'+(item.note?esc(item.note):'')+'</td>'
+          : '';
+        typeTables += '<tr>'+firstCells+'<td class="pt-label">'+esc(pt.label)+'</td>'+checkCell+obsCell+'</tr>';
       });
     });
     typeTables += '</tbody></table></div>';
@@ -5865,123 +5993,111 @@ function _buildPestPrintHTML(opts) {
     etatBadge = '<span style="margin-left:8px;font-weight:bold;color:'+eC+'">— '+esc(opts.etatGlobal)+'</span>';
   }
 
+  var CSS = '*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:#fff}'
+    +'.doc-header{width:100%;border-collapse:collapse;border:2px solid #000;margin-bottom:0}'
+    +'.doc-header td{border:1px solid #000;vertical-align:middle;padding:6px 8px}'
+    +'.col-logo{width:22%;text-align:center}.col-title{width:54%;text-align:center}'
+    +'.col-ref{width:24%;font-size:8pt;padding:4px 8px!important}'
+    +'.doc-title{font-size:11pt;font-weight:bold;text-transform:uppercase;line-height:1.3}'
+    +'.doc-subtitle{font-size:8.5pt;margin-top:3px}'
+    +'.ref-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
+    +'.ref-row:last-child{border-bottom:none}.ref-label{font-weight:bold}'
+    +'.info-table{width:100%;border-collapse:collapse;border:1px solid #000;border-top:none;margin-bottom:10px}'
+    +'.info-table td{border-right:1px solid #ccc;padding:5px 8px;vertical-align:middle}'
+    +'.info-table td:last-child{border-right:none}'
+    +'.info-label{font-weight:bold;font-size:7pt;text-transform:uppercase;color:#555;display:block;margin-bottom:1px}'
+    +'.info-value{font-size:8.5pt;border-bottom:1px dotted #aaa;display:inline-block;min-width:90px;padding:0 2px}'
+    +'.type-section{margin-bottom:10px}'
+    +'.type-header{background:#1a1a1a;color:#fff;font-weight:bold;font-size:9pt;padding:4px 10px;text-transform:uppercase;letter-spacing:.4px}'
+    +'.check-table{width:100%;border-collapse:collapse;font-size:8pt}'
+    +'.check-table th{background:#e0e0e0;border:1px solid #000;padding:3px 6px;font-weight:bold;font-size:7pt;text-transform:uppercase;text-align:left}'
+    +'.check-table td{border:1px solid #ccc;padding:3px 6px;vertical-align:middle}'
+    +'.dev-num{font-weight:bold;text-align:center;background:#f0f0f0;border-color:#999!important;font-size:8pt}'
+    +'.dev-zone,.dev-empl{font-size:7.5pt;color:#333}.pt-label{font-size:8pt}'
+    +'.check-cell{text-align:center;font-weight:bold;font-size:11pt}'
+    +'.check-cell.ok{color:#006600}.check-cell.nok{color:#cc0000}.check-cell.chk-box{font-size:13pt;color:#555}'
+    +'.obs-cell{font-size:7pt;font-style:italic;color:#444}'
+    +'.obs-section{border:1px solid #000;padding:7px 10px;margin-bottom:10px}'
+    +'.obs-title{font-weight:bold;font-size:8pt;text-transform:uppercase;margin-bottom:4px}'
+    +'.obs-text{font-size:8pt;min-height:32px;line-height:1.7;white-space:pre-wrap}'
+    +'.obs-lines{margin-top:4px}.obs-line{border-bottom:1px dotted #aaa;height:18px;margin-bottom:2px}'
+    +'.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-bottom:8px}'
+    +'.sig-table td{width:33.33%;border-right:1px solid #ccc;padding:7px 10px;vertical-align:top;font-size:8pt}'
+    +'.sig-table td:last-child{border-right:none}'
+    +'.sig-title{font-weight:bold;font-size:7.5pt;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:5px}'
+    +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px}'
+    +'.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
+    +'.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
+    +'.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.type-section{page-break-inside:avoid}'
+    +'.type-header{background:#1a1a1a!important;color:#fff!important}'
+    +'.check-table th{background:#e0e0e0!important}.dev-num{background:#f0f0f0!important}'
+    +'@page{size:A4 portrait;margin:12mm 14mm}}';
+
   return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
-    + '<title>'+esc(opts.title)+' — '+esc(docCode)+'</title><style>'
-    + '*{box-sizing:border-box;margin:0;padding:0}'
-    + 'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:#fff;padding:0}'
-    + '.doc-header{width:100%;border-collapse:collapse;border:2px solid #000;margin-bottom:0}'
-    + '.doc-header td{border:1px solid #000;vertical-align:middle;padding:6px 8px}'
-    + '.col-logo{width:22%;text-align:center}'
-    + '.col-title{width:54%;text-align:center}'
-    + '.col-ref{width:24%;font-size:8pt;padding:4px 8px!important}'
-    + '.doc-title{font-size:11pt;font-weight:bold;text-transform:uppercase;line-height:1.3}'
-    + '.doc-subtitle{font-size:8.5pt;margin-top:3px}'
-    + '.ref-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
-    + '.ref-row:last-child{border-bottom:none}'
-    + '.ref-label{font-weight:bold}'
-    + '.info-table{width:100%;border-collapse:collapse;border:1px solid #000;border-top:none;margin-bottom:10px}'
-    + '.info-table td{border-right:1px solid #ccc;padding:5px 8px;vertical-align:middle}'
-    + '.info-table td:last-child{border-right:none}'
-    + '.info-label{font-weight:bold;font-size:7pt;text-transform:uppercase;color:#555;display:block;margin-bottom:1px}'
-    + '.info-value{font-size:8.5pt;border-bottom:1px dotted #aaa;display:inline-block;min-width:90px;padding:0 2px}'
-    + '.type-section{margin-bottom:10px}'
-    + '.type-header{background:#1a1a1a;color:#fff;font-weight:bold;font-size:9pt;padding:4px 10px;text-transform:uppercase;letter-spacing:.4px}'
-    + '.check-table{width:100%;border-collapse:collapse;font-size:8pt}'
-    + '.check-table th{background:#e0e0e0;border:1px solid #000;padding:3px 6px;font-weight:bold;font-size:7pt;text-transform:uppercase;text-align:left}'
-    + '.check-table td{border:1px solid #ccc;padding:3px 6px;vertical-align:middle}'
-    + '.dev-num{font-weight:bold;text-align:center;background:#f0f0f0;border-color:#999!important;font-size:8pt}'
-    + '.dev-zone,.dev-empl{font-size:7.5pt;color:#333}'
-    + '.pt-label{font-size:8pt}'
-    + '.check-cell{text-align:center;font-weight:bold;font-size:11pt}'
-    + '.check-cell.ok{color:#006600}'
-    + '.check-cell.nok{color:#cc0000}'
-    + '.check-cell.chk-box{font-size:13pt;color:#555}'
-    + '.obs-cell{font-size:7pt;font-style:italic;color:#444}'
-    + '.obs-section{border:1px solid #000;padding:7px 10px;margin-bottom:10px}'
-    + '.obs-title{font-weight:bold;font-size:8pt;text-transform:uppercase;margin-bottom:4px}'
-    + '.obs-text{font-size:8pt;min-height:32px;line-height:1.7;white-space:pre-wrap}'
-    + '.obs-lines{margin-top:4px}'
-    + '.obs-line{border-bottom:1px dotted #aaa;height:18px;margin-bottom:2px}'
-    + '.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-bottom:8px}'
-    + '.sig-table td{width:33.33%;border-right:1px solid #ccc;padding:7px 10px;vertical-align:top;font-size:8pt}'
-    + '.sig-table td:last-child{border-right:none}'
-    + '.sig-title{font-weight:bold;font-size:7.5pt;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:5px}'
-    + '.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px}'
-    + '.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
-    + '.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
-    + '.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
-    + '@media print{'
-    + 'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.type-section{page-break-inside:avoid}'
-    + '.type-header{background:#1a1a1a!important;color:#fff!important}'
-    + '.check-table th{background:#e0e0e0!important}'
-    + '.dev-num{background:#f0f0f0!important}'
-    + '@page{size:A4 portrait;margin:12mm 14mm}}'
-    + '</style></head><body>'
+    +'<title>'+esc(opts.title)+' — '+esc(docCode)+'</title><style>'+CSS+'</style></head><body>'
+    +'<table class="doc-header"><tr>'
+    +'<td class="col-logo"><div style="width:82px;height:52px;border:1px solid #ccc;margin:0 auto;'
+    +'display:flex;align-items:center;justify-content:center;font-size:7pt;color:#bbb;flex-direction:column">'
+    +'<div style="font-size:16pt;line-height:1">🏢</div><div style="margin-top:2px">LOGO</div></div></td>'
+    +'<td class="col-title"><div class="doc-title">Fiche de contrôle</div>'
+    +'<div class="doc-subtitle">'+esc(opts.subtitle||'')+'</div>'
+    +'<div class="doc-subtitle" style="font-size:8pt;margin-top:3px;font-weight:600">'+esc(opts.title)+etatBadge+'</div></td>'
+    +'<td class="col-ref">'
+    +'<div class="ref-row"><span class="ref-label">Réf&nbsp;:</span><span style="font-weight:700;font-size:8.5pt">'+esc(docCode)+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>01</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Page&nbsp;:</span><span>1/1</span></div>'
+    +'<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+editionDate+'</span></div>'
+    +'</td></tr></table>'
+    +'<table class="info-table"><tr>'
+    +'<td style="width:28%"><span class="info-label">Date d\'inspection</span><span class="info-value">'+esc(opts.date||'')+'</span></td>'
+    +'<td style="width:44%"><span class="info-label">Inspecteur / Superviseur HSE</span><span class="info-value">'+esc(opts.superviseur||'')+'</span></td>'
+    +'<td><span class="info-label">Prochaine inspection</span><span class="info-value">'+esc(opts.prochaine||'')+'</span></td>'
+    +'</tr></table>'
+    +typeTables
+    +'<div class="obs-section"><div class="obs-title">Observations générales / Actions correctives</div>'
+    +(opts.obs?'<div class="obs-text">'+esc(opts.obs)+'</div>':'<div class="obs-lines"><div class="obs-line"></div><div class="obs-line"></div><div class="obs-line"></div></div>')
+    +'</div>'
+    +'<table class="sig-table"><tr>'
+    +'<td><div class="sig-title">Inspecteur</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
+    +'<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
+    +'<td><div class="sig-title">Superviseur HSE</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
+    +'<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
+    +'<td><div class="sig-title">Responsable Entreprise</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
+    +'<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
+    +'</tr></table>'
+    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Généré le '+editionDate+' — Conforme aux exigences ISO 9001:2015</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+}
 
-    /* ── HEADER ── */
-    + '<table class="doc-header"><tr>'
-    + '<td class="col-logo">'
-    +   '<div style="width:82px;height:52px;border:1px solid #ccc;margin:0 auto;display:flex;'
-    +   'align-items:center;justify-content:center;font-size:7pt;color:#bbb;flex-direction:column">'
-    +   '<div style="font-size:16pt;line-height:1">🏢</div>'
-    +   '<div style="margin-top:2px">LOGO</div></div>'
-    + '</td>'
-    + '<td class="col-title">'
-    +   '<div class="doc-title">Fiche de contrôle</div>'
-    +   '<div class="doc-subtitle">Dispositifs de lutte contre les nuisibles</div>'
-    +   '<div class="doc-subtitle" style="font-size:8pt;margin-top:3px;font-weight:600">'+esc(opts.title)+etatBadge+'</div>'
-    + '</td>'
-    + '<td class="col-ref">'
-    +   '<div class="ref-row"><span class="ref-label">Réf&nbsp;:</span><span style="font-weight:700;font-size:8.5pt">'+esc(docCode)+'</span></div>'
-    +   '<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>01</span></div>'
-    +   '<div class="ref-row"><span class="ref-label">Page&nbsp;:</span><span>1/1</span></div>'
-    +   '<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+editionDate+'</span></div>'
-    + '</td>'
-    + '</tr></table>'
-
-    /* ── INFO ROW ── */
-    + '<table class="info-table"><tr>'
-    + '<td style="width:28%"><span class="info-label">Date d\'inspection</span>'
-    +   '<span class="info-value">'+esc(opts.date||'')+'</span></td>'
-    + '<td style="width:44%"><span class="info-label">Inspecteur / Superviseur HSE</span>'
-    +   '<span class="info-value">'+esc(opts.superviseur||'')+'</span></td>'
-    + '<td><span class="info-label">Prochaine inspection</span>'
-    +   '<span class="info-value">'+esc(opts.prochaine||'')+'</span></td>'
-    + '</tr></table>'
-
-    /* ── CHECKLISTS ── */
-    + typeTables
-
-    /* ── OBSERVATIONS ── */
-    + '<div class="obs-section"><div class="obs-title">Observations générales / Actions correctives</div>'
-    + (opts.obs
-      ? '<div class="obs-text">'+esc(opts.obs)+'</div>'
-      : '<div class="obs-lines"><div class="obs-line"></div><div class="obs-line"></div><div class="obs-line"></div></div>')
-    + '</div>'
-
-    /* ── SIGNATURES ── */
-    + '<table class="sig-table"><tr>'
-    + '<td><div class="sig-title">Inspecteur</div>'
-    +   '<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'
-    +   (opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
-    +   '<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
-    +   '<div class="sig-field-label">Date :</div><div class="sig-line">'
-    +   (opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
-    + '<td><div class="sig-title">Superviseur HSE</div>'
-    +   '<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
-    +   '<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
-    +   '<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
-    + '<td><div class="sig-title">Responsable Entreprise</div>'
-    +   '<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
-    +   '<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
-    +   '<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
-    + '</tr></table>'
-
-    /* ── FOOTER ── */
-    + '<div class="footer">Document qualité interne — '+esc(docCode)+' — Généré le '+editionDate+' — Conforme aux exigences ISO 9001:2015</div>'
-    + '<script>window.onload=function(){window.print();}<\/script>'
-    + '</body></html>';
+function _buildPestPrintHTML(opts) {
+  var sections = [];
+  (opts.types||[]).forEach(function(type) {
+    var td = opts.typeData[type];
+    if (!td || !td.items || !td.items.length || !(td.checklist||[]).length) return;
+    sections.push({ sectionTitle:(PEST_ICONS[type]||'')+' '+type+' — '+(PEST_LABELS[type]||type), prefix:type, items:td.items, checklist:td.checklist });
+  });
+  return _buildHSEPrintHTML({
+    docCode:    opts.docCode,
+    title:      opts.title,
+    subtitle:   'Dispositifs de lutte contre les nuisibles',
+    date:       opts.date,
+    superviseur:opts.superviseur,
+    prochaine:  opts.prochaine,
+    obs:        opts.obs,
+    etatGlobal: opts.etatGlobal,
+    mode:       opts.mode,
+    sections:   sections
+  });
 }
 
 function printBlankPestChecklist() {

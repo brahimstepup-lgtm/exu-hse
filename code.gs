@@ -1541,12 +1541,14 @@ function getChecklists(token) {
 function getExtConfig(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
   try {
-    var raw = PropertiesService.getScriptProperties().getProperty('EXTINCTEUR_CONFIG')||'[]';
+    var props  = PropertiesService.getScriptProperties();
+    var raw    = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
     var config = JSON.parse(raw);
     if (!config.length) {
       for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    return { success:true, data:config };
+    var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
+    return { success:true, data:config, extDocCode:extDocCode };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1556,7 +1558,9 @@ function saveExtConfig(p) {
     var config = (p.config||[]).map(function(c){
       return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||''), emplacement:String(c.emplacement||'') };
     }).filter(function(c){ return c.num>=1 && c.num<=200; });
-    PropertiesService.getScriptProperties().setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
+    if (p.docCode) props.setProperty('EXT_DOC_CODE', String(p.docCode));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
@@ -1588,15 +1592,19 @@ function getConfigData(adminKey) {
     if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
     if (!riaConfig.items)  riaConfig.items = [];
     if (!riaConfig.count)  riaConfig.count = 20;
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig };
+    var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
+    var riaDocCode = props.getProperty('RIA_DOC_CODE') || 'ENR-HSE 2';
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
 function saveRiaConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    var cfg = p.riaConfig || { count:20, items:[] };
-    PropertiesService.getScriptProperties().setProperty('RIA_CONFIG', JSON.stringify(cfg));
+    var cfg   = p.riaConfig || { count:20, items:[] };
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('RIA_CONFIG', JSON.stringify(cfg));
+    if (p.riaDocCode) props.setProperty('RIA_DOC_CODE', String(p.riaDocCode));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
