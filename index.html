@@ -760,6 +760,10 @@ img{max-width:100%;display:block;}
 .global-ext-badge.ok{background:rgba(39,174,96,.18);color:#2ecc71;border:1px solid rgba(39,174,96,.3);}
 .global-ext-badge.nok{background:rgba(231,76,60,.18);color:#e74c3c;border:1px solid rgba(231,76,60,.3);}
 .global-ext-note{margin:4px 0 0!important;padding:4px 9px!important;height:30px!important;font-size:.78rem!important;width:100%;box-sizing:border-box;}
+/* Sort tabs (inspection globale) */
+.gsort-tab{padding:5px 13px;border-radius:20px;border:1px solid var(--line2);background:var(--ink3);color:var(--t2);cursor:pointer;font-size:.78rem;transition:all .15s;white-space:nowrap;}
+.gsort-tab.on{background:var(--y2);border-color:rgba(245,197,24,.4);color:var(--y);font-weight:600;}
+.gsort-tab:hover:not(.on){background:var(--ink4);}
 /* Config table */
 .ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
 .ext-cfg-row:nth-child(even){background:rgba(255,255,255,.018);border-radius:4px;}
@@ -1230,7 +1234,14 @@ img{max-width:100%;display:block;}
         <button class="btn btn-g" onclick="setAllGlobalStatut('Conforme')"    style="font-size:.78rem;padding:6px 12px">✅ Tout conforme</button>
         <button class="btn btn-g" onclick="setAllGlobalStatut('Non conforme')" style="font-size:.78rem;padding:6px 12px">❌ Tout non conforme</button>
       </div>
-      <!-- Sections par type (générées dynamiquement) -->
+      <!-- Tri -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--t3);margin-right:2px">Trier par :</span>
+        <button class="gsort-tab on" id="gsort-type" onclick="setGlobalSort('type')">🔴 Type</button>
+        <button class="gsort-tab"    id="gsort-zone" onclick="setGlobalSort('zone')">📍 Zone</button>
+        <button class="gsort-tab"    id="gsort-num"  onclick="setGlobalSort('num')">🔢 Numéro</button>
+      </div>
+      <!-- Sections générées dynamiquement -->
       <div id="globalSectionsContainer"></div>
       <div class="fg" style="margin-top:10px">
         <label class="fl">Observations générales</label>
@@ -3653,6 +3664,11 @@ function _initGlobalForm() {
   _globalChecks    = {};
   _globalPhotoB64  = '';
   _globalPhotoMime = '';
+  _globalSortMode  = 'type';
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m==='type'?' on':'');
+  });
   _extConfig.forEach(function(c){
     _globalStatuts[c.num] = 'Conforme';
     _globalNotes[c.num]   = '';
@@ -3670,57 +3686,109 @@ function _initGlobalForm() {
   openSheet('globalInspOv');
 }
 
+var _globalSortMode = 'type';
+
+function setGlobalSort(mode) {
+  /* Sauvegarder les notes saisies avant de reconstruire le DOM */
+  _extConfig.forEach(function(c){
+    var el = document.getElementById('gnote_'+c.num);
+    if (el) _globalNotes[c.num] = el.value;
+  });
+  _globalSortMode = mode;
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderGlobalSections();
+}
+
+function _renderExtAccordionItem(c) {
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var checklist = _checklistByType(c.type);
+  var checks    = _globalChecks[c.num]||{};
+  var total     = checklist.length;
+  var okCount   = checklist.filter(function(it){ return checks[it.key]; }).length;
+  var isOk      = okCount===total;
+
+  var checkItems = checklist.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="gchk_'+c.num+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onExtCheckChange('+c.num+',\''+it.key+'\',this.checked)"/>'
+      +'<label for="gchk_'+c.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  /* Badge type visible seulement quand non groupé par type */
+  var typePill = (_globalSortMode!=='type')
+    ? '<span style="font-size:.7rem;color:'+TY_COLORS[c.type]+';background:'+TY_COLORS[c.type]+'22;border-radius:10px;padding:1px 7px;margin-right:4px">'+TY_ICONS[c.type]+' '+esc(c.type)+'</span>'
+    : '';
+  /* Zone visible seulement quand non groupé par zone */
+  var zoneSpan = (_globalSortMode!=='zone' && c.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
+    +typePill+zoneSpan
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+total+'</span>'
+    +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation…" '
+    +'value="'+esc(_globalNotes[c.num]||'')+'" onchange="_globalNotes['+c.num+']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
 function _renderGlobalSections() {
   var container = document.getElementById('globalSectionsContainer');
   if (!container) return;
-  var types  = ['Poudre ABC','CO2','Eau'];
-  var icons  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
-  var colors = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var by = _globalSortMode;
 
-  container.innerHTML = types.map(function(type) {
-    var exts = _extConfig.filter(function(c){ return c.type===type; })
-                         .sort(function(a,b){ return a.num-b.num; });
-    if (!exts.length) return '';
-    var checklist = _checklistByType(type);
-
-    var extItems = exts.map(function(c) {
-      var checks  = _globalChecks[c.num]||{};
-      var total   = checklist.length;
-      var okCount = checklist.filter(function(it){ return checks[it.key]; }).length;
-      var isOk    = okCount===total;
-
-      var checkItems = checklist.map(function(it) {
-        return '<div class="chk-item">'
-          +'<input type="checkbox" id="gchk_'+c.num+'_'+it.key+'" '
-          +(checks[it.key]?'checked':'')+' '
-          +'onchange="onExtCheckChange('+c.num+',\''+it.key+'\',this.checked)"/>'
-          +'<label for="gchk_'+c.num+'_'+it.key+'">'+esc(it.label)+'</label>'
-          +'</div>';
-      }).join('');
-
-      return '<div class="global-ext-accordion">'
-        +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
-        +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
-        +(c.zone?'<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>':'<span style="flex:1"></span>')
-        +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
-        +(isOk?'✅':'❌')+' '+okCount+'/'+total
-        +'</span>'
-        +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
-        +'</div>'
-        +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
-        +'<div class="chk-group">'+checkItems+'</div>'
-        +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation pour cet extincteur…" '
-        +'onchange="_globalNotes['+c.num+']=this.value"/>'
-        +'</div>'
+  if (by === 'type') {
+    container.innerHTML = ['Poudre ABC','CO2','Eau'].map(function(type) {
+      var exts = _extConfig.filter(function(c){ return c.type===type; })
+                           .sort(function(a,b){ return a.num-b.num; });
+      if (!exts.length) return '';
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span style="color:'+TY_COLORS[type]+'">'+TY_ICONS[type]+'</span> '+esc(type)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
         +'</div>';
     }).join('');
 
-    return '<div class="global-type-section">'
-      +'<div class="global-type-title"><span style="color:'+colors[type]+'">'+icons[type]+'</span> '+esc(type)
-      +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
-      +'<div class="global-ext-list">'+extItems+'</div>'
+  } else if (by === 'zone') {
+    var zoneMap = {};
+    _extConfig.forEach(function(c){
+      var z = (c.zone||'').trim()||'— Zone non définie';
+      if (!zoneMap[z]) zoneMap[z] = [];
+      zoneMap[z].push(c);
+    });
+    var zones = Object.keys(zoneMap).sort();
+    container.innerHTML = zones.map(function(zone) {
+      var exts = zoneMap[zone].sort(function(a,b){ return a.num-b.num; });
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else { /* num */
+    var allExts = _extConfig.slice().sort(function(a,b){ return a.num-b.num; });
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les extincteurs'
+      +' <span class="global-type-count">'+allExts.length+' extincteur'+(allExts.length>1?'s':'')+'</span></div>'
+      +'<div class="global-ext-list">'+allExts.map(_renderExtAccordionItem).join('')+'</div>'
       +'</div>';
-  }).join('');
+  }
 }
 
 function toggleExtAccordion(num) {
