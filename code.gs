@@ -1648,6 +1648,7 @@ function getPestConfigData(adminKey) {
       if (!pestConfig[t].items)  pestConfig[t].items  = [];
       if (!pestConfig[t].count)  pestConfig[t].count  = 5;
     });
+    if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
     return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists };
   } catch(e) { return { success:false, error:e.message }; }
 }
