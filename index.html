@@ -857,6 +857,7 @@ img{max-width:100%;display:block;}
   <div class="sb-sec" id="sbSecSuper" style="display:none">Superviseur HSE</div>
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
+  <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
 </nav>
 
 <!-- APP -->
@@ -1028,6 +1029,25 @@ img{max-width:100%;display:block;}
       </div>
       <div id="incendieBody"></div>
     </div>
+
+    <!-- NUISIBLES -->
+    <div class="view" id="view-nuisibles">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🪲 Contrôle Nuisibles</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configPestBtn" class="btn btn-g" onclick="openConfigPest()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
+          <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Insp. Globale</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="pftab_all" onclick="setPestFilter('all')">Tous</button>
+        <button class="gsort-tab" id="pftab_dei" onclick="setPestFilter('DEI')">⚡ DEI</button>
+        <button class="gsort-tab" id="pftab_bap" onclick="setPestFilter('BAP')">🐭 B. d'appât</button>
+        <button class="gsort-tab" id="pftab_pm"  onclick="setPestFilter('PM')">🪤 Pièges méc.</button>
+        <button class="gsort-tab" id="pftab_pgg" onclick="setPestFilter('PGG')">📋 Plaques glu</button>
+      </div>
+      <div id="nuisiblesBody"></div>
+    </div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1037,6 +1057,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="admin" id="nbAdmin"><span class="nb-icon">📊</span><span>KPI</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -1382,6 +1403,194 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('incendieDetailOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto" id="idetBody"></div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Nuisibles ═══ -->
+<div class="ov" id="pestConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration Contrôle Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('pestConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Zones partagées -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="fi" id="pestNewZoneInput" placeholder="Nouvelle zone (ex: Entrepôt A)…" style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addPestConfigZone();}"/>
+          <button type="button" class="btn btn-g" onclick="addPestConfigZone()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+          <button type="button" class="btn btn-p" onclick="saveZonesConfig()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">💾 Zones</button>
+        </div>
+        <div id="pestZoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
+      </div>
+      <!-- Points de contrôle par type de dispositif -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">✅ Points de contrôle par type</div>
+          <button type="button" class="btn btn-g" onclick="resetPestChecklistToDefaults()" style="height:28px;font-size:.75rem;padding:0 10px;color:var(--t3)">↺ Défauts</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#3498db;margin-bottom:6px">⚡ Désinsectiseur Électrique (DEI)</div>
+          <div id="pestCl_DEI"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('DEI')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#2ecc71;margin-bottom:6px">🐭 Boîte d'appât (BAP)</div>
+          <div id="pestCl_BAP"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('BAP')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#e67e22;margin-bottom:6px">🪤 Piège mécanique (PM)</div>
+          <div id="pestCl_PM"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('PM')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.8rem;font-weight:600;color:#9b59b6;margin-bottom:6px">📋 Plaque de glu (PGG)</div>
+          <div id="pestCl_PGG"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('PGG')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <button class="btn btn-p" onclick="savePestChecklistConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">💾 Sauvegarder les points</button>
+      </div>
+      <!-- Dispositifs par type -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:10px">Détail des dispositifs par type</div>
+      <!-- DEI -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#3498db">⚡ Désinsectiseurs Électriques (DEI)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_DEI" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('DEI')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_DEI" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- BAP -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#2ecc71">🐭 Boîtes d'appât (BAP)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_BAP" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('BAP')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_BAP" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- PM -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#e67e22">🪤 Pièges mécaniques (PM)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_PM" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('PM')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_PM" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- PGG -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#9b59b6">📋 Plaques de glu (PGG)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_PGG" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('PGG')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_PGG" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('pestConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveFullPestConfig()">💾 Sauvegarder tout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale Nuisibles ═══ -->
+<div class="ov" id="globalPestOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🔍 Inspection Globale — Dispositifs Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('globalPestOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalPestDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalPestProchaine"/>
+        </div>
+      </div>
+      <!-- Actions rapides -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllPestStatut('Conforme')"     style="font-size:.78rem;padding:6px 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllPestStatut('Non conforme')" style="font-size:.78rem;padding:6px 12px">❌ Tout non conforme</button>
+      </div>
+      <!-- Tri -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--t3);margin-right:2px">Trier par :</span>
+        <button class="gsort-tab on" id="pgsort_type" onclick="setPestInspSort('type')">🪲 Type</button>
+        <button class="gsort-tab"    id="pgsort_zone" onclick="setPestInspSort('zone')">📍 Zone</button>
+        <button class="gsort-tab"    id="pgsort_num"  onclick="setPestInspSort('num')">🔢 Numéro</button>
+      </div>
+      <!-- Sections dynamiques -->
+      <div id="globalPestSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalPestObs" rows="2" placeholder="Remarques, actions correctives, prestations effectuées…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Checklist signée / rapport (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalPestPhotoArea" onclick="document.getElementById('globalPestPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="globalPestPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalPestPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onPestPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalPestOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitGlobalPestInspection()">✓ Enregistrer tout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Détail inspection Nuisibles ═══ -->
+<div class="ov" id="pestDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="pestDetailTitle">Détail inspection</div>
+      <button class="sh-x" onclick="closeSheet('pestDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="pestDetailBody"></div>
   </div>
 </div>
 
@@ -2049,7 +2258,7 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
-var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
@@ -2103,8 +2312,9 @@ function applyRole(){
     lb.title = (S_AUTH.token)?'Se déconnecter':'Se connecter';
   }
   // Boutons Config (admin uniquement)
-  var ceb=document.getElementById('configExtBtn'); if(ceb) ceb.style.display = admin?'':'none';
-  var crb=document.getElementById('configRiaBtn'); if(crb) crb.style.display = admin?'':'none';
+  var ceb=document.getElementById('configExtBtn');  if(ceb)  ceb.style.display  = admin?'':'none';
+  var crb=document.getElementById('configRiaBtn');  if(crb)  crb.style.display  = admin?'':'none';
+  var cpb=document.getElementById('configPestBtn'); if(cpb)  cpb.style.display  = admin?'':'none';
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
   // Navigation admin : masquer pour non-admins
@@ -2113,7 +2323,7 @@ function applyRole(){
   });
   // Navigation superviseur
   var showSuper = admin || super_;
-  ['sbSecSuper','sbSensi','sbIncendie','nbSensi','nbIncendie'].forEach(function(id){
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
   // Redirige si vue interdite
@@ -2214,7 +2424,8 @@ function goV(v, btn){
               closed:'view-all',elevee:'view-all',moyenne:'view-all',faible:'view-all',
               admin:'view-admin',
               sensibilisation:'view-sensibilisation',
-              incendie:'view-incendie'};
+              incendie:'view-incendie',
+              nuisibles:'view-nuisibles'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -2229,7 +2440,8 @@ function renderCurrent(){
   if(S.view==='home')  renderHome();
   else if(S.view==='admin') renderAdmin();
   else if(S.view==='sensibilisation') renderSensibilisation();
-  else if(S.view==='incendie') renderIncendie();
+  else if(S.view==='incendie')   renderIncendie();
+  else if(S.view==='nuisibles') renderNuisibles();
   else renderTagsView();
 }
 
@@ -4855,6 +5067,701 @@ function submitChecklist() {
       photoChecklist: _incPhotoB64,
       photo_mime: _incPhotoMime
     });
+}
+
+/* ══════════════════════════════════════════
+   CONTRÔLE NUISIBLES — CHECKLISTS PAR DÉFAUT
+══════════════════════════════════════════ */
+
+var CHECKLIST_DEI = [
+  { key:'lampes_uv',    label:'Lampes UV fonctionnelles et propres' },
+  { key:'plateau',      label:'Plateau récupérateur vidé et nettoyé' },
+  { key:'grille',       label:'Grille de protection intacte' },
+  { key:'alimentation', label:'Câblage et alimentation électrique OK' },
+  { key:'emplacement',  label:'Emplacement adapté (éloigné des zones alimentaires)' },
+  { key:'etiquette',    label:'Étiquette de maintenance à jour (≤ 12 mois)' }
+];
+var CHECKLIST_BAP = [
+  { key:'integrite',    label:'Boîte intacte et verrouillée' },
+  { key:'appat',        label:'Appât présent et en bon état' },
+  { key:'activite',     label:'Traces d\'activité relevées / enregistrées' },
+  { key:'emplacement',  label:'Emplacement conforme au plan de dératisation' },
+  { key:'etiquette',    label:'Étiquette d\'identification et de date présente' }
+];
+var CHECKLIST_PM = [
+  { key:'etat',         label:'Mécanisme du piège opérationnel' },
+  { key:'appat',        label:'Appât présent et frais' },
+  { key:'capture',      label:'Résultat de capture enregistré' },
+  { key:'position',     label:'Position conforme (le long des murs / angles)' },
+  { key:'etiquette',    label:'Étiquette d\'identification présente' }
+];
+var CHECKLIST_PGG = [
+  { key:'adhesif',      label:'Surface collante suffisante (≥ 75 % de capacité restante)' },
+  { key:'capture',      label:'Résultat de capture enregistré' },
+  { key:'position',     label:'Positionnée contre les murs / zones à risque' },
+  { key:'date_pose',    label:'Date de pose visible et valide (≤ 4 semaines)' },
+  { key:'proprete',     label:'Aucune poussière / saleté réduisant l\'efficacité' }
+];
+
+var PEST_TYPES  = ['DEI','BAP','PM','PGG'];
+var PEST_ICONS  = { DEI:'⚡', BAP:'🐭', PM:'🪤', PGG:'📋' };
+var PEST_LABELS = { DEI:'Désinsectiseur Électrique', BAP:'Boîte d\'appât', PM:'Piège mécanique', PGG:'Plaque de glu' };
+var PEST_COLORS = { DEI:'#3498db', BAP:'#2ecc71', PM:'#e67e22', PGG:'#9b59b6' };
+
+var _pestConfig         = { DEI:{count:5,items:[]}, BAP:{count:5,items:[]}, PM:{count:5,items:[]}, PGG:{count:5,items:[]} };
+var _pestChecklistConfig = {};
+
+function _pestChecklistByType(type) {
+  var cfg = _pestChecklistConfig[type];
+  if (cfg && cfg.length) return cfg;
+  if (type==='DEI') return CHECKLIST_DEI;
+  if (type==='BAP') return CHECKLIST_BAP;
+  if (type==='PM')  return CHECKLIST_PM;
+  if (type==='PGG') return CHECKLIST_PGG;
+  return [];
+}
+
+/* ══════════════════════════════════════════
+   CONFIG NUISIBLES
+══════════════════════════════════════════ */
+
+function _renderPestZoneChips() {
+  var el = document.getElementById('pestZoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removePestConfigZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+
+function addPestConfigZone() {
+  var inp = document.getElementById('pestNewZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderPestZoneChips();
+  _refreshPestZoneSelects();
+}
+
+function removePestConfigZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderPestZoneChips();
+  _refreshPestZoneSelects();
+}
+
+function _refreshPestZoneSelects() {
+  PEST_TYPES.forEach(function(type) {
+    var body = document.getElementById('pestBody_'+type);
+    if (!body) return;
+    var cfg = _pestConfig[type] || { count:5, items:[] };
+    var count = cfg.count || 5;
+    for (var i=1; i<=count; i++) {
+      var sel = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="zone"]');
+      if (sel && sel.tagName==='SELECT') { var v=sel.value; sel.innerHTML=_zoneOptions(v); }
+    }
+  });
+}
+
+function openConfigPest() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement de la configuration…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _pestConfig       = r.pestConfig || {};
+      _configuredZones  = r.zones || [];
+      var _cl = r.checklists || {};
+      var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
+      _pestChecklistConfig = hasConfig ? _cl : {
+        DEI: CHECKLIST_DEI.slice(), BAP: CHECKLIST_BAP.slice(),
+        PM:  CHECKLIST_PM.slice(),  PGG: CHECKLIST_PGG.slice()
+      };
+      _renderPestChecklistEditor();
+      _renderPestConfigTables();
+      _renderPestZoneChips();
+      _refreshPestZoneSelects();
+      openSheet('pestConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getPestConfigData(S.adminKey);
+}
+
+function _renderPestConfigTables() {
+  PEST_TYPES.forEach(function(type) {
+    var countEl = document.getElementById('pestCount_'+type);
+    var body    = document.getElementById('pestBody_'+type);
+    if (!body) return;
+    var cfg   = _pestConfig[type] || { count:5, items:[] };
+    var count = cfg.count || 5;
+    if (countEl) countEl.value = count;
+    var items = cfg.items || [];
+    var rows  = [];
+    for (var i=1; i<=count; i++) {
+      var item = null;
+      for (var j=0; j<items.length; j++) { if (items[j].num===i) { item=items[j]; break; } }
+      if (!item) item = { num:i, zone:'', emplacement:'' };
+      rows.push(
+        '<div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;align-items:center">'
+        +'<div class="ext-cfg-label" style="color:var(--t3)">'+type+'-'+String(i).padStart(2,'0')+'</div>'
+        +'<select class="fi" data-ptype="'+type+'" data-pnum="'+i+'" data-pfield="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+        +_zoneOptions(item.zone||'')
+        +'</select>'
+        +'<input class="fi" type="text" data-ptype="'+type+'" data-pnum="'+i+'" data-pfield="emplacement" value="'+esc(item.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+        +'</div>'
+      );
+    }
+    body.innerHTML = rows.join('');
+  });
+}
+
+function applyPestCount(type) {
+  var countEl = document.getElementById('pestCount_'+type);
+  if (!countEl) return;
+  var count = parseInt(countEl.value)||5;
+  if (!_pestConfig[type]) _pestConfig[type] = { count:5, items:[] };
+  _pestConfig[type].items = _collectPestItems(type);
+  _pestConfig[type].count = count;
+  _renderPestConfigTables();
+}
+
+function _collectPestItems(type) {
+  var body  = document.getElementById('pestBody_'+type);
+  if (!body) return [];
+  var cfg   = _pestConfig[type] || { count:5, items:[] };
+  var count = cfg.count || 5;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var zsel = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="zone"]');
+    var emp  = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="emplacement"]');
+    items.push({ num:i, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
+  }
+  return items;
+}
+
+function saveFullPestConfig() {
+  var cfg = {};
+  PEST_TYPES.forEach(function(type) {
+    var countEl = document.getElementById('pestCount_'+type);
+    var count   = parseInt(countEl&&countEl.value)||5;
+    cfg[type]   = { count:count, items:_collectPestItems(type) };
+  });
+  _pestConfig = cfg;
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration nuisibles sauvegardée','ok'); closeSheet('pestConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig });
+}
+
+/* ─── Éditeur de points de contrôle ─── */
+function _renderPestChecklistEditor() {
+  PEST_TYPES.forEach(function(type) {
+    var cont = document.getElementById('pestCl_'+type);
+    if (!cont) return;
+    var items = _pestChecklistConfig[type] || [];
+    cont.innerHTML = items.map(function(it) {
+      return '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">'
+        +'<input class="fi" type="text" value="'+esc(it.label)+'" data-pcltype="'+esc(type)+'" data-pclkey="'+esc(it.key)+'" '
+        +'style="height:30px;font-size:.78rem;flex:1" placeholder="Libellé du point…"/>'
+        +'<button type="button" onclick="removePestChecklistItem(\''+esc(type)+'\',\''+esc(it.key)+'\')" '
+        +'style="height:30px;width:30px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:6px;color:#e74c3c;cursor:pointer;font-size:.85rem;flex-shrink:0">✕</button>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function _syncPestChecklistFromDOM() {
+  PEST_TYPES.forEach(function(type) {
+    var cont = document.getElementById('pestCl_'+type);
+    if (!cont) return;
+    _pestChecklistConfig[type] = [];
+    cont.querySelectorAll('input[data-pclkey]').forEach(function(inp) {
+      var label = inp.value.trim();
+      var key   = inp.getAttribute('data-pclkey');
+      if (label) _pestChecklistConfig[type].push({ key:key, label:label });
+    });
+  });
+}
+
+function addPestChecklistItem(type) {
+  _syncPestChecklistFromDOM();
+  if (!_pestChecklistConfig[type]) _pestChecklistConfig[type] = [];
+  _pestChecklistConfig[type].push({ key:'custom_'+(Date.now()%1e7), label:'' });
+  _renderPestChecklistEditor();
+  var cont = document.getElementById('pestCl_'+type);
+  if (cont) { var ins = cont.querySelectorAll('input[data-pclkey]'); if (ins.length) ins[ins.length-1].focus(); }
+}
+
+function removePestChecklistItem(type, key) {
+  _syncPestChecklistFromDOM();
+  _pestChecklistConfig[type] = (_pestChecklistConfig[type]||[]).filter(function(it){ return it.key!==key; });
+  _renderPestChecklistEditor();
+}
+
+function resetPestChecklistToDefaults() {
+  _pestChecklistConfig = {
+    DEI: CHECKLIST_DEI.slice(), BAP: CHECKLIST_BAP.slice(),
+    PM:  CHECKLIST_PM.slice(),  PGG: CHECKLIST_PGG.slice()
+  };
+  _renderPestChecklistEditor();
+  toast('Points restaurés — cliquez 💾 pour sauvegarder','ok');
+}
+
+function savePestChecklistConfig() {
+  _syncPestChecklistFromDOM();
+  showLoader('Sauvegarde des points de contrôle…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Points de contrôle sauvegardés','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestChecklistsConfig({ adminKey:S.adminKey, checklists:_pestChecklistConfig });
+}
+
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE NUISIBLES
+══════════════════════════════════════════ */
+var _pestInspChecks    = {};
+var _pestInspStatuts   = {};
+var _pestInspNotes     = {};
+var _pestInspPhotoB64  = '';
+var _pestInspPhotoMime = '';
+var _pestInspSortMode  = 'type';
+
+function _pkey(type, num) { return type+'_'+num; }
+
+function _getPestItemCfg(type, num) {
+  var cfg   = _pestConfig[type] || { items:[] };
+  var items = cfg.items || [];
+  for (var j=0; j<items.length; j++) { if (items[j].num===num) return items[j]; }
+  return { num:num, zone:'', emplacement:'' };
+}
+
+function openGlobalPestInspection() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _pestConfig = r.pestConfig || {};
+      var _cl = r.checklists || {};
+      var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
+      _pestChecklistConfig = hasConfig ? _cl : {};
+      var hasDevices = PEST_TYPES.some(function(t){ return (_pestConfig[t]&&(_pestConfig[t].count||0))>0; });
+      if (!hasDevices) { toast('Configurez d\'abord les dispositifs (⚙ Configurer)','err'); return; }
+      _initGlobalPestForm();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getPestConfigData(S.adminKey);
+}
+
+function _initGlobalPestForm() {
+  _pestInspChecks = {}; _pestInspStatuts = {}; _pestInspNotes = {};
+  _pestInspPhotoB64 = ''; _pestInspPhotoMime = '';
+  _pestInspSortMode = 'type';
+  PEST_TYPES.forEach(function(type) {
+    var cfg   = _pestConfig[type] || { count:0 };
+    var count = cfg.count || 0;
+    var cl    = _pestChecklistByType(type);
+    for (var i=1; i<=count; i++) {
+      var k = _pkey(type, i);
+      _pestInspChecks[k]  = {};
+      cl.forEach(function(it){ _pestInspChecks[k][it.key] = true; });
+      _pestInspStatuts[k] = 'Conforme';
+      _pestInspNotes[k]   = '';
+    }
+  });
+  document.getElementById('globalPestDate').value      = todayStr();
+  document.getElementById('globalPestProchaine').value = plusDaysStr(todayStr(), 90);
+  document.getElementById('globalPestObs').value       = '';
+  var prev = document.getElementById('globalPestPhotoPreview');
+  if (prev) { prev.style.display='none'; prev.innerHTML=''; }
+  ['pgsort_type','pgsort_zone','pgsort_num'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.className = 'gsort-tab'+(id==='pgsort_type'?' on':'');
+  });
+  _renderPestInspSections();
+  openSheet('globalPestOv');
+}
+
+function setPestInspSort(mode) {
+  _syncPestInspNotes();
+  _pestInspSortMode = mode;
+  ['type','zone','num'].forEach(function(m){
+    var el = document.getElementById('pgsort_'+m);
+    if (el) el.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderPestInspSections();
+}
+
+function _syncPestInspNotes() {
+  PEST_TYPES.forEach(function(type) {
+    var cfg = _pestConfig[type] || { count:0 };
+    for (var i=1; i<=(cfg.count||0); i++) {
+      var k  = _pkey(type, i);
+      var el = document.getElementById('pgnote_'+k);
+      if (el) _pestInspNotes[k] = el.value;
+    }
+  });
+}
+
+function _renderPestInspSections() {
+  var container = document.getElementById('globalPestSectionsContainer');
+  if (!container) return;
+  var by = _pestInspSortMode;
+
+  if (by === 'type') {
+    container.innerHTML = PEST_TYPES.map(function(type) {
+      var cfg   = _pestConfig[type] || { count:0 };
+      var count = cfg.count || 0;
+      if (!count) return '';
+      var items = [];
+      for (var i=1; i<=count; i++) items.push(_getPestItemCfg(type, i));
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span style="color:'+PEST_COLORS[type]+'">'+PEST_ICONS[type]+'</span> '+esc(PEST_LABELS[type])
+        +' <span class="global-type-count">'+count+' dispositif'+(count>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+items.map(function(it){ return _renderPestInspAccordion(type,it,false); }).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else if (by === 'zone') {
+    var zoneMap = {};
+    PEST_TYPES.forEach(function(type) {
+      var cfg = _pestConfig[type] || { count:0 };
+      for (var i=1; i<=(cfg.count||0); i++) {
+        var it = _getPestItemCfg(type, i);
+        var z  = (it.zone||'').trim() || '— Zone non définie';
+        if (!zoneMap[z]) zoneMap[z] = [];
+        zoneMap[z].push({ type:type, item:it });
+      }
+    });
+    container.innerHTML = Object.keys(zoneMap).sort().map(function(zone) {
+      var devs = zoneMap[zone];
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+devs.length+' dispositif'+(devs.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+devs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,true); }).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else {
+    var allDevs = [];
+    PEST_TYPES.forEach(function(type) {
+      var cfg = _pestConfig[type] || { count:0 };
+      for (var i=1; i<=(cfg.count||0); i++) allDevs.push({ type:type, item:_getPestItemCfg(type,i) });
+    });
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les dispositifs'
+      +' <span class="global-type-count">'+allDevs.length+' unité'+(allDevs.length>1?'s':'')+'</span></div>'
+      +'<div class="global-ext-list">'+allDevs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,true); }).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function _renderPestInspAccordion(type, item, showType) {
+  var k       = _pkey(type, item.num);
+  var cl      = _pestChecklistByType(type);
+  var checks  = _pestInspChecks[k] || {};
+  var okCount = cl.filter(function(it){ return checks[it.key]; }).length;
+  var isOk    = okCount === cl.length;
+
+  var checkItems = cl.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="pgchk_'+k+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onPestCheckChange(\''+k+'\',\''+type+'\',\''+it.key+'\',this.checked)"/>'
+      +'<label for="pgchk_'+k+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  var typePill = showType
+    ? '<span style="font-size:.7rem;color:'+PEST_COLORS[type]+';background:'+PEST_COLORS[type]+'22;border-radius:10px;padding:1px 7px;margin-right:4px">'+PEST_ICONS[type]+' '+esc(type)+'</span>'
+    : '';
+  var zoneSpan = (_pestInspSortMode!=='zone' && item.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(item.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+  var emplacePill = item.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(item.emplacement)+'</span>'
+    : '';
+  var detailMeta = (item.zone||item.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(item.zone ? '<span>🏷 '+esc(item.zone)+'</span>' : '')
+      +(item.emplacement ? '<span>📌 '+esc(item.emplacement)+'</span>' : '')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="pghdr_'+k+'" onclick="togglePestAccordion(\''+k+'\')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:68px">'+type+'-'+String(item.num).padStart(2,'0')+'</span>'
+    +typePill+zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="pgbadge_'+k+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+cl.length+'</span>'
+    +'<span id="pgchev_'+k+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="pgdet_'+k+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="pgnote_'+k+'" placeholder="Note / observation…" '
+    +'value="'+esc(_pestInspNotes[k]||'')+'" onchange="_pestInspNotes[\''+k+'\']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function togglePestAccordion(k) {
+  var det  = document.getElementById('pgdet_'+k);
+  var hdr  = document.getElementById('pghdr_'+k);
+  var chev = document.getElementById('pgchev_'+k);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (hdr)  hdr.classList.toggle('open', !open);
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function onPestCheckChange(k, type, key, checked) {
+  if (!_pestInspChecks[k]) _pestInspChecks[k] = {};
+  _pestInspChecks[k][key] = checked;
+  var cl      = _pestChecklistByType(type);
+  var okCount = cl.filter(function(it){ return (_pestInspChecks[k]||{})[it.key]; }).length;
+  var isOk    = okCount === cl.length;
+  _pestInspStatuts[k] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('pgbadge_'+k);
+  if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+okCount+'/'+cl.length; }
+}
+
+function setAllPestStatut(statut) {
+  var isOk = statut === 'Conforme';
+  PEST_TYPES.forEach(function(type) {
+    var cfg = _pestConfig[type] || { count:0 };
+    var cl  = _pestChecklistByType(type);
+    for (var i=1; i<=(cfg.count||0); i++) {
+      var k = _pkey(type, i);
+      if (!_pestInspChecks[k]) _pestInspChecks[k] = {};
+      cl.forEach(function(it){
+        _pestInspChecks[k][it.key] = isOk;
+        var el = document.getElementById('pgchk_'+k+'_'+it.key);
+        if (el) el.checked = isOk;
+      });
+      _pestInspStatuts[k] = statut;
+      var badge = document.getElementById('pgbadge_'+k);
+      if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+(isOk?cl.length:0)+'/'+cl.length; }
+    }
+  });
+}
+
+function submitGlobalPestInspection() {
+  var date = document.getElementById('globalPestDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  _syncPestInspNotes();
+  var result       = {};
+  var totalNonConf = 0;
+  var totalDevs    = 0;
+  PEST_TYPES.forEach(function(type) {
+    var cfg   = _pestConfig[type] || { count:0, items:[] };
+    var count = cfg.count || 0;
+    if (!count) return;
+    var units = [];
+    for (var i=1; i<=count; i++) {
+      var k  = _pkey(type, i);
+      var it = _getPestItemCfg(type, i);
+      if (_pestInspStatuts[k]==='Non conforme') totalNonConf++;
+      totalDevs++;
+      units.push({ num:i, zone:it.zone||'', emplacement:it.emplacement||'',
+                   checks:_pestInspChecks[k]||{}, statut:_pestInspStatuts[k]||'Conforme', note:_pestInspNotes[k]||'' });
+    }
+    result[type] = { units:units };
+  });
+  var etatGlobal = totalNonConf===0 ? 'Conforme' : totalNonConf < totalDevs/2 ? 'Partiel' : 'Non conforme';
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection nuisibles #'+r.id+' enregistrée','ok');
+        closeSheet('globalPestOv');
+        renderNuisibles();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestChecklist({
+      token:              S.adminKey,
+      dateInspection:     date,
+      superviseurNom:     S_AUTH.name||S_AUTH.matricule,
+      type:               'Inspection Globale Nuisibles',
+      idEquipement:       'GLOBAL — '+totalDevs+' dispositifs',
+      zone:               '',
+      checklist:          result,
+      etatGlobal:         etatGlobal,
+      observations:       document.getElementById('globalPestObs').value,
+      prochaineInspection:document.getElementById('globalPestProchaine').value,
+      photoChecklist:     _pestInspPhotoB64,
+      photo_mime:         _pestInspPhotoMime
+    });
+}
+
+function onPestPhotoChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  var prev   = document.getElementById('globalPestPhotoPreview');
+  reader.onload = function(e) {
+    _pestInspPhotoB64  = e.target.result.split(',')[1]||'';
+    _pestInspPhotoMime = file.type||'image/jpeg';
+    if (prev) {
+      prev.style.display = 'block';
+      prev.innerHTML = file.type.startsWith('image/')
+        ? '<img src="'+e.target.result+'" style="max-height:80px;border-radius:6px"/>'
+        : '<div style="font-size:.8rem;color:var(--t2)">📄 '+esc(file.name)+'</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════
+   LISTE & DÉTAIL DES INSPECTIONS NUISIBLES
+══════════════════════════════════════════ */
+var _nuisiblesRecords = [];
+var _pestFilter       = 'all';
+
+function setPestFilter(f) {
+  _pestFilter = f;
+  var tabMap = { all:'all', DEI:'dei', BAP:'bap', PM:'pm', PGG:'pgg' };
+  Object.keys(tabMap).forEach(function(k){
+    var el = document.getElementById('pftab_'+tabMap[k]);
+    if (el) el.className = 'gsort-tab'+(k===f?' on':'');
+  });
+  _renderNuisiblesList();
+}
+
+function _renderNuisiblesList() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body || !_nuisiblesRecords.length) return;
+  var filtered = _nuisiblesRecords.filter(function(c) {
+    if (_pestFilter === 'all') return true;
+    return c.type === _pestFilter || c.type === 'Inspection Globale Nuisibles';
+  });
+  if (!filtered.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
+    return;
+  }
+  body.innerHTML = filtered.map(function(c) {
+    var idx      = _nuisiblesRecords.indexOf(c);
+    var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+    var isGlobal = c.type === 'Inspection Globale Nuisibles';
+    var typeIcon = isGlobal ? '🔍 Inspection Globale'
+      : (PEST_ICONS[c.type]||'🪲')+' '+(PEST_LABELS[c.type]||esc(c.type));
+    var statsLine = '';
+    if (isGlobal && c.checklist && typeof c.checklist==='object') {
+      var parts = [];
+      PEST_TYPES.forEach(function(t){
+        var sec = c.checklist[t];
+        if (!sec||!sec.units||!sec.units.length) return;
+        var tot  = sec.units.length;
+        var conf = sec.units.filter(function(u){ return u.statut==='Conforme'; }).length;
+        if (tot) parts.push(PEST_ICONS[t]+' '+t+': '+conf+'/'+tot);
+      });
+      if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
+    }
+    return '<div class="hse-card" onclick="openPestDetail('+idx+')" style="cursor:pointer">'
+      +'<div class="hse-card-header">'
+      +'<div><div class="hse-card-title">'+typeIcon+'</div>'
+      +'<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+      +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      +'</div>'
+      +statsLine
+      +(c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      +(c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Rapport signé joint</div>' : '')
+      +'<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
+      +'</div>';
+  }).join('');
+}
+
+function openPestDetail(idx) {
+  var c = _nuisiblesRecords[idx];
+  if (!c) return;
+  document.getElementById('pestDetailTitle').textContent = '🔍 Inspection Nuisibles — '+esc(c.dateInspection||'');
+  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c);
+  openSheet('pestDetailOv');
+}
+
+function _buildPestDetailHTML(c) {
+  var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+  var isGlobal = c.type === 'Inspection Globale Nuisibles';
+  var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+    +'<div style="font-size:.82rem;color:var(--t2);line-height:1.6"><div>📅 '+esc(c.dateInspection)+'</div><div>🦺 '+esc(c.superviseurNom)+'</div></div>'
+    +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+    +'</div>';
+  if (c.prochaineInspection) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+  if (c.observations) html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  if (c.photoId) html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir rapport signé</a></div>';
+  html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
+  if (isGlobal && c.checklist && typeof c.checklist==='object') {
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec||!sec.units||!sec.units.length) return;
+      var units    = sec.units;
+      var confCnt  = units.filter(function(u){ return u.statut==='Conforme'; }).length;
+      var cl       = _pestChecklistByType(type);
+      html += '<div class="global-type-section" style="margin-bottom:10px">'
+        +'<div class="global-type-title"><span style="color:'+PEST_COLORS[type]+'">'+PEST_ICONS[type]+'</span> '+esc(PEST_LABELS[type])
+        +' <span class="global-type-count">'+confCnt+'/'+units.length+' conformes</span></div>'
+        +'<div class="global-ext-list">';
+      units.forEach(function(u) {
+        var isOk  = u.statut==='Conforme';
+        var okCnt = cl.filter(function(it){ return u.checks && u.checks[it.key]; }).length;
+        var detId = 'pdet_'+type+'_'+u.num;
+        html += '<div class="global-ext-accordion">'
+          +'<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+          +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:68px">'+type+'-'+String(u.num).padStart(2,'0')+'</span>'
+          +(u.zone?'<span style="font-size:.72rem;color:var(--t3)">'+esc(u.zone)+'</span>':'')
+          +(u.emplacement?'<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(u.emplacement)+'</span>':'')
+          +'<span style="flex:1"></span>'
+          +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+          +'<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+          +'</div>'
+          +'<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+        cl.forEach(function(it) {
+          var checked = u.checks && u.checks[it.key];
+          html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+            +'<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+            +'<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+            +'</div>';
+        });
+        if (u.note) html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(u.note)+'</div>';
+        html += '</div></div>';
+      });
+      html += '</div></div>';
+    });
+  }
+  return html;
+}
+
+function renderNuisibles() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body) return;
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🪲</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Insp. Globale » pour commencer.</div></div>';
+        return;
+      }
+      _nuisiblesRecords = r.data;
+      _renderNuisiblesList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getPestChecklists(S.adminKey);
 }
 
 /* ══════════════════════════════════════════

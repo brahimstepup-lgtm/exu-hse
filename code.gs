@@ -1609,3 +1609,130 @@ function saveChecklistsConfig(p) {
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ══════════════════════════════════════════════════════════════════
+// CONTRÔLE DES DISPOSITIFS DE LUTTE CONTRE LES NUISIBLES
+// Types : DEI (désinsectiseur électrique), BAP (boîte d'appât),
+//         PM  (piège mécanique),           PGG (plaque de glu)
+// ══════════════════════════════════════════════════════════════════
+
+function getNuisiblesSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Suivi_Nuisibles');
+  if (!sh) {
+    sh = ss.insertSheet('Suivi_Nuisibles');
+    sh.appendRow(['ID','DateInspection','Matricule','Superviseur','Type',
+                  'IDEquipement','Zone','Checklist','EtatGlobal',
+                  'Observations','ProchaineInspection','Photo','DateCreation']);
+    sh.getRange(1,1,1,13).setFontWeight('bold');
+  }
+  return sh;
+}
+
+// ── Charger la configuration complète (nuisibles) ──────────────
+function getPestConfigData(adminKey) {
+  if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props         = PropertiesService.getScriptProperties();
+    var rawPest       = props.getProperty('PEST_CONFIG')       || '{}';
+    var rawZones      = props.getProperty('ZONES_CONFIG')      || '[]';
+    var rawChecklists = props.getProperty('PEST_CHECKLISTS_CONFIG') || '{}';
+    var pestConfig    = JSON.parse(rawPest);
+    var zones         = JSON.parse(rawZones);
+    var checklists    = JSON.parse(rawChecklists);
+    // Initialisation par défaut : 5 unités par type
+    ['DEI','BAP','PM','PGG'].forEach(function(t) {
+      if (!pestConfig[t] || typeof pestConfig[t] !== 'object') {
+        pestConfig[t] = { count:5, items:[] };
+      }
+      if (!pestConfig[t].items)  pestConfig[t].items  = [];
+      if (!pestConfig[t].count)  pestConfig[t].count  = 5;
+    });
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder la configuration des dispositifs ───────────────
+function savePestConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    PropertiesService.getScriptProperties()
+      .setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder les listes de contrôle par type ────────────────
+function savePestChecklistsConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    PropertiesService.getScriptProperties()
+      .setProperty('PEST_CHECKLISTS_CONFIG', JSON.stringify(p.checklists||{}));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Enregistrer une inspection nuisibles ───────────────────────
+function savePestChecklist(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess   = verifySession_(p.token);
+    var sh     = getNuisiblesSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var photoUrl = '';
+    if (p.photoChecklist && String(p.photoChecklist).length > 10) {
+      var ext2   = (p.photo_mime||'image/jpeg').indexOf('pdf') !== -1 ? 'pdf' : 'jpg';
+      var fname2 = 'Nuisibles_' + nextId + '_' + new Date().getTime() + '.' + ext2;
+      photoUrl   = savePhotoToFolder_(p.photoChecklist, fname2, p.photo_mime||'image/jpeg');
+    }
+    sh.appendRow([
+      nextId,
+      p.dateInspection ? new Date(p.dateInspection) : new Date(),
+      sess.matricule,
+      String(p.superviseurNom||sess.matricule),
+      String(p.type||'Inspection Globale Nuisibles'),
+      String(p.idEquipement||''),
+      String(p.zone||''),
+      JSON.stringify(p.checklist||{}),
+      String(p.etatGlobal||'Conforme'),
+      String(p.observations||''),
+      p.prochaineInspection ? new Date(p.prochaineInspection) : '',
+      photoUrl,
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire toutes les inspections nuisibles ─────────────────────
+function getPestChecklists(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2, 1, lr-1, 13).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var checks = {};
+      try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
+      return {
+        id:                   r[0],
+        dateInspection:       fmtDate_(r[1]),
+        superviseurMatricule: String(r[2]),
+        superviseurNom:       String(r[3]),
+        type:                 String(r[4]),
+        idEquipement:         String(r[5]),
+        zone:                 String(r[6]),
+        checklist:            checks,
+        etatGlobal:           String(r[8]),
+        observations:         String(r[9]),
+        prochaineInspection:  fmtDate_(r[10]),
+        photoId:              extractFileId_(r[11]),
+        photoUrl:             String(r[11]),
+        dateCreation:         fmtDate_(r[12])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
