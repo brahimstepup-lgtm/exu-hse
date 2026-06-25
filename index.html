@@ -1191,7 +1191,10 @@ img{max-width:100%;display:block;}
       </div>
       <!-- ② Points à vérifier par type -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">Points à vérifier par type</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">Points à vérifier par type</div>
+          <button type="button" class="btn btn-g" onclick="resetChecklistToDefaults()" style="height:28px;font-size:.75rem;padding:0 10px;color:var(--t3)">↺ Défauts</button>
+        </div>
         <div style="margin-bottom:12px">
           <div style="font-size:.8rem;font-weight:600;color:#e67e22;margin-bottom:6px">🔴 Poudre ABC</div>
           <div id="clPoudreList"></div>
@@ -3675,6 +3678,16 @@ function removeChecklistItem(type, key) {
   _renderChecklistEditor();
 }
 
+function resetChecklistToDefaults() {
+  _checklistConfig = {
+    'Poudre ABC': CHECKLIST_POUDRE_ABC.slice(),
+    'CO2':        CHECKLIST_CO2.slice(),
+    'Eau':        CHECKLIST_EAU_EXT.slice()
+  };
+  _renderChecklistEditor();
+  toast('Points restaurés — cliquez 💾 pour sauvegarder','ok');
+}
+
 function saveChecklistConfig() {
   _syncChecklistFromDOM();
   showLoader('Sauvegarde des points de contrôle…');
@@ -3697,7 +3710,9 @@ function openConfigExt() {
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _configuredZones = r.zones||[];
       _extConfig       = r.extConfig||[];
-      _checklistConfig = (r.checklists && typeof r.checklists==='object') ? r.checklists : {
+      var _cl = r.checklists || {};
+      var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
+      _checklistConfig = _hasConfig ? _cl : {
         'Poudre ABC': CHECKLIST_POUDRE_ABC.slice(),
         'CO2':        CHECKLIST_CO2.slice(),
         'Eau':        CHECKLIST_EAU_EXT.slice()
