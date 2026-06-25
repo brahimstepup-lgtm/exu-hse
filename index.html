@@ -4531,8 +4531,11 @@ function _renderIncendieList() {
       + '</div>'
       + statsLine
       + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
-      + (c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
-      + '<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
+      + (c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
+      + '<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      + '<button class="btn btn-g" onclick="openIncendieDetail('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
+      + '<button class="btn btn-g" onclick="printIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      + '</div>'
       + '</div>';
   }).join('');
 }
@@ -5869,8 +5872,11 @@ function _renderNuisiblesList() {
       +'</div>'
       +statsLine
       +(c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
-      +(c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Rapport signé joint</div>' : '')
-      +'<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
+      +(c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Rapport signé joint</div>' : '')
+      +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      +'<button class="btn btn-g" onclick="openPestDetail('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
+      +'<button class="btn btn-g" onclick="printPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +'</div>'
       +'</div>';
   }).join('');
 }
