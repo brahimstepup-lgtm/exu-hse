@@ -6185,11 +6185,13 @@ function _buildHSEPrintHTML(opts) {
     +'.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
     +'.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
     +'.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
+    +'@page{size:A4 portrait;margin:12mm 14mm}'
     +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'.type-section{page-break-inside:avoid}'
-    +'.type-header{background:#1a1a1a!important;color:#fff!important}'
+    +'.type-header{background:#1a1a1a!important;color:#fff!important;page-break-after:avoid}'
+    +'.check-table tr{page-break-inside:avoid}'
     +'.check-table th{background:#e0e0e0!important}.dev-num{background:#f0f0f0!important}'
-    +'@page{size:A4 portrait;margin:12mm 14mm}}';
+    +'.obs-section,.sig-table{page-break-inside:avoid}'
+    +'}';
 
   var autoScript = autoPrint ? '<script>window.onload=function(){window.print();}<\/script>' : '';
 
