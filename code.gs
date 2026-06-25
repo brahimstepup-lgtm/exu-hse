@@ -1536,3 +1536,27 @@ function getChecklists(token) {
     return { success:true, data:data.reverse() };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ── Configuration des extincteurs (type + zone par numéro) ──
+function getExtConfig(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('EXTINCTEUR_CONFIG')||'[]';
+    var config = JSON.parse(raw);
+    if (!config.length) {
+      for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'' });
+    }
+    return { success:true, data:config };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveExtConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var config = (p.config||[]).map(function(c){
+      return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||'') };
+    }).filter(function(c){ return c.num>=1 && c.num<=200; });
+    PropertiesService.getScriptProperties().setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
