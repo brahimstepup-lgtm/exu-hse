@@ -740,6 +740,41 @@ img{max-width:100%;display:block;}
 .equip-drop-item:last-child{border-bottom:none;}
 .equip-drop-item:hover,.equip-drop-item.active{background:var(--ink4);}
 .equip-drop-item mark{background:rgba(245,197,24,.3);color:var(--t1);border-radius:2px;}
+.equip-tag{display:inline-flex;align-items:center;gap:4px;background:var(--y2);border:1px solid rgba(245,197,24,.35);border-radius:12px;padding:2px 8px;font-size:.8rem;color:var(--t1);cursor:pointer;user-select:none;}
+.equip-tag:hover{background:rgba(245,197,24,.22);}
+.equip-multi-item{padding:9px 14px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px;}
+.equip-multi-item:last-child{border-bottom:none;}
+.equip-multi-item:hover{background:var(--ink4);}
+.equip-multi-item.checked-item{background:var(--y3);}
+/* ── Inspection Globale ── */
+.global-type-section{background:var(--ink2);border-radius:10px;padding:14px 14px 10px;margin-bottom:14px;border:1px solid var(--line);}
+.global-type-title{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.global-type-count{font-size:.78rem;font-weight:400;color:var(--t3);background:var(--ink3);border-radius:10px;padding:1px 7px;}
+.global-ext-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.global-ext-accordion{border-radius:8px;overflow:hidden;border:1px solid var(--line2);}
+.global-ext-header{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--ink3);transition:background .15s;user-select:none;}
+.global-ext-header:hover{background:var(--ink4);}
+.global-ext-header.open{background:var(--ink4);}
+.global-ext-detail{background:var(--ink2);padding:10px 14px 10px;border-top:1px solid var(--line2);}
+.global-ext-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap;}
+.global-ext-badge.ok{background:rgba(39,174,96,.18);color:#2ecc71;border:1px solid rgba(39,174,96,.3);}
+.global-ext-badge.nok{background:rgba(231,76,60,.18);color:#e74c3c;border:1px solid rgba(231,76,60,.3);}
+.global-ext-note{margin:4px 0 0!important;padding:4px 9px!important;height:30px!important;font-size:.78rem!important;width:100%;box-sizing:border-box;}
+/* Sort tabs (inspection globale) */
+.gsort-tab{padding:5px 13px;border-radius:20px;border:1px solid var(--line2);background:var(--ink3);color:var(--t2);cursor:pointer;font-size:.78rem;transition:all .15s;white-space:nowrap;}
+.gsort-tab.on{background:var(--y2);border-color:rgba(245,197,24,.4);color:var(--y);font-weight:600;}
+.gsort-tab:hover:not(.on){background:var(--ink4);}
+/* Config table */
+.ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
+.ext-cfg-row:nth-child(even){background:rgba(255,255,255,.018);border-radius:4px;}
+.ext-cfg-label{font-size:.78rem;color:var(--t3);font-weight:600;text-align:center;}
+/* Zone chips */
+.zone-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.3);border-radius:12px;padding:3px 9px;font-size:.8rem;color:#3498db;margin:2px;}
+.zone-chip .zrm{cursor:pointer;opacity:.55;font-size:.75em;line-height:1;}
+.zone-chip .zrm:hover{opacity:1;}
+/* Quick range config */
+.range-cfg-row{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2);}
+.range-cfg-row:last-child{border-bottom:none;}
 .sensi-tab{flex:1;background:none;border:none;color:var(--t3);border-radius:7px;padding:10px 8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;}
 .sensi-tab.on{background:var(--ink4);color:var(--t1);}
 .profil-card{background:var(--ink2);border-radius:14px;padding:18px;border:1px solid var(--line2);margin-bottom:16px;}
@@ -977,7 +1012,11 @@ img{max-width:100%;display:block;}
     <div class="view" id="view-incendie">
       <div class="ph view-hdr">
         <h1 class="ph-title">🧯 Suivi Incendie</h1>
-        <button class="btn btn-p" onclick="openIncendieForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle inspection</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-g" onclick="openConfigExt()" style="padding:8px 12px;font-size:.8rem;min-height:36px">⚙ Config extincteurs</button>
+          <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:8px 14px;font-size:.82rem;min-height:36px">🌍 Inspection Globale</button>
+          <button class="btn btn-p" onclick="openIncendieForm()" style="padding:8px 14px;font-size:.82rem;min-height:36px">＋ Unitaire</button>
+        </div>
       </div>
       <div id="incendieBody"></div>
     </div>
@@ -1065,17 +1104,27 @@ img{max-width:100%;display:block;}
             <option value="RIA">💧 RIA</option>
           </select>
         </div>
-        <div class="fg" style="position:relative">
+        <div class="fg" style="position:relative" id="equipMultiWrapper">
           <label class="fl">ID / N° Équipement</label>
           <div style="position:relative">
-            <input class="fi" type="text" id="incIdEquip" placeholder="Tapez ou choisissez (1–100)…" autocomplete="off"
-              oninput="filterEquipList(this.value)"
-              onfocus="openEquipList()"
-              onkeydown="equipKeyNav(event)"/>
-            <button type="button" onclick="toggleEquipList()" tabindex="-1"
+            <div id="equipTagsArea" class="fi" style="min-height:42px;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 36px 6px 10px;" onclick="toggleEquipDropdown()">
+              <span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>
+            </div>
+            <button type="button" onclick="toggleEquipDropdown()" tabindex="-1"
               style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:1rem;padding:4px">▼</button>
           </div>
-          <div id="equipDropdown" class="emp-search-res" style="display:none;position:absolute;z-index:200;left:0;right:0;max-height:200px;overflow-y:auto;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);"></div>
+          <div id="equipMultiDropdown" style="display:none;position:absolute;z-index:200;left:0;right:0;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);background:var(--ink3)">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--line2)">
+              <input type="text" id="equipMultiSearch" class="fi" placeholder="Rechercher un numéro…"
+                style="margin:0;height:34px" oninput="filterEquipMulti(this.value)" onclick="event.stopPropagation()"/>
+            </div>
+            <div id="equipMultiList" style="max-height:160px;overflow-y:auto"></div>
+            <div style="padding:6px 10px;border-top:1px solid var(--line2);display:flex;gap:6px;align-items:center">
+              <input type="text" id="equipCustomInput" class="fi" placeholder="Ajouter un numéro personnalisé…"
+                style="margin:0;height:34px;flex:1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.preventDefault();addEquipCustom();}"/>
+              <button type="button" class="btn btn-p" onclick="addEquipCustom()" style="height:34px;padding:0 12px;font-size:.85rem;white-space:nowrap">+ Ajouter</button>
+            </div>
+          </div>
         </div>
         <div class="fg">
           <label class="fl">Zone / Emplacement</label>
@@ -1115,6 +1164,119 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('incendieFormOv')">Annuler</button>
       <button class="btn btn-p" onclick="submitChecklist()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Extincteurs ═══ -->
+<div class="ov" id="extConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration des 100 Extincteurs</div>
+      <button class="sh-x" onclick="closeSheet('extConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- ① Gestion des zones -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="fi" id="newZoneInput" placeholder="Nouvelle zone (ex: Atelier A)…"
+            style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addConfigZone();}"/>
+          <button type="button" class="btn btn-g" onclick="addConfigZone()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+          <button type="button" class="btn btn-p" onclick="saveZonesConfig()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">💾 Zones</button>
+        </div>
+        <div id="zoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
+      </div>
+      <!-- ② Affectation rapide par plage -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:6px">Affectation rapide par plage</div>
+        <div style="font-size:.75rem;color:var(--t3);margin-bottom:8px">Ex: <b>1-30</b> ou <b>1,5,10-20</b></div>
+        <div class="range-cfg-row">
+          <span style="font-size:.82rem;font-weight:600;color:#e67e22;min-width:90px">🔴 Poudre ABC</span>
+          <input class="fi" id="rangePoudre" placeholder="Ex: 1-35" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zonePoudre" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        </div>
+        <div class="range-cfg-row">
+          <span style="font-size:.82rem;font-weight:600;color:#3498db;min-width:90px">🔵 CO2</span>
+          <input class="fi" id="rangeCO2" placeholder="Ex: 36-60" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zoneCO2" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        </div>
+        <div class="range-cfg-row">
+          <span style="font-size:.82rem;font-weight:600;color:#27ae60;min-width:90px">💧 Eau</span>
+          <input class="fi" id="rangeEau" placeholder="Ex: 61-100" style="height:34px;font-size:.82rem"/>
+          <select class="fi" id="zoneEau" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        </div>
+        <button class="btn btn-p" onclick="applyRangeConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">Appliquer au tableau ↓</button>
+      </div>
+      <!-- ③ Tableau détaillé -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail extincteur par extincteur</div>
+      <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+        <div style="font-size:.72rem;color:var(--t3);text-align:center">N°</div>
+        <div style="font-size:.72rem;color:var(--t3)">Type</div>
+        <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+        <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+      </div>
+      <div id="extConfigBody"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('extConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveExtConfigLocal()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale ═══ -->
+<div class="ov" id="globalInspOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🌍 Inspection Globale — Tous extincteurs</div>
+      <button class="sh-x" onclick="closeSheet('globalInspOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalIncDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalIncProchaine"/>
+        </div>
+      </div>
+      <!-- Actions globales -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllGlobalStatut('Conforme')"    style="font-size:.78rem;padding:6px 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllGlobalStatut('Non conforme')" style="font-size:.78rem;padding:6px 12px">❌ Tout non conforme</button>
+      </div>
+      <!-- Tri -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--t3);margin-right:2px">Trier par :</span>
+        <button class="gsort-tab on" id="gsort-type" onclick="setGlobalSort('type')">🔴 Type</button>
+        <button class="gsort-tab"    id="gsort-zone" onclick="setGlobalSort('zone')">📍 Zone</button>
+        <button class="gsort-tab"    id="gsort-num"  onclick="setGlobalSort('num')">🔢 Numéro</button>
+      </div>
+      <!-- Sections générées dynamiquement -->
+      <div id="globalSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalIncObs" rows="2" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalPhotoArea" onclick="document.getElementById('globalPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="globalPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onGlobalPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalInspOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitGlobalInspection()">✓ Enregistrer tout</button>
     </div>
   </div>
 </div>
@@ -3347,6 +3509,505 @@ var CHECKLIST_RIA = [
   { key:'signalet',   label:'Signalétique visible et lisible' }
 ];
 
+/* ─── Checklists par type d'extincteur (Inspection Globale) ─── */
+var CHECKLIST_POUDRE_ABC = [
+  { key:'pression',  label:'Pression dans la zone verte (manomètre)' },
+  { key:'goupille',  label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé (1 m autour de l\'appareil)' },
+  { key:'aspect',    label:'Aspect général correct (pas de rouille/dommage)' },
+  { key:'position',  label:'Position et hauteur réglementaires (≤ 1,2 m)' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+var CHECKLIST_CO2 = [
+  { key:'poids',     label:'Poids vérifié / indicateur de charge OK' },
+  { key:'goupille',  label:'Goupille et plombage intacts' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé' },
+  { key:'aspect',    label:'Aspect général correct (pas de corrosion)' },
+  { key:'tuyere',    label:'Tuyère / corne de diffusion en bon état' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+var CHECKLIST_EAU_EXT = [
+  { key:'pression',  label:'Pression dans la zone verte' },
+  { key:'goupille',  label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé' },
+  { key:'aspect',    label:'Aspect général correct (pas de rouille)' },
+  { key:'lance',     label:'Lance et tuyau en bon état' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+
+function _checklistByType(type) {
+  if (type==='CO2')       return CHECKLIST_CO2;
+  if (type==='Eau')       return CHECKLIST_EAU_EXT;
+  return CHECKLIST_POUDRE_ABC;
+}
+
+/* ══════════════════════════════════════════
+   CONFIG EXTINCTEURS + ZONES
+══════════════════════════════════════════ */
+var _extConfig       = [];
+var _configuredZones = [];
+
+/* ─── Helpers zones ─── */
+function _zoneOptions(current) {
+  var opts = '<option value="">— Zone —</option>';
+  _configuredZones.forEach(function(z){
+    opts += '<option value="'+esc(z)+'"'+(z===current?' selected':'')+'>'+esc(z)+'</option>';
+  });
+  return opts;
+}
+
+function _renderZoneChips() {
+  var el = document.getElementById('zoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removeConfigZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+
+function _refreshZoneSelects() {
+  /* met à jour les selects de plage ET du tableau */
+  ['zonePoudre','zoneCO2','zoneEau'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (sel && sel.tagName==='SELECT') { var v=sel.value; sel.innerHTML=_zoneOptions(v); }
+  });
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  for (var i=1; i<=100; i++) {
+    var sel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    if (sel && sel.tagName==='SELECT') { var v2=sel.value; sel.innerHTML=_zoneOptions(v2); }
+  }
+}
+
+function addConfigZone() {
+  var inp = document.getElementById('newZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderZoneChips();
+  _refreshZoneSelects();
+}
+
+function removeConfigZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderZoneChips();
+  _refreshZoneSelects();
+}
+
+function saveZonesConfig() {
+  showLoader('Sauvegarde des zones…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Zones sauvegardées','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveZones({ adminKey:S.adminKey, zones:_configuredZones });
+}
+
+/* ─── Ouverture config panel ─── */
+function openConfigExt() {
+  showLoader('Chargement de la configuration…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _configuredZones = r.zones||[];
+      _extConfig       = r.extConfig||[];
+      _renderZoneChips();
+      _renderExtConfigTable();
+      _refreshZoneSelects();
+      openSheet('extConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
+}
+
+function _renderExtConfigTable() {
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  var rows = [];
+  for (var i=1; i<=100; i++) {
+    var conf = null;
+    for (var j=0; j<_extConfig.length; j++) { if (_extConfig[j].num===i) { conf=_extConfig[j]; break; } }
+    if (!conf) conf = { num:i, type:'Poudre ABC', zone:'', emplacement:'' };
+    rows.push(
+      '<div class="ext-cfg-row">'
+      +'<div class="ext-cfg-label" style="color:var(--t3)">EXT-'+String(i).padStart(2,'0')+'</div>'
+      +'<select class="fi" data-num="'+i+'" data-field="type" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +'<option value="Poudre ABC"'+(conf.type==='Poudre ABC'?' selected':'')+'>🔴 Poudre ABC</option>'
+      +'<option value="CO2"'+(conf.type==='CO2'?' selected':'')+'>🔵 CO2</option>'
+      +'<option value="Eau"'+(conf.type==='Eau'?' selected':'')+'>💧 Eau</option>'
+      +'</select>'
+      +'<select class="fi" data-num="'+i+'" data-field="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +_zoneOptions(conf.zone||'')
+      +'</select>'
+      +'<input class="fi" type="text" data-num="'+i+'" data-field="emplacement" value="'+esc(conf.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+      +'</div>'
+    );
+  }
+  body.innerHTML = rows.join('');
+}
+
+function applyRangeConfig() {
+  var specs = [
+    { type:'Poudre ABC', rangeId:'rangePoudre', zoneId:'zonePoudre' },
+    { type:'CO2',        rangeId:'rangeCO2',    zoneId:'zoneCO2' },
+    { type:'Eau',        rangeId:'rangeEau',    zoneId:'zoneEau' }
+  ];
+  var assignments = {};
+  specs.forEach(function(sp) {
+    var rangeStr = (document.getElementById(sp.rangeId).value||'').trim();
+    var zoneEl   = document.getElementById(sp.zoneId);
+    var zone     = zoneEl ? (zoneEl.value||'').trim() : '';
+    if (!rangeStr) return;
+    _parseRanges(rangeStr).forEach(function(n){ assignments[n] = { type:sp.type, zone:zone }; });
+  });
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  body.querySelectorAll('[data-field="type"]').forEach(function(sel) {
+    var n = parseInt(sel.getAttribute('data-num'),10);
+    if (assignments[n]) {
+      sel.value = assignments[n].type;
+      var zSel = body.querySelector('[data-num="'+n+'"][data-field="zone"]');
+      if (zSel && assignments[n].zone) zSel.value = assignments[n].zone;
+    }
+  });
+  toast('Plages appliquées au tableau','ok');
+}
+
+function _parseRanges(str) {
+  var nums = [];
+  str.split(',').forEach(function(part) {
+    part = part.trim();
+    if (part.indexOf('-')!==-1) {
+      var pts = part.split('-');
+      var a = parseInt(pts[0].trim(),10), b = parseInt(pts[1].trim(),10);
+      if (!isNaN(a)&&!isNaN(b)) for (var i=Math.min(a,b);i<=Math.max(a,b);i++) nums.push(i);
+    } else {
+      var n = parseInt(part,10);
+      if (!isNaN(n)) nums.push(n);
+    }
+  });
+  var unique = {};
+  nums.forEach(function(n){ unique[n]=true; });
+  return Object.keys(unique).map(Number).sort(function(a,b){ return a-b; });
+}
+
+function saveExtConfigLocal() {
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  var config = [];
+  for (var i=1; i<=100; i++) {
+    var sel  = body.querySelector('[data-num="'+i+'"][data-field="type"]');
+    var zsel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    var emp  = body.querySelector('[data-num="'+i+'"][data-field="emplacement"]');
+    if (!sel) continue;
+    config.push({ num:i, type:sel.value, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
+  }
+  _extConfig = config;
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration sauvegardée','ok'); closeSheet('extConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveExtConfig({ adminKey:S.adminKey, config:config });
+}
+
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE (tous extincteurs)
+══════════════════════════════════════════ */
+var _globalStatuts  = {};  // {num: 'Conforme'|'Non conforme'}
+var _globalNotes    = {};  // {num: string}
+var _globalChecks   = {};  // {num: {key: bool}} — points cochés par extincteur
+var _globalPhotoB64 = '';
+var _globalPhotoMime = '';
+
+function openGlobalInspection() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur config: '+(r&&r.error||'?'),'err'); return; }
+      _extConfig = r.data||[];
+      if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
+      _initGlobalForm();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getExtConfig(S.adminKey);
+}
+
+function _initGlobalForm() {
+  _globalStatuts   = {};
+  _globalNotes     = {};
+  _globalChecks    = {};
+  _globalPhotoB64  = '';
+  _globalPhotoMime = '';
+  _globalSortMode  = 'type';
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m==='type'?' on':'');
+  });
+  _extConfig.forEach(function(c){
+    _globalStatuts[c.num] = 'Conforme';
+    _globalNotes[c.num]   = '';
+    var cl = _checklistByType(c.type);
+    _globalChecks[c.num]  = {};
+    cl.forEach(function(it){ _globalChecks[c.num][it.key] = true; });
+  });
+  document.getElementById('globalIncDate').value = todayStr();
+  document.getElementById('globalIncProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('globalIncObs').value = '';
+  document.getElementById('globalPhotoPreview').style.display = 'none';
+  document.getElementById('globalPhotoArea').classList.remove('has-file');
+  document.getElementById('globalPhotoInput').value = '';
+  _renderGlobalSections();
+  openSheet('globalInspOv');
+}
+
+var _globalSortMode = 'type';
+
+function setGlobalSort(mode) {
+  /* Sauvegarder les notes saisies avant de reconstruire le DOM */
+  _extConfig.forEach(function(c){
+    var el = document.getElementById('gnote_'+c.num);
+    if (el) _globalNotes[c.num] = el.value;
+  });
+  _globalSortMode = mode;
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderGlobalSections();
+}
+
+function _renderExtAccordionItem(c) {
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var checklist = _checklistByType(c.type);
+  var checks    = _globalChecks[c.num]||{};
+  var total     = checklist.length;
+  var okCount   = checklist.filter(function(it){ return checks[it.key]; }).length;
+  var isOk      = okCount===total;
+
+  var checkItems = checklist.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="gchk_'+c.num+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onExtCheckChange('+c.num+',\''+it.key+'\',this.checked)"/>'
+      +'<label for="gchk_'+c.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  /* Badge type visible seulement quand non groupé par type */
+  var typePill = (_globalSortMode!=='type')
+    ? '<span style="font-size:.7rem;color:'+TY_COLORS[c.type]+';background:'+TY_COLORS[c.type]+'22;border-radius:10px;padding:1px 7px;margin-right:4px">'+TY_ICONS[c.type]+' '+esc(c.type)+'</span>'
+    : '';
+  /* Zone visible seulement quand non groupé par zone */
+  var zoneSpan = (_globalSortMode!=='zone' && c.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+
+  /* Emplacement pill in header if set */
+  var emplacePill = c.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(c.emplacement)+'</span>'
+    : '';
+
+  /* Meta line inside detail: zone + emplacement */
+  var detailMeta = (c.zone||c.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(c.zone ? '<span>🏷 '+esc(c.zone)+'</span>' : '')
+      +(c.emplacement ? '<span>📌 '+esc(c.emplacement)+'</span>' : '')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
+    +typePill+zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+total+'</span>'
+    +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation…" '
+    +'value="'+esc(_globalNotes[c.num]||'')+'" onchange="_globalNotes['+c.num+']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function _renderGlobalSections() {
+  var container = document.getElementById('globalSectionsContainer');
+  if (!container) return;
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var by = _globalSortMode;
+
+  if (by === 'type') {
+    container.innerHTML = ['Poudre ABC','CO2','Eau'].map(function(type) {
+      var exts = _extConfig.filter(function(c){ return c.type===type; })
+                           .sort(function(a,b){ return a.num-b.num; });
+      if (!exts.length) return '';
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span style="color:'+TY_COLORS[type]+'">'+TY_ICONS[type]+'</span> '+esc(type)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else if (by === 'zone') {
+    var zoneMap = {};
+    _extConfig.forEach(function(c){
+      var z = (c.zone||'').trim()||'— Zone non définie';
+      if (!zoneMap[z]) zoneMap[z] = [];
+      zoneMap[z].push(c);
+    });
+    var zones = Object.keys(zoneMap).sort();
+    container.innerHTML = zones.map(function(zone) {
+      var exts = zoneMap[zone].sort(function(a,b){ return a.num-b.num; });
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else { /* num */
+    var allExts = _extConfig.slice().sort(function(a,b){ return a.num-b.num; });
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les extincteurs'
+      +' <span class="global-type-count">'+allExts.length+' extincteur'+(allExts.length>1?'s':'')+'</span></div>'
+      +'<div class="global-ext-list">'+allExts.map(_renderExtAccordionItem).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function toggleExtAccordion(num) {
+  var det  = document.getElementById('gdet_'+num);
+  var hdr  = document.getElementById('ghdr_'+num);
+  var chev = document.getElementById('gchev_'+num);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (hdr)  hdr.classList.toggle('open', !open);
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function onExtCheckChange(num, key, checked) {
+  if (!_globalChecks[num]) _globalChecks[num] = {};
+  _globalChecks[num][key] = checked;
+  var extConf = null;
+  for (var i=0; i<_extConfig.length; i++) { if (_extConfig[i].num===num){ extConf=_extConfig[i]; break; } }
+  if (!extConf) return;
+  var cl      = _checklistByType(extConf.type);
+  var total   = cl.length;
+  var okCount = cl.filter(function(it){ return (_globalChecks[num]||{})[it.key]; }).length;
+  var isOk    = okCount===total;
+  _globalStatuts[num] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('gbadge_'+num);
+  if (badge) {
+    badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+    badge.innerHTML = (isOk?'✅':'❌')+' '+okCount+'/'+total;
+  }
+}
+
+function setAllGlobalStatut(statut) {
+  var isOk = statut==='Conforme';
+  _extConfig.forEach(function(c){
+    var cl = _checklistByType(c.type);
+    if (!_globalChecks[c.num]) _globalChecks[c.num]={};
+    cl.forEach(function(it){
+      _globalChecks[c.num][it.key] = isOk;
+      var el = document.getElementById('gchk_'+c.num+'_'+it.key);
+      if (el) el.checked = isOk;
+    });
+    _globalStatuts[c.num] = statut;
+    var badge = document.getElementById('gbadge_'+c.num);
+    if (badge) {
+      badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+      badge.innerHTML = (isOk?'✅':'❌')+' '+(isOk?cl.length:0)+'/'+cl.length;
+    }
+  });
+}
+
+function submitGlobalInspection() {
+  var date = document.getElementById('globalIncDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  if (!_extConfig.length) { toast('Configurez les extincteurs d\'abord','err'); return; }
+  _extConfig.forEach(function(c){
+    var el = document.getElementById('gnote_'+c.num);
+    if (el) _globalNotes[c.num] = el.value;
+  });
+  var nonConf = _extConfig.filter(function(c){ return _globalStatuts[c.num]==='Non conforme'; });
+  var etatGlobal = nonConf.length===0 ? 'Conforme'
+                 : nonConf.length < _extConfig.length/2 ? 'Partiel' : 'Non conforme';
+  var types = ['Poudre ABC','CO2','Eau'];
+  var sections = {};
+  types.forEach(function(type) {
+    var exts = _extConfig.filter(function(c){ return c.type===type; })
+                         .sort(function(a,b){ return a.num-b.num; });
+    if (!exts.length) return;
+    sections[type] = {
+      extincteurs: exts.map(function(c){
+        return { num:c.num, zone:c.zone||'', checks:_globalChecks[c.num]||{}, statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
+      })
+    };
+  });
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection globale #'+r.id+' enregistrée','ok');
+        closeSheet('globalInspOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: 'Inspection Globale',
+      idEquipement: 'GLOBAL — '+_extConfig.length+' extincteurs',
+      zone: '',
+      checklist: sections,
+      etatGlobal: etatGlobal,
+      observations: document.getElementById('globalIncObs').value,
+      prochaineInspection: document.getElementById('globalIncProchaine').value,
+      photoChecklist: _globalPhotoB64,
+      photo_mime: _globalPhotoMime
+    });
+}
+
+function onGlobalPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _globalPhotoB64  = e.target.result;
+    _globalPhotoMime = file.type;
+    var area = document.getElementById('globalPhotoArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('globalPhotoPreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
 function renderIncendie() {
   var body = document.getElementById('incendieBody');
   body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
@@ -3359,18 +4020,35 @@ function renderIncendie() {
       }
       body.innerHTML = r.data.map(function(c) {
         var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
-        var checks = c.checklist||{};
-        var total = Object.keys(checks).length;
-        var ok    = Object.values ? Object.values(checks).filter(Boolean).length
-                  : Object.keys(checks).filter(function(k){ return checks[k]; }).length;
+        var isGlobal = c.type==='Inspection Globale';
+        var typeIcon = c.type==='RIA' ? '💧 RIA' : isGlobal ? '🌍 Inspection Globale' : '🔴 Extincteur';
+        var statsLine = '';
+        if (isGlobal && c.checklist && typeof c.checklist==='object') {
+          var types2 = ['Poudre ABC','CO2','Eau'];
+          var icons2  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+          var parts = [];
+          types2.forEach(function(t){
+            var sec = c.checklist[t];
+            if (!sec||!sec.extincteurs) return;
+            var tot = sec.extincteurs.length;
+            var conf = sec.extincteurs.filter(function(e){ return e.statut==='Conforme'; }).length;
+            parts.push(icons2[t]+' '+t+': '+conf+'/'+tot);
+          });
+          if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
+        } else {
+          var checks = c.checklist||{};
+          var total = Object.keys(checks).length;
+          var ok    = Object.values ? Object.values(checks).filter(Boolean).length
+                    : Object.keys(checks).filter(function(k){ return checks[k]; }).length;
+          if (total) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok+'/'+total+' points OK</div>';
+        }
         return '<div class="hse-card">'
           + '<div class="hse-card-header">'
-          + '<div><div class="hse-card-title">'+(c.type==='RIA'?'💧 RIA':'🔴 Extincteur')+' — '+esc(c.idEquipement||'—')+'</div>'
-          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span><span>📍 '+esc(c.zone||'—')+'</span><span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+          + '<div><div class="hse-card-title">'+typeIcon+(isGlobal?'':' — '+esc(c.idEquipement||'—'))+'</div>'
+          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
           + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
           + '</div>'
-          + (total ? '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok+'/'+total+' points OK</div>' : '')
-          + (c.observations ? '<div style="font-size:.8rem;color:var(--t3);margin-bottom:6px">📝 '+esc(c.observations)+'</div>' : '')
+          + statsLine
           + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
           + (c.photoId ? '<div style="margin-top:8px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>' : '')
           + '</div>';
@@ -3384,8 +4062,12 @@ function openIncendieForm() {
   _incPhotoB64 = '';
   _incPhotoMime = '';
   document.getElementById('incDate').value = todayStr();
-  document.getElementById('incIdEquip').value = '';
-  document.getElementById('equipDropdown').style.display = 'none';
+  _equipSelected = [];
+  _equipCustom   = [];
+  _equipSearchQ  = '';
+  renderEquipTags();
+  var _emdd = document.getElementById('equipMultiDropdown');
+  if (_emdd) _emdd.style.display = 'none';
   document.getElementById('incZone').value = '';
   document.getElementById('incObs').value = '';
   document.getElementById('incProchaine').value = plusDaysStr(todayStr(), 365);
@@ -3441,10 +4123,10 @@ function collectChecklist() {
 
 function submitChecklist() {
   var date = document.getElementById('incDate').value;
-  var idEq = document.getElementById('incIdEquip').value.trim();
+  var idEq = _equipSelected.join(', ');
   var zone = document.getElementById('incZone').value.trim();
   if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
-  if (!idEq) { toast('Saisissez l\'ID de l\'équipement','err'); return; }
+  if (!idEq) { toast('Sélectionnez au moins un équipement','err'); return; }
   var checks = collectChecklist();
   showLoader('Enregistrement…');
   google.script.run
@@ -3531,7 +4213,7 @@ function saveThemes() {
 }
 
 /* ══════════════════════════════════════════
-   DROPDOWN ÉQUIPEMENT 1–100
+   MULTI-SELECT ÉQUIPEMENT
 ══════════════════════════════════════════ */
 
 var _equipAll = (function(){
@@ -3539,75 +4221,99 @@ var _equipAll = (function(){
   for (var i=1; i<=100; i++) a.push(String(i));
   return a;
 })();
-var _equipIdx = -1;
+var _equipCustom  = [];
+var _equipSelected = [];
+var _equipSearchQ  = '';
 
-function _renderEquipItems(items, q) {
-  if (!items.length) return '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
-  return items.map(function(v, i) {
-    var label = q ? v.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>') : v;
-    return '<div class="equip-drop-item" data-val="'+v+'" data-idx="'+i+'" onmousedown="selectEquipItem(\''+v+'\')">'+label+'</div>';
+function renderEquipTags() {
+  var area = document.getElementById('equipTagsArea');
+  if (!area) return;
+  if (!_equipSelected.length) {
+    area.innerHTML = '<span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>';
+    return;
+  }
+  area.innerHTML = _equipSelected.map(function(v) {
+    return '<span class="equip-tag" onmousedown="event.preventDefault();removeEquipTag(\''+v+'\')" title="Retirer '+v+'">'
+      + esc(v) + ' <span style="opacity:.6;font-size:.75em">✕</span></span>';
   }).join('');
 }
 
-function openEquipList() {
-  _equipIdx = -1;
-  var q = (document.getElementById('incIdEquip').value||'').trim();
-  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
-  var dd = document.getElementById('equipDropdown');
-  dd.innerHTML = _renderEquipItems(filtered, q);
-  dd.style.display = filtered.length ? 'block' : 'none';
+function removeEquipTag(val) {
+  _equipSelected = _equipSelected.filter(function(v){ return v !== val; });
+  renderEquipTags();
+  _renderEquipMultiList();
 }
 
-function filterEquipList(q) {
-  _equipIdx = -1;
-  q = (q||'').trim();
-  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
-  var dd = document.getElementById('equipDropdown');
-  dd.innerHTML = _renderEquipItems(filtered, q);
-  dd.style.display = filtered.length ? 'block' : 'none';
-}
-
-function toggleEquipList() {
-  var dd = document.getElementById('equipDropdown');
-  if (dd.style.display==='block') { dd.style.display='none'; }
-  else { document.getElementById('incIdEquip').focus(); openEquipList(); }
-}
-
-function selectEquipItem(val) {
-  document.getElementById('incIdEquip').value = val;
-  document.getElementById('equipDropdown').style.display = 'none';
-  _equipIdx = -1;
-}
-
-function equipKeyNav(e) {
-  var dd = document.getElementById('equipDropdown');
-  var items = dd.querySelectorAll('.equip-drop-item');
-  if (!items.length) return;
-  if (e.key==='ArrowDown') {
-    e.preventDefault();
-    _equipIdx = Math.min(_equipIdx+1, items.length-1);
-  } else if (e.key==='ArrowUp') {
-    e.preventDefault();
-    _equipIdx = Math.max(_equipIdx-1, 0);
-  } else if (e.key==='Enter') {
-    e.preventDefault();
-    if (_equipIdx>=0 && items[_equipIdx]) selectEquipItem(items[_equipIdx].getAttribute('data-val'));
-    else dd.style.display='none';
+function _renderEquipMultiList() {
+  var allNums = _equipAll.concat(_equipCustom);
+  var q = _equipSearchQ;
+  var filtered = q ? allNums.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase())!==-1; }) : allNums;
+  var list = document.getElementById('equipMultiList');
+  if (!list) return;
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
     return;
-  } else if (e.key==='Escape') {
-    dd.style.display='none'; _equipIdx=-1; return;
-  } else { return; }
-  items.forEach(function(el){ el.classList.remove('active'); });
-  if (_equipIdx>=0 && items[_equipIdx]) {
-    items[_equipIdx].classList.add('active');
-    items[_equipIdx].scrollIntoView({ block:'nearest' });
+  }
+  list.innerHTML = filtered.map(function(v) {
+    var isChecked = _equipSelected.indexOf(v) !== -1;
+    var isCustom  = _equipCustom.indexOf(v) !== -1;
+    return '<div class="equip-multi-item'+(isChecked?' checked-item':'')+'" onmousedown="event.preventDefault();toggleEquipSelect(\''+v+'\')">'
+      + '<input type="checkbox" '+(isChecked?'checked':'')+' style="pointer-events:none;accent-color:var(--y)"/>'
+      + (isCustom ? '<span style="color:var(--y);font-size:.75rem;font-weight:700">★ </span>' : '')
+      + '<span>'+esc(v)+'</span>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleEquipSelect(val) {
+  var idx = _equipSelected.indexOf(val);
+  if (idx === -1) _equipSelected.push(val);
+  else _equipSelected.splice(idx, 1);
+  renderEquipTags();
+  _renderEquipMultiList();
+}
+
+function toggleEquipDropdown() {
+  var dd = document.getElementById('equipMultiDropdown');
+  if (!dd) return;
+  if (dd.style.display === 'block') {
+    dd.style.display = 'none';
+  } else {
+    dd.style.display = 'block';
+    var s = document.getElementById('equipMultiSearch');
+    if (s) { s.value = ''; }
+    _equipSearchQ = '';
+    _renderEquipMultiList();
+    if (s) s.focus();
   }
 }
 
+function filterEquipMulti(q) {
+  _equipSearchQ = (q||'').trim();
+  _renderEquipMultiList();
+}
+
+function addEquipCustom() {
+  var input = document.getElementById('equipCustomInput');
+  var val = (input.value||'').trim();
+  if (!val) return;
+  if (_equipAll.indexOf(val) === -1 && _equipCustom.indexOf(val) === -1) {
+    _equipCustom.push(val);
+  }
+  if (_equipSelected.indexOf(val) === -1) _equipSelected.push(val);
+  input.value = '';
+  renderEquipTags();
+  _equipSearchQ = '';
+  var s = document.getElementById('equipMultiSearch');
+  if (s) s.value = '';
+  _renderEquipMultiList();
+}
+
 document.addEventListener('click', function(e) {
-  var dd = document.getElementById('equipDropdown');
-  if (dd && !dd.contains(e.target) && e.target.id!=='incIdEquip') {
-    dd.style.display='none';
+  var wrapper = document.getElementById('equipMultiWrapper');
+  var dd = document.getElementById('equipMultiDropdown');
+  if (dd && wrapper && !wrapper.contains(e.target)) {
+    dd.style.display = 'none';
   }
 });
 
