@@ -4200,7 +4200,8 @@ function saveExtConfigLocal() {
 ══════════════════════════════════════════ */
 var _extDocCode    = 'ENR-HSE 1';
 var _riaDocCode    = 'ENR-HSE 2';
-var _hseLogoUrl    = '';
+var _hseLogoUrl     = '';
+var _hseLogoDataUrl = '';
 var _incendieCurrentDetailIdx = -1;
 var _globalStatuts  = {};
 var _globalNotes    = {};
@@ -4214,15 +4215,20 @@ function _renderLogoPreview() {
   var ph   = document.getElementById('logoPreviewPlaceholder');
   var delB = document.getElementById('deleteLogoBtn');
   if (!img) return;
-  if (_hseLogoUrl) {
-    img.src = _hseLogoUrl;
+  var src = _hseLogoDataUrl || _hseLogoUrl;
+  if (src) {
+    img.onerror = function() {
+      img.style.display = 'none';
+      if (ph) { ph.style.display = ''; ph.textContent = '✓'; ph.title = 'Logo enregistré'; }
+    };
+    img.src = src;
     img.style.display = 'block';
     if (ph)  ph.style.display  = 'none';
     if (delB) delB.style.display = 'inline-flex';
   } else {
     img.style.display = 'none';
     img.src = '';
-    if (ph)  ph.style.display  = '';
+    if (ph)  { ph.style.display = ''; ph.textContent = '🏢'; ph.title = ''; }
     if (delB) delB.style.display = 'none';
   }
 }
@@ -4234,6 +4240,8 @@ function onLogoUpload(input) {
   var reader = new FileReader();
   reader.onload = function(e) {
     var dataUrl = e.target.result;
+    _hseLogoDataUrl = dataUrl;
+    _renderLogoPreview();
     var b64 = dataUrl.split(',')[1];
     showLoader('Téléversement du logo…');
     google.script.run
@@ -4241,7 +4249,6 @@ function onLogoUpload(input) {
         hideSplash();
         if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
         _hseLogoUrl = r.logoUrl || '';
-        _renderLogoPreview();
         toast('✓ Logo mis à jour','ok');
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
@@ -4257,7 +4264,8 @@ function deleteAdminLogo() {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _hseLogoUrl = '';
+      _hseLogoUrl     = '';
+      _hseLogoDataUrl = '';
       _renderLogoPreview();
       toast('✓ Logo supprimé','ok');
     })
@@ -5122,7 +5130,7 @@ function printBlankExtChecklist() {
     date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalIncProchaine')&&document.getElementById('globalIncProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:_hseLogoUrl, sections:sections
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl), sections:sections
   }));
 }
 
@@ -5141,7 +5149,7 @@ function printBlankRiaChecklist() {
     date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalRiaProchaine')&&document.getElementById('globalRiaProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:_hseLogoUrl,
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),
     sections: [{ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:items, checklist:CHECKLIST_RIA }]
   }));
 }
@@ -5184,7 +5192,7 @@ function printIncendieRecord(idx) {
     obs:         c.observations||'',
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
-    logoUrl:     _hseLogoUrl,
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),
     sections:    sections
   }));
 }
@@ -5226,7 +5234,7 @@ function viewIncendieRecord(idx) {
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
     autoPrint:   false,
-    logoUrl:     _hseLogoUrl,
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),
     sections:    sections
   }));
 }
@@ -6280,7 +6288,7 @@ function printBlankPestChecklist() {
     typeData:   typeData,
     docCode:    _pestDocCode,
     mode:       'blank',
-    logoUrl:    _hseLogoUrl
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6312,7 +6320,7 @@ function printPestRecord(idx) {
     docCode:    _pestDocCode,
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
-    logoUrl:    _hseLogoUrl
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6345,7 +6353,7 @@ function viewPestRecord(idx) {
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
     autoPrint:  false,
-    logoUrl:    _hseLogoUrl
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }

@@ -1763,7 +1763,7 @@ function saveLogoConfig(p) {
     var file   = DriveApp.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     var fileId = file.getId();
-    var url    = 'https://drive.google.com/uc?export=view&id=' + fileId;
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
     props.setProperty('HSE_LOGO_FILE_ID', fileId);
     props.setProperty('HSE_LOGO_URL', url);
     return { success:true, logoUrl:url };
