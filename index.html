@@ -740,6 +740,12 @@ img{max-width:100%;display:block;}
 .equip-drop-item:last-child{border-bottom:none;}
 .equip-drop-item:hover,.equip-drop-item.active{background:var(--ink4);}
 .equip-drop-item mark{background:rgba(245,197,24,.3);color:var(--t1);border-radius:2px;}
+.equip-tag{display:inline-flex;align-items:center;gap:4px;background:var(--y2);border:1px solid rgba(245,197,24,.35);border-radius:12px;padding:2px 8px;font-size:.8rem;color:var(--t1);cursor:pointer;user-select:none;}
+.equip-tag:hover{background:rgba(245,197,24,.22);}
+.equip-multi-item{padding:9px 14px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px;}
+.equip-multi-item:last-child{border-bottom:none;}
+.equip-multi-item:hover{background:var(--ink4);}
+.equip-multi-item.checked-item{background:var(--y3);}
 .sensi-tab{flex:1;background:none;border:none;color:var(--t3);border-radius:7px;padding:10px 8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;}
 .sensi-tab.on{background:var(--ink4);color:var(--t1);}
 .profil-card{background:var(--ink2);border-radius:14px;padding:18px;border:1px solid var(--line2);margin-bottom:16px;}
@@ -1065,17 +1071,27 @@ img{max-width:100%;display:block;}
             <option value="RIA">💧 RIA</option>
           </select>
         </div>
-        <div class="fg" style="position:relative">
+        <div class="fg" style="position:relative" id="equipMultiWrapper">
           <label class="fl">ID / N° Équipement</label>
           <div style="position:relative">
-            <input class="fi" type="text" id="incIdEquip" placeholder="Tapez ou choisissez (1–100)…" autocomplete="off"
-              oninput="filterEquipList(this.value)"
-              onfocus="openEquipList()"
-              onkeydown="equipKeyNav(event)"/>
-            <button type="button" onclick="toggleEquipList()" tabindex="-1"
+            <div id="equipTagsArea" class="fi" style="min-height:42px;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 36px 6px 10px;" onclick="toggleEquipDropdown()">
+              <span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>
+            </div>
+            <button type="button" onclick="toggleEquipDropdown()" tabindex="-1"
               style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:1rem;padding:4px">▼</button>
           </div>
-          <div id="equipDropdown" class="emp-search-res" style="display:none;position:absolute;z-index:200;left:0;right:0;max-height:200px;overflow-y:auto;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);"></div>
+          <div id="equipMultiDropdown" style="display:none;position:absolute;z-index:200;left:0;right:0;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);background:var(--ink3)">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--line2)">
+              <input type="text" id="equipMultiSearch" class="fi" placeholder="Rechercher un numéro…"
+                style="margin:0;height:34px" oninput="filterEquipMulti(this.value)" onclick="event.stopPropagation()"/>
+            </div>
+            <div id="equipMultiList" style="max-height:160px;overflow-y:auto"></div>
+            <div style="padding:6px 10px;border-top:1px solid var(--line2);display:flex;gap:6px;align-items:center">
+              <input type="text" id="equipCustomInput" class="fi" placeholder="Ajouter un numéro personnalisé…"
+                style="margin:0;height:34px;flex:1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.preventDefault();addEquipCustom();}"/>
+              <button type="button" class="btn btn-p" onclick="addEquipCustom()" style="height:34px;padding:0 12px;font-size:.85rem;white-space:nowrap">+ Ajouter</button>
+            </div>
+          </div>
         </div>
         <div class="fg">
           <label class="fl">Zone / Emplacement</label>
@@ -3384,8 +3400,12 @@ function openIncendieForm() {
   _incPhotoB64 = '';
   _incPhotoMime = '';
   document.getElementById('incDate').value = todayStr();
-  document.getElementById('incIdEquip').value = '';
-  document.getElementById('equipDropdown').style.display = 'none';
+  _equipSelected = [];
+  _equipCustom   = [];
+  _equipSearchQ  = '';
+  renderEquipTags();
+  var _emdd = document.getElementById('equipMultiDropdown');
+  if (_emdd) _emdd.style.display = 'none';
   document.getElementById('incZone').value = '';
   document.getElementById('incObs').value = '';
   document.getElementById('incProchaine').value = plusDaysStr(todayStr(), 365);
@@ -3441,10 +3461,10 @@ function collectChecklist() {
 
 function submitChecklist() {
   var date = document.getElementById('incDate').value;
-  var idEq = document.getElementById('incIdEquip').value.trim();
+  var idEq = _equipSelected.join(', ');
   var zone = document.getElementById('incZone').value.trim();
   if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
-  if (!idEq) { toast('Saisissez l\'ID de l\'équipement','err'); return; }
+  if (!idEq) { toast('Sélectionnez au moins un équipement','err'); return; }
   var checks = collectChecklist();
   showLoader('Enregistrement…');
   google.script.run
@@ -3531,7 +3551,7 @@ function saveThemes() {
 }
 
 /* ══════════════════════════════════════════
-   DROPDOWN ÉQUIPEMENT 1–100
+   MULTI-SELECT ÉQUIPEMENT
 ══════════════════════════════════════════ */
 
 var _equipAll = (function(){
@@ -3539,75 +3559,99 @@ var _equipAll = (function(){
   for (var i=1; i<=100; i++) a.push(String(i));
   return a;
 })();
-var _equipIdx = -1;
+var _equipCustom  = [];
+var _equipSelected = [];
+var _equipSearchQ  = '';
 
-function _renderEquipItems(items, q) {
-  if (!items.length) return '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
-  return items.map(function(v, i) {
-    var label = q ? v.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>') : v;
-    return '<div class="equip-drop-item" data-val="'+v+'" data-idx="'+i+'" onmousedown="selectEquipItem(\''+v+'\')">'+label+'</div>';
+function renderEquipTags() {
+  var area = document.getElementById('equipTagsArea');
+  if (!area) return;
+  if (!_equipSelected.length) {
+    area.innerHTML = '<span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>';
+    return;
+  }
+  area.innerHTML = _equipSelected.map(function(v) {
+    return '<span class="equip-tag" onmousedown="event.preventDefault();removeEquipTag(\''+v+'\')" title="Retirer '+v+'">'
+      + esc(v) + ' <span style="opacity:.6;font-size:.75em">✕</span></span>';
   }).join('');
 }
 
-function openEquipList() {
-  _equipIdx = -1;
-  var q = (document.getElementById('incIdEquip').value||'').trim();
-  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
-  var dd = document.getElementById('equipDropdown');
-  dd.innerHTML = _renderEquipItems(filtered, q);
-  dd.style.display = filtered.length ? 'block' : 'none';
+function removeEquipTag(val) {
+  _equipSelected = _equipSelected.filter(function(v){ return v !== val; });
+  renderEquipTags();
+  _renderEquipMultiList();
 }
 
-function filterEquipList(q) {
-  _equipIdx = -1;
-  q = (q||'').trim();
-  var filtered = q ? _equipAll.filter(function(v){ return v.indexOf(q)!==-1; }) : _equipAll;
-  var dd = document.getElementById('equipDropdown');
-  dd.innerHTML = _renderEquipItems(filtered, q);
-  dd.style.display = filtered.length ? 'block' : 'none';
-}
-
-function toggleEquipList() {
-  var dd = document.getElementById('equipDropdown');
-  if (dd.style.display==='block') { dd.style.display='none'; }
-  else { document.getElementById('incIdEquip').focus(); openEquipList(); }
-}
-
-function selectEquipItem(val) {
-  document.getElementById('incIdEquip').value = val;
-  document.getElementById('equipDropdown').style.display = 'none';
-  _equipIdx = -1;
-}
-
-function equipKeyNav(e) {
-  var dd = document.getElementById('equipDropdown');
-  var items = dd.querySelectorAll('.equip-drop-item');
-  if (!items.length) return;
-  if (e.key==='ArrowDown') {
-    e.preventDefault();
-    _equipIdx = Math.min(_equipIdx+1, items.length-1);
-  } else if (e.key==='ArrowUp') {
-    e.preventDefault();
-    _equipIdx = Math.max(_equipIdx-1, 0);
-  } else if (e.key==='Enter') {
-    e.preventDefault();
-    if (_equipIdx>=0 && items[_equipIdx]) selectEquipItem(items[_equipIdx].getAttribute('data-val'));
-    else dd.style.display='none';
+function _renderEquipMultiList() {
+  var allNums = _equipAll.concat(_equipCustom);
+  var q = _equipSearchQ;
+  var filtered = q ? allNums.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase())!==-1; }) : allNums;
+  var list = document.getElementById('equipMultiList');
+  if (!list) return;
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
     return;
-  } else if (e.key==='Escape') {
-    dd.style.display='none'; _equipIdx=-1; return;
-  } else { return; }
-  items.forEach(function(el){ el.classList.remove('active'); });
-  if (_equipIdx>=0 && items[_equipIdx]) {
-    items[_equipIdx].classList.add('active');
-    items[_equipIdx].scrollIntoView({ block:'nearest' });
+  }
+  list.innerHTML = filtered.map(function(v) {
+    var isChecked = _equipSelected.indexOf(v) !== -1;
+    var isCustom  = _equipCustom.indexOf(v) !== -1;
+    return '<div class="equip-multi-item'+(isChecked?' checked-item':'')+'" onmousedown="event.preventDefault();toggleEquipSelect(\''+v+'\')">'
+      + '<input type="checkbox" '+(isChecked?'checked':'')+' style="pointer-events:none;accent-color:var(--y)"/>'
+      + (isCustom ? '<span style="color:var(--y);font-size:.75rem;font-weight:700">★ </span>' : '')
+      + '<span>'+esc(v)+'</span>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleEquipSelect(val) {
+  var idx = _equipSelected.indexOf(val);
+  if (idx === -1) _equipSelected.push(val);
+  else _equipSelected.splice(idx, 1);
+  renderEquipTags();
+  _renderEquipMultiList();
+}
+
+function toggleEquipDropdown() {
+  var dd = document.getElementById('equipMultiDropdown');
+  if (!dd) return;
+  if (dd.style.display === 'block') {
+    dd.style.display = 'none';
+  } else {
+    dd.style.display = 'block';
+    var s = document.getElementById('equipMultiSearch');
+    if (s) { s.value = ''; }
+    _equipSearchQ = '';
+    _renderEquipMultiList();
+    if (s) s.focus();
   }
 }
 
+function filterEquipMulti(q) {
+  _equipSearchQ = (q||'').trim();
+  _renderEquipMultiList();
+}
+
+function addEquipCustom() {
+  var input = document.getElementById('equipCustomInput');
+  var val = (input.value||'').trim();
+  if (!val) return;
+  if (_equipAll.indexOf(val) === -1 && _equipCustom.indexOf(val) === -1) {
+    _equipCustom.push(val);
+  }
+  if (_equipSelected.indexOf(val) === -1) _equipSelected.push(val);
+  input.value = '';
+  renderEquipTags();
+  _equipSearchQ = '';
+  var s = document.getElementById('equipMultiSearch');
+  if (s) s.value = '';
+  _renderEquipMultiList();
+}
+
 document.addEventListener('click', function(e) {
-  var dd = document.getElementById('equipDropdown');
-  if (dd && !dd.contains(e.target) && e.target.id!=='incIdEquip') {
-    dd.style.display='none';
+  var wrapper = document.getElementById('equipMultiWrapper');
+  var dd = document.getElementById('equipMultiDropdown');
+  if (dd && wrapper && !wrapper.contains(e.target)) {
+    dd.style.display = 'none';
   }
 });
 
