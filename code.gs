@@ -1586,6 +1586,8 @@ function getConfigData(adminKey) {
       for (var i=1; i<=100; i++) extConfig.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
     if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
+    if (!riaConfig.items)  riaConfig.items = [];
+    if (!riaConfig.count)  riaConfig.count = 20;
     return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig };
   } catch(e) { return { success:false, error:e.message }; }
 }

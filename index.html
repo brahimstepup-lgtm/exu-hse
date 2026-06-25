@@ -4286,6 +4286,8 @@ function openConfigRIA() {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _riaConfig = r.riaConfig || { count:20, items:[] };
+      if (!_riaConfig.items) _riaConfig.items = [];
+      if (!_riaConfig.count) _riaConfig.count = 20;
       _configuredZones = r.zones || [];
       document.getElementById('riaCountInput').value = _riaConfig.count || 20;
       _renderRiaConfigTable();
@@ -4302,7 +4304,8 @@ function _renderRiaConfigTable() {
   var rows = [];
   for (var i=1; i<=count; i++) {
     var item = null;
-    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { item=_riaConfig.items[j]; break; } }
+    var _ri = _riaConfig.items||[];
+    for (var j=0; j<_ri.length; j++) { if (_ri[j].num===i) { item=_ri[j]; break; } }
     if (!item) item = { num:i, zone:'', emplacement:'' };
     rows.push(
       '<div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center">'
@@ -4360,6 +4363,8 @@ function openGlobalInspectionRIA() {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _riaConfig = r.riaConfig || { count:20, items:[] };
+      if (!_riaConfig.items) _riaConfig.items = [];
+      if (!_riaConfig.count) _riaConfig.count = 20;
       _initGlobalFormRIA();
       openSheet('globalRiaOv');
     })
@@ -4416,7 +4421,8 @@ function _renderRiaSections() {
   var items = [];
   for (var i=1; i<=count; i++) {
     var cfg = null;
-    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { cfg=_riaConfig.items[j]; break; } }
+    var _ri2 = _riaConfig.items||[];
+    for (var j=0; j<_ri2.length; j++) { if (_ri2[j].num===i) { cfg=_ri2[j]; break; } }
     items.push(cfg || { num:i, zone:'', emplacement:'' });
   }
 
