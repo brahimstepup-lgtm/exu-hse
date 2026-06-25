@@ -1189,26 +1189,25 @@ img{max-width:100%;display:block;}
         </div>
         <div id="zoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
       </div>
-      <!-- ② Affectation rapide par plage -->
+      <!-- ② Points à vérifier par type -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:6px">Affectation rapide par plage</div>
-        <div style="font-size:.75rem;color:var(--t3);margin-bottom:8px">Ex: <b>1-30</b> ou <b>1,5,10-20</b></div>
-        <div class="range-cfg-row">
-          <span style="font-size:.82rem;font-weight:600;color:#e67e22;min-width:90px">🔴 Poudre ABC</span>
-          <input class="fi" id="rangePoudre" placeholder="Ex: 1-35" style="height:34px;font-size:.82rem"/>
-          <select class="fi" id="zonePoudre" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">Points à vérifier par type</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#e67e22;margin-bottom:6px">🔴 Poudre ABC</div>
+          <div id="clPoudreList"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('Poudre ABC')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
         </div>
-        <div class="range-cfg-row">
-          <span style="font-size:.82rem;font-weight:600;color:#3498db;min-width:90px">🔵 CO2</span>
-          <input class="fi" id="rangeCO2" placeholder="Ex: 36-60" style="height:34px;font-size:.82rem"/>
-          <select class="fi" id="zoneCO2" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#3498db;margin-bottom:6px">🔵 CO2</div>
+          <div id="clCO2List"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('CO2')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
         </div>
-        <div class="range-cfg-row">
-          <span style="font-size:.82rem;font-weight:600;color:#27ae60;min-width:90px">💧 Eau</span>
-          <input class="fi" id="rangeEau" placeholder="Ex: 61-100" style="height:34px;font-size:.82rem"/>
-          <select class="fi" id="zoneEau" style="height:34px;font-size:.82rem"><option value="">— Zone (opt.) —</option></select>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.8rem;font-weight:600;color:#27ae60;margin-bottom:6px">💧 Eau</div>
+          <div id="clEauList"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('Eau')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
         </div>
-        <button class="btn btn-p" onclick="applyRangeConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">Appliquer au tableau ↓</button>
+        <button class="btn btn-p" onclick="saveChecklistConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">💾 Sauvegarder les points</button>
       </div>
       <!-- ③ Tableau détaillé -->
       <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail extincteur par extincteur</div>
@@ -3550,9 +3549,13 @@ var CHECKLIST_EAU_EXT = [
   { key:'signalet',  label:'Signalétique visible et lisible' }
 ];
 
+var _checklistConfig = {};
+
 function _checklistByType(type) {
-  if (type==='CO2')       return CHECKLIST_CO2;
-  if (type==='Eau')       return CHECKLIST_EAU_EXT;
+  var cfg = _checklistConfig[type];
+  if (cfg && cfg.length) return cfg;
+  if (type==='CO2') return CHECKLIST_CO2;
+  if (type==='Eau') return CHECKLIST_EAU_EXT;
   return CHECKLIST_POUDRE_ABC;
 }
 
@@ -3624,6 +3627,67 @@ function saveZonesConfig() {
     .saveZones({ adminKey:S.adminKey, zones:_configuredZones });
 }
 
+/* ─── Éditeur de points de contrôle par type ─── */
+function _renderChecklistEditor() {
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  Object.keys(map).forEach(function(type) {
+    var cont = document.getElementById(map[type]);
+    if (!cont) return;
+    var items = _checklistConfig[type] || [];
+    cont.innerHTML = items.map(function(it) {
+      return '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">'
+        +'<input class="fi" type="text" value="'+esc(it.label)+'" data-cltype="'+esc(type)+'" data-clkey="'+esc(it.key)+'" '
+        +'style="height:30px;font-size:.78rem;flex:1" placeholder="Libellé du point…"/>'
+        +'<button type="button" onclick="removeChecklistItem(\''+esc(type)+'\',\''+esc(it.key)+'\')" '
+        +'style="height:30px;width:30px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:6px;color:#e74c3c;cursor:pointer;font-size:.85rem;flex-shrink:0">✕</button>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function _syncChecklistFromDOM() {
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  Object.keys(map).forEach(function(type) {
+    var cont = document.getElementById(map[type]);
+    if (!cont) return;
+    _checklistConfig[type] = [];
+    cont.querySelectorAll('input[data-clkey]').forEach(function(inp) {
+      var label = inp.value.trim();
+      var key   = inp.getAttribute('data-clkey');
+      if (label) _checklistConfig[type].push({ key:key, label:label });
+    });
+  });
+}
+
+function addChecklistItem(type) {
+  _syncChecklistFromDOM();
+  if (!_checklistConfig[type]) _checklistConfig[type] = [];
+  _checklistConfig[type].push({ key:'custom_'+(Date.now()%1e7), label:'' });
+  _renderChecklistEditor();
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  var cont = document.getElementById(map[type]);
+  if (cont) { var ins = cont.querySelectorAll('input[data-clkey]'); if (ins.length) ins[ins.length-1].focus(); }
+}
+
+function removeChecklistItem(type, key) {
+  _syncChecklistFromDOM();
+  _checklistConfig[type] = (_checklistConfig[type]||[]).filter(function(it){ return it.key!==key; });
+  _renderChecklistEditor();
+}
+
+function saveChecklistConfig() {
+  _syncChecklistFromDOM();
+  showLoader('Sauvegarde des points de contrôle…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Points de contrôle sauvegardés','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklistsConfig({ adminKey:S.adminKey, checklists:_checklistConfig });
+}
+
 /* ─── Ouverture config panel ─── */
 function openConfigExt() {
   showLoader('Chargement de la configuration…');
@@ -3633,8 +3697,14 @@ function openConfigExt() {
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _configuredZones = r.zones||[];
       _extConfig       = r.extConfig||[];
+      _checklistConfig = (r.checklists && typeof r.checklists==='object') ? r.checklists : {
+        'Poudre ABC': CHECKLIST_POUDRE_ABC.slice(),
+        'CO2':        CHECKLIST_CO2.slice(),
+        'Eau':        CHECKLIST_EAU_EXT.slice()
+      };
       _renderZoneChips();
       _renderExtConfigTable();
+      _renderChecklistEditor();
       _refreshZoneSelects();
       openSheet('extConfigOv');
     })

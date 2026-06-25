@@ -1574,13 +1574,24 @@ function getConfigData(adminKey) {
   if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
   try {
     var props = PropertiesService.getScriptProperties();
-    var rawExt   = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
-    var rawZones = props.getProperty('ZONES_CONFIG')||'[]';
-    var extConfig = JSON.parse(rawExt);
-    var zones     = JSON.parse(rawZones);
+    var rawExt        = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
+    var rawZones      = props.getProperty('ZONES_CONFIG')||'[]';
+    var rawChecklists = props.getProperty('CHECKLISTS_CONFIG')||'{}';
+    var extConfig  = JSON.parse(rawExt);
+    var zones      = JSON.parse(rawZones);
+    var checklists = JSON.parse(rawChecklists);
     if (!extConfig.length) {
       for (var i=1; i<=100; i++) extConfig.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    return { success:true, extConfig:extConfig, zones:zones };
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveChecklistsConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var checklists = p.checklists || {};
+    PropertiesService.getScriptProperties().setProperty('CHECKLISTS_CONFIG', JSON.stringify(checklists));
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
