@@ -1013,7 +1013,7 @@ img{max-width:100%;display:block;}
       <div class="ph view-hdr">
         <h1 class="ph-title">🧯 Suivi Incendie</h1>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-g" onclick="openConfigExt()" style="padding:8px 12px;font-size:.8rem;min-height:36px">⚙ Config extincteurs</button>
+          <button id="configExtBtn" class="btn btn-g" onclick="openConfigExt()" style="padding:8px 12px;font-size:.8rem;min-height:36px">⚙ Config extincteurs</button>
           <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:8px 14px;font-size:.82rem;min-height:36px">🌍 Inspection Globale</button>
           <button class="btn btn-p" onclick="openIncendieForm()" style="padding:8px 14px;font-size:.82rem;min-height:36px">＋ Unitaire</button>
         </div>
@@ -2012,6 +2012,8 @@ function applyRole(){
     lb.innerHTML = (S_AUTH.name) ? ((admin?'🔓':super_?'🦺':'👤')+' '+S_AUTH.name) : (admin?'🔓 Admin':'🔒 Log In');
     lb.title = (S_AUTH.token)?'Se déconnecter':'Se connecter';
   }
+  // Bouton Config extincteurs (admin uniquement)
+  var ceb=document.getElementById('configExtBtn'); if(ceb) ceb.style.display = admin?'':'none';
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
   // Navigation admin : masquer pour non-admins
@@ -3703,6 +3705,7 @@ function saveChecklistConfig() {
 
 /* ─── Ouverture config panel ─── */
 function openConfigExt() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
   showLoader('Chargement de la configuration…');
   google.script.run
     .withSuccessHandler(function(r) {
