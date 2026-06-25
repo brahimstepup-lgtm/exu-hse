@@ -1011,12 +1011,20 @@ img{max-width:100%;display:block;}
     <!-- INCENDIE -->
     <div class="view" id="view-incendie">
       <div class="ph view-hdr">
-        <h1 class="ph-title">🧯 Suivi Incendie</h1>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button id="configExtBtn" class="btn btn-g" onclick="openConfigExt()" style="padding:8px 12px;font-size:.8rem;min-height:36px">⚙ Config extincteurs</button>
-          <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:8px 14px;font-size:.82rem;min-height:36px">🌍 Inspection Globale</button>
-          <button class="btn btn-p" onclick="openIncendieForm()" style="padding:8px 14px;font-size:.82rem;min-height:36px">＋ Unitaire</button>
+        <h1 class="ph-title">🧯 Extincteurs &amp; RIA</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configExtBtn" class="btn btn-g" onclick="openConfigExt()" style="padding:7px 10px;font-size:.78rem;min-height:34px">⚙ Cfg Ext.</button>
+          <button id="configRiaBtn" class="btn btn-g" onclick="openConfigRIA()" style="padding:7px 10px;font-size:.78rem;min-height:34px">⚙ Cfg RIA</button>
+          <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌍 Insp. Ext.</button>
+          <button class="btn btn-p" onclick="openGlobalInspectionRIA()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌊 Insp. RIA</button>
+          <button class="btn btn-p" onclick="openIncendieForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Unitaire</button>
         </div>
+      </div>
+      <!-- Tabs filtre -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="iftab_all" onclick="setIncendieFilter('all')">Tous</button>
+        <button class="gsort-tab" id="iftab_ext" onclick="setIncendieFilter('ext')">🔴 Extincteurs</button>
+        <button class="gsort-tab" id="iftab_ria" onclick="setIncendieFilter('ria')">💧 RIA</button>
       </div>
       <div id="incendieBody"></div>
     </div>
@@ -1279,6 +1287,88 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('globalInspOv')">Annuler</button>
       <button class="btn btn-p" onclick="submitGlobalInspection()">✓ Enregistrer tout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config RIA ═══ -->
+<div class="ov" id="riaConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration RIA</div>
+      <button class="sh-x" onclick="closeSheet('riaConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Nombre de RIA -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">Nombre de RIA dans l'usine</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" type="number" id="riaCountInput" min="1" max="50" value="20" style="height:34px;font-size:.9rem;width:80px"/>
+          <button class="btn btn-g" onclick="applyRiaCount()" style="height:34px;font-size:.82rem;padding:0 12px">Appliquer</button>
+        </div>
+      </div>
+      <!-- Tableau -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail par RIA</div>
+      <div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">N°</div>
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">Zone</div>
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">Emplacement</div>
+      </div>
+      <div id="riaConfigBody" style="display:flex;flex-direction:column;gap:3px"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('riaConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveRiaConfigLocal()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale RIA ═══ -->
+<div class="ov" id="globalRiaOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🌊 Inspection Globale RIA</div>
+      <button class="sh-x" onclick="closeSheet('globalRiaOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalRiaDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalRiaProchaine"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllRiaStatut('Conforme')" style="height:32px;font-size:.78rem;padding:0 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllRiaStatut('Non conforme')" style="height:32px;font-size:.78rem;padding:0 12px">❌ Tout non conforme</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="grsort_zone" onclick="setRiaSort('zone')">📍 Zone</button>
+        <button class="gsort-tab" id="grsort_num" onclick="setRiaSort('num')">🔢 Numéro</button>
+      </div>
+      <div id="globalRiaSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalRiaObs" rows="2" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalRiaPhotoArea" onclick="document.getElementById('globalRiaPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner</div>
+          <div class="hse-upload-preview" id="globalRiaPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalRiaPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onRiaPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalRiaOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitGlobalInspectionRIA()">✓ Enregistrer tout</button>
     </div>
   </div>
 </div>
@@ -2012,8 +2102,9 @@ function applyRole(){
     lb.innerHTML = (S_AUTH.name) ? ((admin?'🔓':super_?'🦺':'👤')+' '+S_AUTH.name) : (admin?'🔓 Admin':'🔒 Log In');
     lb.title = (S_AUTH.token)?'Se déconnecter':'Se connecter';
   }
-  // Bouton Config extincteurs (admin uniquement)
+  // Boutons Config (admin uniquement)
   var ceb=document.getElementById('configExtBtn'); if(ceb) ceb.style.display = admin?'':'none';
+  var crb=document.getElementById('configRiaBtn'); if(crb) crb.style.display = admin?'':'none';
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
   // Navigation admin : masquer pour non-admins
@@ -4109,6 +4200,383 @@ function onGlobalPhotoChange(input) {
 }
 
 var _incendieRecords = [];
+var _incendieFilter  = 'all';
+
+/* ══════════════════════════════════════════
+   FILTRE LISTE INCENDIE
+══════════════════════════════════════════ */
+function setIncendieFilter(f) {
+  _incendieFilter = f;
+  ['all','ext','ria'].forEach(function(k){
+    var el = document.getElementById('iftab_'+k);
+    if (el) el.className = 'gsort-tab'+(k===f?' on':'');
+  });
+  _renderIncendieList();
+}
+
+function _renderIncendieList() {
+  var body = document.getElementById('incendieBody');
+  if (!body || !_incendieRecords.length) return;
+  var filtered = _incendieRecords.filter(function(c) {
+    if (_incendieFilter === 'ext') return c.type !== 'RIA' && c.type !== 'Inspection Globale RIA';
+    if (_incendieFilter === 'ria') return c.type === 'RIA' || c.type === 'Inspection Globale RIA';
+    return true;
+  });
+  if (!filtered.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
+    return;
+  }
+  body.innerHTML = filtered.map(function(c) {
+    var idx = _incendieRecords.indexOf(c);
+    var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+    var isGlobalExt = c.type==='Inspection Globale';
+    var isGlobalRia = c.type==='Inspection Globale RIA';
+    var typeIcon = isGlobalRia ? '🌊 Inspection Globale RIA'
+                 : c.type==='RIA' ? '💧 RIA'
+                 : isGlobalExt ? '🌍 Inspection Globale'
+                 : '🔴 Extincteur';
+    var statsLine = '';
+    if (isGlobalExt && c.checklist && typeof c.checklist==='object') {
+      var types2 = ['Poudre ABC','CO2','Eau'];
+      var icons2  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+      var parts = [];
+      types2.forEach(function(t){
+        var sec = c.checklist[t];
+        if (!sec||!sec.riaUnits&&!sec.extincteurs) return;
+        var arr = sec.extincteurs||[];
+        var tot = arr.length;
+        var conf = arr.filter(function(e){ return e.statut==='Conforme'; }).length;
+        if (tot) parts.push(icons2[t]+' '+t+': '+conf+'/'+tot);
+      });
+      if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
+    } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+      var tot2 = c.checklist.length;
+      var conf2 = c.checklist.filter(function(e){ return e.statut==='Conforme'; }).length;
+      statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px">💧 RIA : '+conf2+'/'+tot2+' conformes</div>';
+    } else if (!isGlobalExt && !isGlobalRia) {
+      var chk = c.checklist||{};
+      var tot3 = Object.keys(chk).length;
+      var ok3  = Object.keys(chk).filter(function(k){ return chk[k]; }).length;
+      if (tot3) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok3+'/'+tot3+' points OK</div>';
+    }
+    return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" style="cursor:pointer">'
+      + '<div class="hse-card-header">'
+      + '<div><div class="hse-card-title">'+typeIcon+(!isGlobalExt&&!isGlobalRia?' — '+esc(c.idEquipement||'—'):'')+'</div>'
+      + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+      + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      + '</div>'
+      + statsLine
+      + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      + (c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
+      + '<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   CONFIG RIA
+══════════════════════════════════════════ */
+var _riaConfig = { count:20, items:[] };
+
+function openConfigRIA() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _riaConfig = r.riaConfig || { count:20, items:[] };
+      _configuredZones = r.zones || [];
+      document.getElementById('riaCountInput').value = _riaConfig.count || 20;
+      _renderRiaConfigTable();
+      openSheet('riaConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
+}
+
+function _renderRiaConfigTable() {
+  var body = document.getElementById('riaConfigBody');
+  if (!body) return;
+  var count = parseInt(document.getElementById('riaCountInput').value)||20;
+  var rows = [];
+  for (var i=1; i<=count; i++) {
+    var item = null;
+    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { item=_riaConfig.items[j]; break; } }
+    if (!item) item = { num:i, zone:'', emplacement:'' };
+    rows.push(
+      '<div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center">'
+      +'<div class="ext-cfg-label" style="color:var(--t3)">RIA-'+String(i).padStart(2,'0')+'</div>'
+      +'<select class="fi" data-rnum="'+i+'" data-rfield="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +_zoneOptions(item.zone||'')
+      +'</select>'
+      +'<input class="fi" type="text" data-rnum="'+i+'" data-rfield="emplacement" value="'+esc(item.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+      +'</div>'
+    );
+  }
+  body.innerHTML = rows.join('');
+}
+
+function applyRiaCount() {
+  _renderRiaConfigTable();
+}
+
+function saveRiaConfigLocal() {
+  var body = document.getElementById('riaConfigBody');
+  if (!body) return;
+  var count = parseInt(document.getElementById('riaCountInput').value)||20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var zsel = body.querySelector('[data-rnum="'+i+'"][data-rfield="zone"]');
+    var emp  = body.querySelector('[data-rnum="'+i+'"][data-rfield="emplacement"]');
+    items.push({ num:i, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
+  }
+  _riaConfig = { count:count, items:items };
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration RIA sauvegardée','ok'); closeSheet('riaConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRiaConfig({ adminKey:S.adminKey, riaConfig:_riaConfig });
+}
+
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE RIA
+══════════════════════════════════════════ */
+var _globalRiaChecks  = {};
+var _globalRiaStatuts = {};
+var _globalRiaNotes   = {};
+var _globalRiaPhotoB64  = '';
+var _globalRiaPhotoMime = '';
+var _globalRiaSortMode  = 'zone';
+
+function openGlobalInspectionRIA() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _riaConfig = r.riaConfig || { count:20, items:[] };
+      _initGlobalFormRIA();
+      openSheet('globalRiaOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
+}
+
+function _initGlobalFormRIA() {
+  _globalRiaChecks = {}; _globalRiaStatuts = {}; _globalRiaNotes = {};
+  _globalRiaPhotoB64 = ''; _globalRiaPhotoMime = '';
+  var cl = CHECKLIST_RIA;
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    _globalRiaChecks[i] = {};
+    cl.forEach(function(it){ _globalRiaChecks[i][it.key] = true; });
+    _globalRiaStatuts[i] = 'Conforme';
+    _globalRiaNotes[i] = '';
+  }
+  _globalRiaSortMode = 'zone';
+  document.getElementById('globalRiaDate').value = todayStr();
+  document.getElementById('globalRiaProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('globalRiaObs').value = '';
+  var prev = document.getElementById('globalRiaPhotoPreview');
+  if (prev) { prev.style.display='none'; prev.innerHTML=''; }
+  ['grsort_zone','grsort_num'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.className = 'gsort-tab'+(id==='grsort_zone'?' on':'');
+  });
+  _renderRiaSections();
+}
+
+function setRiaSort(mode) {
+  _syncRiaNotes();
+  _globalRiaSortMode = mode;
+  ['zone','num'].forEach(function(m){
+    var el = document.getElementById('grsort_'+m);
+    if (el) el.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderRiaSections();
+}
+
+function _syncRiaNotes() {
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    var el = document.getElementById('grianote_'+i);
+    if (el) _globalRiaNotes[i] = el.value;
+  }
+}
+
+function _renderRiaSections() {
+  var container = document.getElementById('globalRiaSectionsContainer');
+  if (!container) return;
+  var count = _riaConfig.count || 20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var cfg = null;
+    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { cfg=_riaConfig.items[j]; break; } }
+    items.push(cfg || { num:i, zone:'', emplacement:'' });
+  }
+
+  if (_globalRiaSortMode === 'zone') {
+    var zones = {};
+    items.forEach(function(r){ var z=r.zone||'Sans zone'; if(!zones[z])zones[z]=[]; zones[z].push(r); });
+    container.innerHTML = Object.keys(zones).sort().map(function(zone) {
+      var exts = zones[zone].sort(function(a,b){ return a.num-b.num; });
+      return '<div class="global-type-section" style="margin-bottom:10px">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+exts.length+' RIA</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderRiaAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+  } else {
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les RIA'
+      +' <span class="global-type-count">'+items.length+' unités</span></div>'
+      +'<div class="global-ext-list">'+items.sort(function(a,b){ return a.num-b.num; }).map(_renderRiaAccordionItem).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function _renderRiaAccordionItem(r) {
+  var cl = CHECKLIST_RIA;
+  var checks = _globalRiaChecks[r.num] || {};
+  var okCount = cl.filter(function(it){ return checks[it.key]; }).length;
+  var isOk = okCount === cl.length;
+
+  var checkItems = cl.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="griachk_'+r.num+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onRiaCheckChange('+r.num+',\''+it.key+'\',this.checked)"/>'
+      +'<label for="griachk_'+r.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  var zoneSpan = (_globalRiaSortMode!=='zone' && r.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(r.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+  var emplacePill = r.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(r.emplacement)+'</span>'
+    : '';
+  var detailMeta = (r.zone||r.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(r.zone?'<span>🏷 '+esc(r.zone)+'</span>':'')
+      +(r.emplacement?'<span>📌 '+esc(r.emplacement)+'</span>':'')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="griahdr_'+r.num+'" onclick="toggleRiaAccordion('+r.num+')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">RIA-'+String(r.num).padStart(2,'0')+'</span>'
+    +zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="griabadge_'+r.num+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+cl.length+'</span>'
+    +'<span id="griachev_'+r.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="griadet_'+r.num+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="grianote_'+r.num+'" placeholder="Note / observation…" '
+    +'value="'+esc(_globalRiaNotes[r.num]||'')+'" onchange="_globalRiaNotes['+r.num+']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function toggleRiaAccordion(num) {
+  var det  = document.getElementById('griadet_'+num);
+  var chev = document.getElementById('griachev_'+num);
+  var hdr  = document.getElementById('griahdr_'+num);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display  = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  if (hdr)  hdr.classList.toggle('open', !open);
+}
+
+function onRiaCheckChange(num, key, checked) {
+  if (!_globalRiaChecks[num]) _globalRiaChecks[num] = {};
+  _globalRiaChecks[num][key] = checked;
+  var cl = CHECKLIST_RIA;
+  var okCount = cl.filter(function(it){ return _globalRiaChecks[num][it.key]; }).length;
+  var isOk = okCount === cl.length;
+  _globalRiaStatuts[num] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('griabadge_'+num);
+  if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+okCount+'/'+cl.length; }
+}
+
+function setAllRiaStatut(statut) {
+  var isOk = statut === 'Conforme';
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    if (!_globalRiaChecks[i]) _globalRiaChecks[i] = {};
+    CHECKLIST_RIA.forEach(function(it){
+      _globalRiaChecks[i][it.key] = isOk;
+      var el = document.getElementById('griachk_'+i+'_'+it.key);
+      if (el) el.checked = isOk;
+    });
+    _globalRiaStatuts[i] = statut;
+    var badge = document.getElementById('griabadge_'+i);
+    if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+(isOk?CHECKLIST_RIA.length:0)+'/'+CHECKLIST_RIA.length; }
+  }
+}
+
+function submitGlobalInspectionRIA() {
+  var date = document.getElementById('globalRiaDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  _syncRiaNotes();
+  var count = _riaConfig.count || 20;
+  var nonConf = 0;
+  var riaUnits = [];
+  for (var i=1; i<=count; i++) {
+    var cfg = null;
+    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { cfg=_riaConfig.items[j]; break; } }
+    cfg = cfg || { num:i, zone:'', emplacement:'' };
+    if (_globalRiaStatuts[i]==='Non conforme') nonConf++;
+    riaUnits.push({ num:i, zone:cfg.zone||'', emplacement:cfg.emplacement||'', checks:_globalRiaChecks[i]||{}, statut:_globalRiaStatuts[i]||'Conforme', note:_globalRiaNotes[i]||'' });
+  }
+  var etatGlobal = nonConf===0 ? 'Conforme' : nonConf < count/2 ? 'Partiel' : 'Non conforme';
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection globale RIA #'+r.id+' enregistrée','ok');
+        closeSheet('globalRiaOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: 'Inspection Globale RIA',
+      idEquipement: 'GLOBAL — '+count+' RIA',
+      zone: '',
+      checklist: riaUnits,
+      etatGlobal: etatGlobal,
+      observations: document.getElementById('globalRiaObs').value,
+      prochaineInspection: document.getElementById('globalRiaProchaine').value,
+      photoB64: _globalRiaPhotoB64,
+      photoMime: _globalRiaPhotoMime
+    });
+}
+
+function onRiaPhotoChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  var prev = document.getElementById('globalRiaPhotoPreview');
+  reader.onload = function(e) {
+    _globalRiaPhotoB64  = e.target.result.split(',')[1]||'';
+    _globalRiaPhotoMime = file.type||'image/jpeg';
+    if (prev) { prev.style.display='block'; prev.innerHTML=file.type.startsWith('image/')? '<img src="'+e.target.result+'" style="max-height:80px;border-radius:6px"/>' : '<div style="font-size:.8rem;color:var(--t2)">📄 '+esc(file.name)+'</div>'; }
+  };
+  reader.readAsDataURL(file);
+}
 
 function openIncendieDetail(idx) {
   var c = _incendieRecords[idx];
@@ -4133,7 +4601,8 @@ function _buildDetailHTML(c) {
   var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
   var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
   var badgeCls  = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
-  var isGlobal  = c.type === 'Inspection Globale';
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
   var html = '';
 
   /* ── Header ── */
@@ -4205,16 +4674,52 @@ function _buildDetailHTML(c) {
       html += '</div></div>';
     });
 
+  /* ── Inspection Globale RIA ── */
+  } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+    var riaUnits = c.checklist;
+    var confCntR = riaUnits.filter(function(r){ return r.statut==='Conforme'; }).length;
+    html += '<div class="global-type-section" style="margin-bottom:10px">'
+      + '<div class="global-type-title"><span>💧</span> RIA'
+      + ' <span class="global-type-count">'+confCntR+'/'+riaUnits.length+' conformes</span></div>'
+      + '<div class="global-ext-list">';
+    riaUnits.forEach(function(r) {
+      var isOk  = r.statut === 'Conforme';
+      var cl    = CHECKLIST_RIA;
+      var okCnt = cl.filter(function(it){ return r.checks && r.checks[it.key]; }).length;
+      var detId = 'idet_ria_'+r.num;
+      html += '<div class="global-ext-accordion">'
+        + '<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+        + '<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">RIA-'+String(r.num).padStart(2,'0')+'</span>'
+        + (r.zone ? '<span style="font-size:.72rem;color:var(--t3)">'+esc(r.zone)+'</span>' : '')
+        + (r.emplacement ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(r.emplacement)+'</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+        + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+        + '</div>'
+        + '<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+      cl.forEach(function(it) {
+        var checked = r.checks && r.checks[it.key];
+        html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+          + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+          + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+          + '</div>';
+      });
+      if (r.note) html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(r.note)+'</div>';
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+
   /* ── Unit inspection: flat checklist ── */
   } else {
-    if (!isGlobal) {
-      html += '<div style="margin-bottom:8px;font-size:.85rem;font-weight:600;color:var(--t1)">🔴 '+esc(c.idEquipement||'—')+'</div>';
+    if (!isGlobal && !isGlobalRia) {
+      var unitIcon = c.type==='RIA' ? '💧' : '🔴';
+      html += '<div style="margin-bottom:8px;font-size:.85rem;font-weight:600;color:var(--t1)">'+unitIcon+' '+esc(c.idEquipement||'—')+'</div>';
       if (c.zone) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:10px">📍 '+esc(c.zone)+'</div>';
     }
     var checks = c.checklist || {};
     var keys = Object.keys(checks);
     if (keys.length) {
-      var allCL = CHECKLIST_POUDRE_ABC.concat(CHECKLIST_CO2).concat(CHECKLIST_EAU_EXT);
+      var allCL = CHECKLIST_POUDRE_ABC.concat(CHECKLIST_CO2).concat(CHECKLIST_EAU_EXT).concat(CHECKLIST_RIA);
       var lmap = {};
       allCL.forEach(function(it){ lmap[it.key]=it.label; });
       html += '<div class="chk-group">';
@@ -4243,42 +4748,7 @@ function renderIncendie() {
         return;
       }
       _incendieRecords = r.data;
-      body.innerHTML = r.data.map(function(c, idx) {
-        var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
-        var isGlobal = c.type==='Inspection Globale';
-        var typeIcon = c.type==='RIA' ? '💧 RIA' : isGlobal ? '🌍 Inspection Globale' : '🔴 Extincteur';
-        var statsLine = '';
-        if (isGlobal && c.checklist && typeof c.checklist==='object') {
-          var types2 = ['Poudre ABC','CO2','Eau'];
-          var icons2  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
-          var parts = [];
-          types2.forEach(function(t){
-            var sec = c.checklist[t];
-            if (!sec||!sec.extincteurs) return;
-            var tot = sec.extincteurs.length;
-            var conf = sec.extincteurs.filter(function(e){ return e.statut==='Conforme'; }).length;
-            parts.push(icons2[t]+' '+t+': '+conf+'/'+tot);
-          });
-          if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
-        } else {
-          var checks = c.checklist||{};
-          var total = Object.keys(checks).length;
-          var ok    = Object.values ? Object.values(checks).filter(Boolean).length
-                    : Object.keys(checks).filter(function(k){ return checks[k]; }).length;
-          if (total) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok+'/'+total+' points OK</div>';
-        }
-        return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" style="cursor:pointer">'
-          + '<div class="hse-card-header">'
-          + '<div><div class="hse-card-title">'+typeIcon+(isGlobal?'':' — '+esc(c.idEquipement||'—'))+'</div>'
-          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
-          + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
-          + '</div>'
-          + statsLine
-          + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
-          + (c.photoId ? '<div style="margin-top:8px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
-          + '<div style="margin-top:6px;font-size:.72rem;color:var(--t3)">Appuyer pour voir le détail →</div>'
-          + '</div>';
-      }).join('');
+      _renderIncendieList();
     })
     .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
     .getChecklists(S.adminKey);

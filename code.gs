@@ -1577,13 +1577,25 @@ function getConfigData(adminKey) {
     var rawExt        = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
     var rawZones      = props.getProperty('ZONES_CONFIG')||'[]';
     var rawChecklists = props.getProperty('CHECKLISTS_CONFIG')||'{}';
+    var rawRia        = props.getProperty('RIA_CONFIG')||'{}';
     var extConfig  = JSON.parse(rawExt);
     var zones      = JSON.parse(rawZones);
     var checklists = JSON.parse(rawChecklists);
+    var riaConfig  = JSON.parse(rawRia);
     if (!extConfig.length) {
       for (var i=1; i<=100; i++) extConfig.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists };
+    if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveRiaConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var cfg = p.riaConfig || { count:20, items:[] };
+    PropertiesService.getScriptProperties().setProperty('RIA_CONFIG', JSON.stringify(cfg));
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
