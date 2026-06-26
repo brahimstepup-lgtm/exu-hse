@@ -1547,9 +1547,10 @@ function getExtConfig(token) {
     if (!config.length) {
       for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
-    var logoUrl    = props.getProperty('HSE_LOGO_URL') || '';
-    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl };
+    var extDocCode   = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
+    var logoUrl      = props.getProperty('HSE_LOGO_URL') || '';
+    var signatureUrl = props.getProperty('HSE_SIG_URL')  || '';
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1593,10 +1594,11 @@ function getConfigData(adminKey) {
     if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
     if (!riaConfig.items)  riaConfig.items = [];
     if (!riaConfig.count)  riaConfig.count = 20;
-    var extDocCode = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
-    var riaDocCode = props.getProperty('RIA_DOC_CODE') || 'ENR-HSE 2';
-    var logoUrl    = props.getProperty('HSE_LOGO_URL') || '';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl };
+    var extDocCode   = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
+    var riaDocCode   = props.getProperty('RIA_DOC_CODE') || 'ENR-HSE 2';
+    var logoUrl      = props.getProperty('HSE_LOGO_URL') || '';
+    var signatureUrl = props.getProperty('HSE_SIG_URL')  || '';
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1659,8 +1661,9 @@ function getPestConfigData(adminKey) {
       if (!pestConfig[t].count)  pestConfig[t].count  = 5;
     });
     if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
-    var logoUrl = props.getProperty('HSE_LOGO_URL') || '';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl };
+    var logoUrl      = props.getProperty('HSE_LOGO_URL') || '';
+    var signatureUrl = props.getProperty('HSE_SIG_URL')  || '';
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1778,6 +1781,39 @@ function deleteLogoConfig(p) {
     if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
     props.deleteProperty('HSE_LOGO_FILE_ID');
     props.deleteProperty('HSE_LOGO_URL');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SIGNATURE / GRIFFE DU RESPONSABLE HSE
+// ══════════════════════════════════════════════════════════════════
+function saveSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var bytes  = Utilities.base64Decode(p.sigBase64);
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-signature.png');
+    var file   = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+    props.setProperty('HSE_SIG_FILE_ID', fileId);
+    props.setProperty('HSE_SIG_URL', url);
+    return { success:true, signatureUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('HSE_SIG_FILE_ID');
+    props.deleteProperty('HSE_SIG_URL');
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
