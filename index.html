@@ -4871,6 +4871,7 @@ function _renderIncendieList() {
     if (_incendieFilter === 'ria') return c.type === 'RIA' || c.type === 'Inspection Globale RIA';
     return true;
   });
+  filtered.sort(function(a,b){ return (b.dateInspection||'').localeCompare(a.dateInspection||''); });
   if (!filtered.length) {
     body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
     return;
@@ -6467,6 +6468,7 @@ function _renderNuisiblesList() {
     if (_pestFilter === 'all') return true;
     return c.type === _pestFilter || c.type === 'Inspection Globale Nuisibles';
   });
+  filtered.sort(function(a,b){ return (b.dateInspection||'').localeCompare(a.dateInspection||''); });
   if (!filtered.length) {
     body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
     return;
