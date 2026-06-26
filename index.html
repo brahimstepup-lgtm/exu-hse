@@ -4908,7 +4908,7 @@ function _renderIncendieList() {
       var ok3  = Object.keys(chk).filter(function(k){ return chk[k]; }).length;
       if (tot3) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok3+'/'+tot3+' points OK</div>';
     }
-    return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" style="cursor:pointer">'
+    return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" oncontextmenu="openCardCtxMenu(event,'+idx+',\'incendie\')" style="cursor:pointer">'
       + '<div class="hse-card-header">'
       + '<div><div class="hse-card-title">'+typeIcon+(!isGlobalExt&&!isGlobalRia?' — '+esc(c.idEquipement||'—'):'')+'</div>'
       + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
@@ -5638,6 +5638,52 @@ function saveEditInspection() {
     })
     .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
     [fn]({ adminKey: S.adminKey, id: c.id, superviseurNom: supNom, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs });
+}
+
+/* ── Menu contextuel cartes d'inspection (admin) ── */
+var _ctxKind = '';
+var _ctxIdx  = -1;
+
+function openCardCtxMenu(event, idx, kind) {
+  if (!isAdmin()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  _ctxKind = kind;
+  _ctxIdx  = idx;
+  var menu = document.getElementById('cardCtxMenu');
+  var x = event.clientX, y = event.clientY;
+  if (x + 210 > window.innerWidth)  x = window.innerWidth  - 215;
+  if (y + 70  > window.innerHeight) y = window.innerHeight - 75;
+  menu.style.left    = x + 'px';
+  menu.style.top     = y + 'px';
+  menu.style.display = 'block';
+}
+
+function _closeCtxMenu() {
+  var m = document.getElementById('cardCtxMenu');
+  if (m) m.style.display = 'none';
+}
+
+document.addEventListener('click',       _closeCtxMenu);
+document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#cardCtxMenu')) _closeCtxMenu(); });
+
+function duplicateInspection() {
+  _closeCtxMenu();
+  var records = _ctxKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c = records[_ctxIdx];
+  if (!c) return;
+  showLoader('Duplication…');
+  var fn = _ctxKind === 'pest' ? 'duplicatePestChecklist' : 'duplicateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      toast('✓ Inspection dupliquée — ID #'+r.id, 'ok');
+      if (_ctxKind === 'pest') renderNuisibles();
+      else renderIncendie();
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id });
 }
 
 function validateInspection(idx, kind) {
@@ -6443,7 +6489,7 @@ function _renderNuisiblesList() {
       });
       if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
     }
-    return '<div class="hse-card" onclick="openPestDetail('+idx+')" style="cursor:pointer">'
+    return '<div class="hse-card" onclick="openPestDetail('+idx+')" oncontextmenu="openCardCtxMenu(event,'+idx+',\'pest\')" style="cursor:pointer">'
       +'<div class="hse-card-header">'
       +'<div><div class="hse-card-title">'+typeIcon+'</div>'
       +'<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
@@ -7024,5 +7070,13 @@ function openIfsId(fileId) {
     .getImageBase64(fileId);
 }
 </script>
+
+<!-- ═══ Menu contextuel cartes ═══ -->
+<div id="cardCtxMenu" style="display:none;position:fixed;z-index:9999;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:5px;min-width:196px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <button onclick="duplicateInspection()" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--t1);padding:9px 14px;font-size:.84rem;cursor:pointer;border-radius:7px" onmouseover="this.style.background='var(--ink4)'" onmouseout="this.style.background='none'">
+    <span style="font-size:1rem">📋</span> Dupliquer l'inspection
+  </button>
+</div>
+
 </body>
 </html>

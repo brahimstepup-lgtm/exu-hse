@@ -1550,6 +1550,42 @@ function updateChecklist(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Dupliquer une inspection incendie (admin uniquement) ──
+function duplicateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
+    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      new Date(),   // date = aujourd'hui
+      src[2],       // matricule superviseur
+      src[3],       // nom superviseur
+      src[4],       // type
+      src[5],       // idEquipement
+      src[6],       // zone
+      src[7],       // checklist JSON
+      src[8],       // etatGlobal
+      src[9],       // observations
+      '',           // prochaineInspection (reset)
+      '',           // photo (reset)
+      new Date(),   // dateCreation
+      ''            // responsableNom (reset — nouvelle validation requise)
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Valider une inspection incendie (admin uniquement) ──
 function validateChecklist(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
@@ -1823,6 +1859,42 @@ function updatePestChecklist(p) {
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
     return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Dupliquer une inspection nuisibles (admin uniquement) ──
+function duplicatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
+    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      new Date(),
+      src[2],
+      src[3],
+      src[4],
+      src[5],
+      src[6],
+      src[7],
+      src[8],
+      src[9],
+      '',
+      '',
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
