@@ -978,24 +978,6 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
       </div>
-      <!-- Signature Responsable HSE -->
-      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Signature / Griffe Responsable HSE</div>
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div id="sigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-            <span id="sigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
-            <img id="sigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
-              📁 Choisir l'image
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSignatureUpload(this)"/>
-            </label>
-            <button id="deleteSigBtn" class="btn btn-g" onclick="deleteAdminSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
-            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Responsable HSE » de toutes les fiches imprimées</div>
-          </div>
-        </div>
-      </div>
       <div id="adminBody"></div>
     </div>
 
@@ -1940,27 +1922,7 @@ img{max-width:100%;display:block;}
     <div class="sh-hdr"><span class="sh-title">👥 Gestion des accès</span>
       <button class="sh-close" onclick="closeSheet('usersOv')">✕</button></div>
     <div class="sh-body">
-      <!-- Section signature superviseur (visible aux superviseurs seulement) -->
-      <div id="superSigSection" style="display:none;background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Ma signature / Griffe</div>
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div id="superSigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-            <span id="superSigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
-            <img id="superSigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
-              📁 Choisir l'image
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSuperSignatureUpload(this)"/>
-            </label>
-            <button id="deleteSuperSigBtn" class="btn btn-g" onclick="deleteAdminSuperSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
-            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Superviseur HSE » de toutes les fiches imprimées</div>
-          </div>
-        </div>
-      </div>
-      <!-- Section gestion des utilisateurs (admin seulement) -->
-      <div id="usersAdminSection">
-        <div style="margin-bottom:10px">
+      <div style="margin-bottom:10px">
           <input id="usersSearch" type="text" placeholder="🔍 Rechercher par matricule ou nom…"
             oninput="filterUsers(this.value)"
             style="width:100%;box-sizing:border-box;background:var(--ink3);border:1px solid var(--line2);color:var(--t1);border-radius:8px;padding:8px 12px;font-size:.88rem;outline:none">
@@ -1968,7 +1930,6 @@ img{max-width:100%;display:block;}
         <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
           <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
         </div>
-      </div>
     </div>
   </div>
 </div>
@@ -2095,6 +2056,22 @@ function doLogout() {
 /* ══ USER MANAGEMENT (admin only) ══ */
 var _usersData = [];
 
+function _sigBtnHtml(mat, role) {
+  var show = (role==='hse_supervisor'||role==='admin');
+  var sigType = role==='admin'?'responsable':'superviseur';
+  var sigUrl = role==='admin'
+    ? (_hseSignatureDataUrl||_hseSignatureUrl)
+    : (_hseSuperSignatureDataUrl||_hseSuperSignatureUrl);
+  var thumb = sigUrl
+    ? '<img src="'+sigUrl+'" style="max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px"/>'
+    : '';
+  return '<label id="sigrow-'+mat+'" data-sigtype="'+sigType+'" class="btn btn-g"'
+    +' style="height:30px;font-size:.76rem;padding:0 10px;display:'+(show?'inline-flex':'none')+';align-items:center;gap:2px;cursor:pointer">'
+    +thumb+'✍ Griffe'
+    +'<input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="adminUploadSig(\''+mat+'\',this)"/>'
+    +'</label>';
+}
+
 function renderUsersList(data) {
   var list = document.getElementById('usersList');
   if (!data.length) { list.innerHTML='<div style="color:var(--t3);font-size:.85rem">Aucun résultat</div>'; return; }
@@ -2115,6 +2092,7 @@ function renderUsersList(data) {
       + '</select>'
       + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
       + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
+      + _sigBtnHtml(u.matricule, u.role)
       + '</div></div></div>';
   }).join('');
 }
@@ -2131,25 +2109,17 @@ function openUsersPanel() {
   if (S_AUTH.role==='admin' && !S.adminKey) { S.role='admin'; S.adminKey=S_AUTH.token; }
   if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
   openSheet('usersOv');
-  // Les deux sections sont visibles pour l'admin
-  var superSec = document.getElementById('superSigSection');
-  var adminSec = document.getElementById('usersAdminSection');
-  if (superSec) superSec.style.display = '';
-  if (adminSec) adminSec.style.display = '';
-  // Charger la signature superviseur existante
-  if (!_hseSuperSignatureUrl) {
+  // Charger les sig URLs si pas encore en cache
+  if (!_hseSignatureUrl && !_hseSuperSignatureUrl) {
     google.script.run
       .withSuccessHandler(function(r) {
         if (r && r.success) {
+          _hseSignatureUrl      = r.signatureUrl           || '';
           _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
-          _renderSuperSigPreview();
         }
       })
       .getExtConfig(S.adminKey);
-  } else {
-    _renderSuperSigPreview();
   }
-  // Charger la liste des utilisateurs
   var list = document.getElementById('usersList');
   var searchEl = document.getElementById('usersSearch');
   if (searchEl) searchEl.value = '';
@@ -2177,6 +2147,16 @@ function openSetPwd(mat, name) {
     .adminSetPassword({ adminKey:S.adminKey, matricule:mat, password:pwd });
 }
 
+function adminUploadSig(mat, input) {
+  var btn = document.getElementById('sigrow-'+mat);
+  var sigType = btn ? btn.dataset.sigtype : 'superviseur';
+  if (sigType === 'responsable') {
+    onSignatureUpload(input);
+  } else {
+    onSuperSignatureUpload(input);
+  }
+}
+
 function adminToggle(mat, actif) {
   google.script.run
     .withSuccessHandler(function(r){
@@ -2193,6 +2173,17 @@ function adminChangeRole(mat, role) {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .adminSetRole({ adminKey:S.adminKey, matricule:mat, role:role });
+  // Mettre à jour le cache local
+  var u = _usersData.find(function(x){ return x.matricule===mat; });
+  if (u) u.role = role;
+  // Toggler le bouton Griffe
+  var btn = document.getElementById('sigrow-'+mat);
+  if (btn) {
+    var show = (role==='hse_supervisor'||role==='admin');
+    btn.style.display = show ? 'inline-flex' : 'none';
+    var sigType = role==='admin'?'responsable':'superviseur';
+    btn.dataset.sigtype = sigType;
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -2633,21 +2624,6 @@ function brHtml(n,v,p){
    ADMIN KPI — Heatmap + Tables
 ══════════════════════════════════════════ */
 function renderAdmin(){
-  // Charger les URLs de signature au premier affichage du dashboard
-  if (!_adminSigLoaded) {
-    _adminSigLoaded = true;
-    google.script.run
-      .withSuccessHandler(function(r) {
-        if (r && r.success) {
-          _hseLogoUrl      = r.logoUrl      || _hseLogoUrl;
-          _hseSignatureUrl = r.signatureUrl || _hseSignatureUrl;
-          _renderSigPreview();
-        }
-      })
-      .getExtConfig(S.adminKey || S_AUTH.token);
-  } else {
-    _renderSigPreview();
-  }
   var k=S.kpis;
   if(!k){ document.getElementById('adminBody').innerHTML='<div class="empty"><div class="empty-i">⏳</div><div class="empty-t">Chargement KPI…</div></div>'; return; }
 
@@ -4394,6 +4370,7 @@ function onSignatureUpload(input) {
         if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
         _hseSignatureUrl = r.signatureUrl || '';
         toast('✓ Signature mise à jour','ok');
+        if (_usersData.length) renderUsersList(_usersData);
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
       .saveSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
@@ -4458,6 +4435,7 @@ function onSuperSignatureUpload(input) {
         if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
         _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
         toast('✓ Signature superviseur mise à jour','ok');
+        if (_usersData.length) renderUsersList(_usersData);
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
       .saveSupervisorSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
