@@ -1240,6 +1240,24 @@ img{max-width:100%;display:block;}
           <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
         </div>
       </div>
+      <!-- Paramètres d'impression -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Ext. &amp; RIA)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
+            <input class="fi" id="extDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
+            <input class="fi" id="extDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
+            <input class="fi" type="number" id="extProchaineMonthsInput" value="12" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
+          </div>
+        </div>
+      </div>
       <!-- ① Gestion des zones -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
@@ -1469,6 +1487,24 @@ img{max-width:100%;display:block;}
         <div style="display:flex;gap:8px;align-items:center">
           <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
           <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
+      <!-- Paramètres d'impression -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Nuisibles)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
+            <input class="fi" id="pestDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
+            <input class="fi" id="pestDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
+            <input class="fi" type="number" id="pestProchaineMonthsInput" value="3" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
+          </div>
         </div>
       </div>
       <!-- Zones partagées -->
@@ -2265,6 +2301,14 @@ function plusDaysStr(iso,n){
   var d=iso?new Date(iso):new Date();
   if(isNaN(d.getTime())) d=new Date();
   d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+function plusMonthsStr(iso,n){
+  var d=iso?new Date(iso):new Date();
+  if(isNaN(d.getTime())) d=new Date();
+  var targetMonth=d.getMonth()+n;
+  d.setFullYear(d.getFullYear()+Math.floor(targetMonth/12));
+  d.setMonth(((targetMonth%12)+12)%12);
   return d.toISOString().split('T')[0];
 }
 function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
@@ -4124,14 +4168,23 @@ function openConfigExt() {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _configuredZones = r.zones||[];
-      _extConfig       = r.extConfig||[];
-      _extDocCode      = r.extDocCode || 'ENR-HSE 1';
-      _hseLogoUrl               = r.logoUrl                || '';
-      _hseSignatureUrl          = r.signatureUrl           || '';
-      _hseSuperSignatureUrl     = r.supervisorSignatureUrl || '';
+      _configuredZones       = r.zones||[];
+      _extConfig             = r.extConfig||[];
+      _extDocCode            = r.extDocCode            || 'ENR-HSE 1';
+      _extDocRev             = r.extDocRev             || '01';
+      _extDocEdition         = r.extDocEdition         || '';
+      _extProchaineMonths    = parseInt(r.extProchaineMonths)  || 12;
+      _hseLogoUrl            = r.logoUrl               || '';
+      _hseSignatureUrl       = r.signatureUrl          || '';
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| '';
       var dcEl = document.getElementById('extDocCodeInput');
       if (dcEl) dcEl.value = _extDocCode;
+      var rvEl = document.getElementById('extDocRevInput');
+      if (rvEl) rvEl.value = _extDocRev;
+      var edEl = document.getElementById('extDocEditionInput');
+      if (edEl) edEl.value = _extDocEdition;
+      var pmEl = document.getElementById('extProchaineMonthsInput');
+      if (pmEl) pmEl.value = _extProchaineMonths;
       _renderLogoPreview();
       var _cl = r.checklists || {};
       var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
@@ -4235,6 +4288,12 @@ function saveExtConfigLocal() {
   _extConfig = config;
   var dcEl = document.getElementById('extDocCodeInput');
   _extDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 1';
+  var rvEl = document.getElementById('extDocRevInput');
+  _extDocRev = (rvEl&&rvEl.value.trim()) || '01';
+  var edEl = document.getElementById('extDocEditionInput');
+  _extDocEdition = (edEl&&edEl.value.trim()) || '';
+  var pmEl = document.getElementById('extProchaineMonthsInput');
+  _extProchaineMonths = parseInt(pmEl&&pmEl.value) || 12;
   showLoader('Sauvegarde…');
   google.script.run
     .withSuccessHandler(function(r){
@@ -4243,14 +4302,20 @@ function saveExtConfigLocal() {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveExtConfig({ adminKey:S.adminKey, config:config, docCode:_extDocCode });
+    .saveExtConfig({ adminKey:S.adminKey, config:config, docCode:_extDocCode, docRev:_extDocRev, docEdition:_extDocEdition, prochaineMonths:_extProchaineMonths });
 }
 
 /* ══════════════════════════════════════════
    INSPECTION GLOBALE (tous extincteurs)
 ══════════════════════════════════════════ */
-var _extDocCode    = 'ENR-HSE 1';
-var _riaDocCode    = 'ENR-HSE 2';
+var _extDocCode           = 'ENR-HSE 1';
+var _riaDocCode           = 'ENR-HSE 2';
+var _extDocRev            = '01';
+var _extDocEdition        = '';
+var _extProchaineMonths   = 12;
+var _pestDocRev           = '01';
+var _pestDocEdition       = '';
+var _pestProchaineMonths  = 3;
 var _hseLogoUrl               = '';
 var _hseLogoDataUrl           = '';
 var _hseSignatureUrl          = '';
@@ -4464,11 +4529,14 @@ function openGlobalInspection() {
     .withSuccessHandler(function(r){
       hideSplash();
       if (!r||!r.success) { toast('Erreur config: '+(r&&r.error||'?'),'err'); return; }
-      _extConfig  = r.data||[];
-      _extDocCode = r.extDocCode || _extDocCode;
-      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
-      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
-      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _extConfig             = r.data||[];
+      _extDocCode            = r.extDocCode            || _extDocCode;
+      _extDocRev             = r.extDocRev             || _extDocRev;
+      _extDocEdition         = r.extDocEdition         || _extDocEdition;
+      _extProchaineMonths    = parseInt(r.extProchaineMonths)  || _extProchaineMonths;
+      _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
+      _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl;
       if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
       _initGlobalForm();
     })
@@ -4495,7 +4563,7 @@ function _initGlobalForm() {
     cl.forEach(function(it){ _globalChecks[c.num][it.key] = true; });
   });
   document.getElementById('globalIncDate').value = todayStr();
-  document.getElementById('globalIncProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('globalIncProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
   document.getElementById('globalIncObs').value = '';
   document.getElementById('globalPhotoPreview').style.display = 'none';
   document.getElementById('globalPhotoArea').classList.remove('has-file');
@@ -4911,10 +4979,13 @@ function openGlobalInspectionRIA() {
       _riaConfig  = r.riaConfig || { count:20, items:[] };
       if (!_riaConfig.items) _riaConfig.items = [];
       if (!_riaConfig.count) _riaConfig.count = 20;
-      _riaDocCode           = r.riaDocCode            || _riaDocCode;
-      _hseLogoUrl           = r.logoUrl               || _hseLogoUrl;
-      _hseSignatureUrl      = r.signatureUrl          || _hseSignatureUrl;
-      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _riaDocCode            = r.riaDocCode            || _riaDocCode;
+      _extDocRev             = r.extDocRev             || _extDocRev;
+      _extDocEdition         = r.extDocEdition         || _extDocEdition;
+      _extProchaineMonths    = parseInt(r.extProchaineMonths) || _extProchaineMonths;
+      _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
+      _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl;
       _initGlobalFormRIA();
       openSheet('globalRiaOv');
     })
@@ -4935,7 +5006,7 @@ function _initGlobalFormRIA() {
   }
   _globalRiaSortMode = 'zone';
   document.getElementById('globalRiaDate').value = todayStr();
-  document.getElementById('globalRiaProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('globalRiaProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
   document.getElementById('globalRiaObs').value = '';
   var prev = document.getElementById('globalRiaPhotoPreview');
   if (prev) { prev.style.display='none'; prev.innerHTML=''; }
@@ -5314,6 +5385,8 @@ function printBlankExtChecklist() {
   });
   _openPrintWin(_buildHSEPrintHTML({
     docCode:     _extDocCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
     title:       'Inspection Globale Extincteurs',
     subtitle:    'Sécurité Incendie — Extincteurs',
     date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
@@ -5333,6 +5406,8 @@ function printBlankRiaChecklist() {
   }
   _openPrintWin(_buildHSEPrintHTML({
     docCode:     _riaDocCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
     title:       'Inspection Globale RIA',
     subtitle:    'Sécurité Incendie — Robinets Incendie Armés',
     date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
@@ -5373,6 +5448,8 @@ function printIncendieRecord(idx) {
   if (!sections.length) { toast('Aucune donnée à imprimer','err'); return; }
   _openPrintWin(_buildHSEPrintHTML({
     docCode:     docCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
     title:       c.type || 'Inspection Sécurité Incendie',
     subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
     date:        _fmtDate(c.dateInspection||''),
@@ -5414,6 +5491,8 @@ function viewIncendieRecord(idx) {
   if (!sections.length) { toast('Aucune donnée à afficher','err'); return; }
   _openPrintWin(_buildHSEPrintHTML({
     docCode:     docCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
     title:       c.type || 'Inspection Sécurité Incendie',
     subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
     date:        _fmtDate(c.dateInspection||''),
@@ -5457,7 +5536,7 @@ function openIncendieForm() {
   if (_emdd) _emdd.style.display = 'none';
   document.getElementById('incZone').value = '';
   document.getElementById('incObs').value = '';
-  document.getElementById('incProchaine').value = plusDaysStr(todayStr(), 365);
+  document.getElementById('incProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
   document.getElementById('incEtat').value = 'Conforme';
   document.getElementById('incType').value = 'Extincteur';
   document.getElementById('incPhotoPreview').style.display = 'none';
@@ -5645,11 +5724,14 @@ function openConfigPest() {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _pestConfig           = r.pestConfig || {};
-      _pestDocCode          = (_pestConfig.docCode) || 'ENR-HSE 7';
-      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
-      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
-      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _pestConfig             = r.pestConfig || {};
+      _pestDocCode            = (_pestConfig.docCode)  || 'ENR-HSE 7';
+      _pestDocRev             = r.pestDocRev           || '01';
+      _pestDocEdition         = r.pestDocEdition       || '';
+      _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || 3;
+      _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
+      _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       _configuredZones  = r.zones || [];
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
@@ -5659,6 +5741,12 @@ function openConfigPest() {
       };
       var dcEl = document.getElementById('pestDocCodeInput');
       if (dcEl) dcEl.value = _pestDocCode;
+      var rvEl2 = document.getElementById('pestDocRevInput');
+      if (rvEl2) rvEl2.value = _pestDocRev;
+      var edEl2 = document.getElementById('pestDocEditionInput');
+      if (edEl2) edEl2.value = _pestDocEdition;
+      var pmEl2 = document.getElementById('pestProchaineMonthsInput');
+      if (pmEl2) pmEl2.value = _pestProchaineMonths;
       _renderPestChecklistEditor();
       _renderPestConfigTables();
       _renderPestZoneChips();
@@ -5724,6 +5812,12 @@ function _collectPestItems(type) {
 function saveFullPestConfig() {
   var dcEl = document.getElementById('pestDocCodeInput');
   _pestDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 7';
+  var rvEl2 = document.getElementById('pestDocRevInput');
+  _pestDocRev = (rvEl2&&rvEl2.value.trim()) || '01';
+  var edEl2 = document.getElementById('pestDocEditionInput');
+  _pestDocEdition = (edEl2&&edEl2.value.trim()) || '';
+  var pmEl2 = document.getElementById('pestProchaineMonthsInput');
+  _pestProchaineMonths = parseInt(pmEl2&&pmEl2.value) || 3;
   var cfg = { docCode: _pestDocCode };
   PEST_TYPES.forEach(function(type) {
     var countEl = document.getElementById('pestCount_'+type);
@@ -5739,7 +5833,7 @@ function saveFullPestConfig() {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig });
+    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig, docRev:_pestDocRev, docEdition:_pestDocEdition, prochaineMonths:_pestProchaineMonths });
 }
 
 /* ─── Éditeur de points de contrôle ─── */
@@ -5838,11 +5932,14 @@ function openGlobalPestInspection(pestType) {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _pestConfig           = r.pestConfig || {};
-      _pestDocCode          = (_pestConfig.docCode) || 'ENR-HSE 7';
-      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
-      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
-      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _pestConfig             = r.pestConfig || {};
+      _pestDocCode            = (_pestConfig.docCode)  || 'ENR-HSE 7';
+      _pestDocRev             = r.pestDocRev           || _pestDocRev;
+      _pestDocEdition         = r.pestDocEdition       || _pestDocEdition;
+      _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || _pestProchaineMonths;
+      _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
+      _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
       _pestChecklistConfig = hasConfig ? _cl : {};
@@ -5877,7 +5974,7 @@ function _initGlobalPestForm() {
     }
   });
   document.getElementById('globalPestDate').value      = todayStr();
-  document.getElementById('globalPestProchaine').value = plusDaysStr(todayStr(), 90);
+  document.getElementById('globalPestProchaine').value = plusMonthsStr(todayStr(), _pestProchaineMonths);
   document.getElementById('globalPestObs').value       = '';
   var prev = document.getElementById('globalPestPhotoPreview');
   if (prev) { prev.style.display='none'; prev.innerHTML=''; }
@@ -6288,7 +6385,10 @@ function _buildHSEPrintHTML(opts) {
   var signatureUrl          = opts.signatureUrl         || '';
   var supervisorSignatureUrl = opts.supervisorSignatureUrl || '';
   var now         = new Date();
-  var editionDate = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var _autoDate   = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var editionDate = _autoDate;
+  var docRev      = opts.docRev      || '01';
+  var docEdition  = opts.docEdition  || _autoDate;
 
   var typeTables = '';
   (opts.sections||[]).forEach(function(sec) {
@@ -6400,9 +6500,9 @@ function _buildHSEPrintHTML(opts) {
     +'<div class="doc-subtitle" style="font-size:8pt;margin-top:3px;font-weight:600">'+esc(opts.title)+etatBadge+'</div></td>'
     +'<td class="col-ref">'
     +'<div class="ref-row"><span class="ref-label">Réf&nbsp;:</span><span style="font-weight:700;font-size:8.5pt">'+esc(docCode)+'</span></div>'
-    +'<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>01</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>'+esc(docRev)+'</span></div>'
     +'<div class="ref-row"><span class="ref-label">Page&nbsp;:</span><span>1/1</span></div>'
-    +'<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+editionDate+'</span></div>'
+    +'<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+esc(docEdition)+'</span></div>'
     +'</td></tr></table>'
     +'<table class="info-table"><tr>'
     +'<td style="width:28%"><span class="info-label">Date d\'inspection</span><span class="info-value">'+esc(opts.date||'')+'</span></td>'
@@ -6429,7 +6529,7 @@ function _buildHSEPrintHTML(opts) {
       : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
     +'</tr></table>'
-    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Généré le '+editionDate+' — Conforme aux exigences ISO 9001:2015</div>'
+    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Éd. '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
     +autoScript
     +'</body></html>';
 }
@@ -6443,6 +6543,8 @@ function _buildPestPrintHTML(opts) {
   });
   return _buildHSEPrintHTML({
     docCode:    opts.docCode,
+    docRev:     opts.docRev,
+    docEdition: opts.docEdition,
     title:      opts.title,
     subtitle:   'Dispositifs de lutte contre les nuisibles',
     date:       opts.date,
@@ -6488,6 +6590,8 @@ function printBlankPestChecklist() {
     types:      activeTypes,
     typeData:   typeData,
     docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
     mode:       'blank',
     logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
   });
@@ -6519,6 +6623,8 @@ function printPestRecord(idx) {
     types:      activeTypes,
     typeData:   typeData,
     docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
     logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
@@ -6551,6 +6657,8 @@ function viewPestRecord(idx) {
     types:      activeTypes,
     typeData:   typeData,
     docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
     autoPrint:  false,

@@ -1547,11 +1547,14 @@ function getExtConfig(token) {
     if (!config.length) {
       for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    var extDocCode             = props.getProperty('EXT_DOC_CODE') || 'ENR-HSE 1';
-    var logoUrl                = props.getProperty('HSE_LOGO_URL')     || '';
-    var signatureUrl           = props.getProperty('HSE_SIG_URL')      || '';
-    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')  || '';
-    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl };
+    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
+    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
+    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
+    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
+    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1563,7 +1566,10 @@ function saveExtConfig(p) {
     }).filter(function(c){ return c.num>=1 && c.num<=200; });
     var props = PropertiesService.getScriptProperties();
     props.setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
-    if (p.docCode) props.setProperty('EXT_DOC_CODE', String(p.docCode));
+    if (p.docCode)          props.setProperty('EXT_DOC_CODE',          String(p.docCode));
+    if (p.docRev      != null) props.setProperty('EXT_DOC_REV',         String(p.docRev).trim()||'01');
+    if (p.docEdition  != null) props.setProperty('EXT_DOC_EDITION',     String(p.docEdition).trim());
+    if (p.prochaineMonths != null) props.setProperty('EXT_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||12));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
@@ -1595,12 +1601,15 @@ function getConfigData(adminKey) {
     if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
     if (!riaConfig.items)  riaConfig.items = [];
     if (!riaConfig.count)  riaConfig.count = 20;
-    var extDocCode             = props.getProperty('EXT_DOC_CODE')     || 'ENR-HSE 1';
-    var riaDocCode             = props.getProperty('RIA_DOC_CODE')     || 'ENR-HSE 2';
-    var logoUrl                = props.getProperty('HSE_LOGO_URL')     || '';
-    var signatureUrl           = props.getProperty('HSE_SIG_URL')      || '';
-    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')  || '';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl };
+    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
+    var riaDocCode             = props.getProperty('RIA_DOC_CODE')         || 'ENR-HSE 2';
+    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
+    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
+    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
+    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1663,10 +1672,13 @@ function getPestConfigData(adminKey) {
       if (!pestConfig[t].count)  pestConfig[t].count  = 5;
     });
     if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
-    var logoUrl                = props.getProperty('HSE_LOGO_URL')     || '';
-    var signatureUrl           = props.getProperty('HSE_SIG_URL')      || '';
-    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')  || '';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl };
+    var logoUrl                 = props.getProperty('HSE_LOGO_URL')          || '';
+    var signatureUrl            = props.getProperty('HSE_SIG_URL')           || '';
+    var supervisorSignatureUrl  = props.getProperty('HSE_SUP_SIG_URL')       || '';
+    var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
+    var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
+    var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1674,8 +1686,11 @@ function getPestConfigData(adminKey) {
 function savePestConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    PropertiesService.getScriptProperties()
-      .setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
+    if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'01');
+    if (p.docEdition  != null) props.setProperty('PEST_DOC_EDITION',      String(p.docEdition).trim());
+    if (p.prochaineMonths != null) props.setProperty('PEST_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||3));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
