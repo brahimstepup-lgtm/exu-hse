@@ -1505,6 +1505,27 @@ function saveChecklist(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Modifier une inspection incendie (admin uniquement) ──
+function updateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
+    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Lire toutes les inspections incendie ──
 function getChecklists(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
@@ -1735,6 +1756,27 @@ function savePestChecklist(p) {
       new Date()
     ]);
     return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Modifier une inspection nuisibles (admin uniquement) ──
+function updatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
+    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
 

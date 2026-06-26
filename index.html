@@ -1691,6 +1691,43 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ OVERLAY: Modifier une inspection (admin) ═══ -->
+<div class="ov" id="editInspOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="editInspTitle">✏ Modifier l'inspection</div>
+      <button class="sh-x" onclick="closeSheet('editInspOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div class="fg">
+        <label class="fl">Date d'inspection</label>
+        <input class="fi" type="date" id="editInspDate"/>
+      </div>
+      <div class="fg">
+        <label class="fl">État global</label>
+        <select class="fi" id="editInspEtat" style="height:40px">
+          <option value="Conforme">Conforme</option>
+          <option value="Non conforme">Non conforme</option>
+          <option value="Partiel">Partiel</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Prochaine inspection</label>
+        <input class="fi" type="date" id="editInspProchaine"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Observations</label>
+        <textarea class="fi" id="editInspObs" rows="4" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('editInspOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveEditInspection()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ OVERLAY: Admin — Thèmes de Sensibilisation ═══ -->
 <div class="ov" id="themesAdminOv">
   <div class="sheet">
@@ -4877,6 +4914,7 @@ function _renderIncendieList() {
       + '<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
       + '<button class="btn btn-g" onclick="viewIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
       + '<button class="btn btn-g" onclick="printIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      + (isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'incendie\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
       + '</div>'
       + '</div>';
   }).join('');
@@ -5505,6 +5543,56 @@ function viewIncendieRecord(idx) {
     logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
     sections:    sections
   }));
+}
+
+/* ══════════════════════════════════════════
+   MODIFICATION D'INSPECTION (admin)
+══════════════════════════════════════════ */
+var _editInspKind = '';
+var _editInspIdx  = -1;
+
+function openEditInspection(idx, kind) {
+  var c = kind === 'pest' ? _nuisiblesRecords[idx] : _incendieRecords[idx];
+  if (!c) return;
+  _editInspKind = kind;
+  _editInspIdx  = idx;
+  var typeLabel = kind === 'pest'
+    ? (PEST_LABELS[c.type] || c.type || 'Inspection')
+    : (c.type || 'Inspection');
+  document.getElementById('editInspTitle').textContent = '✏ Modifier — ' + typeLabel + ' #' + c.id;
+  document.getElementById('editInspDate').value      = c.dateInspection     || '';
+  document.getElementById('editInspProchaine').value = c.prochaineInspection|| '';
+  document.getElementById('editInspEtat').value      = c.etatGlobal         || 'Conforme';
+  document.getElementById('editInspObs').value       = c.observations        || '';
+  openSheet('editInspOv');
+}
+
+function saveEditInspection() {
+  var dateVal  = document.getElementById('editInspDate').value;
+  var etat     = document.getElementById('editInspEtat').value;
+  var proch    = document.getElementById('editInspProchaine').value;
+  var obs      = document.getElementById('editInspObs').value.trim();
+  if (!dateVal) { toast('Date d\'inspection requise','err'); return; }
+  var records  = _editInspKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c        = records[_editInspIdx];
+  if (!c) { toast('Erreur: enregistrement introuvable','err'); return; }
+  showLoader('Sauvegarde…');
+  var fn = _editInspKind === 'pest' ? 'updatePestChecklist' : 'updateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: ' + (r&&r.error||'?'), 'err'); return; }
+      c.dateInspection      = dateVal;
+      c.etatGlobal          = etat;
+      c.prochaineInspection = proch;
+      c.observations        = obs;
+      closeSheet('editInspOv');
+      if (_editInspKind === 'pest') _renderNuisiblesList();
+      else _renderIncendieList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs });
 }
 
 function renderIncendie() {
@@ -6299,6 +6387,7 @@ function _renderNuisiblesList() {
       +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
       +'<button class="btn btn-g" onclick="viewPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
       +'<button class="btn btn-g" onclick="printPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +(isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'pest\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
       +'</div>'
       +'</div>';
   }).join('');
