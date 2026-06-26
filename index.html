@@ -6675,7 +6675,7 @@ function _buildHSEPrintHTML(opts) {
     +'<td style="width:50%"><div class="sig-title">Responsable HSE</div>'
     +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
-    +(signatureUrl
+    +(opts.responsable && signatureUrl
       ? '<div style="height:54px;padding:2px 0"><img src="'+signatureUrl+'" alt="Signature" style="max-width:180px;max-height:50px;object-fit:contain;display:block;"/></div>'
       : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
