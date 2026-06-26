@@ -1706,21 +1706,39 @@ img{max-width:100%;display:block;}
           <option value="">Chargement…</option>
         </select>
       </div>
-      <div class="fg">
-        <label class="fl">Date d'inspection</label>
-        <input class="fi" type="date" id="editInspDate"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="editInspDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="editInspProchaine"/>
+        </div>
       </div>
-      <div class="fg">
-        <label class="fl">État global</label>
-        <select class="fi" id="editInspEtat" style="height:40px">
-          <option value="Conforme">Conforme</option>
-          <option value="Non conforme">Non conforme</option>
-          <option value="Partiel">Partiel</option>
-        </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Type</label>
+          <input class="fi" id="editInspType" placeholder="ex. Extincteur, RIA…"/>
+        </div>
+        <div class="fg">
+          <label class="fl">État global</label>
+          <select class="fi" id="editInspEtat" style="height:40px">
+            <option value="Conforme">Conforme</option>
+            <option value="Non conforme">Non conforme</option>
+            <option value="Partiel">Partiel</option>
+          </select>
+        </div>
       </div>
-      <div class="fg">
-        <label class="fl">Prochaine inspection</label>
-        <input class="fi" type="date" id="editInspProchaine"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">ID Équipement</label>
+          <input class="fi" id="editInspEquipement" placeholder="N° ou code équipement"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Zone</label>
+          <input class="fi" id="editInspZone" placeholder="Zone / Emplacement"/>
+        </div>
       </div>
       <div class="fg">
         <label class="fl">Observations</label>
@@ -5603,10 +5621,13 @@ function openEditInspection(idx, kind) {
     ? (PEST_LABELS[c.type] || c.type || 'Inspection')
     : (c.type || 'Inspection');
   document.getElementById('editInspTitle').textContent = '✏ Modifier — ' + typeLabel + ' #' + c.id;
-  document.getElementById('editInspDate').value      = c.dateInspection     || '';
-  document.getElementById('editInspProchaine').value = c.prochaineInspection|| '';
-  document.getElementById('editInspEtat').value      = c.etatGlobal         || 'Conforme';
-  document.getElementById('editInspObs').value       = c.observations        || '';
+  document.getElementById('editInspDate').value       = c.dateInspection      || '';
+  document.getElementById('editInspProchaine').value  = c.prochaineInspection || '';
+  document.getElementById('editInspEtat').value       = c.etatGlobal          || 'Conforme';
+  document.getElementById('editInspObs').value        = c.observations         || '';
+  document.getElementById('editInspType').value       = c.type                || '';
+  document.getElementById('editInspEquipement').value = c.idEquipement         || '';
+  document.getElementById('editInspZone').value       = c.zone                || '';
   _loadSuperviseursList(c.superviseurNom || '');
   openSheet('editInspOv');
 }
@@ -5617,6 +5638,9 @@ function saveEditInspection() {
   var etat     = document.getElementById('editInspEtat').value;
   var proch    = document.getElementById('editInspProchaine').value;
   var obs      = document.getElementById('editInspObs').value.trim();
+  var typeVal  = document.getElementById('editInspType').value.trim();
+  var equip    = document.getElementById('editInspEquipement').value.trim();
+  var zone     = document.getElementById('editInspZone').value.trim();
   if (!dateVal) { toast('Date d\'inspection requise','err'); return; }
   var records  = _editInspKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
   var c        = records[_editInspIdx];
@@ -5632,13 +5656,16 @@ function saveEditInspection() {
       c.etatGlobal          = etat;
       c.prochaineInspection = proch;
       c.observations        = obs;
+      c.type                = typeVal;
+      c.idEquipement        = equip;
+      c.zone                = zone;
       closeSheet('editInspOv');
       if (_editInspKind === 'pest') _renderNuisiblesList();
       else _renderIncendieList();
       toast('✓ Inspection mise à jour', 'ok');
     })
     .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
-    [fn]({ adminKey: S.adminKey, id: c.id, superviseurNom: supNom, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs });
+    [fn]({ adminKey: S.adminKey, id: c.id, superviseurNom: supNom, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs, type: typeVal, idEquipement: equip, zone: zone });
 }
 
 /* ── Menu contextuel cartes d'inspection (admin) ── */

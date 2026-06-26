@@ -1541,9 +1541,12 @@ function updateChecklist(p) {
       if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
     }
     if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
     if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
-    if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
+    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
+    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
     return { success:true };
@@ -1853,9 +1856,12 @@ function updatePestChecklist(p) {
       if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
     }
     if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
     if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
-    if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
+    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
+    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
     return { success:true };
