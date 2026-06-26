@@ -1550,6 +1550,25 @@ function updateChecklist(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Valider une inspection incendie (admin uniquement) ──
+function validateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
+    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Lire toutes les inspections incendie ──
 function getChecklists(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
@@ -1557,7 +1576,8 @@ function getChecklists(token) {
     var sh = getIncendieSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var rows = sh.getRange(2, 1, lr-1, 13).getValues();
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
       var checks = {};
       try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
@@ -1575,7 +1595,8 @@ function getChecklists(token) {
         prochaineInspection: fmtDate_(r[10]),
         photoId: extractFileId_(r[11]),
         photoUrl: String(r[11]),
-        dateCreation: fmtDate_(r[12])
+        dateCreation: fmtDate_(r[12]),
+        responsableNom: String(r[13]||'')
       };
     });
     return { success:true, data:data.reverse() };
@@ -1805,6 +1826,25 @@ function updatePestChecklist(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Valider une inspection nuisibles (admin uniquement) ──
+function validatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
+    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Lire toutes les inspections nuisibles ─────────────────────
 function getPestChecklists(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
@@ -1812,7 +1852,8 @@ function getPestChecklists(token) {
     var sh = getNuisiblesSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var rows = sh.getRange(2, 1, lr-1, 13).getValues();
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
       var checks = {};
       try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
@@ -1830,7 +1871,8 @@ function getPestChecklists(token) {
         prochaineInspection:  fmtDate_(r[10]),
         photoId:              extractFileId_(r[11]),
         photoUrl:             String(r[11]),
-        dateCreation:         fmtDate_(r[12])
+        dateCreation:         fmtDate_(r[12]),
+        responsableNom:       String(r[13]||'')
       };
     });
     return { success:true, data:data.reverse() };

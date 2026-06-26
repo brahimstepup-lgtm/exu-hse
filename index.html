@@ -4916,11 +4916,13 @@ function _renderIncendieList() {
       + '</div>'
       + statsLine
       + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      + (c.responsableNom ? '<div style="font-size:.78rem;color:#22c55e;margin-top:4px">✅ Validé par '+esc(c.responsableNom)+'</div>' : '')
       + (c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
       + '<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
       + '<button class="btn btn-g" onclick="viewIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
       + '<button class="btn btn-g" onclick="printIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
       + (isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'incendie\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
+      + (isAdmin() ? '<button class="btn '+(c.responsableNom?'btn-p':'btn-g')+'" onclick="validateInspection('+idx+',\'incendie\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0" title="Valider l\'inspection">'+(c.responsableNom?'✅':'☑')+'</button>' : '')
       + '</div>'
       + '</div>';
   }).join('');
@@ -5498,6 +5500,7 @@ function printIncendieRecord(idx) {
     subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
     date:        _fmtDate(c.dateInspection||''),
     superviseur: c.superviseurNom||'',
+    responsable: c.responsableNom||'',
     prochaine:   _fmtDate(c.prochaineInspection||''),
     obs:         c.observations||'',
     etatGlobal:  c.etatGlobal||'',
@@ -5634,6 +5637,29 @@ function saveEditInspection() {
     })
     .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
     [fn]({ adminKey: S.adminKey, id: c.id, superviseurNom: supNom, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs });
+}
+
+function validateInspection(idx, kind) {
+  var records = kind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c = records[idx];
+  if (!c) return;
+  var adminNom = (S_AUTH && S_AUTH.name) || 'Admin';
+  var msg = 'Valider cette inspection au nom de :\n"' + adminNom + '" ?\n\nLe nom et la griffe apparaîtront dans la partie Responsable HSE du rapport.';
+  if (c.responsableNom) msg += '\n\n(déjà validé par : ' + c.responsableNom + ')';
+  if (!confirm(msg)) return;
+  showLoader('Validation…');
+  var fn = kind === 'pest' ? 'validatePestChecklist' : 'validateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: ' + (r&&r.error||'?'), 'err'); return; }
+      c.responsableNom = adminNom;
+      if (kind === 'pest') _renderNuisiblesList();
+      else _renderIncendieList();
+      toast('✅ Inspection validée par ' + adminNom, 'ok');
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id, responsableNom: adminNom });
 }
 
 function renderIncendie() {
@@ -6424,11 +6450,13 @@ function _renderNuisiblesList() {
       +'</div>'
       +statsLine
       +(c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      +(c.responsableNom ? '<div style="font-size:.78rem;color:#22c55e;margin-top:4px">✅ Validé par '+esc(c.responsableNom)+'</div>' : '')
       +(c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Rapport signé joint</div>' : '')
       +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
       +'<button class="btn btn-g" onclick="viewPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
       +'<button class="btn btn-g" onclick="printPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
       +(isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'pest\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
+      +(isAdmin() ? '<button class="btn '+(c.responsableNom?'btn-p':'btn-g')+'" onclick="validateInspection('+idx+',\'pest\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0" title="Valider l\'inspection">'+(c.responsableNom?'✅':'☑')+'</button>' : '')
       +'</div>'
       +'</div>';
   }).join('');
@@ -6645,12 +6673,12 @@ function _buildHSEPrintHTML(opts) {
     +'</div>'
     +'<table class="sig-table"><tr>'
     +'<td style="width:50%"><div class="sig-title">Responsable HSE</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
     +(signatureUrl
       ? '<div style="height:54px;padding:2px 0"><img src="'+signatureUrl+'" alt="Signature" style="max-width:180px;max-height:50px;object-fit:contain;display:block;"/></div>'
       : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
     +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
     +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
@@ -6748,6 +6776,7 @@ function printPestRecord(idx) {
     title:      c.type || 'Inspection Dispositifs Nuisibles',
     date:       _fmtDate(c.dateInspection||''),
     superviseur:c.superviseurNom||'',
+    responsable:c.responsableNom||'',
     prochaine:  _fmtDate(c.prochaineInspection||''),
     obs:        c.observations||'',
     types:      activeTypes,
