@@ -1250,6 +1250,24 @@ img{max-width:100%;display:block;}
           </div>
         </div>
       </div>
+      <!-- Signature / griffe Superviseur HSE -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Signature / Griffe Superviseur HSE</div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div id="superSigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            <span id="superSigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
+            <img id="superSigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
+          </div>
+          <div style="flex:1">
+            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
+              📁 Choisir l'image
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSuperSignatureUpload(this)"/>
+            </label>
+            <button id="deleteSuperSigBtn" class="btn btn-g" onclick="deleteAdminSuperSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
+            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Superviseur HSE » de toutes les fiches imprimées</div>
+          </div>
+        </div>
+      </div>
       <!-- Code document -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
@@ -4096,12 +4114,14 @@ function openConfigExt() {
       _configuredZones = r.zones||[];
       _extConfig       = r.extConfig||[];
       _extDocCode      = r.extDocCode || 'ENR-HSE 1';
-      _hseLogoUrl      = r.logoUrl      || '';
-      _hseSignatureUrl = r.signatureUrl || '';
+      _hseLogoUrl               = r.logoUrl                || '';
+      _hseSignatureUrl          = r.signatureUrl           || '';
+      _hseSuperSignatureUrl     = r.supervisorSignatureUrl || '';
       var dcEl = document.getElementById('extDocCodeInput');
       if (dcEl) dcEl.value = _extDocCode;
       _renderLogoPreview();
       _renderSigPreview();
+      _renderSuperSigPreview();
       var _cl = r.checklists || {};
       var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
       _checklistConfig = _hasConfig ? _cl : {
@@ -4220,10 +4240,12 @@ function saveExtConfigLocal() {
 ══════════════════════════════════════════ */
 var _extDocCode    = 'ENR-HSE 1';
 var _riaDocCode    = 'ENR-HSE 2';
-var _hseLogoUrl          = '';
-var _hseLogoDataUrl      = '';
-var _hseSignatureUrl     = '';
-var _hseSignatureDataUrl = '';
+var _hseLogoUrl               = '';
+var _hseLogoDataUrl           = '';
+var _hseSignatureUrl          = '';
+var _hseSignatureDataUrl      = '';
+var _hseSuperSignatureUrl     = '';
+var _hseSuperSignatureDataUrl = '';
 var _incendieCurrentDetailIdx = -1;
 var _globalStatuts  = {};
 var _globalNotes    = {};
@@ -4359,6 +4381,69 @@ function deleteAdminSignature() {
     .deleteSignatureConfig({ adminKey:S.adminKey });
 }
 
+/* ── Signature / griffe Superviseur HSE ────────── */
+function _renderSuperSigPreview() {
+  var img  = document.getElementById('superSigPreviewImg');
+  var ph   = document.getElementById('superSigPreviewPlaceholder');
+  var delB = document.getElementById('deleteSuperSigBtn');
+  if (!img) return;
+  var src = _hseSuperSignatureDataUrl || _hseSuperSignatureUrl;
+  if (src) {
+    img.onerror = function() {
+      img.style.display = 'none';
+      ph.textContent = '✓';
+      ph.style.display = 'flex';
+    };
+    img.src = src;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+    if (delB) delB.style.display = 'inline-flex';
+  } else {
+    img.style.display = 'none';
+    ph.textContent    = '✍';
+    ph.style.display  = 'flex';
+    if (delB) delB.style.display = 'none';
+  }
+}
+
+function onSuperSignatureUpload(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _hseSuperSignatureDataUrl = dataUrl;
+    _renderSuperSigPreview();
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement de la signature superviseur…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
+        toast('✓ Signature superviseur mise à jour','ok');
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveSupervisorSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteAdminSuperSignature() {
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _hseSuperSignatureUrl     = '';
+      _hseSuperSignatureDataUrl = '';
+      _renderSuperSigPreview();
+      toast('✓ Signature superviseur supprimée','ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey });
+}
+
 function openGlobalInspection() {
   showLoader('Chargement…');
   google.script.run
@@ -4367,8 +4452,9 @@ function openGlobalInspection() {
       if (!r||!r.success) { toast('Erreur config: '+(r&&r.error||'?'),'err'); return; }
       _extConfig  = r.data||[];
       _extDocCode = r.extDocCode || _extDocCode;
-      _hseLogoUrl      = r.logoUrl      || _hseLogoUrl;
-      _hseSignatureUrl = r.signatureUrl || _hseSignatureUrl;
+      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
+      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
+      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
       _initGlobalForm();
     })
@@ -4811,9 +4897,10 @@ function openGlobalInspectionRIA() {
       _riaConfig  = r.riaConfig || { count:20, items:[] };
       if (!_riaConfig.items) _riaConfig.items = [];
       if (!_riaConfig.count) _riaConfig.count = 20;
-      _riaDocCode      = r.riaDocCode    || _riaDocCode;
-      _hseLogoUrl      = r.logoUrl       || _hseLogoUrl;
-      _hseSignatureUrl = r.signatureUrl  || _hseSignatureUrl;
+      _riaDocCode           = r.riaDocCode            || _riaDocCode;
+      _hseLogoUrl           = r.logoUrl               || _hseLogoUrl;
+      _hseSignatureUrl      = r.signatureUrl          || _hseSignatureUrl;
+      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       _initGlobalFormRIA();
       openSheet('globalRiaOv');
     })
@@ -5218,7 +5305,7 @@ function printBlankExtChecklist() {
     date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalIncProchaine')&&document.getElementById('globalIncProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl), sections:sections
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl), sections:sections
   }));
 }
 
@@ -5237,7 +5324,7 @@ function printBlankRiaChecklist() {
     date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalRiaProchaine')&&document.getElementById('globalRiaProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
     sections: [{ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:items, checklist:CHECKLIST_RIA }]
   }));
 }
@@ -5280,7 +5367,7 @@ function printIncendieRecord(idx) {
     obs:         c.observations||'',
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
     sections:    sections
   }));
 }
@@ -5322,7 +5409,7 @@ function viewIncendieRecord(idx) {
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
     autoPrint:   false,
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
     sections:    sections
   }));
 }
@@ -5544,10 +5631,11 @@ function openConfigPest() {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _pestConfig       = r.pestConfig || {};
-      _pestDocCode      = (_pestConfig.docCode) || 'ENR-HSE 7';
-      _hseLogoUrl       = r.logoUrl      || _hseLogoUrl;
-      _hseSignatureUrl  = r.signatureUrl || _hseSignatureUrl;
+      _pestConfig           = r.pestConfig || {};
+      _pestDocCode          = (_pestConfig.docCode) || 'ENR-HSE 7';
+      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
+      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
+      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       _configuredZones  = r.zones || [];
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
@@ -5736,10 +5824,11 @@ function openGlobalPestInspection(pestType) {
     .withSuccessHandler(function(r) {
       hideSplash();
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _pestConfig  = r.pestConfig || {};
-      _pestDocCode     = (_pestConfig.docCode) || 'ENR-HSE 7';
-      _hseLogoUrl      = r.logoUrl      || _hseLogoUrl;
-      _hseSignatureUrl = r.signatureUrl || _hseSignatureUrl;
+      _pestConfig           = r.pestConfig || {};
+      _pestDocCode          = (_pestConfig.docCode) || 'ENR-HSE 7';
+      _hseLogoUrl           = r.logoUrl                || _hseLogoUrl;
+      _hseSignatureUrl      = r.signatureUrl           || _hseSignatureUrl;
+      _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
       _pestChecklistConfig = hasConfig ? _cl : {};
@@ -6180,9 +6269,10 @@ function _fmtDate(s) {
 ────────────────────────────────────────────────────────────────── */
 function _buildHSEPrintHTML(opts) {
   var docCode      = opts.docCode      || 'ENR-HSE';
-  var autoPrint    = opts.autoPrint    !== false;
-  var logoUrl      = opts.logoUrl      || '';
-  var signatureUrl = opts.signatureUrl || '';
+  var autoPrint             = opts.autoPrint            !== false;
+  var logoUrl               = opts.logoUrl              || '';
+  var signatureUrl          = opts.signatureUrl         || '';
+  var supervisorSignatureUrl = opts.supervisorSignatureUrl || '';
   var now         = new Date();
   var editionDate = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
 
@@ -6319,7 +6409,10 @@ function _buildHSEPrintHTML(opts) {
     +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
     +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
     +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
-    +'<div class="sig-field-label">Signature :</div><div class="sig-line-lg"></div>'
+    +'<div class="sig-field-label">Signature :</div>'
+    +(supervisorSignatureUrl
+      ? '<div style="height:54px;padding:2px 0"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="max-width:180px;max-height:50px;object-fit:contain;display:block;"/></div>'
+      : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
     +'</tr></table>'
     +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Généré le '+editionDate+' — Conforme aux exigences ISO 9001:2015</div>'
@@ -6344,10 +6437,11 @@ function _buildPestPrintHTML(opts) {
     obs:        opts.obs,
     etatGlobal: opts.etatGlobal,
     mode:       opts.mode,
-    autoPrint:    opts.autoPrint,
-    logoUrl:      opts.logoUrl,
-    signatureUrl: opts.signatureUrl,
-    sections:     sections
+    autoPrint:              opts.autoPrint,
+    logoUrl:                opts.logoUrl,
+    signatureUrl:           opts.signatureUrl,
+    supervisorSignatureUrl: opts.supervisorSignatureUrl,
+    sections:               sections
   });
 }
 
@@ -6381,7 +6475,7 @@ function printBlankPestChecklist() {
     typeData:   typeData,
     docCode:    _pestDocCode,
     mode:       'blank',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6413,7 +6507,7 @@ function printPestRecord(idx) {
     docCode:    _pestDocCode,
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6446,7 +6540,7 @@ function viewPestRecord(idx) {
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
     autoPrint:  false,
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
