@@ -858,7 +858,6 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
-  <button class="snav" id="sbSuperSig" onclick="openUsersPanel()" style="display:none"><span class="snav-i">✍</span>Ma signature</button>
 </nav>
 
 <!-- APP -->
@@ -2130,28 +2129,27 @@ function filterUsers(q) {
 
 function openUsersPanel() {
   if (S_AUTH.role==='admin' && !S.adminKey) { S.role='admin'; S.adminKey=S_AUTH.token; }
-  if (!isSuperOrAdmin()) { toast('Accès refusé','err'); return; }
+  if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
   openSheet('usersOv');
-  // Afficher/masquer les sections selon le rôle
-  var superSec  = document.getElementById('superSigSection');
-  var adminSec  = document.getElementById('usersAdminSection');
-  var isSup = isSupervisor();
-  var isAdm = isAdmin();
-  if (superSec) superSec.style.display = isSup ? '' : 'none';
-  if (adminSec) adminSec.style.display = isAdm ? '' : 'none';
-  // Superviseur : charger et afficher sa signature
-  if (isSup) {
+  // Les deux sections sont visibles pour l'admin
+  var superSec = document.getElementById('superSigSection');
+  var adminSec = document.getElementById('usersAdminSection');
+  if (superSec) superSec.style.display = '';
+  if (adminSec) adminSec.style.display = '';
+  // Charger la signature superviseur existante
+  if (!_hseSuperSignatureUrl) {
     google.script.run
       .withSuccessHandler(function(r) {
         if (r && r.success) {
-          _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+          _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
           _renderSuperSigPreview();
         }
       })
-      .getExtConfig(S_AUTH.token);
-    return;
+      .getExtConfig(S.adminKey);
+  } else {
+    _renderSuperSigPreview();
   }
-  // Admin : charger la liste des utilisateurs
+  // Charger la liste des utilisateurs
   var list = document.getElementById('usersList');
   var searchEl = document.getElementById('usersSearch');
   if (searchEl) searchEl.value = '';
@@ -2447,9 +2445,6 @@ function applyRole(){
   ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
-  // Bouton "Ma signature" uniquement pour les superviseurs (pas admins)
-  var sbSuperSigEl = document.getElementById('sbSuperSig');
-  if (sbSuperSigEl) sbSuperSigEl.style.display = super_ && !admin ? '' : 'none';
   // Redirige si vue interdite
   if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV(super_?'sensibilisation':'all', null);
   if(!showSuper && SUPERVISOR_VIEWS[S.view]) goV('all', null);
@@ -4465,7 +4460,7 @@ function onSuperSignatureUpload(input) {
         toast('✓ Signature superviseur mise à jour','ok');
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-      .saveSupervisorSignatureConfig({ adminKey:S.adminKey || S_AUTH.token, sigBase64:b64, mime:file.type });
+      .saveSupervisorSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
   };
   reader.readAsDataURL(file);
 }
@@ -4482,7 +4477,7 @@ function deleteAdminSuperSignature() {
       toast('✓ Signature superviseur supprimée','ok');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey || S_AUTH.token });
+    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey });
 }
 
 function openGlobalInspection() {

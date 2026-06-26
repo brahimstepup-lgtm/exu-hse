@@ -1825,7 +1825,7 @@ function deleteSignatureConfig(p) {
 // SIGNATURE / GRIFFE DU SUPERVISEUR HSE
 // ══════════════════════════════════════════════════════════════════
 function saveSupervisorSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
     var props  = PropertiesService.getScriptProperties();
     var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
@@ -1843,7 +1843,7 @@ function saveSupervisorSignatureConfig(p) {
 }
 
 function deleteSupervisorSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
     var props  = PropertiesService.getScriptProperties();
     var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
