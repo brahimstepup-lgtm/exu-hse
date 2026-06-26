@@ -170,6 +170,27 @@ function adminGetUsers(adminKey) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// Retourner la liste des superviseurs HSE + admins (pour le menu déroulant)
+function getSuperviseursList(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:true, data:[] };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var list = [];
+    rows.forEach(function(r) {
+      var role  = String(r[EDB.ROLE]||'').trim();
+      var actif = String(r[EDB.ACTIF]).toLowerCase();
+      var nom   = String(r[EDB.NAME]).trim();
+      if ((role === 'hse_supervisor' || role === 'admin') && actif === 'true' && nom) {
+        list.push({ matricule: String(r[EDB.MAT]).trim(), nom: nom });
+      }
+    });
+    return { success:true, data:list };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // Admin: set password for an employee
 function adminSetPassword(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };

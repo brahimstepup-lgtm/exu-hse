@@ -1702,7 +1702,9 @@ img{max-width:100%;display:block;}
     <div class="sh-body" style="overflow-y:auto">
       <div class="fg">
         <label class="fl">Inspecteur / Superviseur HSE</label>
-        <input class="fi" id="editInspSuperviseur" placeholder="Nom et prénom"/>
+        <select class="fi" id="editInspSuperviseur" style="height:40px">
+          <option value="">Chargement…</option>
+        </select>
       </div>
       <div class="fg">
         <label class="fl">Date d'inspection</label>
@@ -5555,6 +5557,38 @@ function viewIncendieRecord(idx) {
 var _editInspKind = '';
 var _editInspIdx  = -1;
 
+function _loadSuperviseursList(currentNom) {
+  var sel = document.getElementById('editInspSuperviseur');
+  sel.innerHTML = '<option value="">Chargement…</option>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      sel.innerHTML = '';
+      var list = (r && r.success && r.data) ? r.data : [];
+      // Si le nom actuel n'est pas dans la liste, l'ajouter en premier
+      var found = list.some(function(sv){ return sv.nom === currentNom; });
+      if (currentNom && !found) {
+        var opt = document.createElement('option');
+        opt.value = currentNom; opt.textContent = currentNom; opt.selected = true;
+        sel.appendChild(opt);
+      }
+      list.forEach(function(sv) {
+        var opt = document.createElement('option');
+        opt.value = sv.nom; opt.textContent = sv.nom;
+        if (sv.nom === currentNom) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (!sel.options.length) {
+        sel.innerHTML = '<option value="">—</option>';
+      }
+    })
+    .withFailureHandler(function() {
+      sel.innerHTML = currentNom
+        ? '<option value="'+currentNom+'">'+currentNom+'</option>'
+        : '<option value="">—</option>';
+    })
+    .getSuperviseursList(S.token);
+}
+
 function openEditInspection(idx, kind) {
   var c = kind === 'pest' ? _nuisiblesRecords[idx] : _incendieRecords[idx];
   if (!c) return;
@@ -5564,11 +5598,11 @@ function openEditInspection(idx, kind) {
     ? (PEST_LABELS[c.type] || c.type || 'Inspection')
     : (c.type || 'Inspection');
   document.getElementById('editInspTitle').textContent = '✏ Modifier — ' + typeLabel + ' #' + c.id;
-  document.getElementById('editInspSuperviseur').value = c.superviseurNom    || '';
   document.getElementById('editInspDate').value      = c.dateInspection     || '';
   document.getElementById('editInspProchaine').value = c.prochaineInspection|| '';
   document.getElementById('editInspEtat').value      = c.etatGlobal         || 'Conforme';
   document.getElementById('editInspObs').value       = c.observations        || '';
+  _loadSuperviseursList(c.superviseurNom || '');
   openSheet('editInspOv');
 }
 
