@@ -858,6 +858,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+  <button class="snav" id="sbSuperSig" onclick="openUsersPanel()" style="display:none"><span class="snav-i">✍</span>Ma signature</button>
 </nav>
 
 <!-- APP -->
@@ -977,6 +978,24 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
+      </div>
+      <!-- Signature Responsable HSE -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Signature / Griffe Responsable HSE</div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div id="sigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            <span id="sigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
+            <img id="sigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
+          </div>
+          <div style="flex:1">
+            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
+              📁 Choisir l'image
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSignatureUpload(this)"/>
+            </label>
+            <button id="deleteSigBtn" class="btn btn-g" onclick="deleteAdminSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
+            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Responsable HSE » de toutes les fiches imprimées</div>
+          </div>
+        </div>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -1229,42 +1248,6 @@ img{max-width:100%;display:block;}
             </label>
             <button id="deleteLogoBtn" class="btn btn-g" onclick="deleteAdminLogo()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
             <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît en haut à gauche de toutes les fiches imprimées</div>
-          </div>
-        </div>
-      </div>
-      <!-- Signature / griffe Responsable HSE -->
-      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Signature / Griffe Responsable HSE</div>
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div id="sigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-            <span id="sigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
-            <img id="sigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
-              📁 Choisir l'image
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSignatureUpload(this)"/>
-            </label>
-            <button id="deleteSigBtn" class="btn btn-g" onclick="deleteAdminSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
-            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Responsable HSE » de toutes les fiches imprimées</div>
-          </div>
-        </div>
-      </div>
-      <!-- Signature / griffe Superviseur HSE -->
-      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Signature / Griffe Superviseur HSE</div>
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div id="superSigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-            <span id="superSigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
-            <img id="superSigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
-              📁 Choisir l'image
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSuperSignatureUpload(this)"/>
-            </label>
-            <button id="deleteSuperSigBtn" class="btn btn-g" onclick="deleteAdminSuperSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
-            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Superviseur HSE » de toutes les fiches imprimées</div>
           </div>
         </div>
       </div>
@@ -1958,13 +1941,34 @@ img{max-width:100%;display:block;}
     <div class="sh-hdr"><span class="sh-title">👥 Gestion des accès</span>
       <button class="sh-close" onclick="closeSheet('usersOv')">✕</button></div>
     <div class="sh-body">
-      <div style="margin-bottom:10px">
-        <input id="usersSearch" type="text" placeholder="🔍 Rechercher par matricule ou nom…"
-          oninput="filterUsers(this.value)"
-          style="width:100%;box-sizing:border-box;background:var(--ink3);border:1px solid var(--line2);color:var(--t1);border-radius:8px;padding:8px 12px;font-size:.88rem;outline:none">
+      <!-- Section signature superviseur (visible aux superviseurs seulement) -->
+      <div id="superSigSection" style="display:none;background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">✍ Ma signature / Griffe</div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div id="superSigPreviewBox" style="width:120px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            <span id="superSigPreviewPlaceholder" style="font-size:1.2rem">✍</span>
+            <img id="superSigPreviewImg" src="" alt="Signature" style="max-width:118px;max-height:50px;object-fit:contain;display:none"/>
+          </div>
+          <div style="flex:1">
+            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
+              📁 Choisir l'image
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onSuperSignatureUpload(this)"/>
+            </label>
+            <button id="deleteSuperSigBtn" class="btn btn-g" onclick="deleteAdminSuperSignature()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
+            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît dans le bloc « Superviseur HSE » de toutes les fiches imprimées</div>
+          </div>
+        </div>
       </div>
-      <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
-        <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
+      <!-- Section gestion des utilisateurs (admin seulement) -->
+      <div id="usersAdminSection">
+        <div style="margin-bottom:10px">
+          <input id="usersSearch" type="text" placeholder="🔍 Rechercher par matricule ou nom…"
+            oninput="filterUsers(this.value)"
+            style="width:100%;box-sizing:border-box;background:var(--ink3);border:1px solid var(--line2);color:var(--t1);border-radius:8px;padding:8px 12px;font-size:.88rem;outline:none">
+        </div>
+        <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2126,8 +2130,28 @@ function filterUsers(q) {
 
 function openUsersPanel() {
   if (S_AUTH.role==='admin' && !S.adminKey) { S.role='admin'; S.adminKey=S_AUTH.token; }
-  if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
+  if (!isSuperOrAdmin()) { toast('Accès refusé','err'); return; }
   openSheet('usersOv');
+  // Afficher/masquer les sections selon le rôle
+  var superSec  = document.getElementById('superSigSection');
+  var adminSec  = document.getElementById('usersAdminSection');
+  var isSup = isSupervisor();
+  var isAdm = isAdmin();
+  if (superSec) superSec.style.display = isSup ? '' : 'none';
+  if (adminSec) adminSec.style.display = isAdm ? '' : 'none';
+  // Superviseur : charger et afficher sa signature
+  if (isSup) {
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (r && r.success) {
+          _hseSuperSignatureUrl = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+          _renderSuperSigPreview();
+        }
+      })
+      .getExtConfig(S_AUTH.token);
+    return;
+  }
+  // Admin : charger la liste des utilisateurs
   var list = document.getElementById('usersList');
   var searchEl = document.getElementById('usersSearch');
   if (searchEl) searchEl.value = '';
@@ -2423,6 +2447,9 @@ function applyRole(){
   ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
+  // Bouton "Ma signature" uniquement pour les superviseurs (pas admins)
+  var sbSuperSigEl = document.getElementById('sbSuperSig');
+  if (sbSuperSigEl) sbSuperSigEl.style.display = super_ && !admin ? '' : 'none';
   // Redirige si vue interdite
   if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV(super_?'sensibilisation':'all', null);
   if(!showSuper && SUPERVISOR_VIEWS[S.view]) goV('all', null);
@@ -2611,6 +2638,21 @@ function brHtml(n,v,p){
    ADMIN KPI — Heatmap + Tables
 ══════════════════════════════════════════ */
 function renderAdmin(){
+  // Charger les URLs de signature au premier affichage du dashboard
+  if (!_adminSigLoaded) {
+    _adminSigLoaded = true;
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (r && r.success) {
+          _hseLogoUrl      = r.logoUrl      || _hseLogoUrl;
+          _hseSignatureUrl = r.signatureUrl || _hseSignatureUrl;
+          _renderSigPreview();
+        }
+      })
+      .getExtConfig(S.adminKey || S_AUTH.token);
+  } else {
+    _renderSigPreview();
+  }
   var k=S.kpis;
   if(!k){ document.getElementById('adminBody').innerHTML='<div class="empty"><div class="empty-i">⏳</div><div class="empty-t">Chargement KPI…</div></div>'; return; }
 
@@ -4120,8 +4162,6 @@ function openConfigExt() {
       var dcEl = document.getElementById('extDocCodeInput');
       if (dcEl) dcEl.value = _extDocCode;
       _renderLogoPreview();
-      _renderSigPreview();
-      _renderSuperSigPreview();
       var _cl = r.checklists || {};
       var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
       _checklistConfig = _hasConfig ? _cl : {
@@ -4246,6 +4286,7 @@ var _hseSignatureUrl          = '';
 var _hseSignatureDataUrl      = '';
 var _hseSuperSignatureUrl     = '';
 var _hseSuperSignatureDataUrl = '';
+var _adminSigLoaded           = false;
 var _incendieCurrentDetailIdx = -1;
 var _globalStatuts  = {};
 var _globalNotes    = {};
@@ -4424,7 +4465,7 @@ function onSuperSignatureUpload(input) {
         toast('✓ Signature superviseur mise à jour','ok');
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-      .saveSupervisorSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
+      .saveSupervisorSignatureConfig({ adminKey:S.adminKey || S_AUTH.token, sigBase64:b64, mime:file.type });
   };
   reader.readAsDataURL(file);
 }
@@ -4441,7 +4482,7 @@ function deleteAdminSuperSignature() {
       toast('✓ Signature superviseur supprimée','ok');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey });
+    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey || S_AUTH.token });
 }
 
 function openGlobalInspection() {
