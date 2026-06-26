@@ -5586,7 +5586,7 @@ function _loadSuperviseursList(currentNom) {
         ? '<option value="'+currentNom+'">'+currentNom+'</option>'
         : '<option value="">—</option>';
     })
-    .getSuperviseursList(S.token);
+    .getSuperviseursList({ token: S.token, adminKey: S.adminKey });
 }
 
 function openEditInspection(idx, kind) {

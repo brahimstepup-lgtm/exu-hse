@@ -171,8 +171,11 @@ function adminGetUsers(adminKey) {
 }
 
 // Retourner la liste des superviseurs HSE + admins (pour le menu déroulant)
-function getSuperviseursList(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+function getSuperviseursList(p) {
+  var token    = (typeof p === 'string') ? p : (p && p.token);
+  var adminKey = (typeof p === 'object') ? (p && p.adminKey) : null;
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey) && !isSessionSuperOrAdmin_(token))
+    return { success:false, error:'Accès refusé' };
   try {
     var sh = getEdbSheet_();
     var lr = sh.getLastRow();
@@ -180,10 +183,9 @@ function getSuperviseursList(token) {
     var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
     var list = [];
     rows.forEach(function(r) {
-      var role  = String(r[EDB.ROLE]||'').trim();
-      var actif = String(r[EDB.ACTIF]).toLowerCase();
-      var nom   = String(r[EDB.NAME]).trim();
-      if ((role === 'hse_supervisor' || role === 'admin') && actif === 'true' && nom) {
+      var role = String(r[EDB.ROLE]||'').trim();
+      var nom  = String(r[EDB.NAME]).trim();
+      if ((role === 'hse_supervisor' || role === 'admin') && nom) {
         list.push({ matricule: String(r[EDB.MAT]).trim(), nom: nom });
       }
     });
