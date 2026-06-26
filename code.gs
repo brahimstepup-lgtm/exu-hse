@@ -1519,6 +1519,7 @@ function updateChecklist(p) {
     }
     if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
     if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
     if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
@@ -1773,6 +1774,7 @@ function updatePestChecklist(p) {
     }
     if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
     if (p.dateInspection)    sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
     if (p.etatGlobal)        sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
