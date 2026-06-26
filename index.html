@@ -6645,19 +6645,19 @@ function _buildHSEPrintHTML(opts) {
     +'</div>'
     +'<table class="sig-table"><tr>'
     +'<td style="width:50%"><div class="sig-title">Responsable HSE</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
     +'<div class="sig-field-label">Signature :</div>'
     +(signatureUrl
       ? '<div style="height:54px;padding:2px 0"><img src="'+signatureUrl+'" alt="Signature" style="max-width:180px;max-height:50px;object-fit:contain;display:block;"/></div>'
       : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
     +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line"></div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
     +(supervisorSignatureUrl
       ? '<div style="height:54px;padding:2px 0"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="max-width:180px;max-height:50px;object-fit:contain;display:block;"/></div>'
       : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
+    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
     +'</tr></table>'
     +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Éd. '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
     +autoScript
