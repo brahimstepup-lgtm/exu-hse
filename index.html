@@ -797,6 +797,36 @@ img{max-width:100%;display:block;}
 .role-admin{background:rgba(239,68,68,.2);color:#ef4444;}
 .role-super{background:rgba(245,197,24,.2);color:#f5c518;}
 .role-user{background:rgba(107,114,128,.2);color:#9ca3af;}
+
+/* ══ SIGNATURE RAPPORT (griffes) ═══════════════════════════ */
+.sig-rapport-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:28px;}
+.sig-rapport-col{position:relative;overflow:visible;border:1px solid #c8cdd6;border-radius:6px;padding:16px 16px 14px;background:#fff;color:#111;}
+.sig-rapport-col-name{font-size:.78rem;font-weight:700;color:#1a1a2e;text-align:center;margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase;}
+.sig-rapport-label{font-size:.71rem;color:#555;margin-bottom:16px;}
+.sig-rapport-img-wrap{position:relative;height:70px;overflow:visible;margin-bottom:6px;}
+.sig-rapport-img{
+  position:absolute;
+  top:-24px;left:-14px;         /* déborde hors du cadre */
+  width:210px;height:105px;
+  object-fit:contain;
+  mix-blend-mode:multiply;      /* retire le fond blanc — rendu encre */
+  z-index:9;                    /* par-dessus le texte adjacent */
+  transform:rotate(-2deg);      /* légère inclinaison naturelle */
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.07));
+  pointer-events:none;
+  opacity:.93;
+}
+.sig-rapport-placeholder{height:60px;border-bottom:1px solid #999;margin-bottom:10px;}
+.sig-rapport-title{font-size:.7rem;color:#333;font-style:italic;text-align:center;line-height:1.4;}
+.sig-rapport-date{font-size:.7rem;color:#666;margin-top:3px;text-align:center;}
+/* Rapport général */
+.rapport-wrap{background:#fff;color:#111;padding:20px 20px 8px;font-family:'Space Grotesk',sans-serif;}
+.rapport-header{border-bottom:2px solid #1a1a2e;padding-bottom:12px;margin-bottom:16px;}
+.rapport-title{font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:2px;}
+.rapport-meta{font-size:.75rem;color:#555;line-height:1.6;}
+.rapport-section{margin-bottom:14px;}
+.rapport-section-title{font-size:.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:8px;}
+.rapport-part-chip{display:inline-block;background:#f0f2f8;color:#1a1a2e;border-radius:12px;padding:2px 10px;font-size:.72rem;margin:2px;}
 </style>
 </head>
 <body>
@@ -976,6 +1006,7 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
+        <button class="btn btn-b" onclick="openSigAdmin()">✍️ Griffes rapport</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -3366,6 +3397,7 @@ function renderSensibilisation() {
           + (partNames ? '<div style="font-size:.78rem;color:var(--t2);margin-bottom:8px">👥 '+partNames+'</div>' : '')
           + (c.notes ? '<div style="font-size:.8rem;color:var(--t3);margin-bottom:8px">📝 '+esc(c.notes)+'</div>' : '')
           + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir fiche de présence</a>' : '<span style="font-size:.78rem;color:var(--t3)">Pas de fiche jointe</span>')
+          + '<div style="margin-top:10px;text-align:right"><button onclick="(function(campagne){openSensiRapport(campagne);})('+JSON.stringify(c)+')" style="background:var(--ink3);border:1px solid var(--line2);color:var(--t2);border-radius:8px;padding:6px 12px;font-size:.76rem;cursor:pointer;font-family:var(--fh)">📄 Rapport</button></div>'
           + '</div>';
       }).join('');
     })
@@ -5031,6 +5063,181 @@ function openIfsId(fileId) {
     .withFailureHandler(function(){})
     .getImageBase64(fileId);
 }
+
+/* ══ CONFIG GRIFFES (admin) ════════════════════════════════ */
+function openSigAdmin() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.success) {
+        document.getElementById('sigKouachiId').value = r.kouachiId || '';
+        document.getElementById('sigSeddikiId').value = r.seddikiId || '';
+      }
+      openSheet('sigAdminOv');
+    })
+    .withFailureHandler(function() { openSheet('sigAdminOv'); })
+    .getSigIds(S.adminKey);
+}
+
+function saveSigAdminConfig() {
+  var k = document.getElementById('sigKouachiId').value.trim();
+  var s = document.getElementById('sigSeddikiId').value.trim();
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r && r.success) {
+        _sigCache = {};  // vider le cache
+        toast('✓ Griffes enregistrées','ok');
+        closeSheet('sigAdminOv');
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveSigConfig({ adminKey:S.adminKey, kouachiId:k, seddikiId:s });
+}
+
+/* ══ RAPPORT DE SENSIBILISATION — griffes ══════════════════ */
+var _sigCache = {};  // { kouachi: 'data:...', seddiki: 'data:...' }
+
+function openSensiRapport(campagne) {
+  var body = document.getElementById('sensiRapportBody');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement…</div>';
+  openSheet('sensiRapportOv');
+
+  /* Charge les griffes depuis Drive puis construit le rapport */
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.success) {
+        _sigCache.kouachi = r.kouachi || '';
+        _sigCache.seddiki = r.seddiki || '';
+      }
+      body.innerHTML = _buildSensiRapportHtml(campagne);
+    })
+    .withFailureHandler(function() {
+      body.innerHTML = _buildSensiRapportHtml(campagne);
+    })
+    .getSigImages(S.adminKey);
+}
+
+function _buildSensiRapportHtml(c) {
+  var dateStr = c.dateCampagne || '—';
+  var theme   = c.theme || '—';
+  var anim    = c.animateurNom || '—';
+  var notes   = c.notes || '';
+  var parts   = (c.participants || []);
+
+  /* ── Entête ── */
+  var html = '<div class="rapport-wrap">';
+  html += '<div class="rapport-header">'
+    + '<div class="rapport-title">📋 Rapport de Sensibilisation HSE</div>'
+    + '<div class="rapport-meta">'
+    + '<span>📅 Date : <b>'+esc(dateStr)+'</b></span> &nbsp;·&nbsp; '
+    + '<span>🎯 Thème : <b>'+esc(theme)+'</b></span>'
+    + (anim ? ' &nbsp;·&nbsp; <span>🦺 Animateur : <b>'+esc(anim)+'</b></span>' : '')
+    + '</div>'
+    + '</div>';
+
+  /* ── Participants ── */
+  if (parts.length) {
+    html += '<div class="rapport-section">'
+      + '<div class="rapport-section-title">Participants ('+parts.length+')</div>'
+      + '<div>';
+    parts.forEach(function(p) {
+      html += '<span class="rapport-part-chip">'+esc(p.name||p.matricule)+'</span>';
+    });
+    html += '</div></div>';
+  }
+
+  /* ── Notes ── */
+  if (notes) {
+    html += '<div class="rapport-section">'
+      + '<div class="rapport-section-title">Notes</div>'
+      + '<div style="font-size:.8rem;color:#333;line-height:1.6">'+esc(notes)+'</div>'
+      + '</div>';
+  }
+
+  /* ── Bloc signatures (griffes) ── */
+  html += _buildSigBlock(anim, dateStr);
+
+  html += '</div>';
+  return html;
+}
+
+function _buildSigBlock(animNom, dateStr) {
+  var kouachiImg = _sigCache.kouachi
+    ? '<div class="sig-rapport-img-wrap"><img class="sig-rapport-img" src="'+_sigCache.kouachi+'" alt="Signature"/></div>'
+    : '<div class="sig-rapport-placeholder"></div>';
+
+  var seddikiImg = _sigCache.seddiki
+    ? '<div class="sig-rapport-img-wrap"><img class="sig-rapport-img" src="'+_sigCache.seddiki+'" alt="Signature"/></div>'
+    : '<div class="sig-rapport-placeholder"></div>';
+
+  return '<div class="sig-rapport-grid">'
+    /* Colonne gauche — animateur / Chargé HSE */
+    + '<div class="sig-rapport-col">'
+    + '<div class="sig-rapport-col-name">'+esc(animNom)+'</div>'
+    + '<div class="sig-rapport-label">Signature :</div>'
+    + kouachiImg
+    + '<div class="sig-rapport-title">Chargé des Activités HSE</div>'
+    + '<div class="sig-rapport-date">Date : '+esc(dateStr)+'</div>'
+    + '</div>'
+    /* Colonne droite — Superviseur HSE */
+    + '<div class="sig-rapport-col">'
+    + '<div class="sig-rapport-col-name">Superviseur HSE</div>'
+    + '<div class="sig-rapport-label">Signature :</div>'
+    + seddikiImg
+    + '<div class="sig-rapport-title">Superviseur HSE</div>'
+    + '<div class="sig-rapport-date">Date : '+esc(dateStr)+'</div>'
+    + '</div>'
+    + '</div>';
+}
 </script>
+
+<!-- ═══ OVERLAY: Config Griffes (signatures rapport) ═══ -->
+<div class="ov" id="sigAdminOv">
+  <div class="sheet" style="max-width:480px">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">✍️ Griffes — Signatures rapport</div>
+      <button class="sh-x" onclick="closeSheet('sigAdminOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="font-size:.78rem;color:var(--t3);margin-bottom:16px;line-height:1.5">
+        Saisir les <b>IDs fichiers Google Drive</b> des images de signatures (PNG/JPG fond blanc ou transparent).<br>
+        L'ID se trouve dans l'URL de partage Drive : <code style="font-size:.7rem">…/d/<b>ID_ICI</b>/view</code>
+      </div>
+      <div class="fg">
+        <label class="fl">ID griffe — Chargé des Activités HSE (KOUACHI)</label>
+        <input class="fi" id="sigKouachiId" placeholder="1AbCd2EfGh3Ij4Kl…"/>
+      </div>
+      <div class="fg" style="margin-top:12px">
+        <label class="fl">ID griffe — Superviseur HSE (SEDDIKI)</label>
+        <input class="fi" id="sigSeddikiId" placeholder="1AbCd2EfGh3Ij4Kl…"/>
+      </div>
+      <div style="margin-top:14px;font-size:.73rem;color:var(--t3)">
+        ⚠️ Rendre les fichiers Drive accessibles « Toute personne avec le lien » avant de sauvegarder.
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('sigAdminOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveSigAdminConfig()">✓ Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Rapport de Sensibilisation ═══ -->
+<div class="ov" id="sensiRapportOv">
+  <div class="sheet" style="max-height:92vh;max-width:680px">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📄 Rapport de Sensibilisation</div>
+      <button class="sh-x" onclick="closeSheet('sensiRapportOv')">✕</button>
+    </div>
+    <div class="sh-body" id="sensiRapportBody" style="overflow-y:auto;padding:0;background:#f4f5f7"></div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('sensiRapportOv')">Fermer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

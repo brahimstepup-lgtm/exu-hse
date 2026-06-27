@@ -1609,3 +1609,46 @@ function saveChecklistsConfig(p) {
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ── Griffes (signatures images) pour les rapports ──
+// Retourne seulement les IDs (pour l'admin config)
+function getSigIds(adminKey) {
+  if (!isAdmin_(adminKey)) return { success:false, error:'Accès admin requis' };
+  var props = PropertiesService.getScriptProperties();
+  return {
+    success: true,
+    kouachiId: props.getProperty('SIG_KOUACHI_ID') || '',
+    seddikiId: props.getProperty('SIG_SEDDIKI_ID') || ''
+  };
+}
+
+
+// Stocke les file IDs Drive dans les propriétés SIG_KOUACHI_ID et SIG_SEDDIKI_ID
+function getSigImages(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  var props = PropertiesService.getScriptProperties();
+  var kouachiId = props.getProperty('SIG_KOUACHI_ID') || '';
+  var seddikiId = props.getProperty('SIG_SEDDIKI_ID') || '';
+  var result = { success:true, kouachi:'', seddiki:'' };
+  try {
+    if (kouachiId) {
+      var bk = DriveApp.getFileById(kouachiId).getBlob();
+      result.kouachi = 'data:'+bk.getContentType()+';base64,'+Utilities.base64Encode(bk.getBytes());
+    }
+  } catch(e) {}
+  try {
+    if (seddikiId) {
+      var bs = DriveApp.getFileById(seddikiId).getBlob();
+      result.seddiki = 'data:'+bs.getContentType()+';base64,'+Utilities.base64Encode(bs.getBytes());
+    }
+  } catch(e) {}
+  return result;
+}
+
+function saveSigConfig(p) {
+  if (!isAdmin_(p && p.adminKey)) return { success:false, error:'Accès admin requis' };
+  var props = PropertiesService.getScriptProperties();
+  if (typeof p.kouachiId !== 'undefined') props.setProperty('SIG_KOUACHI_ID', String(p.kouachiId||''));
+  if (typeof p.seddikiId !== 'undefined') props.setProperty('SIG_SEDDIKI_ID', String(p.seddikiId||''));
+  return { success:true };
+}
