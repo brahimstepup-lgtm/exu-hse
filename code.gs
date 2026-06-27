@@ -170,6 +170,29 @@ function adminGetUsers(adminKey) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// Retourner la liste des superviseurs HSE + admins (pour le menu déroulant)
+function getSuperviseursList(p) {
+  var token    = (typeof p === 'string') ? p : (p && p.token);
+  var adminKey = (typeof p === 'object') ? (p && p.adminKey) : null;
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey) && !isSessionSuperOrAdmin_(token))
+    return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:true, data:[] };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var list = [];
+    rows.forEach(function(r) {
+      var role = String(r[EDB.ROLE]||'').trim();
+      var nom  = String(r[EDB.NAME]).trim();
+      if ((role === 'hse_supervisor' || role === 'admin') && nom) {
+        list.push({ matricule: String(r[EDB.MAT]).trim(), nom: nom });
+      }
+    });
+    return { success:true, data:list };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // Admin: set password for an employee
 function adminSetPassword(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
@@ -1505,6 +1528,86 @@ function saveChecklist(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Modifier une inspection incendie (admin uniquement) ──
+function updateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
+    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
+    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
+    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
+    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Dupliquer une inspection incendie (admin uniquement) ──
+function duplicateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
+    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      new Date(),   // date = aujourd'hui
+      src[2],       // matricule superviseur
+      src[3],       // nom superviseur
+      src[4],       // type
+      src[5],       // idEquipement
+      src[6],       // zone
+      src[7],       // checklist JSON
+      src[8],       // etatGlobal
+      src[9],       // observations
+      '',           // prochaineInspection (reset)
+      '',           // photo (reset)
+      new Date(),   // dateCreation
+      ''            // responsableNom (reset — nouvelle validation requise)
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Valider une inspection incendie (admin uniquement) ──
+function validateChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncendieSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
+    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Lire toutes les inspections incendie ──
 function getChecklists(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
@@ -1512,7 +1615,8 @@ function getChecklists(token) {
     var sh = getIncendieSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var rows = sh.getRange(2, 1, lr-1, 13).getValues();
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
       var checks = {};
       try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
@@ -1530,7 +1634,8 @@ function getChecklists(token) {
         prochaineInspection: fmtDate_(r[10]),
         photoId: extractFileId_(r[11]),
         photoUrl: String(r[11]),
-        dateCreation: fmtDate_(r[12])
+        dateCreation: fmtDate_(r[12]),
+        responsableNom: String(r[13]||'')
       };
     });
     return { success:true, data:data.reverse() };
@@ -1541,12 +1646,20 @@ function getChecklists(token) {
 function getExtConfig(token) {
   if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
   try {
-    var raw = PropertiesService.getScriptProperties().getProperty('EXTINCTEUR_CONFIG')||'[]';
+    var props  = PropertiesService.getScriptProperties();
+    var raw    = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
     var config = JSON.parse(raw);
     if (!config.length) {
       for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
     }
-    return { success:true, data:config };
+    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
+    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
+    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
+    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
+    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1556,7 +1669,12 @@ function saveExtConfig(p) {
     var config = (p.config||[]).map(function(c){
       return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||''), emplacement:String(c.emplacement||'') };
     }).filter(function(c){ return c.num>=1 && c.num<=200; });
-    PropertiesService.getScriptProperties().setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
+    if (p.docCode)          props.setProperty('EXT_DOC_CODE',          String(p.docCode));
+    if (p.docRev      != null) props.setProperty('EXT_DOC_REV',         String(p.docRev).trim()||'01');
+    if (p.docEdition  != null) props.setProperty('EXT_DOC_EDITION',     String(p.docEdition).trim());
+    if (p.prochaineMonths != null) props.setProperty('EXT_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||12));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
@@ -1588,15 +1706,25 @@ function getConfigData(adminKey) {
     if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
     if (!riaConfig.items)  riaConfig.items = [];
     if (!riaConfig.count)  riaConfig.count = 20;
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig };
+    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
+    var riaDocCode             = props.getProperty('RIA_DOC_CODE')         || 'ENR-HSE 2';
+    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
+    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
+    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
+    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
 function saveRiaConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    var cfg = p.riaConfig || { count:20, items:[] };
-    PropertiesService.getScriptProperties().setProperty('RIA_CONFIG', JSON.stringify(cfg));
+    var cfg   = p.riaConfig || { count:20, items:[] };
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('RIA_CONFIG', JSON.stringify(cfg));
+    if (p.riaDocCode) props.setProperty('RIA_DOC_CODE', String(p.riaDocCode));
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
@@ -1606,6 +1734,324 @@ function saveChecklistsConfig(p) {
   try {
     var checklists = p.checklists || {};
     PropertiesService.getScriptProperties().setProperty('CHECKLISTS_CONFIG', JSON.stringify(checklists));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONTRÔLE DES DISPOSITIFS DE LUTTE CONTRE LES NUISIBLES
+// Types : DEI (désinsectiseur électrique), BAP (boîte d'appât),
+//         PM  (piège mécanique),           PGG (plaque de glu)
+// ══════════════════════════════════════════════════════════════════
+
+function getNuisiblesSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Suivi_Nuisibles');
+  if (!sh) {
+    sh = ss.insertSheet('Suivi_Nuisibles');
+    sh.appendRow(['ID','DateInspection','Matricule','Superviseur','Type',
+                  'IDEquipement','Zone','Checklist','EtatGlobal',
+                  'Observations','ProchaineInspection','Photo','DateCreation']);
+    sh.getRange(1,1,1,13).setFontWeight('bold');
+  }
+  return sh;
+}
+
+// ── Charger la configuration complète (nuisibles) ──────────────
+function getPestConfigData(adminKey) {
+  if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props         = PropertiesService.getScriptProperties();
+    var rawPest       = props.getProperty('PEST_CONFIG')       || '{}';
+    var rawZones      = props.getProperty('ZONES_CONFIG')      || '[]';
+    var rawChecklists = props.getProperty('PEST_CHECKLISTS_CONFIG') || '{}';
+    var pestConfig    = JSON.parse(rawPest);
+    var zones         = JSON.parse(rawZones);
+    var checklists    = JSON.parse(rawChecklists);
+    // Initialisation par défaut : 5 unités par type
+    ['DEI','BAP','PM','PGG'].forEach(function(t) {
+      if (!pestConfig[t] || typeof pestConfig[t] !== 'object') {
+        pestConfig[t] = { count:5, items:[] };
+      }
+      if (!pestConfig[t].items)  pestConfig[t].items  = [];
+      if (!pestConfig[t].count)  pestConfig[t].count  = 5;
+    });
+    if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
+    var logoUrl                 = props.getProperty('HSE_LOGO_URL')          || '';
+    var signatureUrl            = props.getProperty('HSE_SIG_URL')           || '';
+    var supervisorSignatureUrl  = props.getProperty('HSE_SUP_SIG_URL')       || '';
+    var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
+    var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
+    var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder la configuration des dispositifs ───────────────
+function savePestConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
+    if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'01');
+    if (p.docEdition  != null) props.setProperty('PEST_DOC_EDITION',      String(p.docEdition).trim());
+    if (p.prochaineMonths != null) props.setProperty('PEST_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||3));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder les listes de contrôle par type ────────────────
+function savePestChecklistsConfig(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    PropertiesService.getScriptProperties()
+      .setProperty('PEST_CHECKLISTS_CONFIG', JSON.stringify(p.checklists||{}));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Enregistrer une inspection nuisibles ───────────────────────
+function savePestChecklist(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess   = verifySession_(p.token);
+    var sh     = getNuisiblesSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var photoUrl = '';
+    if (p.photoChecklist && String(p.photoChecklist).length > 10) {
+      var ext2   = (p.photo_mime||'image/jpeg').indexOf('pdf') !== -1 ? 'pdf' : 'jpg';
+      var fname2 = 'Nuisibles_' + nextId + '_' + new Date().getTime() + '.' + ext2;
+      photoUrl   = savePhotoToFolder_(p.photoChecklist, fname2, p.photo_mime||'image/jpeg');
+    }
+    sh.appendRow([
+      nextId,
+      p.dateInspection ? new Date(p.dateInspection) : new Date(),
+      sess.matricule,
+      String(p.superviseurNom||sess.matricule),
+      String(p.type||'Inspection Globale Nuisibles'),
+      String(p.idEquipement||''),
+      String(p.zone||''),
+      JSON.stringify(p.checklist||{}),
+      String(p.etatGlobal||'Conforme'),
+      String(p.observations||''),
+      p.prochaineInspection ? new Date(p.prochaineInspection) : '',
+      photoUrl,
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Modifier une inspection nuisibles (admin uniquement) ──
+function updatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
+    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
+    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
+    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
+    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
+    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
+    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Dupliquer une inspection nuisibles (admin uniquement) ──
+function duplicatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
+    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      new Date(),
+      src[2],
+      src[3],
+      src[4],
+      src[5],
+      src[6],
+      src[7],
+      src[8],
+      src[9],
+      '',
+      '',
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Valider une inspection nuisibles (admin uniquement) ──
+function validatePestChecklist(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
+    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire toutes les inspections nuisibles ─────────────────────
+function getPestChecklists(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var checks = {};
+      try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
+      return {
+        id:                   r[0],
+        dateInspection:       fmtDate_(r[1]),
+        superviseurMatricule: String(r[2]),
+        superviseurNom:       String(r[3]),
+        type:                 String(r[4]),
+        idEquipement:         String(r[5]),
+        zone:                 String(r[6]),
+        checklist:            checks,
+        etatGlobal:           String(r[8]),
+        observations:         String(r[9]),
+        prochaineInspection:  fmtDate_(r[10]),
+        photoId:              extractFileId_(r[11]),
+        photoUrl:             String(r[11]),
+        dateCreation:         fmtDate_(r[12]),
+        responsableNom:       String(r[13]||'')
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LOGO DE L'ENTREPRISE (stocké dans Drive, URL dans PropertiesService)
+// ══════════════════════════════════════════════════════════════════
+function saveLogoConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var bytes  = Utilities.base64Decode(p.logoBase64);
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-logo.png');
+    var file   = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+    props.setProperty('HSE_LOGO_FILE_ID', fileId);
+    props.setProperty('HSE_LOGO_URL', url);
+    return { success:true, logoUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteLogoConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('HSE_LOGO_FILE_ID');
+    props.deleteProperty('HSE_LOGO_URL');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SIGNATURE / GRIFFE DU RESPONSABLE HSE
+// ══════════════════════════════════════════════════════════════════
+function saveSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var bytes  = Utilities.base64Decode(p.sigBase64);
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-signature.png');
+    var file   = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+    props.setProperty('HSE_SIG_FILE_ID', fileId);
+    props.setProperty('HSE_SIG_URL', url);
+    return { success:true, signatureUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('HSE_SIG_FILE_ID');
+    props.deleteProperty('HSE_SIG_URL');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SIGNATURE / GRIFFE DU SUPERVISEUR HSE
+// ══════════════════════════════════════════════════════════════════
+function saveSupervisorSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var bytes  = Utilities.base64Decode(p.sigBase64);
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-supervisor-signature.png');
+    var file   = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+    props.setProperty('HSE_SUP_SIG_FILE_ID', fileId);
+    props.setProperty('HSE_SUP_SIG_URL', url);
+    return { success:true, supervisorSignatureUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteSupervisorSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props  = PropertiesService.getScriptProperties();
+    var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('HSE_SUP_SIG_FILE_ID');
+    props.deleteProperty('HSE_SUP_SIG_URL');
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
