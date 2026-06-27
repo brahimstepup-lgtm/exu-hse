@@ -2138,18 +2138,24 @@ function deleteSupervisorSignatureConfig(p) {
 //              Responsable | DateCreation
 //   Code document par défaut : ENR-HSE 8  (configurable)
 // ══════════════════════════════════════════════════════════════════
+// Colonnes Rapport_Nuisibles :
+// 0:ID  1:Date  2:Zone  3:Emplacement  4:TypeNuisible  5:Description
+// 6:ActionsImmédiates  7:MesuresCorrectives  8:PrestaireInformé
+// 9:PrestaireNom  10:ContactMode  11:ContactVal
+// 12:Superviseur  13:Matricule  14:Statut  15:Responsable  16:DateCréation
 function getRapportNuisiblesSheet_() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sh = ss.getSheetByName('Rapport_Nuisibles');
   if (!sh) {
     sh = ss.insertSheet('Rapport_Nuisibles');
     sh.appendRow([
-      'ID','Date','Zone','Type Nuisible','Description / Observations',
-      'Actions Immédiates','Mesures Correctives','Superviseur','Matricule',
-      'Photo (URL)','Statut','Responsable','Date Création'
+      'ID','Date','Zone','Emplacement','Type Nuisible','Description / Observations',
+      'Actions Immédiates','Mesures Correctives',
+      'Prestataire Informé','Nom Prestataire','Mode Contact','Coordonnées Contact',
+      'Superviseur','Matricule','Statut','Responsable','Date Création'
     ]);
-    sh.getRange(1,1,1,13).setFontWeight('bold').setBackground('#7d3c98').setFontColor('#ffffff');
-    sh.setColumnWidth(5, 280); sh.setColumnWidth(6, 220); sh.setColumnWidth(7, 220);
+    sh.getRange(1,1,1,17).setFontWeight('bold').setBackground('#7d3c98').setFontColor('#ffffff');
+    sh.setColumnWidth(6, 260); sh.setColumnWidth(7, 200); sh.setColumnWidth(8, 200);
   }
   return sh;
 }
@@ -2161,23 +2167,21 @@ function saveRapportNuisibles(p) {
     var sh   = getRapportNuisiblesSheet_();
     var lr   = sh.getLastRow();
     var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
-    var photoUrl = '';
-    if (p.photo && String(p.photo).length > 10) {
-      var ext   = (p.photo_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
-      var fname = 'RapportNuisibles_'+nextId+'_'+new Date().getTime()+'.'+ext;
-      photoUrl  = savePhotoToFolder_(p.photo, fname, p.photo_mime||'image/jpeg');
-    }
     sh.appendRow([
       nextId,
       p.date ? new Date(p.date) : new Date(),
       String(p.zone||''),
+      String(p.emplacement||''),
       String(p.typeNuisible||''),
       String(p.description||''),
       String(p.actionsImmediates||''),
       String(p.mesuresCorrectives||''),
+      String(p.prestaireInforme||'Non'),
+      String(p.prestaireNom||''),
+      String(p.contactMode||''),
+      String(p.contactVal||''),
       String(p.superviseurNom||sess.matricule),
       sess.matricule,
-      photoUrl,
       String(p.statut||'En cours'),
       String(p.responsable||''),
       new Date()
@@ -2192,24 +2196,27 @@ function getRapportNuisibles(token) {
     var sh = getRapportNuisiblesSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var cols = Math.max(sh.getLastColumn(), 13);
+    var cols = Math.max(sh.getLastColumn(), 17);
     var rows = sh.getRange(2,1,lr-1,cols).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
       return {
         id:                 r[0],
         date:               fmtDate_(r[1]),
         zone:               String(r[2]),
-        typeNuisible:       String(r[3]),
-        description:        String(r[4]),
-        actionsImmediates:  String(r[5]),
-        mesuresCorrectives: String(r[6]),
-        superviseurNom:     String(r[7]),
-        matricule:          String(r[8]),
-        photoUrl:           String(r[9]),
-        photoId:            extractFileId_(r[9],''),
-        statut:             String(r[10]||'En cours'),
-        responsable:        String(r[11]||''),
-        dateCreation:       fmtDate_(r[12])
+        emplacement:        String(r[3]),
+        typeNuisible:       String(r[4]),
+        description:        String(r[5]),
+        actionsImmediates:  String(r[6]),
+        mesuresCorrectives: String(r[7]),
+        prestaireInforme:   String(r[8]||'Non'),
+        prestaireNom:       String(r[9]||''),
+        contactMode:        String(r[10]||''),
+        contactVal:         String(r[11]||''),
+        superviseurNom:     String(r[12]),
+        matricule:          String(r[13]),
+        statut:             String(r[14]||'En cours'),
+        responsable:        String(r[15]||''),
+        dateCreation:       fmtDate_(r[16])
       };
     });
     return { success:true, data:data.reverse() };
