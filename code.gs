@@ -2064,15 +2064,29 @@ function deleteUserSignatureConfig(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-// Helper interne : construit { mat: url } depuis les propriétés du script
+// Helper interne : construit { mat: url, nom: url } depuis les propriétés + la feuille
 function _buildSigMap_() {
   var props = PropertiesService.getScriptProperties();
   var all   = props.getProperties();
   var map   = {};
+  // Index par matricule
   Object.keys(all).forEach(function(k) {
     var m = k.match(/^HSE_SIG_URL_(.+)$/);
     if (m && all[k]) map[m[1]] = all[k];
   });
+  // Index aussi par nom depuis la feuille employés
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr >= EDB_START) {
+      var rows = sh.getRange(EDB_START, 1, lr - EDB_START + 1, 2).getValues();
+      rows.forEach(function(r) {
+        var mat  = String(r[EDB.MAT]).trim();
+        var name = String(r[EDB.NAME]).trim();
+        if (mat && name && map[mat]) map[name] = map[mat];
+      });
+    }
+  } catch(e) {}
   return map;
 }
 

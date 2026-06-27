@@ -6646,10 +6646,10 @@ function _buildHSEPrintHTML(opts) {
   var docCode      = opts.docCode      || 'ENR-HSE';
   var autoPrint             = opts.autoPrint            !== false;
   var logoUrl               = opts.logoUrl              || '';
-  var signatureUrl          = opts.signatureUrl         || _userSigMap[S_AUTH&&S_AUTH.matricule] || '';
+  var signatureUrl          = opts.signatureUrl         || '';
   var supervisorSignatureUrl = opts.supervisorSignatureUrl
-    || _userSigMap[S_AUTH&&S_AUTH.matricule]
     || _userSigMap[opts.superviseur]
+    || _userSigMap[S_AUTH&&S_AUTH.matricule]
     || '';
   var now         = new Date();
   var _autoDate   = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
