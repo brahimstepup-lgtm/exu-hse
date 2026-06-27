@@ -2283,43 +2283,75 @@ function getRapportNuisiblesConfig(token) {
       docRev:            props.getProperty('PEST_RAPPORT_DOC_REV')        || '01',
       docEdition:        props.getProperty('PEST_RAPPORT_DOC_EDITION')    || '',
       logoUrl:           props.getProperty('HSE_LOGO_URL')                || '',
-      prestataireSigUrl: props.getProperty('PEST_RAPPORT_PRESTA_SIG_URL') || '',
-      prestataireNom:    props.getProperty('PEST_RAPPORT_PRESTA_NOM')     || '',
+      prestaId:          props.getProperty('PEST_RAPPORT_PRESTA_ID')      || '',
+      prestataires:      _getPrestataires_(),
       sigMap:            _buildSigMap_()
     };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-function savePrestataireSigRapport(p) {
+// ══════════════════════════════════════════════════════════════════
+// GESTION DES PRESTATAIRES (griffes)
+// Stocké en JSON : PRESTATAIRES_JSON = [{id, nom, sigUrl, fileId}]
+// ══════════════════════════════════════════════════════════════════
+function _getPrestataires_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('PRESTATAIRES_JSON') || '[]';
+    return JSON.parse(raw);
+  } catch(e) { return []; }
+}
+function _savePrestataires_(list) {
+  PropertiesService.getScriptProperties().setProperty('PRESTATAIRES_JSON', JSON.stringify(list));
+}
+
+function getPrestataires(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  return { success:true, data:_getPrestataires_() };
+}
+
+function savePrestataire(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    var props = PropertiesService.getScriptProperties();
-    var oldId = props.getProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    var b64  = String(p.sigBase64||'').replace(/^data:[^;]+;base64,/, '');
-    var blob = Utilities.newBlob(Utilities.base64Decode(b64), p.mime || 'image/png', 'pest-rapport-presta-sig.png');
-    var file = DriveApp.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    var url  = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w400';
-    props.setProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID', file.getId());
-    props.setProperty('PEST_RAPPORT_PRESTA_SIG_URL', url);
-    if (p.nom != null) props.setProperty('PEST_RAPPORT_PRESTA_NOM', String(p.nom).trim());
-    return { success:true, sigUrl:url };
+    var list = _getPrestataires_();
+    var nom  = String(p.nom||'').trim();
+    if (!nom) return { success:false, error:'Nom requis' };
+    var id   = p.id || ('P' + Date.now());
+    var idx  = list.findIndex(function(x){ return x.id===id; });
+    var entry = idx>=0 ? list[idx] : { id:id, nom:nom, sigUrl:'', fileId:'' };
+    entry.nom = nom;
+    // Upload griffe si fournie
+    if (p.sigBase64 && p.sigBase64.length > 10) {
+      if (entry.fileId) { try { DriveApp.getFileById(entry.fileId).setTrashed(true); } catch(e){} }
+      var b64  = String(p.sigBase64).replace(/^data:[^;]+;base64,/, '');
+      var blob = Utilities.newBlob(Utilities.base64Decode(b64), p.mime||'image/png', 'presta-sig-'+id+'.png');
+      var file = DriveApp.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      entry.fileId = file.getId();
+      entry.sigUrl = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w400';
+    }
+    if (idx>=0) list[idx]=entry; else list.push(entry);
+    _savePrestataires_(list);
+    return { success:true, prestataire:entry };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-function deletePrestataireSigRapport(p) {
+function deletePrestataire(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    var props = PropertiesService.getScriptProperties();
-    var oldId = props.getProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
-    props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_URL');
-    props.deleteProperty('PEST_RAPPORT_PRESTA_NOM');
+    var list = _getPrestataires_();
+    var idx  = list.findIndex(function(x){ return x.id===String(p.id); });
+    if (idx<0) return { success:false, error:'Introuvable' };
+    var entry = list[idx];
+    if (entry.fileId) { try { DriveApp.getFileById(entry.fileId).setTrashed(true); } catch(e){} }
+    list.splice(idx,1);
+    _savePrestataires_(list);
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// Compatibilité : l'ancienne propriété unique reste lisible mais n'est plus écrite
+function savePrestataireSigRapport(p) { return savePrestataire(p); }
+function deletePrestataireSigRapport(p) { return deletePrestataire(p); }
 
 function saveRapportNuisiblesConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
@@ -2328,6 +2360,7 @@ function saveRapportNuisiblesConfig(p) {
     if (p.docCode    != null) props.setProperty('PEST_RAPPORT_DOC_CODE',    String(p.docCode).trim()    || 'ENR-HSE 8');
     if (p.docRev     != null) props.setProperty('PEST_RAPPORT_DOC_REV',     String(p.docRev).trim()     || '01');
     if (p.docEdition != null) props.setProperty('PEST_RAPPORT_DOC_EDITION', String(p.docEdition).trim());
+    if (p.prestaId   != null) props.setProperty('PEST_RAPPORT_PRESTA_ID',   String(p.prestaId).trim());
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }

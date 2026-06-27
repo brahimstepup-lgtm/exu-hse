@@ -977,6 +977,7 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
+        <button class="btn btn-b" onclick="openPrestatairesPanel()" style="background:rgba(125,60,152,.25);border:1px solid rgba(125,60,152,.5);color:#c39bd3">🏢 Prestataires & griffes</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -1507,23 +1508,14 @@ img{max-width:100%;display:block;}
             <input type="radio" name="inspPrestaGriffeYN" id="inspPrestaGriffeNon" value="non" onchange="toggleInspPrestaGriffe()" checked style="accent-color:#9b59b6"/> Non
           </label>
         </div>
-        <!-- Zone upload griffe inspection (masquée par défaut) -->
-        <div id="inspPrestaGriffeZone" style="display:none;margin-top:10px;padding:10px;background:rgba(125,60,152,.08);border-radius:8px;border:1px solid rgba(125,60,152,.25)">
-          <div style="margin-bottom:8px">
-            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Nom du prestataire</label>
-            <input class="fi" id="inspPrestaGriffeNom" placeholder="Ex : Société Nettoyage Pro" style="height:32px;font-size:.83rem"/>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <input type="file" id="inspPrestaGriffeInput" accept="image/*" onchange="uploadInspPrestaGriffe(this)" style="display:none"/>
-            <button onclick="document.getElementById('inspPrestaGriffeInput').click()"
-              style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.8rem;white-space:nowrap">
-              📂 Charger la griffe
-            </button>
-            <div id="inspPrestaGriffePreview" style="display:none;display:flex;align-items:center;gap:8px">
-              <img id="inspPrestaGriffeImg" src="" style="max-height:50px;max-width:160px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
-              <button onclick="deleteInspPrestaGriffe()" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.78rem;white-space:nowrap">✕ Supprimer</button>
-            </div>
-            <span id="inspPrestaGriffePH" style="font-size:.78rem;color:#666;font-style:italic">Aucune griffe</span>
+        <!-- Sélection prestataire inspection -->
+        <div id="inspPrestaGriffeZone" style="display:none;margin-top:8px;padding:10px;background:rgba(125,60,152,.08);border-radius:8px;border:1px solid rgba(125,60,152,.25)">
+          <label class="fl" style="font-size:.75rem;margin-bottom:4px">Sélectionner le prestataire</label>
+          <select class="fi" id="inspPrestaGriffeSelect" style="height:34px;font-size:.85rem" onchange="previewPrestaGriffe('inspPrestaGriffePreview','inspPrestaGriffeImg',this.value)">
+            <option value="">— Choisir un prestataire —</option>
+          </select>
+          <div id="inspPrestaGriffePreview" style="margin-top:8px;display:none">
+            <img id="inspPrestaGriffeImg" src="" style="max-height:55px;max-width:180px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
           </div>
         </div>
       </div>
@@ -1554,23 +1546,14 @@ img{max-width:100%;display:block;}
             <input type="radio" name="rnPrestaGriffeYN" id="rnPrestaGriffeNon" value="non" onchange="toggleRnPrestaGriffe()" checked style="accent-color:#9b59b6"/> Non
           </label>
         </div>
-        <!-- Zone upload griffe rapport (masquée par défaut) -->
+        <!-- Sélection prestataire rapport -->
         <div id="rnPrestaGriffeZone" style="display:none;padding:10px;background:rgba(125,60,152,.08);border-radius:8px;border:1px solid rgba(125,60,152,.25);margin-bottom:8px">
-          <div style="margin-bottom:8px">
-            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Nom du prestataire</label>
-            <input class="fi" id="rnPrestaGriffeNomInput" placeholder="Ex : Société Dératisation SARL" style="height:32px;font-size:.83rem"/>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <input type="file" id="rnPrestaGriffeInput" accept="image/*" onchange="uploadRnPrestaGriffe(this)" style="display:none"/>
-            <button onclick="document.getElementById('rnPrestaGriffeInput').click()"
-              style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.8rem;white-space:nowrap">
-              📂 Charger la griffe
-            </button>
-            <div id="rnPrestaGriffePreview" style="display:none;align-items:center;gap:8px">
-              <img id="rnPrestaGriffeImg" src="" style="max-height:50px;max-width:160px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
-              <button onclick="deleteRnPrestaGriffe()" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.78rem;white-space:nowrap">✕ Supprimer</button>
-            </div>
-            <span id="rnPrestaGriffePlaceholder" style="font-size:.78rem;color:#666;font-style:italic">Aucune griffe configurée</span>
+          <label class="fl" style="font-size:.75rem;margin-bottom:4px">Sélectionner le prestataire</label>
+          <select class="fi" id="rnPrestaGriffeSelect" style="height:34px;font-size:.85rem" onchange="previewPrestaGriffe('rnPrestaGriffePreview','rnPrestaGriffeImg',this.value)">
+            <option value="">— Choisir un prestataire —</option>
+          </select>
+          <div id="rnPrestaGriffePreview" style="margin-top:8px;display:none">
+            <img id="rnPrestaGriffeImg" src="" style="max-height:55px;max-width:180px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
           </div>
         </div>
         <button class="btn btn-p" onclick="saveRapportNuisiblesConfigFromUI()" style="height:34px;font-size:.82rem;padding:0 14px;background:#9b59b6">💾 Sauvegarder config rapport</button>
@@ -2267,6 +2250,47 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('delOv')">Annuler</button>
       <button class="btn btn-r" id="delConfBtn">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Gestion des Prestataires & Griffes ═══ -->
+<div class="ov" id="prestatairesOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🏢 Prestataires &amp; Griffes</div>
+      <button class="sh-x" onclick="closeSheet('prestatairesOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+      <!-- Ajouter un prestataire -->
+      <div style="background:var(--ink2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid rgba(125,60,152,.35)">
+        <div style="font-size:.85rem;font-weight:700;color:#9b59b6;margin-bottom:12px">➕ Ajouter / Modifier un prestataire</div>
+        <input class="fi" id="prestaFormNom" placeholder="Nom du prestataire *" style="height:36px;font-size:.88rem;margin-bottom:10px"/>
+        <div style="margin-bottom:10px">
+          <label class="fl" style="font-size:.75rem;margin-bottom:4px">Griffe / Signature <span style="color:#888;font-weight:400">(optionnel)</span></label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="file" id="prestaFormSigInput" accept="image/*" onchange="prestaFormHandleSig(this)" style="display:none"/>
+            <button onclick="document.getElementById('prestaFormSigInput').click()"
+              style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.8rem">
+              📂 Choisir la griffe
+            </button>
+            <span id="prestaFormSigName" style="font-size:.78rem;color:#aaa">Aucune image</span>
+          </div>
+          <div id="prestaFormSigPreview" style="margin-top:8px;display:none">
+            <img id="prestaFormSigImg" src="" style="max-height:60px;max-width:200px;object-fit:contain;border:1px solid #555;border-radius:6px;padding:3px;background:#fff"/>
+          </div>
+        </div>
+        <input type="hidden" id="prestaFormId" value=""/>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p" onclick="submitPrestataire()" style="background:#9b59b6;flex:1">💾 Enregistrer</button>
+          <button class="btn btn-g" onclick="resetPrestaForm()" id="prestaFormCancelBtn" style="display:none">✕ Annuler</button>
+        </div>
+      </div>
+      <!-- Liste des prestataires -->
+      <div id="prestatairesListBody">
+        <div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px">Chargement…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -6419,7 +6443,19 @@ function openConfigPest() {
             var rnc = document.getElementById('rnDocCodeInput');    if (rnc) rnc.value = _rnDocCode;
             var rnr = document.getElementById('rnDocRevInput');     if (rnr) rnr.value = _rnDocRev;
             var rne = document.getElementById('rnDocEditionInput'); if (rne) rne.value = _rnDocEdition;
-            _rnRenderPrestaGriffe(rn.prestataireSigUrl || '', rn.prestataireNom || '');
+            // Charger la liste prestataires et sélectionner le prestataire configuré
+            if (rn.prestataires) {
+              _prestatairesData = rn.prestataires;
+              _reloadPrestatairesSelects();
+              var savedId = rn.prestaId || '';
+              var sel = document.getElementById('rnPrestaGriffeSelect');
+              if (sel && savedId) {
+                sel.value = savedId;
+                previewPrestaGriffe('rnPrestaGriffePreview','rnPrestaGriffeImg', savedId);
+                var ouiR = document.getElementById('rnPrestaGriffeOui');
+                if (ouiR && savedId) { ouiR.checked = true; toggleRnPrestaGriffe(); }
+              }
+            }
           }
         })
         .withFailureHandler(function(){})
@@ -6581,15 +6617,25 @@ function savePestChecklistConfig() {
 }
 
 function saveRapportNuisiblesConfigFromUI() {
-  var code = (document.getElementById('rnDocCodeInput')&&document.getElementById('rnDocCodeInput').value.trim()) || 'ENR-HSE 8';
-  var rev  = (document.getElementById('rnDocRevInput')&&document.getElementById('rnDocRevInput').value.trim())  || '01';
-  var ed   = (document.getElementById('rnDocEditionInput')&&document.getElementById('rnDocEditionInput').value.trim()) || '';
+  var code     = (document.getElementById('rnDocCodeInput')&&document.getElementById('rnDocCodeInput').value.trim())     || 'ENR-HSE 8';
+  var rev      = (document.getElementById('rnDocRevInput')&&document.getElementById('rnDocRevInput').value.trim())       || '01';
+  var ed       = (document.getElementById('rnDocEditionInput')&&document.getElementById('rnDocEditionInput').value.trim()) || '';
+  var ouiR     = document.getElementById('rnPrestaGriffeOui');
+  var prestaId = (ouiR&&ouiR.checked) ? ((document.getElementById('rnPrestaGriffeSelect')||{}).value||'') : '';
   _rnDocCode = code; _rnDocRev = rev; _rnDocEdition = ed;
+  // Mettre à jour la griffe en mémoire
+  if (prestaId) {
+    var p = _prestatairesData.find(function(x){ return x.id===prestaId; });
+    _rnPrestataireSigUrl = (p&&p.sigUrl) || '';
+    _rnPrestataireSigNom = (p&&p.nom)    || '';
+  } else {
+    _rnPrestataireSigUrl = ''; _rnPrestataireSigNom = '';
+  }
   showLoader('Sauvegarde…');
   google.script.run
     .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Config rapport nuisibles sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveRapportNuisiblesConfig({ adminKey:S.adminKey, docCode:code, docRev:rev, docEdition:ed });
+    .saveRapportNuisiblesConfig({ adminKey:S.adminKey, docCode:code, docRev:rev, docEdition:ed, prestaId:prestaId });
 }
 
 /* ══════════════════════════════════════════
@@ -7564,77 +7610,164 @@ function submitCloture() {
     .cloturerRapportNuisibles({ token:S.adminKey, id:c.id, docCloture:_clotureDocB64, docMime:_clotureDocMime });
 }
 
-// ── Rapport Nuisibles : griffe prestataire ──
+// ══════════════════════════════════════════════════════
+// GESTION PRESTATAIRES (dashboard)
+// ══════════════════════════════════════════════════════
+var _prestatairesData   = [];   // [{id, nom, sigUrl}]
+var _prestaFormSigB64   = '';
+var _prestaFormSigMime  = '';
+
+function openPrestatairesPanel() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  _prestaFormSigB64 = ''; _prestaFormSigMime = '';
+  resetPrestaForm();
+  openSheet('prestatairesOv');
+  _loadPrestataires();
+}
+
+function _loadPrestataires() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _prestatairesData = r.data || []; _renderPrestataires(); }
+    })
+    .withFailureHandler(function(){})
+    .getPrestataires(S.adminKey);
+}
+
+function _renderPrestataires() {
+  var body = document.getElementById('prestatairesListBody');
+  if (!body) return;
+  if (!_prestatairesData.length) {
+    body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Aucun prestataire configuré</div>';
+    return;
+  }
+  body.innerHTML = _prestatairesData.map(function(p) {
+    return '<div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line);display:flex;align-items:center;gap:12px">'
+      +(p.sigUrl?'<img src="'+p.sigUrl+'" style="height:48px;width:120px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:2px;background:#fff;flex-shrink:0"/>'
+               :'<div style="height:48px;width:120px;border:1px dashed #555;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666;font-size:.75rem;flex-shrink:0">Pas de griffe</div>')
+      +'<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:var(--t1)">'+esc(p.nom)+'</div>'
+      +'<div style="font-size:.75rem;color:var(--t3);margin-top:2px">'+(p.sigUrl?'✅ Griffe configurée':'⚠️ Sans griffe')+'</div></div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0">'
+      +'<button onclick="editPrestataire(\''+p.id+'\')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">✏ Modifier</button>'
+      +'<button onclick="deletePrestataire_(\''+p.id+'\',\''+esc(p.nom)+'\')" style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">🗑</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function prestaFormHandleSig(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _prestaFormSigB64  = e.target.result;
+    _prestaFormSigMime = file.type || 'image/png';
+    document.getElementById('prestaFormSigName').textContent = file.name;
+    document.getElementById('prestaFormSigImg').src = e.target.result;
+    document.getElementById('prestaFormSigPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitPrestataire() {
+  var nom = (document.getElementById('prestaFormNom')||{}).value.trim();
+  if (!nom) { toast('Nom du prestataire requis','err'); return; }
+  var id  = (document.getElementById('prestaFormId')||{}).value.trim() || '';
+  var payload = { adminKey:S.adminKey, nom:nom };
+  if (id) payload.id = id;
+  if (_prestaFormSigB64) { payload.sigBase64 = _prestaFormSigB64; payload.mime = _prestaFormSigMime; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) { toast('✅ Prestataire enregistré','ok'); resetPrestaForm(); _loadPrestataires(); _reloadPrestatairesSelects(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePrestataire(payload);
+}
+
+function editPrestataire(id) {
+  var p = _prestatairesData.find(function(x){ return x.id===id; });
+  if (!p) return;
+  document.getElementById('prestaFormNom').value = p.nom;
+  document.getElementById('prestaFormId').value  = p.id;
+  if (p.sigUrl) {
+    document.getElementById('prestaFormSigName').textContent = 'Griffe existante';
+    document.getElementById('prestaFormSigImg').src = p.sigUrl;
+    document.getElementById('prestaFormSigPreview').style.display = 'block';
+  }
+  document.getElementById('prestaFormCancelBtn').style.display = '';
+  document.getElementById('prestaFormNom').focus();
+}
+
+function resetPrestaForm() {
+  var f = document.getElementById('prestaFormNom'); if (f) f.value = '';
+  var i = document.getElementById('prestaFormId');  if (i) i.value = '';
+  _prestaFormSigB64 = ''; _prestaFormSigMime = '';
+  var pi = document.getElementById('prestaFormSigInput'); if (pi) pi.value = '';
+  var sn = document.getElementById('prestaFormSigName'); if (sn) sn.textContent = 'Aucune image';
+  var sp = document.getElementById('prestaFormSigPreview'); if (sp) sp.style.display = 'none';
+  var cb = document.getElementById('prestaFormCancelBtn'); if (cb) cb.style.display = 'none';
+}
+
+function deletePrestataire_(id, nom) {
+  if (!confirm('Supprimer le prestataire "'+nom+'" ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) { toast('Prestataire supprimé','ok'); _loadPrestataires(); _reloadPrestatairesSelects(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deletePrestataire({ adminKey:S.adminKey, id:id });
+}
+
+// Remplir les selects de prestataires dans les configs ENR
+function _reloadPrestatairesSelects() {
+  ['rnPrestaGriffeSelect','inspPrestaGriffeSelect'].forEach(function(sid) {
+    var sel = document.getElementById(sid); if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">— Choisir un prestataire —</option>';
+    _prestatairesData.forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id; o.textContent = p.nom + (p.sigUrl ? ' ✅' : ' (sans griffe)');
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  });
+}
+
+function previewPrestaGriffe(previewId, imgId, id) {
+  var p = _prestatairesData.find(function(x){ return x.id===id; });
+  var prev = document.getElementById(previewId);
+  var img  = document.getElementById(imgId);
+  if (!prev || !img) return;
+  if (p && p.sigUrl) { img.src = p.sigUrl; prev.style.display = 'block'; }
+  else               { prev.style.display = 'none'; }
+  // Mettre à jour la variable pour l'impression
+  if (id === (document.getElementById('rnPrestaGriffeSelect')||{}).value) {
+    _rnPrestataireSigUrl = (p&&p.sigUrl) || '';
+    _rnPrestataireSigNom = (p&&p.nom)    || '';
+  }
+}
+
+// ── Toggles dans les configs ──
 function toggleRnPrestaGriffe() {
   var oui  = document.getElementById('rnPrestaGriffeOui');
   var zone = document.getElementById('rnPrestaGriffeZone');
   if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
 }
 
-function _rnRenderPrestaGriffe(url, nom) {
-  _rnPrestataireSigUrl = url || '';
-  var prev = document.getElementById('rnPrestaGriffePreview');
-  var ph   = document.getElementById('rnPrestaGriffePlaceholder');
-  var img  = document.getElementById('rnPrestaGriffeImg');
-  var nomEl= document.getElementById('rnPrestaGriffeNomInput');
-  if (nomEl && nom) nomEl.value = nom;
-  // Si une griffe existe, cocher Oui et afficher la zone
-  if (url) {
-    var ouiR = document.getElementById('rnPrestaGriffeOui');
-    if (ouiR) { ouiR.checked = true; toggleRnPrestaGriffe(); }
-  }
-  if (!prev) return;
-  if (url) {
-    if (img) img.src = url;
-    prev.style.display = 'flex';
-    if (ph) ph.style.display = 'none';
-  } else {
-    prev.style.display = 'none';
-    if (ph) ph.style.display = 'inline';
-  }
-}
-
-function uploadRnPrestaGriffe(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var nom = (document.getElementById('rnPrestaGriffeNomInput')||{}).value || '';
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    showLoader('Enregistrement de la griffe…');
-    google.script.run
-      .withSuccessHandler(function(r) {
-        hideSplash();
-        if (r&&r.success) { _rnRenderPrestaGriffe(r.sigUrl, nom); toast('✅ Griffe prestataire enregistrée','ok'); }
-        else toast('Erreur: '+(r&&r.error||'?'),'err');
-      })
-      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-      .savePrestataireSigRapport({ adminKey:S.adminKey, sigBase64:e.target.result, mime:file.type, nom:nom });
-  };
-  reader.readAsDataURL(file);
-}
-
-function deleteRnPrestaGriffe() {
-  if (!confirm('Supprimer la griffe prestataire ?')) return;
-  showLoader('Suppression…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) { _rnRenderPrestaGriffe('', ''); toast('Griffe supprimée','ok'); }
-      else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deletePrestataireSigRapport({ adminKey:S.adminKey });
-}
-
-// ── Inspection Nuisibles : griffe prestataire (future) ──
 function toggleInspPrestaGriffe() {
   var oui  = document.getElementById('inspPrestaGriffeOui');
   var zone = document.getElementById('inspPrestaGriffeZone');
   if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
 }
 
-function uploadInspPrestaGriffe(input) {
-  toast('Fonctionnalité bientôt disponible pour les inspections', 'info');
+// Compatibilité : ancienne référence supprimée
+function _rnRenderPrestaGriffe(url, nom) {
+  _rnPrestataireSigUrl = url || '';
+  _rnPrestataireSigNom = nom || '';
 }
 
 function rnTogglePresta() {
@@ -7669,8 +7802,12 @@ function openRapportNuisibles() {
       _rnDocCode           = r.docCode           || 'ENR-HSE 8';
       _rnDocRev            = r.docRev            || '01';
       _rnDocEdition        = r.docEdition        || '';
-      _rnPrestataireSigUrl  = r.prestataireSigUrl || '';
-      _rnPrestataireSigNom  = r.prestataireNom    || '';
+      // Résoudre la griffe du prestataire sélectionné
+      var prestaList = r.prestataires || [];
+      var prestaId   = r.prestaId     || '';
+      var prestaObj  = prestaList.find(function(x){ return x.id===prestaId; }) || null;
+      _rnPrestataireSigUrl = (prestaObj&&prestaObj.sigUrl) || '';
+      _rnPrestataireSigNom = (prestaObj&&prestaObj.nom)    || '';
       if (r.logoUrl) _hseLogoUrl = r.logoUrl;
       if (r.sigMap)  Object.assign(_userSigMap, r.sigMap);
       // Réinitialiser champs
