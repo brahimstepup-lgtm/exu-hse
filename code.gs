@@ -2128,3 +2128,130 @@ function saveSupervisorSignatureConfig(p) {
 function deleteSupervisorSignatureConfig(p) {
   return deleteUserSignatureConfig(p);
 }
+
+// ══════════════════════════════════════════════════════════════════
+// RAPPORT EN CAS DE PRÉSENCE DE NUISIBLES  (Code document distinct)
+//   Feuille : Rapport_Nuisibles
+//   Colonnes : ID | Date | Zone | TypeNuisible | Description |
+//              ActionsImmédiates | MesuresCorrectivites |
+//              Superviseur | Matricule | Photo (URL) | Statut |
+//              Responsable | DateCreation
+//   Code document par défaut : ENR-HSE 8  (configurable)
+// ══════════════════════════════════════════════════════════════════
+function getRapportNuisiblesSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Rapport_Nuisibles');
+  if (!sh) {
+    sh = ss.insertSheet('Rapport_Nuisibles');
+    sh.appendRow([
+      'ID','Date','Zone','Type Nuisible','Description / Observations',
+      'Actions Immédiates','Mesures Correctives','Superviseur','Matricule',
+      'Photo (URL)','Statut','Responsable','Date Création'
+    ]);
+    sh.getRange(1,1,1,13).setFontWeight('bold').setBackground('#7d3c98').setFontColor('#ffffff');
+    sh.setColumnWidth(5, 280); sh.setColumnWidth(6, 220); sh.setColumnWidth(7, 220);
+  }
+  return sh;
+}
+
+function saveRapportNuisibles(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess = verifySession_(p.token);
+    var sh   = getRapportNuisiblesSheet_();
+    var lr   = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var photoUrl = '';
+    if (p.photo && String(p.photo).length > 10) {
+      var ext   = (p.photo_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
+      var fname = 'RapportNuisibles_'+nextId+'_'+new Date().getTime()+'.'+ext;
+      photoUrl  = savePhotoToFolder_(p.photo, fname, p.photo_mime||'image/jpeg');
+    }
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.zone||''),
+      String(p.typeNuisible||''),
+      String(p.description||''),
+      String(p.actionsImmediates||''),
+      String(p.mesuresCorrectives||''),
+      String(p.superviseurNom||sess.matricule),
+      sess.matricule,
+      photoUrl,
+      String(p.statut||'En cours'),
+      String(p.responsable||''),
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getRapportNuisibles(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var cols = Math.max(sh.getLastColumn(), 13);
+    var rows = sh.getRange(2,1,lr-1,cols).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      return {
+        id:                 r[0],
+        date:               fmtDate_(r[1]),
+        zone:               String(r[2]),
+        typeNuisible:       String(r[3]),
+        description:        String(r[4]),
+        actionsImmediates:  String(r[5]),
+        mesuresCorrectives: String(r[6]),
+        superviseurNom:     String(r[7]),
+        matricule:          String(r[8]),
+        photoUrl:           String(r[9]),
+        photoId:            extractFileId_(r[9],''),
+        statut:             String(r[10]||'En cours'),
+        responsable:        String(r[11]||''),
+        dateCreation:       fmtDate_(r[12])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteRapportNuisibles(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Introuvable' };
+    var ids = sh.getRange(2,1,lr-1,1).getValues();
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { sh.deleteRow(i+2); return { success:true }; }
+    }
+    return { success:false, error:'ID introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getRapportNuisiblesConfig(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    return {
+      success:        true,
+      docCode:        props.getProperty('PEST_RAPPORT_DOC_CODE')    || 'ENR-HSE 8',
+      docRev:         props.getProperty('PEST_RAPPORT_DOC_REV')     || '01',
+      docEdition:     props.getProperty('PEST_RAPPORT_DOC_EDITION') || '',
+      logoUrl:        props.getProperty('HSE_LOGO_URL')             || '',
+      sigMap:         _buildSigMap_()
+    };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveRapportNuisiblesConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (p.docCode    != null) props.setProperty('PEST_RAPPORT_DOC_CODE',    String(p.docCode).trim()    || 'ENR-HSE 8');
+    if (p.docRev     != null) props.setProperty('PEST_RAPPORT_DOC_REV',     String(p.docRev).trim()     || '01');
+    if (p.docEdition != null) props.setProperty('PEST_RAPPORT_DOC_EDITION', String(p.docEdition).trim());
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
