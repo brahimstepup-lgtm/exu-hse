@@ -1833,18 +1833,6 @@ img{max-width:100%;display:block;}
             <label class="fl">Nom du prestataire</label>
             <input class="fi" id="rn_presta_nom" placeholder="Ex : SOBIEX, RENTOKIL…" style="height:36px"/>
           </div>
-          <div>
-            <label class="fl">Mode de contact utilisé</label>
-            <div style="display:flex;gap:8px;margin-top:4px;margin-bottom:8px">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
-                <input type="radio" name="rn_contact_mode" id="rn_contact_tel" value="Numéro" onchange="rnToggleContactMode()" checked style="accent-color:#9b59b6"/> Numéro de téléphone
-              </label>
-              <label style="display:flex;align-items:center;gap=6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
-                <input type="radio" name="rn_contact_mode" id="rn_contact_email" value="Email" onchange="rnToggleContactMode()" style="accent-color:#9b59b6"/> Email
-              </label>
-            </div>
-            <input class="fi" id="rn_contact_val" placeholder="Numéro de téléphone…" style="height:36px"/>
-          </div>
         </div>
       </div>
       <!-- Photo nuisible (optionnelle) -->
@@ -7827,11 +7815,6 @@ function rnTogglePresta() {
   if (det) det.style.display = (oui&&oui.checked) ? '' : 'none';
 }
 
-function rnToggleContactMode() {
-  var telEl = document.getElementById('rn_contact_tel');
-  var inp   = document.getElementById('rn_contact_val');
-  if (inp) inp.placeholder = (telEl&&telEl.checked) ? 'Numéro de téléphone…' : 'Adresse email…';
-}
 
 function _rnFillZones() {
   var sel = document.getElementById('rn_zone');
@@ -7874,10 +7857,6 @@ function openRapportNuisibles() {
       if (nonRad) { nonRad.checked = true; }
       document.getElementById('rn_presta_details').style.display = 'none';
       document.getElementById('rn_presta_nom').value   = '';
-      document.getElementById('rn_contact_val').value  = '';
-      var telRad = document.getElementById('rn_contact_tel');
-      if (telRad) telRad.checked = true;
-      rnToggleContactMode();
       // Zones
       if (_configuredZones && _configuredZones.length) {
         _rnFillZones();
@@ -7907,9 +7886,6 @@ function submitRapportNuisibles() {
   var ouiRad     = document.getElementById('rn_presta_oui');
   var prestaInfo = ouiRad&&ouiRad.checked ? 'Oui' : 'Non';
   var prestaNom  = document.getElementById('rn_presta_nom').value.trim();
-  var contactModeEl = document.getElementById('rn_contact_tel');
-  var contactMode= contactModeEl&&contactModeEl.checked ? 'Numéro' : 'Email';
-  var contactVal = document.getElementById('rn_contact_val').value.trim();
   if (!date||!zone||!type) { toast('Date, zone et type de nuisible sont requis','err'); return; }
   showLoader('Enregistrement…');
   var payload = {
@@ -7923,8 +7899,6 @@ function submitRapportNuisibles() {
     statut:             statut,
     prestaireInforme:   prestaInfo,
     prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
-    contactMode:        prestaInfo==='Oui' ? contactMode : '',
-    contactVal:         prestaInfo==='Oui' ? contactVal : '',
     superviseurNom:     S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
   };
   if (_rnPhotoB64) { payload.photoNuisible = _rnPhotoB64; payload.mime = _rnPhotoMime || 'image/jpeg'; }
@@ -8031,13 +8005,10 @@ function openRapportNuisiblesDetail(idx) {
   };
   var prestaBlock = '';
   if (c.prestaireInforme) {
-    var pContact = (c.prestaireInforme==='Oui'&&c.contactMode&&c.contactVal)
-      ? (c.contactMode+' : '+c.contactVal) : '';
     prestaBlock = '<div style="background:rgba(125,60,152,.12);border-radius:8px;padding:10px;margin:10px 0;border:1px solid rgba(125,60,152,.3)">'
       +'<div style="font-size:.75rem;font-weight:700;color:#9b59b6;text-transform:uppercase;margin-bottom:6px">🏢 Prestataire</div>'
       +row('Prestataire informé', c.prestaireInforme)
       +row('Nom du prestataire', c.prestaireNom)
-      +row('Contact', pContact)
       +'</div>';
   }
   var html = '<div style="padding:4px 0">'
@@ -8120,15 +8091,12 @@ function _doPrintRapportNuisibles(idx) {
 
   var prestaSection = '';
   if (c.prestaireInforme) {
-    var contactLine = (c.prestaireInforme==='Oui'&&c.contactMode&&c.contactVal)
-      ? '<div class="field"><div class="fl">Mode de contact / Coordonnées</div><div class="fv">'+esc(c.contactMode)+' : '+esc(c.contactVal)+'</div></div>' : '';
     prestaSection = '<div class="section-title">🏢 Prestataire</div>'
       +'<div class="row2">'
       +'<div class="field"><div class="fl">Prestataire informé ?</div>'
       +'<div class="fv" style="font-weight:700;color:'+(c.prestaireInforme==='Oui'?'#006600':'#cc0000')+'">'+esc(c.prestaireInforme)+'</div></div>'
       +(c.prestaireNom?'<div class="field"><div class="fl">Nom du prestataire</div><div class="fv">'+esc(c.prestaireNom)+'</div></div>':'<div></div>')
-      +'</div>'
-      +contactLine;
+      +'</div>';
   }
 
   // Tableau de signatures
