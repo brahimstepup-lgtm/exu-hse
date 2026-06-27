@@ -1465,9 +1465,11 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('incendieDetailOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto" id="idetBody"></div>
-    <div class="sh-foot">
+    <div class="sh-foot" id="idetFoot">
       <button class="btn btn-g" onclick="closeSheet('incendieDetailOv')">Fermer</button>
-      <button class="btn btn-g" onclick="printIncendieRecord(_incendieCurrentDetailIdx)">🖨 Imprimer le rapport</button>
+      <button class="btn btn-g" onclick="printIncendieRecord(_incendieCurrentDetailIdx)">🖨 Imprimer</button>
+      <button class="btn btn-p" id="idetEditBtn" style="display:none" onclick="toggleIdetEdit()">✏ Modifier</button>
+      <button class="btn btn-p" id="idetSaveBtn" style="display:none;background:#22c55e" onclick="saveIdetEdit()">💾 Sauvegarder</button>
     </div>
   </div>
 </div>
@@ -5310,15 +5312,122 @@ function onRiaPhotoChange(input) {
   reader.readAsDataURL(file);
 }
 
+var _idetEditMode = false;
+
 function openIncendieDetail(idx) {
   var c = _incendieRecords[idx];
   if (!c) return;
   _incendieCurrentDetailIdx = idx;
+  _idetEditMode = false;
   var isGlobal = c.type === 'Inspection Globale';
   document.getElementById('idetTitle').textContent =
     (isGlobal ? '🌍 Inspection Globale' : (c.type==='Inspection Globale RIA'?'🌊 Inspection Globale RIA':'🔴 Inspection')) + ' — ' + (c.dateInspection||'');
-  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c);
+  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, false);
+  var editBtn = document.getElementById('idetEditBtn');
+  var saveBtn = document.getElementById('idetSaveBtn');
+  if (editBtn) editBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
   openSheet('incendieDetailOv');
+}
+
+function toggleIdetEdit() {
+  _idetEditMode = !_idetEditMode;
+  var c = _incendieRecords[_incendieCurrentDetailIdx];
+  if (!c) return;
+  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, _idetEditMode);
+  document.getElementById('idetEditBtn').textContent = _idetEditMode ? '👁 Vue' : '✏ Modifier';
+  document.getElementById('idetSaveBtn').style.display = _idetEditMode ? 'inline-flex' : 'none';
+}
+
+function saveIdetEdit() {
+  var c = _incendieRecords[_incendieCurrentDetailIdx];
+  if (!c) return;
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+
+  // Lire les champs header
+  var dateVal  = (document.getElementById('idetDate')    ||{}).value  || c.dateInspection      || '';
+  var prochVal = (document.getElementById('idetProch')   ||{}).value  || c.prochaineInspection || '';
+  var etatVal  = (document.getElementById('idetEtat')    ||{}).value  || c.etatGlobal          || '';
+  var obsVal   = (document.getElementById('idetObs')     ||{}).value  || c.observations        || '';
+  var supVal   = (document.getElementById('idetSup')     ||{}).value  || c.superviseurNom      || '';
+
+  // Reconstruire le JSON checklist depuis les checkboxes
+  var newChecklist = c.checklist;
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    newChecklist = {};
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.extincteurs) return;
+      var exts = sec.extincteurs.map(function(e) {
+        var cl = _checklistByType(type);
+        var newChecks = {};
+        cl.forEach(function(it) {
+          var cb = document.getElementById('chk_'+type.replace(/ /g,'_')+'_'+e.num+'_'+it.key);
+          newChecks[it.key] = cb ? cb.checked : (e.checks && e.checks[it.key]) || false;
+        });
+        var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+        var noteEl = document.getElementById('note_'+type.replace(/ /g,'_')+'_'+e.num);
+        return Object.assign({}, e, {
+          checks: newChecks,
+          statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+          note: noteEl ? noteEl.value : (e.note || '')
+        });
+      });
+      newChecklist[type] = Object.assign({}, sec, { extincteurs: exts });
+    });
+  } else if (isGlobalRia && Array.isArray(c.checklist)) {
+    newChecklist = c.checklist.map(function(r) {
+      var cl = CHECKLIST_RIA;
+      var newChecks = {};
+      cl.forEach(function(it) {
+        var cb = document.getElementById('chk_RIA_'+r.num+'_'+it.key);
+        newChecks[it.key] = cb ? cb.checked : (r.checks && r.checks[it.key]) || false;
+      });
+      var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+      var noteEl = document.getElementById('note_RIA_'+r.num);
+      return Object.assign({}, r, {
+        checks: newChecks,
+        statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+        note: noteEl ? noteEl.value : (r.note || '')
+      });
+    });
+  }
+
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      // Mettre à jour l'objet en mémoire
+      c.dateInspection      = dateVal;
+      c.prochaineInspection = prochVal;
+      c.etatGlobal          = etatVal;
+      c.observations        = obsVal;
+      c.superviseurNom      = supVal;
+      c.checklist           = newChecklist;
+      // Repasser en mode vue
+      _idetEditMode = false;
+      document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, false);
+      document.getElementById('idetEditBtn').textContent = '✏ Modifier';
+      document.getElementById('idetSaveBtn').style.display = 'none';
+      document.getElementById('idetTitle').textContent =
+        (isGlobal ? '🌍 Inspection Globale' : (isGlobalRia?'🌊 Inspection Globale RIA':'🔴 Inspection'))
+        + ' — ' + dateVal;
+      _renderIncendieList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .updateChecklist({
+      adminKey: S.adminKey,
+      id: c.id,
+      superviseurNom:      supVal,
+      dateInspection:      dateVal,
+      etatGlobal:          etatVal,
+      prochaineInspection: prochVal,
+      observations:        obsVal,
+      checklistJson:       JSON.stringify(newChecklist)
+    });
 }
 
 function toggleIdetExt(detId) {
@@ -5330,7 +5439,7 @@ function toggleIdetExt(detId) {
   if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
 }
 
-function _buildDetailHTML(c) {
+function _buildDetailHTML(c, editMode) {
   var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
   var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
   var badgeCls  = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
@@ -5339,19 +5448,36 @@ function _buildDetailHTML(c) {
   var html = '';
 
   /* ── Header ── */
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-    + '<div style="font-size:.82rem;color:var(--t2);line-height:1.6">'
-    + '<div>📅 '+esc(c.dateInspection)+'</div>'
-    + '<div>🦺 '+esc(c.superviseurNom)+'</div>'
-    + '</div>'
-    + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
-    + '</div>';
-
-  if (c.prochaineInspection)
-    html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
-
-  if (c.observations)
-    html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  if (editMode) {
+    html += '<div style="display:grid;gap:8px;margin-bottom:12px;font-size:.82rem">'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">📅 Date</label>'
+      + '<input id="idetDate" class="fi" type="date" value="'+esc(c.dateInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🦺 Superviseur</label>'
+      + '<input id="idetSup" class="fi" type="text" value="'+esc(c.superviseurNom||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🔜 Prochaine</label>'
+      + '<input id="idetProch" class="fi" type="date" value="'+esc(c.prochaineInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">État global</label>'
+      + '<select id="idetEtat" class="fi" style="height:32px;font-size:.82rem;flex:1">'
+      + '<option value="Conforme"'+(c.etatGlobal==='Conforme'?' selected':'')+'>Conforme</option>'
+      + '<option value="Non conforme"'+(c.etatGlobal==='Non conforme'?' selected':'')+'>Non conforme</option>'
+      + '<option value="Partiel"'+(c.etatGlobal==='Partiel'?' selected':'')+'>Partiel</option>'
+      + '</select></div>'
+      + '<div style="display:flex;gap:8px;align-items:flex-start"><label style="color:var(--t3);min-width:80px;padding-top:6px">📝 Obs.</label>'
+      + '<textarea id="idetObs" class="fi" rows="2" style="font-size:.82rem;flex:1;resize:vertical">'+esc(c.observations||'')+'</textarea></div>'
+      + '</div>';
+  } else {
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div style="font-size:.82rem;color:var(--t2);line-height:1.6">'
+      + '<div>📅 '+esc(c.dateInspection)+'</div>'
+      + '<div>🦺 '+esc(c.superviseurNom)+'</div>'
+      + '</div>'
+      + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      + '</div>';
+    if (c.prochaineInspection)
+      html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+    if (c.observations)
+      html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  }
 
   if (c.photoId)
     html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>';
@@ -5392,14 +5518,18 @@ function _buildDetailHTML(c) {
 
         cl.forEach(function(it) {
           var checked = e.checks && e.checks[it.key];
+          var cbId = 'chk_'+type.replace(/ /g,'_')+'_'+e.num+'_'+it.key;
           html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
-            + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+            + '<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
             + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
             + '</div>';
         });
 
-        if (e.note)
+        if (editMode) {
+          html += '<textarea id="note_'+type.replace(/ /g,'_')+'_'+e.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(e.note||'')+'</textarea>';
+        } else if (e.note) {
           html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(e.note)+'</div>';
+        }
 
         html += '</div></div>';
       });
@@ -5432,12 +5562,17 @@ function _buildDetailHTML(c) {
         + '<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
       cl.forEach(function(it) {
         var checked = r.checks && r.checks[it.key];
+        var cbId = 'chk_RIA_'+r.num+'_'+it.key;
         html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
-          + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+          + '<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
           + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
           + '</div>';
       });
-      if (r.note) html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(r.note)+'</div>';
+      if (editMode) {
+        html += '<textarea id="note_RIA_'+r.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(r.note||'')+'</textarea>';
+      } else if (r.note) {
+        html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(r.note)+'</div>';
+      }
       html += '</div></div>';
     });
     html += '</div></div>';
@@ -5459,7 +5594,7 @@ function _buildDetailHTML(c) {
       keys.forEach(function(k) {
         var checked = checks[k];
         html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
-          + '<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+          + '<input type="checkbox" id="chk_unit_'+k+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
           + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+(lmap[k]||esc(k))+'</label>'
           + '</div>';
       });
