@@ -6752,14 +6752,14 @@ function _buildHSEPrintHTML(opts) {
     +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
     +(opts.responsable && signatureUrl
-      ? '<div style="position:relative;height:44px;overflow:visible;margin-bottom:2px"><img src="'+signatureUrl+'" alt="Signature" style="position:absolute;top:-18px;left:-8px;width:210px;max-height:72px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+      ? '<div style="position:relative;height:50px;overflow:visible;margin-bottom:-10px"><img src="'+signatureUrl+'" alt="Signature" style="position:absolute;top:-6px;left:-8px;width:200px;max-height:68px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
       : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
     +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
     +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
     +'<div class="sig-field-label">Signature :</div>'
     +(supervisorSignatureUrl
-      ? '<div style="position:relative;height:44px;overflow:visible;margin-bottom:2px"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-4px;width:210px;max-height:72px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
+      ? '<div style="position:relative;height:50px;overflow:visible;margin-bottom:-10px"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="position:absolute;top:-6px;left:-4px;width:200px;max-height:68px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
       : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
     +'</tr></table>'
