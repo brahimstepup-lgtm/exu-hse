@@ -2278,13 +2278,43 @@ function getRapportNuisiblesConfig(token) {
   try {
     var props = PropertiesService.getScriptProperties();
     return {
-      success:        true,
-      docCode:        props.getProperty('PEST_RAPPORT_DOC_CODE')    || 'ENR-HSE 8',
-      docRev:         props.getProperty('PEST_RAPPORT_DOC_REV')     || '01',
-      docEdition:     props.getProperty('PEST_RAPPORT_DOC_EDITION') || '',
-      logoUrl:        props.getProperty('HSE_LOGO_URL')             || '',
-      sigMap:         _buildSigMap_()
+      success:           true,
+      docCode:           props.getProperty('PEST_RAPPORT_DOC_CODE')       || 'ENR-HSE 8',
+      docRev:            props.getProperty('PEST_RAPPORT_DOC_REV')        || '01',
+      docEdition:        props.getProperty('PEST_RAPPORT_DOC_EDITION')    || '',
+      logoUrl:           props.getProperty('HSE_LOGO_URL')                || '',
+      prestataireSigUrl: props.getProperty('PEST_RAPPORT_PRESTA_SIG_URL') || '',
+      sigMap:            _buildSigMap_()
     };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function savePrestataireSigRapport(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var oldId = props.getProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    var b64  = String(p.sigBase64||'').replace(/^data:[^;]+;base64,/, '');
+    var blob = Utilities.newBlob(Utilities.base64Decode(b64), p.mime || 'image/png', 'pest-rapport-presta-sig.png');
+    var file = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var url  = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w400';
+    props.setProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID', file.getId());
+    props.setProperty('PEST_RAPPORT_PRESTA_SIG_URL', url);
+    return { success:true, sigUrl:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deletePrestataireSigRapport(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var oldId = props.getProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
+    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
+    props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
+    props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_URL');
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
