@@ -2143,6 +2143,7 @@ function deleteSupervisorSignatureConfig(p) {
 // 6:ActionsImmédiates  7:MesuresCorrectives  8:PrestaireInformé
 // 9:PrestaireNom  10:ContactMode  11:ContactVal
 // 12:Superviseur  13:Matricule  14:Statut  15:Responsable  16:DateCréation
+// 17:PhotoNuisible(URL)  18:DocCloture(URL)
 function getRapportNuisiblesSheet_() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sh = ss.getSheetByName('Rapport_Nuisibles');
@@ -2152,7 +2153,8 @@ function getRapportNuisiblesSheet_() {
       'ID','Date','Zone','Emplacement','Type Nuisible','Description / Observations',
       'Actions Immédiates','Mesures Correctives',
       'Prestataire Informé','Nom Prestataire','Mode Contact','Coordonnées Contact',
-      'Superviseur','Matricule','Statut','Responsable','Date Création'
+      'Superviseur','Matricule','Statut','Responsable','Date Création',
+      'Photo Nuisible','Doc Clôture (ENR-13)'
     ]);
     sh.getRange(1,1,1,17).setFontWeight('bold').setBackground('#7d3c98').setFontColor('#ffffff');
     sh.setColumnWidth(6, 260); sh.setColumnWidth(7, 200); sh.setColumnWidth(8, 200);
@@ -2167,6 +2169,7 @@ function saveRapportNuisibles(p) {
     var sh   = getRapportNuisiblesSheet_();
     var lr   = sh.getLastRow();
     var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var ir = sh.getLastRow() + 1;
     sh.appendRow([
       nextId,
       p.date ? new Date(p.date) : new Date(),
@@ -2184,9 +2187,40 @@ function saveRapportNuisibles(p) {
       sess.matricule,
       String(p.statut||'En cours'),
       String(p.responsable||''),
-      new Date()
+      new Date(),
+      '',  // Photo Nuisible
+      ''   // Doc Clôture
     ]);
+    // Photo nuisible (optionnelle)
+    if (p.photoNuisible && p.photoNuisible.length > 10) {
+      var fn = nextId + '.NuisiblePhoto.' + nowHHMMSS_() + '.jpg';
+      var urlPh = savePhotoToFolder_(p.photoNuisible, fn, p.mime || 'image/jpeg');
+      if (urlPh) sh.getRange(ir, 18).setValue(urlPh);
+    }
     return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function cloturerRapportNuisibles(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    if (!p.docCloture || p.docCloture.length < 10) return { success:false, error:'Document de clôture requis' };
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Introuvable' };
+    var ids = sh.getRange(2,1,lr-1,1).getValues();
+    var ri = -1;
+    for (var i=0; i<ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { ri = i+2; break; } }
+    if (ri < 0) return { success:false, error:'Rapport introuvable' };
+    // Sauvegarder le document de clôture (PDF ou image)
+    var mime = p.docMime || 'application/pdf';
+    var ext  = mime === 'application/pdf' ? '.pdf' : '.jpg';
+    var fn   = p.id + '.DocCloture.ENR13.' + nowHHMMSS_() + ext;
+    var urlDoc = savePhotoToFolder_(p.docCloture, fn, mime);
+    if (!urlDoc) return { success:false, error:'Impossible de sauvegarder le document' };
+    sh.getRange(ri, 15).setValue('Résolu');
+    sh.getRange(ri, 19).setValue(urlDoc);
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -2196,7 +2230,7 @@ function getRapportNuisibles(token) {
     var sh = getRapportNuisiblesSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var cols = Math.max(sh.getLastColumn(), 17);
+    var cols = Math.max(sh.getLastColumn(), 19);
     var rows = sh.getRange(2,1,lr-1,cols).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
       return {
@@ -2216,7 +2250,9 @@ function getRapportNuisibles(token) {
         matricule:          String(r[13]),
         statut:             String(r[14]||'En cours'),
         responsable:        String(r[15]||''),
-        dateCreation:       fmtDate_(r[16])
+        dateCreation:       fmtDate_(r[16]),
+        photoNuisible:      String(r[17]||''),
+        docCloture:         String(r[18]||'')
       };
     });
     return { success:true, data:data.reverse() };

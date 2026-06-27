@@ -1806,13 +1806,31 @@ img{max-width:100%;display:block;}
           </div>
         </div>
       </div>
+      <!-- Photo nuisible (optionnelle) -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Photo du nuisible constaté <span style="color:#888;font-weight:400;text-transform:none">(optionnel)</span></label>
+        <input type="file" id="rn_photo_input" accept="image/*" capture="environment"
+          onchange="rnHandlePhoto(this)"
+          style="display:none"/>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" onclick="document.getElementById('rn_photo_input').click()"
+            style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">
+            📷 Choisir une photo
+          </button>
+          <span id="rn_photo_name" style="font-size:12px;color:#aaa">Aucune photo sélectionnée</span>
+        </div>
+        <div id="rn_photo_preview" style="margin-top:8px;display:none">
+          <img id="rn_photo_img" src="" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+          <button type="button" onclick="rnClearPhoto()"
+            style="display:block;margin-top:4px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px">✕ Supprimer la photo</button>
+        </div>
+      </div>
       <!-- Statut -->
       <div style="margin-bottom:4px">
         <label class="fl">Statut</label>
         <select class="fi" id="rn_statut" style="height:38px">
           <option value="En cours">🔴 En cours</option>
           <option value="Traité">🟠 Traité</option>
-          <option value="Résolu">✅ Résolu</option>
         </select>
       </div>
     </div>
@@ -1835,6 +1853,41 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('rapportNuisiblesDetailOv')">Fermer</button>
       <button class="btn btn-g" onclick="printRapportNuisibles(_rnCurrentIdx)" style="gap:4px">🖨 Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Clôture Rapport Nuisibles (ENR-13) ═══ -->
+<div class="ov" id="cloturaNuisiblesOv">
+  <div class="sheet" style="max-height:80vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📁 Clôture du rapport — ENR-13</div>
+      <button class="sh-x" onclick="closeSheet('cloturaNuisiblesOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+      <p style="font-size:13px;color:#ccc;margin-bottom:16px">
+        Pour clôturer ce rapport, veuillez joindre le document de clôture <strong>ENR-13</strong>
+        (rapport de traitement, bon d'intervention prestataire, etc.).
+      </p>
+      <div style="margin-bottom:12px">
+        <label class="fl">Document ENR-13 <span style="color:#e74c3c">*</span></label>
+        <input type="file" id="cloture_doc_input" accept="image/*,.pdf"
+          onchange="clotureHandleDoc(this)"
+          style="display:none"/>
+        <button type="button" onclick="document.getElementById('cloture_doc_input').click()"
+          style="background:#27ae60;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-size:14px;width:100%">
+          📎 Sélectionner le document ENR-13
+        </button>
+        <div id="cloture_doc_name" style="margin-top:8px;font-size:12px;color:#aaa">Aucun fichier sélectionné</div>
+        <div id="cloture_doc_preview" style="margin-top:8px;display:none">
+          <img id="cloture_doc_img" src="" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('cloturaNuisiblesOv')">Annuler</button>
+      <button class="btn" onclick="submitCloture()" style="background:#27ae60;color:#fff">✅ Clôturer le rapport</button>
     </div>
   </div>
 </div>
@@ -7377,6 +7430,78 @@ var _rnCurrentIdx            = -1;
 var _rnDocCode               = 'ENR-HSE 8';
 var _rnDocRev                = '01';
 var _rnDocEdition            = '';
+var _rnPhotoB64              = '';
+var _rnPhotoMime             = '';
+var _clotureIdx              = -1;
+var _clotureDocB64           = '';
+var _clotureDocMime          = '';
+
+function rnHandlePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _rnPhotoB64  = e.target.result;
+    _rnPhotoMime = file.type || 'image/jpeg';
+    document.getElementById('rn_photo_name').textContent = file.name;
+    document.getElementById('rn_photo_img').src = e.target.result;
+    document.getElementById('rn_photo_preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function rnClearPhoto() {
+  _rnPhotoB64 = ''; _rnPhotoMime = '';
+  document.getElementById('rn_photo_input').value = '';
+  document.getElementById('rn_photo_name').textContent = 'Aucune photo sélectionnée';
+  document.getElementById('rn_photo_preview').style.display = 'none';
+  document.getElementById('rn_photo_img').src = '';
+}
+
+function openCloture(idx) {
+  _clotureIdx    = idx;
+  _clotureDocB64 = ''; _clotureDocMime = '';
+  document.getElementById('cloture_doc_input').value  = '';
+  document.getElementById('cloture_doc_name').textContent = 'Aucun fichier sélectionné';
+  document.getElementById('cloture_doc_preview').style.display = 'none';
+  document.getElementById('cloture_doc_img').src = '';
+  openSheet('cloturaNuisiblesOv');
+}
+
+function clotureHandleDoc(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _clotureDocB64  = e.target.result;
+    _clotureDocMime = file.type || 'application/pdf';
+    document.getElementById('cloture_doc_name').textContent = file.name;
+    if (file.type && file.type.startsWith('image/')) {
+      document.getElementById('cloture_doc_img').src = e.target.result;
+      document.getElementById('cloture_doc_preview').style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitCloture() {
+  if (_clotureIdx < 0) return;
+  var c = _rapportNuisiblesRecords[_clotureIdx];
+  if (!c) return;
+  if (!_clotureDocB64) { toast('Veuillez sélectionner le document ENR-13','err'); return; }
+  showLoader('Clôture en cours…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Rapport #'+c.id+' clôturé','ok');
+        closeSheet('cloturaNuisiblesOv');
+        renderRapportNuisibles();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .cloturerRapportNuisibles({ token:S.adminKey, id:c.id, docCloture:_clotureDocB64, docMime:_clotureDocMime });
+}
 
 function rnTogglePresta() {
   var oui = document.getElementById('rn_presta_oui');
@@ -7419,6 +7544,7 @@ function openRapportNuisibles() {
       document.getElementById('rn_desc').value        = '';
       document.getElementById('rn_actions').value     = '';
       document.getElementById('rn_statut').value      = 'En cours';
+      rnClearPhoto();
       // Prestataire
       var nonRad = document.getElementById('rn_presta_non');
       if (nonRad) { nonRad.checked = true; }
@@ -7462,6 +7588,22 @@ function submitRapportNuisibles() {
   var contactVal = document.getElementById('rn_contact_val').value.trim();
   if (!date||!zone||!type) { toast('Date, zone et type de nuisible sont requis','err'); return; }
   showLoader('Enregistrement…');
+  var payload = {
+    token:              S.adminKey,
+    date:               date,
+    zone:               zone,
+    emplacement:        emplacement,
+    typeNuisible:       type,
+    description:        desc,
+    actionsImmediates:  actions,
+    statut:             statut,
+    prestaireInforme:   prestaInfo,
+    prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
+    contactMode:        prestaInfo==='Oui' ? contactMode : '',
+    contactVal:         prestaInfo==='Oui' ? contactVal : '',
+    superviseurNom:     S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
+  };
+  if (_rnPhotoB64) { payload.photoNuisible = _rnPhotoB64; payload.mime = _rnPhotoMime || 'image/jpeg'; }
   google.script.run
     .withSuccessHandler(function(r) {
       hideSplash();
@@ -7472,21 +7614,7 @@ function submitRapportNuisibles() {
       } else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveRapportNuisibles({
-      token:              S.adminKey,
-      date:               date,
-      zone:               zone,
-      emplacement:        emplacement,
-      typeNuisible:       type,
-      description:        desc,
-      actionsImmediates:  actions,
-      statut:             statut,
-      prestaireInforme:   prestaInfo,
-      prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
-      contactMode:        prestaInfo==='Oui' ? contactMode : '',
-      contactVal:         prestaInfo==='Oui' ? contactVal : '',
-      superviseurNom:     S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
-    });
+    .saveRapportNuisibles(payload);
 }
 
 function renderRapportNuisibles() {
@@ -7526,9 +7654,10 @@ function _renderRapportNuisiblesList() {
       +'<span style="background:'+statColor+';color:#fff;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap">'+statIcon+' '+esc(c.statut)+'</span>'
       +'</div>'
       +(c.description?'<div style="font-size:.8rem;color:var(--t2);margin-top:6px;line-height:1.4">'+esc(c.description.substring(0,120))+(c.description.length>120?'…':'')+'</div>':'')
-      +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">'
       +'<button class="btn btn-g" onclick="openRapportNuisiblesDetail('+i+')" style="flex:1;font-size:.78rem;height:32px">👁 Détail</button>'
       +'<button class="btn btn-g" onclick="printRapportNuisibles('+i+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +(c.statut!=='Résolu'?'<button class="btn" onclick="openCloture('+i+')" style="flex:1;font-size:.78rem;height:32px;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#27ae60;border-radius:var(--rs)">📁 Clôturer</button>':'')
       +(isAdmin()?'<button class="btn" onclick="deleteRapportNuisiblesRecord('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:var(--rs)">🗑</button>':'')
       +'</div>'
       +'</div>';
@@ -7568,7 +7697,9 @@ function openRapportNuisiblesDetail(idx) {
     +row('Type de nuisible', c.typeNuisible)
     +row('Description / Observations', c.description)
     +row('Actions immédiates', c.actionsImmediates)
+    +(c.photoNuisible?'<div style="margin-bottom:10px"><div style="font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📷 Photo du nuisible</div><img src="'+c.photoNuisible+'" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #444"/></div>':'')
     +prestaBlock
+    +(c.docCloture?'<div style="margin-bottom:10px;padding:10px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);border-radius:8px"><div style="font-size:.75rem;font-weight:700;color:#27ae60;text-transform:uppercase;margin-bottom:6px">📁 Document de clôture (ENR-13)</div><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60;font-size:.88rem">📎 Voir / Télécharger le document ENR-13</a></div>':'')
     +row('Superviseur', c.superviseurNom)
     +row('Date de création', c.dateCreation)
     +'</div>';
@@ -7695,6 +7826,10 @@ function printRapportNuisibles(idx) {
     // Actions
     +'<div class="section-title">⚡ Actions</div>'
     +'<div class="field"><span class="fl">Actions immédiates prises</span><div class="fv" style="min-height:28px">'+esc(c.actionsImmediates||'—')+'</div></div>'
+    // Photo nuisible
+    +(c.photoNuisible?'<div class="section-title">📷 Photo du nuisible</div><div style="margin-bottom:10px"><img src="'+c.photoNuisible+'" alt="Photo nuisible" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc;border-radius:6px"/></div>':'')
+    // Doc clôture
+    +(c.docCloture?'<div class="section-title">📁 Document de clôture (ENR-13)</div><div style="margin-bottom:10px;padding:8px;border:1px solid #27ae60;border-radius:6px;font-size:9pt"><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60">📎 Voir le document ENR-13</a></div>':'')
     // Prestataire
     +prestaSection
     // Tableau de signatures en bas
