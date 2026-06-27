@@ -858,6 +858,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+  <button class="snav" data-v="rapport-nuisibles" id="sbRapportNuisibles" style="display:none"><span class="snav-i">📝</span>Rapport Nuisibles</button>
 </nav>
 
 <!-- APP -->
@@ -1056,6 +1057,25 @@ img{max-width:100%;display:block;}
       </div>
       <div id="nuisiblesBody"></div>
     </div>
+
+    <!-- ═══ VUE : RAPPORT PRÉSENCE NUISIBLES — ENR-HSE-24 ═══ -->
+    <div class="view" id="view-rapport-nuisibles">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">📝 Rapport Présence Nuisibles</h1>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:.72rem;color:var(--t3);background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:3px 8px">ENR-HSE-24</span>
+          <button class="btn btn-p" onclick="openRapportNuisibleForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Nouveau rapport</button>
+        </div>
+      </div>
+      <!-- Filtres statut -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="rntab_all"    onclick="setRapportNuisibleFilter('all')">Tous</button>
+        <button class="gsort-tab"    id="rntab_ouvert" onclick="setRapportNuisibleFilter('Ouvert')">🔴 Ouverts</button>
+        <button class="gsort-tab"    id="rntab_encours" onclick="setRapportNuisibleFilter('En cours')">🟡 En cours</button>
+        <button class="gsort-tab"    id="rntab_resolu" onclick="setRapportNuisibleFilter('Résolu')">🟢 Résolus</button>
+      </div>
+      <div id="rapportNuisiblesBody"></div>
+    </div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1066,6 +1086,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="rapport-nuisibles" id="nbRapportNuisibles" style="display:none"><span class="nb-icon">📝</span><span>Rapport</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -1687,6 +1708,142 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('pestDetailOv')">Fermer</button>
       <button class="btn btn-g" onclick="printPestRecord(_pestCurrentDetailIdx)" style="gap:4px">🖨 Imprimer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Rapport Présence Nuisibles ENR-HSE-24 (formulaire) ═══ -->
+<div class="ov" id="rapportNuisibleOv">
+  <div class="sheet" style="max-height:95vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📝 Rapport Présence Nuisibles <span style="font-size:.72rem;color:var(--t3);margin-left:6px">ENR-HSE-24</span></div>
+      <button class="sh-x" onclick="closeSheet('rapportNuisibleOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Date + Zone -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Date de constatation</label>
+          <input class="fi" type="date" id="rnDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Zone / Localisation</label>
+          <input class="fi" id="rnZone" placeholder="Ex. Zone de stockage A…"/>
+        </div>
+      </div>
+      <!-- Type de nuisible + Gravité -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Type de nuisible</label>
+          <select class="fi" id="rnType" style="height:40px">
+            <option value="">— Sélectionner —</option>
+            <option value="Rongeurs">🐭 Rongeurs</option>
+            <option value="Insectes volants">🦟 Insectes volants</option>
+            <option value="Insectes rampants">🪳 Insectes rampants</option>
+            <option value="Cafards">🪳 Cafards</option>
+            <option value="Oiseaux">🐦 Oiseaux</option>
+            <option value="Reptiles">🦎 Reptiles</option>
+            <option value="Autres">❓ Autres</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Niveau de gravité</label>
+          <select class="fi" id="rnGravite" style="height:40px">
+            <option value="Faible">🟢 Faible</option>
+            <option value="Modéré" selected>🟡 Modéré</option>
+            <option value="Critique">🔴 Critique</option>
+          </select>
+        </div>
+      </div>
+      <!-- Description -->
+      <div class="fg">
+        <label class="fl">Description de la présence observée</label>
+        <textarea class="fi" id="rnDescription" rows="3" placeholder="Décrire ce qui a été observé, les traces, quantité estimée…" style="resize:vertical"></textarea>
+      </div>
+      <!-- Actions immédiates -->
+      <div class="fg">
+        <label class="fl">Actions immédiates prises</label>
+        <textarea class="fi" id="rnActionsImm" rows="2" placeholder="Mesures prises sur-le-champ…" style="resize:vertical"></textarea>
+      </div>
+      <!-- Actions proposées -->
+      <div class="fg">
+        <label class="fl">Actions correctives proposées</label>
+        <textarea class="fi" id="rnActionsProp" rows="2" placeholder="Traitement prévu, mesures préventives…" style="resize:vertical"></textarea>
+      </div>
+      <!-- Prestataire -->
+      <div class="fg">
+        <label class="fl">Prestataire contacté ?</label>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem">
+            <input type="radio" name="rnPrestataire" id="rnPrestNon" value="non" checked onchange="toggleRnPrestataire()"/> Non
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem">
+            <input type="radio" name="rnPrestataire" id="rnPrestOui" value="oui" onchange="toggleRnPrestataire()"/> Oui
+          </label>
+        </div>
+      </div>
+      <div id="rnPrestataireDetails" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg">
+            <label class="fl">Nom du prestataire</label>
+            <input class="fi" id="rnNomPrestataire" placeholder="Société ou nom…"/>
+          </div>
+          <div class="fg">
+            <label class="fl">Date d'intervention prévue</label>
+            <input class="fi" type="date" id="rnDateIntervention"/>
+          </div>
+        </div>
+      </div>
+      <!-- Statut -->
+      <div class="fg">
+        <label class="fl">Statut du rapport</label>
+        <select class="fi" id="rnStatut" style="height:40px" onchange="toggleRnCloture()">
+          <option value="Ouvert" selected>🔴 Ouvert</option>
+          <option value="En cours">🟡 En cours de traitement</option>
+          <option value="Résolu">🟢 Résolu</option>
+        </select>
+      </div>
+      <div class="fg" id="rnClotureRow" style="display:none">
+        <label class="fl">Date de clôture</label>
+        <input class="fi" type="date" id="rnDateCloture"/>
+      </div>
+      <!-- Superviseur HSE -->
+      <div class="fg">
+        <label class="fl">Superviseur HSE (rédacteur)</label>
+        <select class="fi" id="rnSuperviseur" style="height:40px">
+          <option value="">Chargement…</option>
+        </select>
+      </div>
+      <!-- Photo -->
+      <div class="fg">
+        <label class="fl">Photo / Document (optionnel)</label>
+        <div class="hse-upload-area" id="rnPhotoArea" onclick="document.getElementById('rnPhotoInput').click()">
+          <div style="font-size:1.8rem">📸</div>
+          <div class="hse-upload-label">Appuyer pour ajouter une photo</div>
+          <div class="hse-upload-preview" id="rnPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="rnPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onRnPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('rapportNuisibleOv')">Annuler</button>
+      <button class="btn btn-p" id="rnSaveBtn" onclick="submitRapportNuisible()">💾 Enregistrer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Rapport Nuisibles — Détail ═══ -->
+<div class="ov" id="rapportNuisibleDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="rnDetailTitle">📝 Détail rapport</div>
+      <button class="sh-x" onclick="closeSheet('rapportNuisibleDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="rnDetailBody"></div>
+    <div class="sh-foot" id="rnDetailFoot">
+      <button class="btn btn-g" onclick="closeSheet('rapportNuisibleDetailOv')">Fermer</button>
     </div>
   </div>
 </div>
@@ -2473,7 +2630,7 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
-var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true, 'rapport-nuisibles':true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
@@ -2538,7 +2695,7 @@ function applyRole(){
   });
   // Navigation superviseur
   var showSuper = admin || super_;
-  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','sbRapportNuisibles','nbSensi','nbIncendie','nbNuisibles','nbRapportNuisibles'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
   // Redirige si vue interdite
@@ -2640,7 +2797,8 @@ function goV(v, btn){
               admin:'view-admin',
               sensibilisation:'view-sensibilisation',
               incendie:'view-incendie',
-              nuisibles:'view-nuisibles'};
+              nuisibles:'view-nuisibles',
+              'rapport-nuisibles':'view-rapport-nuisibles'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -2657,6 +2815,7 @@ function renderCurrent(){
   else if(S.view==='sensibilisation') renderSensibilisation();
   else if(S.view==='incendie')   renderIncendie();
   else if(S.view==='nuisibles') renderNuisibles();
+  else if(S.view==='rapport-nuisibles') renderRapportNuisibles();
   else renderTagsView();
 }
 
@@ -6922,6 +7081,421 @@ function renderNuisibles() {
     })
     .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
     .getPestChecklists(S.adminKey);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RAPPORT PRÉSENCE NUISIBLES — ENR-HSE-24
+══════════════════════════════════════════════════════════════════ */
+
+var _rapportNuisiblesRecords = [];
+var _rnFilter = 'all';
+var _rnPhotoBase64 = null;
+var _rnPhotoMime   = null;
+var _rnEditId      = null;
+
+var RN_GRAVITE_COLOR = { 'Faible':'#22c55e', 'Modéré':'#f59e0b', 'Critique':'#ef4444' };
+var RN_STATUT_ICON   = { 'Ouvert':'🔴', 'En cours':'🟡', 'Résolu':'🟢' };
+
+function setRapportNuisibleFilter(f) {
+  _rnFilter = f;
+  ['all','ouvert','encours','resolu'].forEach(function(k){
+    var el = document.getElementById('rntab_'+k);
+    if (el) el.classList.remove('on');
+  });
+  var tabKey = f==='all'?'all':f==='Ouvert'?'ouvert':f==='En cours'?'encours':'resolu';
+  var tab = document.getElementById('rntab_'+tabKey);
+  if (tab) tab.classList.add('on');
+  _renderRapportNuisiblesList();
+}
+
+function renderRapportNuisibles() {
+  var body = document.getElementById('rapportNuisiblesBody');
+  if (!body) return;
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      _rapportNuisiblesRecords = r.data || [];
+      _renderRapportNuisiblesList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getRapportsNuisibles(S_AUTH.token || S.adminKey);
+}
+
+function _renderRapportNuisiblesList() {
+  var body = document.getElementById('rapportNuisiblesBody');
+  if (!body) return;
+  var data = _rapportNuisiblesRecords.filter(function(r){
+    if (_rnFilter === 'all') return true;
+    return r.statut === _rnFilter;
+  });
+  if (!data.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">📝</div><div>Aucun rapport'
+      +(_rnFilter!=='all' ? ' pour ce statut' : '')+'.</div>'
+      +'<div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouveau rapport » pour commencer.</div></div>';
+    return;
+  }
+  body.innerHTML = data.map(function(r, i) {
+    var gc = RN_GRAVITE_COLOR[r.gravite] || '#888';
+    var si = RN_STATUT_ICON[r.statut]   || '⚪';
+    var realIdx = _rapportNuisiblesRecords.indexOf(r);
+    return '<div class="insp-card" onclick="openRapportNuisibleDetail('+realIdx+')" style="cursor:pointer">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-weight:600;font-size:.92rem;margin-bottom:2px">'+esc(r.typeNuisible||'—')+' — '+esc(r.zone||'—')+'</div>'
+      +'<div style="font-size:.78rem;color:var(--t3)">'+esc(r.dateConstatation||'')+' · '+esc(r.superviseurNom||r.matricule||'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+      +'<span style="font-size:.72rem;font-weight:600;color:'+gc+';background:'+gc+'22;border:1px solid '+gc+'44;border-radius:6px;padding:2px 7px">'+esc(r.gravite||'')+'</span>'
+      +'<span style="font-size:.8rem">'+si+' <span style="font-size:.72rem;color:var(--t3)">'+esc(r.statut||'')+'</span></span>'
+      +'</div>'
+      +'</div>'
+      +(r.description ? '<div style="font-size:.8rem;color:var(--t2);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">'+esc(r.description)+'</div>' : '')
+      +'</div>';
+  }).join('');
+}
+
+function openRapportNuisibleForm(editId) {
+  if (!isSuperOrAdmin()) { toast('🔒 Accès réservé aux superviseurs HSE et administrateurs','err'); return; }
+  _rnEditId      = editId || null;
+  _rnPhotoBase64 = null;
+  _rnPhotoMime   = null;
+
+  // Reset form
+  var today = todayStr();
+  document.getElementById('rnDate').value        = today;
+  document.getElementById('rnZone').value        = '';
+  document.getElementById('rnType').value        = '';
+  document.getElementById('rnGravite').value     = 'Modéré';
+  document.getElementById('rnDescription').value = '';
+  document.getElementById('rnActionsImm').value  = '';
+  document.getElementById('rnActionsProp').value = '';
+  document.getElementById('rnNomPrestataire').value  = '';
+  document.getElementById('rnDateIntervention').value = '';
+  document.getElementById('rnStatut').value      = 'Ouvert';
+  document.getElementById('rnDateCloture').value = '';
+  document.getElementById('rnPrestNon').checked  = true;
+  document.getElementById('rnPrestataireDetails').style.display = 'none';
+  document.getElementById('rnClotureRow').style.display  = 'none';
+  var prev = document.getElementById('rnPhotoPreview');
+  var area = document.getElementById('rnPhotoArea');
+  if (prev) prev.style.display = 'none';
+  if (area) { var lbl = area.querySelector('.hse-upload-label'); if (lbl) lbl.style.display=''; }
+
+  // Pre-fill from existing record if editing
+  if (_rnEditId !== null) {
+    var rec = _rapportNuisiblesRecords.find(function(r){ return String(r.id)===String(_rnEditId); });
+    if (rec) {
+      if (rec.dateConstatation) document.getElementById('rnDate').value = rec.dateConstatation;
+      document.getElementById('rnZone').value        = rec.zone        || '';
+      document.getElementById('rnType').value        = rec.typeNuisible || '';
+      document.getElementById('rnGravite').value     = rec.gravite     || 'Modéré';
+      document.getElementById('rnDescription').value = rec.description || '';
+      document.getElementById('rnActionsImm').value  = rec.actionsImmediates || '';
+      document.getElementById('rnActionsProp').value = rec.actionsProposees  || '';
+      document.getElementById('rnStatut').value      = rec.statut      || 'Ouvert';
+      if (rec.dateCloture) document.getElementById('rnDateCloture').value = rec.dateCloture;
+      if (rec.prestataireContacte === 'Oui') {
+        document.getElementById('rnPrestOui').checked = true;
+        document.getElementById('rnPrestataireDetails').style.display = '';
+        document.getElementById('rnNomPrestataire').value  = rec.nomPrestataire  || '';
+        if (rec.dateIntervention) document.getElementById('rnDateIntervention').value = rec.dateIntervention;
+      }
+      toggleRnCloture();
+    }
+  }
+
+  // Load superviseurs
+  _fillRnSuperviseurSelect();
+
+  document.getElementById('rnSaveBtn').textContent = _rnEditId !== null ? '💾 Mettre à jour' : '💾 Enregistrer le rapport';
+  openSheet('rapportNuisibleOv');
+}
+
+function _fillRnSuperviseurSelect() {
+  var sel = document.getElementById('rnSuperviseur');
+  if (!sel) return;
+  var currentName = S_AUTH && (S_AUTH.name || S_AUTH.matricule) || '';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      var list = (r&&r.success&&r.data)||[];
+      sel.innerHTML = '<option value="">— Sélectionner —</option>'
+        + list.map(function(s){ return '<option value="'+esc(s.nom||s)+'"'+(s.nom===currentName||s===currentName?' selected':'')+'>'+esc(s.nom||s)+'</option>'; }).join('');
+      if (!sel.value && currentName) sel.value = currentName;
+    })
+    .withFailureHandler(function(){
+      sel.innerHTML = '<option value="'+esc(currentName)+'">'+esc(currentName)+'</option>';
+    })
+    .getSuperviseursList(S_AUTH.token || S.adminKey);
+}
+
+function toggleRnPrestataire() {
+  var oui = document.getElementById('rnPrestOui');
+  document.getElementById('rnPrestataireDetails').style.display = (oui && oui.checked) ? '' : 'none';
+}
+
+function toggleRnCloture() {
+  var statut = document.getElementById('rnStatut');
+  document.getElementById('rnClotureRow').style.display = (statut && statut.value === 'Résolu') ? '' : 'none';
+  if (statut && statut.value === 'Résolu' && !document.getElementById('rnDateCloture').value) {
+    document.getElementById('rnDateCloture').value = todayStr();
+  }
+}
+
+function onRnPhotoChange(input) {
+  if (!input.files||!input.files[0]) return;
+  var file = input.files[0];
+  _rnPhotoMime = file.type;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    _rnPhotoBase64 = b64;
+    var prev = document.getElementById('rnPhotoPreview');
+    var area = document.getElementById('rnPhotoArea');
+    if (prev) {
+      if (file.type.indexOf('image') !== -1) {
+        prev.innerHTML = '<img src="'+e.target.result+'" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:cover"/>';
+      } else {
+        prev.innerHTML = '<div style="font-size:.8rem;padding:6px">📄 '+esc(file.name)+'</div>';
+      }
+      prev.style.display = '';
+    }
+    if (area) { var lbl = area.querySelector('.hse-upload-label'); if (lbl) lbl.style.display='none'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitRapportNuisible() {
+  if (!isSuperOrAdmin()) { toast('🔒 Accès refusé','err'); return; }
+  var date     = document.getElementById('rnDate').value;
+  var zone     = document.getElementById('rnZone').value.trim();
+  var type     = document.getElementById('rnType').value;
+  var gravite  = document.getElementById('rnGravite').value;
+  var desc     = document.getElementById('rnDescription').value.trim();
+  var sup      = document.getElementById('rnSuperviseur').value;
+
+  if (!date)   { toast('Saisissez la date de constatation','err'); return; }
+  if (!zone)   { toast('Saisissez la zone / localisation','err'); return; }
+  if (!type)   { toast('Sélectionnez le type de nuisible','err'); return; }
+  if (!desc)   { toast('Décrivez la présence observée','err'); return; }
+
+  var prestOui = document.getElementById('rnPrestOui').checked;
+
+  var payload = {
+    token:                S_AUTH.token || S.adminKey,
+    dateConstatation:     date,
+    zone:                 zone,
+    typeNuisible:         type,
+    gravite:              gravite,
+    description:          desc,
+    actionsImmediates:    document.getElementById('rnActionsImm').value.trim(),
+    actionsProposees:     document.getElementById('rnActionsProp').value.trim(),
+    prestataireContacte:  prestOui,
+    nomPrestataire:       prestOui ? document.getElementById('rnNomPrestataire').value.trim() : '',
+    dateIntervention:     prestOui ? document.getElementById('rnDateIntervention').value : '',
+    statut:               document.getElementById('rnStatut').value,
+    dateCloture:          document.getElementById('rnDateCloture').value || '',
+    superviseurNom:       sup,
+    photoBase64:          _rnPhotoBase64 || '',
+    photoMime:            _rnPhotoMime   || 'image/jpeg'
+  };
+
+  var btn = document.getElementById('rnSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+  showLoader('Enregistrement…');
+
+  var fn = _rnEditId !== null ? 'updateRapportNuisible' : 'saveRapportNuisible';
+  if (_rnEditId !== null) payload.id = _rnEditId;
+
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (btn) { btn.disabled = false; btn.textContent = _rnEditId !== null ? '💾 Mettre à jour' : '💾 Enregistrer le rapport'; }
+      if (!r||!r.success) { toast(r&&r.error||'Erreur','err'); return; }
+      toast('✓ Rapport #'+(r.id||_rnEditId)+' enregistré','ok');
+      closeSheet('rapportNuisibleOv');
+      renderRapportNuisibles();
+    })
+    .withFailureHandler(function(e) {
+      hideSplash();
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer le rapport'; }
+      toast(e.message,'err');
+    })
+    [fn](payload);
+}
+
+function openRapportNuisibleDetail(idx) {
+  var r = _rapportNuisiblesRecords[idx];
+  if (!r) return;
+  var gc = RN_GRAVITE_COLOR[r.gravite] || '#888';
+  var si = RN_STATUT_ICON[r.statut]   || '⚪';
+
+  document.getElementById('rnDetailTitle').textContent = '📝 Rapport #' + r.id;
+
+  var html = '<div style="padding:4px 0">'
+    // Header badge
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+    +'<span style="font-size:.72rem;font-weight:600;color:'+gc+';background:'+gc+'22;border:1px solid '+gc+'44;border-radius:8px;padding:3px 10px">'+esc(r.gravite||'')+'</span>'
+    +'<span style="font-size:.72rem;background:var(--ink3);border:1px solid var(--line2);border-radius:8px;padding:3px 10px">'+si+' '+esc(r.statut||'')+'</span>'
+    +'<span style="font-size:.72rem;color:var(--t3);background:var(--ink3);border:1px solid var(--line2);border-radius:8px;padding:3px 10px">ENR-HSE-24</span>'
+    +'</div>'
+    // Info grid
+    +_rnDetailRow('Type de nuisible', r.typeNuisible)
+    +_rnDetailRow('Zone / Localisation', r.zone)
+    +_rnDetailRow('Date de constatation', r.dateConstatation)
+    +_rnDetailRow('Superviseur HSE', r.superviseurNom||r.matricule)
+    +'<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0"/>'
+    +_rnDetailRow('Description observée', r.description, true)
+    +_rnDetailRow('Actions immédiates prises', r.actionsImmediates, true)
+    +_rnDetailRow('Actions correctives proposées', r.actionsProposees, true)
+    +'<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0"/>'
+    +_rnDetailRow('Prestataire contacté', r.prestataireContacte)
+    +(r.prestataireContacte==='Oui' ? _rnDetailRow('Nom prestataire', r.nomPrestataire) : '')
+    +(r.prestataireContacte==='Oui' ? _rnDetailRow('Date intervention prévue', r.dateIntervention) : '')
+    +(r.dateCloture ? _rnDetailRow('Date de clôture', r.dateCloture) : '')
+    +'<div style="font-size:.72rem;color:var(--t3);margin-top:12px">Créé le '+esc(r.dateCreation||'')+'</div>'
+    +'</div>';
+
+  document.getElementById('rnDetailBody').innerHTML = html;
+
+  // Foot: edit + print buttons
+  var foot = document.getElementById('rnDetailFoot');
+  foot.innerHTML = '<button class="btn btn-g" onclick="closeSheet(\'rapportNuisibleDetailOv\')">Fermer</button>';
+  if (isSuperOrAdmin()) {
+    foot.innerHTML += '<button class="btn" onclick="openRapportNuisibleForm('+r.id+')" style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:var(--rs)">✏ Modifier</button>';
+  }
+  foot.innerHTML += '<button class="btn btn-p" onclick="printRapportNuisible('+idx+')" style="gap:4px">🖨 Imprimer</button>';
+  if (isAdmin()) {
+    foot.innerHTML += '<button class="btn" onclick="deleteRapportNuisibleConfirm('+r.id+')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:var(--rs)">🗑 Supprimer</button>';
+  }
+
+  openSheet('rapportNuisibleDetailOv');
+}
+
+function _rnDetailRow(label, val, wrap) {
+  if (!val || String(val).trim() === '') return '';
+  return '<div style="margin-bottom:10px">'
+    +'<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.4px;margin-bottom:2px">'+esc(label)+'</div>'
+    +'<div style="font-size:.88rem;color:var(--t1)'+(wrap?';white-space:pre-wrap':'')+'">' +esc(String(val))+'</div>'
+    +'</div>';
+}
+
+function deleteRapportNuisibleConfirm(id) {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  if (!confirm('Supprimer définitivement ce rapport ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (!r||!r.success) { toast(r&&r.error||'Erreur','err'); return; }
+      toast('Rapport supprimé','ok');
+      closeSheet('rapportNuisibleDetailOv');
+      renderRapportNuisibles();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteRapportNuisible({ adminKey: S_AUTH.token || S.adminKey, id: id });
+}
+
+function printRapportNuisible(idx) {
+  var r = _rapportNuisiblesRecords[idx];
+  if (!r) return;
+  var gc = RN_GRAVITE_COLOR[r.gravite] || '#888';
+  var si = RN_STATUT_ICON[r.statut]   || '⚪';
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var sigUrl  = _hseSignatureDataUrl || _hseSignatureUrl || '';
+  var supSigUrl = _hseSuperSignatureDataUrl || _hseSuperSignatureUrl || '';
+
+  var logoCell = logoUrl
+    ? '<img src="'+logoUrl+'" alt="Logo" style="max-width:80px;max-height:52px;object-fit:contain;display:block;margin:0 auto;"/>'
+    : '<div style="width:82px;height:52px;border:1px solid #ccc;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#bbb;flex-direction:column"><div style="font-size:16pt;line-height:1">🏢</div><div style="margin-top:2px">LOGO</div></div>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapport Nuisibles #'+r.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:#fff;padding-top:50px}'
+    +'#hse-toolbar{position:fixed;top:0;left:0;right:0;height:46px;background:#1a1a2e;color:#fff;display:flex;align-items:center;padding:0 14px;gap:10px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.5)}'
+    +'@media print{#hse-toolbar{display:none!important}body{padding-top:0!important}}'
+    +'.doc-header{width:100%;border-collapse:collapse;border:2px solid #000;margin-bottom:0}'
+    +'.doc-header td{border:1px solid #000;vertical-align:middle;padding:6px 8px}'
+    +'.col-logo{width:22%;text-align:center}.col-title{width:54%;text-align:center}.col-ref{width:24%;font-size:8pt;padding:4px 8px!important}'
+    +'.doc-title{font-size:11pt;font-weight:bold;text-transform:uppercase;line-height:1.3}'
+    +'.doc-subtitle{font-size:8.5pt;margin-top:3px}'
+    +'.ref-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
+    +'.ref-row:last-child{border-bottom:none}.ref-label{font-weight:bold}'
+    +'.info-table{width:100%;border-collapse:collapse;border:1px solid #000;border-top:none;margin-bottom:12px}'
+    +'.info-table td{border:1px solid #ccc;padding:5px 8px;vertical-align:top}'
+    +'.info-label{font-weight:bold;font-size:7pt;text-transform:uppercase;color:#555;display:block;margin-bottom:2px}'
+    +'.info-value{font-size:8.5pt;min-width:80px;padding:0 2px}'
+    +'.section-header{background:#1a1a1a;color:#fff;font-weight:bold;font-size:9pt;padding:4px 10px;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 0 0}'
+    +'.section-body{border:1px solid #000;border-top:none;padding:8px;margin-bottom:10px;font-size:8.5pt;white-space:pre-wrap}'
+    +'.badge{display:inline-block;font-weight:bold;font-size:8pt;border-radius:4px;padding:2px 8px;border:1px solid}'
+    +'.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:8px}'
+    +'.sig-table td{border:1px solid #ccc;padding:6px 8px;width:50%;vertical-align:top}'
+    +'.sig-title{font-weight:bold;font-size:8pt;text-transform:uppercase;color:#333;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:6px}'
+    +'.sig-line{border-bottom:1px dotted #aaa;min-height:18px;margin:4px 0 8px 0;font-size:8pt}'
+    +'.sig-line-lg{border-bottom:1px dotted #aaa;height:44px;margin:4px 0 8px 0}'
+    +'.footer{text-align:center;font-size:7pt;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:6px}'
+    +'</style></head><body>'
+    +'<div id="hse-toolbar">'
+    +'<span style="font-size:13px;font-weight:700;flex:1">Rapport Présence Nuisibles — ENR-HSE-24 — #'+r.id+'</span>'
+    +'<button onclick="window.print()" style="background:#f5c518;color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif">🖨 Imprimer</button>'
+    +'<button onclick="window.close()" style="background:#555;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:Arial,sans-serif">✕ Fermer</button>'
+    +'</div>'
+    // Document header
+    +'<table class="doc-header"><tr>'
+    +'<td class="col-logo">'+logoCell+'</td>'
+    +'<td class="col-title">'
+    +'<div class="doc-title">Rapport de présence de nuisibles</div>'
+    +'<div class="doc-subtitle">Fiche de signalement et suivi des actions</div>'
+    +'</td>'
+    +'<td class="col-ref">'
+    +'<div class="ref-row"><span class="ref-label">Réf. doc :</span><span>ENR-HSE-24</span></div>'
+    +'<div class="ref-row"><span class="ref-label">N° rapport :</span><span>#'+r.id+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Date :</span><span>'+esc(r.dateConstatation||'')+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Statut :</span><span>'+si+' '+esc(r.statut||'')+'</span></div>'
+    +'</td>'
+    +'</tr></table>'
+    // Info table
+    +'<table class="info-table"><tr>'
+    +'<td><span class="info-label">Type de nuisible</span><span class="info-value">'+esc(r.typeNuisible||'')+'</span></td>'
+    +'<td><span class="info-label">Zone / Localisation</span><span class="info-value">'+esc(r.zone||'')+'</span></td>'
+    +'<td><span class="info-label">Niveau de gravité</span><span class="info-value"><span class="badge" style="color:'+gc+';border-color:'+gc+'">'+esc(r.gravite||'')+'</span></span></td>'
+    +'<td><span class="info-label">Superviseur HSE</span><span class="info-value">'+esc(r.superviseurNom||r.matricule||'')+'</span></td>'
+    +'</tr></table>'
+    // Sections
+    +'<div class="section-header">Description de la présence observée</div>'
+    +'<div class="section-body">'+esc(r.description||'—')+'</div>'
+    +'<div class="section-header">Actions immédiates prises</div>'
+    +'<div class="section-body">'+esc(r.actionsImmediates||'—')+'</div>'
+    +'<div class="section-header">Actions correctives proposées</div>'
+    +'<div class="section-body">'+esc(r.actionsProposees||'—')+'</div>'
+    +'<div class="section-header">Prestataire / Intervention</div>'
+    +'<div class="section-body">'
+    +'<b>Prestataire contacté :</b> '+esc(r.prestataireContacte||'Non')
+    +(r.prestataireContacte==='Oui' ? '\n<b>Nom :</b> '+esc(r.nomPrestataire||'—')+'\n<b>Date intervention prévue :</b> '+esc(r.dateIntervention||'—') : '')
+    +(r.dateCloture ? '\n<b>Date de clôture :</b> '+esc(r.dateCloture) : '')
+    +'</div>'
+    // Signatures
+    +'<table class="sig-table"><tr>'
+    +'<td><div class="sig-title">Superviseur HSE</div>'
+    +'<div style="font-size:7pt;color:#555">Nom et prénom :</div><div class="sig-line">'+esc(r.superviseurNom||'')+'</div>'
+    +'<div style="font-size:7pt;color:#555">Signature :</div>'
+    +(supSigUrl ? '<div style="height:50px"><img src="'+supSigUrl+'" style="max-width:160px;max-height:46px;object-fit:contain"/></div>' : '<div class="sig-line-lg"></div>')
+    +'<div style="font-size:7pt;color:#555">Date :</div><div class="sig-line">'+esc(r.dateConstatation||'')+'</div>'
+    +'</td>'
+    +'<td><div class="sig-title">Responsable HSE</div>'
+    +'<div style="font-size:7pt;color:#555">Nom et prénom :</div><div class="sig-line"></div>'
+    +'<div style="font-size:7pt;color:#555">Signature :</div>'
+    +(sigUrl ? '<div style="height:50px"><img src="'+sigUrl+'" style="max-width:160px;max-height:46px;object-fit:contain"/></div>' : '<div class="sig-line-lg"></div>')
+    +'<div style="font-size:7pt;color:#555">Date :</div><div class="sig-line"></div>'
+    +'</td>'
+    +'</tr></table>'
+    +'<div class="footer">Document qualité interne — ENR-HSE-24 — Conforme aux exigences ISO 9001:2015</div>'
+    +'</body></html>';
+
+  var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
 }
 
 /* ══════════════════════════════════════════

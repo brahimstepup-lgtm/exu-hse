@@ -1958,6 +1958,142 @@ function getPestChecklists(token) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// RAPPORT DE PRÉSENCE DE NUISIBLES — ENR-HSE-24
+// Fiche de signalement : type, zone, gravité, actions, suivi
+// ══════════════════════════════════════════════════════════════════
+
+var RAPPORT_NUISIBLES_SHEET = 'Rapport_Nuisibles_24';
+
+function getRapportNuisiblesSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(RAPPORT_NUISIBLES_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(RAPPORT_NUISIBLES_SHEET);
+    sh.appendRow([
+      'ID','DateConstatation','Matricule','SuperviseurNom',
+      'Zone','TypeNuisible','Description','Gravite',
+      'ActionsImmédiates','ActionsProposées',
+      'PrestataireContacte','NomPrestataire','DateIntervention',
+      'Statut','DateCloture','PhotoUrl','DateCreation'
+    ]);
+    sh.getRange(1,1,1,17).setFontWeight('bold');
+  }
+  return sh;
+}
+
+function saveRapportNuisible(p) {
+  if (!isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess = verifySession_(p.token);
+    var sh   = getRapportNuisiblesSheet_();
+    var lr   = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var photoUrl = '';
+    if (p.photoBase64 && String(p.photoBase64).length > 10) {
+      var ext   = (p.photoMime||'image/jpeg').indexOf('pdf') !== -1 ? 'pdf' : 'jpg';
+      var fname = 'RapportNuisibles_' + nextId + '_' + new Date().getTime() + '.' + ext;
+      photoUrl  = savePhotoToFolder_(p.photoBase64, fname, p.photoMime||'image/jpeg');
+    }
+    sh.appendRow([
+      nextId,
+      p.dateConstatation ? new Date(p.dateConstatation) : new Date(),
+      sess.matricule,
+      String(p.superviseurNom || sess.matricule),
+      String(p.zone            || ''),
+      String(p.typeNuisible    || ''),
+      String(p.description     || ''),
+      String(p.gravite         || 'Modéré'),
+      String(p.actionsImmediates  || ''),
+      String(p.actionsProposees   || ''),
+      p.prestataireContacte ? 'Oui' : 'Non',
+      String(p.nomPrestataire  || ''),
+      p.dateIntervention ? new Date(p.dateIntervention) : '',
+      String(p.statut          || 'Ouvert'),
+      p.dateCloture ? new Date(p.dateCloture) : '',
+      photoUrl,
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getRapportsNuisibles(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2,1,lr-1,17).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r){
+      return {
+        id:                  r[0],
+        dateConstatation:    fmtDate_(r[1]),
+        matricule:           String(r[2]),
+        superviseurNom:      String(r[3]),
+        zone:                String(r[4]),
+        typeNuisible:        String(r[5]),
+        description:         String(r[6]),
+        gravite:             String(r[7]),
+        actionsImmediates:   String(r[8]),
+        actionsProposees:    String(r[9]),
+        prestataireContacte: String(r[10]),
+        nomPrestataire:      String(r[11]),
+        dateIntervention:    fmtDate_(r[12]),
+        statut:              String(r[13]),
+        dateCloture:         fmtDate_(r[14]),
+        photoId:             extractFileId_(r[15]),
+        photoUrl:            String(r[15]),
+        dateCreation:        fmtDate_(r[16])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function updateRapportNuisible(p) {
+  if (!isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2,1,lr-1,1).getValues();
+    var rowNum = -1;
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
+    }
+    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.dateConstatation)       sh.getRange(rowNum,2).setValue(new Date(p.dateConstatation));
+    if (p.superviseurNom != null) sh.getRange(rowNum,4).setValue(String(p.superviseurNom));
+    if (p.zone           != null) sh.getRange(rowNum,5).setValue(String(p.zone));
+    if (p.typeNuisible   != null) sh.getRange(rowNum,6).setValue(String(p.typeNuisible));
+    if (p.description    != null) sh.getRange(rowNum,7).setValue(String(p.description));
+    if (p.gravite        != null) sh.getRange(rowNum,8).setValue(String(p.gravite));
+    if (p.actionsImmediates  != null) sh.getRange(rowNum,9).setValue(String(p.actionsImmediates));
+    if (p.actionsProposees   != null) sh.getRange(rowNum,10).setValue(String(p.actionsProposees));
+    if (p.prestataireContacte != null) sh.getRange(rowNum,11).setValue(p.prestataireContacte ? 'Oui' : 'Non');
+    if (p.nomPrestataire != null) sh.getRange(rowNum,12).setValue(String(p.nomPrestataire));
+    if (p.dateIntervention != null) sh.getRange(rowNum,13).setValue(p.dateIntervention ? new Date(p.dateIntervention) : '');
+    if (p.statut         != null) sh.getRange(rowNum,14).setValue(String(p.statut));
+    if (p.dateCloture    != null) sh.getRange(rowNum,15).setValue(p.dateCloture ? new Date(p.dateCloture) : '');
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteRapportNuisible(p) {
+  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportNuisiblesSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
+    var ids = sh.getRange(2,1,lr-1,1).getValues();
+    for (var i=0; i<ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) { sh.deleteRow(i+2); return { success:true }; }
+    }
+    return { success:false, error:'Enregistrement introuvable' };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // LOGO DE L'ENTREPRISE (stocké dans Drive, URL dans PropertiesService)
 // ══════════════════════════════════════════════════════════════════
 function saveLogoConfig(p) {
