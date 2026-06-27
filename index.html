@@ -1578,6 +1578,22 @@ img{max-width:100%;display:block;}
           </div>
         </div>
       </div>
+      <!-- Produits ENR-13 -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(39,174,96,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#27ae60;margin-bottom:10px">🧴 Liste des produits — ENR-13 Exécution</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <select id="enr13ProdRefInput" class="fi" style="height:34px;font-size:.82rem;width:80px">
+            <option value="FDS">FDS</option>
+            <option value="FT">FT</option>
+            <option value="MSDS">MSDS</option>
+          </select>
+          <input class="fi" id="enr13ProdNomInput" placeholder="Nom du produit…" style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addEnr13Product();}"/>
+          <button type="button" class="btn btn-g" onclick="addEnr13Product()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+        </div>
+        <div id="enr13ProdList" style="display:flex;flex-direction:column;gap:4px;min-height:24px;margin-bottom:10px"></div>
+        <button class="btn" onclick="saveEnr13Products()" style="height:34px;font-size:.82rem;padding:0 14px;background:#27ae60;color:#fff">💾 Sauvegarder les produits</button>
+      </div>
       <!-- Zones partagées -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
@@ -1956,9 +1972,9 @@ img{max-width:100%;display:block;}
           <tbody id="enr13TableBody">
             <tr>
               <td style="border:1px solid var(--line2);padding:5px 7px;font-weight:600;color:var(--t1)">Produit utilisé</td>
-              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_r" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
-              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_v" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
-              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_g" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><select class="fi" id="enr13_produit_r" style="height:28px;font-size:.78rem;border:none;background:transparent;width:100%"><option value="">—</option></select></td>
+              <td style="border:1px solid var(--line2);padding:3px"><select class="fi" id="enr13_produit_v" style="height:28px;font-size:.78rem;border:none;background:transparent;width:100%"><option value="">—</option></select></td>
+              <td style="border:1px solid var(--line2);padding:3px"><select class="fi" id="enr13_produit_g" style="height:28px;font-size:.78rem;border:none;background:transparent;width:100%"><option value="">—</option></select></td>
               <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
             </tr>
             <tr>
@@ -6701,6 +6717,8 @@ function openConfigPest() {
         })
         .withFailureHandler(function(){})
         .getRapportNuisiblesConfig(S.adminKey);
+      _enr13Products = r.enr13Products || [];
+      _renderEnr13ProductsList();
       _renderPestChecklistEditor();
       _renderPestConfigTables();
       _renderPestZoneChips();
@@ -8643,12 +8661,87 @@ document.addEventListener('click', function(e) {
 });
 
 /* ══════════════════════════════════════════
+   LISTE DES PRODUITS ENR-13 (admin)
+══════════════════════════════════════════ */
+var _enr13Products = []; // [{ref:'FDS', nom:'GOLIATHGEL'}, …]
+
+function _renderEnr13ProductsList() {
+  var el = document.getElementById('enr13ProdList');
+  if (!el) return;
+  if (!_enr13Products.length) {
+    el.innerHTML = '<span style="font-size:.75rem;color:var(--t3)">Aucun produit — ajoutez-en ci-dessus</span>';
+  } else {
+    el.innerHTML = _enr13Products.map(function(p, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;background:var(--ink3);border-radius:7px;padding:5px 9px">'
+        +'<span style="background:#27ae60;color:#fff;font-size:.7rem;font-weight:700;border-radius:4px;padding:1px 6px;min-width:38px;text-align:center">'+esc(p.ref)+'</span>'
+        +'<span style="flex:1;font-size:.82rem;color:var(--t1)">'+esc(p.nom)+'</span>'
+        +'<button onclick="removeEnr13Product('+i+')" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.85rem;padding:0 4px" title="Supprimer">✕</button>'
+        +'</div>';
+    }).join('');
+  }
+  _refreshEnr13ProductSelects();
+}
+
+function addEnr13Product() {
+  var ref = (document.getElementById('enr13ProdRefInput')||{}).value || 'FDS';
+  var inp = document.getElementById('enr13ProdNomInput');
+  var nom = (inp ? inp.value.trim() : '');
+  if (!nom) return;
+  _enr13Products.push({ref: ref, nom: nom});
+  if (inp) inp.value = '';
+  _renderEnr13ProductsList();
+}
+
+function removeEnr13Product(idx) {
+  _enr13Products.splice(idx, 1);
+  _renderEnr13ProductsList();
+}
+
+function _refreshEnr13ProductSelects() {
+  var opts = '<option value="">— Sélectionner —</option>'
+    + _enr13Products.map(function(p){
+        return '<option value="'+esc(p.nom)+'">'+esc('['+p.ref+'] '+p.nom)+'</option>';
+      }).join('');
+  ['enr13_produit_r','enr13_produit_v','enr13_produit_g'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = opts;
+    sel.value = cur;
+  });
+}
+
+function saveEnr13Products() {
+  showLoader('Sauvegarde des produits…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Produits ENR-13 sauvegardés','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveEnr13Products({ adminKey: S.adminKey, products: _enr13Products });
+}
+
+/* ══════════════════════════════════════════
    ENR-HSE-13 — Exécution de la Lutte contre les Nuisibles
 ══════════════════════════════════════════ */
 function openEnr13Exec() {
   var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
   var el = document.getElementById('enr13_date');
   if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
+  // Si la liste est vide, charger depuis le backend
+  if (!_enr13Products.length) {
+    google.script.run
+      .withSuccessHandler(function(r){
+        if (r&&r.success&&r.products) { _enr13Products = r.products; }
+        _refreshEnr13ProductSelects();
+      })
+      .withFailureHandler(function(){})
+      .getEnr13Products(S.adminKey);
+  } else {
+    _refreshEnr13ProductSelects();
+  }
   openSheet('enr13ExecOv');
 }
 
