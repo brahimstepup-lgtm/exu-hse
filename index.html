@@ -858,7 +858,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
-  <button class="snav" data-v="rapport-nuisibles" id="sbRapportNuisibles" style="display:none"><span class="snav-i">📝</span>Rapport Nuisibles</button>
+  <button class="snav" data-v="rapport-nuisibles" id="sbRapportNuisibles" style="display:none" onclick="goV('rapport-nuisibles',this)"><span class="snav-i">📝</span>Rapport Nuisibles</button>
 </nav>
 
 <!-- APP -->
@@ -1086,7 +1086,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
-    <button class="nb" data-v="rapport-nuisibles" id="nbRapportNuisibles" style="display:none"><span class="nb-icon">📝</span><span>Rapport</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="rapport-nuisibles" id="nbRapportNuisibles" style="display:none" onclick="goV('rapport-nuisibles',this)"><span class="nb-icon">📝</span><span>Rapport</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -7119,7 +7119,7 @@ function renderRapportNuisibles() {
       _renderRapportNuisiblesList();
     })
     .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
-    .getRapportsNuisibles(S_AUTH.token || S.adminKey);
+    .getRapportsNuisibles(S.adminKey || S_AUTH.token);
 }
 
 function _renderRapportNuisiblesList() {
@@ -7282,7 +7282,7 @@ function submitRapportNuisible() {
   var prestOui = document.getElementById('rnPrestOui').checked;
 
   var payload = {
-    token:                S_AUTH.token || S.adminKey,
+    token:                S.adminKey || S_AUTH.token,
     dateConstatation:     date,
     zone:                 zone,
     typeNuisible:         type,
@@ -7393,7 +7393,7 @@ function deleteRapportNuisibleConfirm(id) {
       renderRapportNuisibles();
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deleteRapportNuisible({ adminKey: S_AUTH.token || S.adminKey, id: id });
+    .deleteRapportNuisible({ adminKey: S.adminKey || S_AUTH.token, id: id });
 }
 
 function printRapportNuisible(idx) {

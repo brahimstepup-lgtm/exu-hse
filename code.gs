@@ -1982,7 +1982,7 @@ function getRapportNuisiblesSheet_() {
 }
 
 function saveRapportNuisible(p) {
-  if (!isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
+  if (!isAdmin_(p && p.token) && !isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
   try {
     var sess = verifySession_(p.token);
     var sh   = getRapportNuisiblesSheet_();
@@ -2018,7 +2018,7 @@ function saveRapportNuisible(p) {
 }
 
 function getRapportsNuisibles(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  if (!isAdmin_(token) && !isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
   try {
     var sh = getRapportNuisiblesSheet_();
     var lr = sh.getLastRow();
@@ -2051,7 +2051,7 @@ function getRapportsNuisibles(token) {
 }
 
 function updateRapportNuisible(p) {
-  if (!isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
+  if (!isAdmin_(p && p.token) && !isSessionSuperOrAdmin_(p && p.token)) return { success:false, error:'Accès refusé' };
   try {
     var sh = getRapportNuisiblesSheet_();
     var lr = sh.getLastRow();
