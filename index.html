@@ -1771,11 +1771,6 @@ img{max-width:100%;display:block;}
         <label class="fl">Actions immédiates prises</label>
         <textarea class="fi" id="rn_actions" rows="2" placeholder="Ex : pose de pièges, isolation de la zone, alerte prestataire…" style="resize:vertical"></textarea>
       </div>
-      <!-- Mesures correctives -->
-      <div style="margin-bottom:12px">
-        <label class="fl">Mesures correctives proposées</label>
-        <textarea class="fi" id="rn_mesures" rows="2" placeholder="Ex : traitement chimique prévu, rebouchage des entrées…" style="resize:vertical"></textarea>
-      </div>
       <!-- ── Prestataire ── -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid rgba(125,60,152,.35)">
         <div style="font-size:.8rem;font-weight:700;color:#9b59b6;margin-bottom:10px">🏢 Prestataire</div>
@@ -1810,13 +1805,6 @@ img{max-width:100%;display:block;}
             <input class="fi" id="rn_contact_val" placeholder="Numéro de téléphone…" style="height:36px"/>
           </div>
         </div>
-      </div>
-      <!-- Responsable -->
-      <div style="margin-bottom:12px">
-        <label class="fl">Responsable du suivi</label>
-        <select class="fi" id="rn_resp" style="height:38px">
-          <option value="">— Sélectionner —</option>
-        </select>
       </div>
       <!-- Statut -->
       <div style="margin-bottom:4px">
@@ -7430,7 +7418,6 @@ function openRapportNuisibles() {
       document.getElementById('rn_type').value        = '';
       document.getElementById('rn_desc').value        = '';
       document.getElementById('rn_actions').value     = '';
-      document.getElementById('rn_mesures').value     = '';
       document.getElementById('rn_statut').value      = 'En cours';
       // Prestataire
       var nonRad = document.getElementById('rn_presta_non');
@@ -7453,17 +7440,6 @@ function openRapportNuisibles() {
           .withFailureHandler(function(){})
           .getPestConfigData(S.adminKey);
       }
-      // Responsables
-      var respSel = document.getElementById('rn_resp');
-      respSel.innerHTML = '<option value="">— Sélectionner —</option>';
-      google.script.run
-        .withSuccessHandler(function(rr) {
-          if (rr&&rr.success&&rr.data) {
-            rr.data.forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; respSel.appendChild(o); });
-          }
-        })
-        .withFailureHandler(function(){})
-        .getResponsablesList();
       openSheet('rapportNuisiblesOv');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
@@ -7477,8 +7453,6 @@ function submitRapportNuisibles() {
   var type       = document.getElementById('rn_type').value.trim();
   var desc       = document.getElementById('rn_desc').value.trim();
   var actions    = document.getElementById('rn_actions').value.trim();
-  var mesures    = document.getElementById('rn_mesures').value.trim();
-  var resp       = document.getElementById('rn_resp').value.trim();
   var statut     = document.getElementById('rn_statut').value.trim();
   var ouiRad     = document.getElementById('rn_presta_oui');
   var prestaInfo = ouiRad&&ouiRad.checked ? 'Oui' : 'Non';
@@ -7506,8 +7480,6 @@ function submitRapportNuisibles() {
       typeNuisible:       type,
       description:        desc,
       actionsImmediates:  actions,
-      mesuresCorrectives: mesures,
-      responsable:        resp,
       statut:             statut,
       prestaireInforme:   prestaInfo,
       prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
@@ -7596,9 +7568,7 @@ function openRapportNuisiblesDetail(idx) {
     +row('Type de nuisible', c.typeNuisible)
     +row('Description / Observations', c.description)
     +row('Actions immédiates', c.actionsImmediates)
-    +row('Mesures correctives', c.mesuresCorrectives)
     +prestaBlock
-    +row('Responsable du suivi', c.responsable)
     +row('Superviseur', c.superviseurNom)
     +row('Date de création', c.dateCreation)
     +'</div>';
@@ -7630,8 +7600,6 @@ function printRapportNuisibles(idx) {
   var supSigUrl = _userSigMap[S_AUTH&&S_AUTH.matricule]
                 || _userSigMap[c.superviseurNom]
                 || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  // Griffe Responsable du suivi : chercher par nom dans le sigMap
-  var respSigUrl = _userSigMap[c.responsable] || '';
   var now    = new Date();
   var edDate = _rnDocEdition || (now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear());
   var today  = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -7649,11 +7617,10 @@ function printRapportNuisibles(idx) {
       +contactLine;
   }
 
-  // Tableau de signatures (modèle identique à _buildHSEPrintHTML)
+  // Tableau de signatures
   var sigTableHTML =
     '<table class="sig-table"><tr>'
-    // Colonne gauche : Superviseur / Déclarant
-    +'<td style="width:50%"><div class="sig-title">Superviseur HSE / Déclarant</div>'
+    +'<td style="width:100%"><div class="sig-title">Superviseur HSE / Déclarant</div>'
     +'<div class="sig-field-label">Nom et prénom :</div>'
     +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.superviseurNom||'')+'</span></div>'
     +'<div class="sig-field-label">Signature / Griffe :</div>'
@@ -7662,17 +7629,6 @@ function printRapportNuisibles(idx) {
       : '<div class="sig-line-lg"></div>')
     +'<div class="sig-field-label">Date :</div>'
     +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
-    +'</td>'
-    // Colonne droite : Responsable du suivi
-    +'<td style="width:50%"><div class="sig-title">Responsable du suivi</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.responsable||'')+'</span></div>'
-    +'<div class="sig-field-label">Signature / Griffe :</div>'
-    +(respSigUrl
-      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+respSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-4px;width:240px;max-height:88px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
-      : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div>'
-    +'<div class="sig-line"></div>'
     +'</td>'
     +'</tr></table>';
 
@@ -7739,7 +7695,6 @@ function printRapportNuisibles(idx) {
     // Actions
     +'<div class="section-title">⚡ Actions</div>'
     +'<div class="field"><span class="fl">Actions immédiates prises</span><div class="fv" style="min-height:28px">'+esc(c.actionsImmediates||'—')+'</div></div>'
-    +'<div class="field"><span class="fl">Mesures correctives proposées</span><div class="fv" style="min-height:28px">'+esc(c.mesuresCorrectives||'—')+'</div></div>'
     // Prestataire
     +prestaSection
     // Tableau de signatures en bas
