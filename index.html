@@ -2153,16 +2153,13 @@ function doLogout() {
 /* ══ USER MANAGEMENT (admin only) ══ */
 var _usersData = [];
 
-function _sigBtnHtml(mat, role) {
+function _sigBtnHtml(mat, role, sigUrl) {
   var show = (role==='hse_supervisor'||role==='admin');
-  var sigType = role==='admin'?'responsable':'superviseur';
-  var sigUrl = role==='admin'
-    ? (_hseSignatureDataUrl||_hseSignatureUrl)
-    : (_hseSuperSignatureDataUrl||_hseSuperSignatureUrl);
-  var thumb = sigUrl
-    ? '<img src="'+sigUrl+'" style="max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px"/>'
+  var url = sigUrl || _userSigMap[mat] || '';
+  var thumb = url
+    ? '<img src="'+url+'" style="max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px"/>'
     : '';
-  return '<label id="sigrow-'+mat+'" data-sigtype="'+sigType+'" class="btn btn-g"'
+  return '<label id="sigrow-'+mat+'" class="btn btn-g"'
     +' style="height:30px;font-size:.76rem;padding:0 10px;display:'+(show?'inline-flex':'none')+';align-items:center;gap:2px;cursor:pointer">'
     +thumb+'✍ Griffe'
     +'<input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="adminUploadSig(\''+mat+'\',this)"/>'
@@ -2172,6 +2169,8 @@ function _sigBtnHtml(mat, role) {
 function renderUsersList(data) {
   var list = document.getElementById('usersList');
   if (!data.length) { list.innerHTML='<div style="color:var(--t3);font-size:.85rem">Aucun résultat</div>'; return; }
+  // Peupler la map griffe depuis les données utilisateurs
+  data.forEach(function(u){ if (u.sigUrl) _userSigMap[u.matricule] = u.sigUrl; });
   list.innerHTML = data.map(function(u) {
     var statusColor = u.actif ? '#22c55e' : '#ef4444';
     var statusLabel = u.actif ? 'Actif' : 'Inactif';
@@ -2189,7 +2188,7 @@ function renderUsersList(data) {
       + '</select>'
       + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
       + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
-      + _sigBtnHtml(u.matricule, u.role)
+      + _sigBtnHtml(u.matricule, u.role, u.sigUrl)
       + '</div></div></div>';
   }).join('');
 }
@@ -2245,13 +2244,37 @@ function openSetPwd(mat, name) {
 }
 
 function adminUploadSig(mat, input) {
-  var btn = document.getElementById('sigrow-'+mat);
-  var sigType = btn ? btn.dataset.sigtype : 'superviseur';
-  if (sigType === 'responsable') {
-    onSignatureUpload(input);
-  } else {
-    onSuperSignatureUpload(input);
-  }
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 512000) { toast('Fichier trop lourd (max 500 Ko)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement de la griffe…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _userSigMap[mat] = r.sigUrl;
+        // Mettre à jour le bouton en place
+        var btn = document.getElementById('sigrow-'+mat);
+        if (btn) {
+          var img = btn.querySelector('img');
+          if (img) { img.src = r.sigUrl; }
+          else {
+            var newImg = document.createElement('img');
+            newImg.src = r.sigUrl;
+            newImg.style.cssText = 'max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px';
+            btn.insertBefore(newImg, btn.firstChild);
+          }
+        }
+        toast('✓ Griffe enregistrée pour '+mat,'ok');
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveUserSignatureConfig({ adminKey:S.adminKey, matricule:mat, sigBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
 }
 
 function adminToggle(mat, actif) {
@@ -4384,6 +4407,8 @@ var _hseSignatureDataUrl      = '';
 var _hseSuperSignatureUrl     = '';
 var _hseSuperSignatureDataUrl = '';
 var _adminSigLoaded           = false;
+// Griffe par matricule { mat: url } — chargé depuis adminGetUsers
+var _userSigMap               = {};
 var _incendieCurrentDetailIdx = -1;
 var _globalStatuts  = {};
 var _globalNotes    = {};
@@ -5457,7 +5482,7 @@ function printBlankExtChecklist() {
     date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalIncProchaine')&&document.getElementById('globalIncProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl), sections:sections
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''), sections:sections
   }));
 }
 
@@ -5478,7 +5503,7 @@ function printBlankRiaChecklist() {
     date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
     superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
     prochaine:   _fmtDate(document.getElementById('globalRiaProchaine')&&document.getElementById('globalRiaProchaine').value||''),
-    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
     sections: [{ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:items, checklist:CHECKLIST_RIA }]
   }));
 }
@@ -5524,7 +5549,7 @@ function printIncendieRecord(idx) {
     obs:         c.observations||'',
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
     sections:    sections
   }));
 }
@@ -5569,7 +5594,7 @@ function viewIncendieRecord(idx) {
     etatGlobal:  c.etatGlobal||'',
     mode:        'record',
     autoPrint:   false,
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl),
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
     sections:    sections
   }));
 }
@@ -6828,7 +6853,7 @@ function printBlankPestChecklist() {
     docRev:     _pestDocRev,
     docEdition: _pestDocEdition,
     mode:       'blank',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6863,7 +6888,7 @@ function printPestRecord(idx) {
     docEdition: _pestDocEdition,
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
@@ -6899,7 +6924,7 @@ function viewPestRecord(idx) {
     mode:       'record',
     etatGlobal: c.etatGlobal||'',
     autoPrint:  false,
-    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_hseSuperSignatureDataUrl||_hseSuperSignatureUrl)
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
   });
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
