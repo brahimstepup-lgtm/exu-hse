@@ -1492,16 +1492,45 @@ img{max-width:100%;display:block;}
     <div class="sh-body" style="overflow-y:auto">
       <!-- Code document inspection -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code document — Inspection Nuisibles</div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">📄 Code document — Inspection Nuisibles</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
           <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
-          <span style="font-size:.75rem;color:var(--t3)">Fiche d'inspection (ENR-HSE 7)</span>
+          <span style="font-size:.75rem;color:var(--t3);white-space:nowrap">Fiche d'inspection</span>
+        </div>
+        <!-- Question griffe prestataire inspection -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid var(--line)">
+          <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="inspPrestaGriffeYN" id="inspPrestaGriffeOui" value="oui" onchange="toggleInspPrestaGriffe()" style="accent-color:#9b59b6"/> Oui
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="inspPrestaGriffeYN" id="inspPrestaGriffeNon" value="non" onchange="toggleInspPrestaGriffe()" checked style="accent-color:#9b59b6"/> Non
+          </label>
+        </div>
+        <!-- Zone upload griffe inspection (masquée par défaut) -->
+        <div id="inspPrestaGriffeZone" style="display:none;margin-top:10px;padding:10px;background:rgba(125,60,152,.08);border-radius:8px;border:1px solid rgba(125,60,152,.25)">
+          <div style="margin-bottom:8px">
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Nom du prestataire</label>
+            <input class="fi" id="inspPrestaGriffeNom" placeholder="Ex : Société Nettoyage Pro" style="height:32px;font-size:.83rem"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="file" id="inspPrestaGriffeInput" accept="image/*" onchange="uploadInspPrestaGriffe(this)" style="display:none"/>
+            <button onclick="document.getElementById('inspPrestaGriffeInput').click()"
+              style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.8rem;white-space:nowrap">
+              📂 Charger la griffe
+            </button>
+            <div id="inspPrestaGriffePreview" style="display:none;display:flex;align-items:center;gap:8px">
+              <img id="inspPrestaGriffeImg" src="" style="max-height:50px;max-width:160px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
+              <button onclick="deleteInspPrestaGriffe()" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.78rem;white-space:nowrap">✕ Supprimer</button>
+            </div>
+            <span id="inspPrestaGriffePH" style="font-size:.78rem;color:#666;font-style:italic">Aucune griffe</span>
+          </div>
         </div>
       </div>
       <!-- Code document rapport présence -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(125,60,152,.35)">
-        <div style="font-size:.82rem;font-weight:700;color:#9b59b6;margin-bottom:8px">🚨 Code document — Rapport Présence Nuisibles</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="font-size:.82rem;font-weight:700;color:#9b59b6;margin-bottom:10px">🚨 Code document — Rapport Présence Nuisibles</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
           <div>
             <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
             <input class="fi" id="rnDocCodeInput" value="ENR-HSE 8" placeholder="ENR-HSE 8" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
@@ -1515,24 +1544,36 @@ img{max-width:100%;display:block;}
             <input class="fi" id="rnDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
           </div>
         </div>
-        <button class="btn btn-p" onclick="saveRapportNuisiblesConfigFromUI()" style="margin-top:10px;height:34px;font-size:.82rem;padding:0 14px;background:#9b59b6">💾 Sauvegarder config rapport</button>
-      </div>
-      <!-- Griffe Prestataire Nuisibles -->
-      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(125,60,152,.35)">
-        <div style="font-size:.82rem;font-weight:700;color:#9b59b6;margin-bottom:8px">🖊 Griffe Prestataire — Rapport Nuisibles <span style="font-weight:400;color:#888">(optionnel)</span></div>
-        <p style="font-size:.78rem;color:var(--t3);margin-bottom:10px">La griffe du prestataire apparaîtra dans le tableau de signatures du document imprimé, uniquement si le prestataire a été informé.</p>
-        <!-- Prévisualisation -->
-        <div id="rnPrestaGriffePreview" style="margin-bottom:10px;display:none">
-          <img id="rnPrestaGriffeImg" src="" style="max-height:70px;max-width:220px;object-fit:contain;border:1px solid #555;border-radius:6px;padding:4px;background:#fff"/>
-          <button onclick="deleteRnPrestaGriffe()" style="display:block;margin-top:4px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.78rem">✕ Supprimer la griffe</button>
+        <!-- Question griffe prestataire rapport -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(125,60,152,.2);margin-bottom:8px">
+          <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="rnPrestaGriffeYN" id="rnPrestaGriffeOui" value="oui" onchange="toggleRnPrestaGriffe()" style="accent-color:#9b59b6"/> Oui
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="rnPrestaGriffeYN" id="rnPrestaGriffeNon" value="non" onchange="toggleRnPrestaGriffe()" checked style="accent-color:#9b59b6"/> Non
+          </label>
         </div>
-        <div id="rnPrestaGriffePlaceholder" style="margin-bottom:10px;color:#666;font-size:.8rem;font-style:italic">Aucune griffe configurée</div>
-        <!-- Upload -->
-        <input type="file" id="rnPrestaGriffeInput" accept="image/*" onchange="uploadRnPrestaGriffe(this)" style="display:none"/>
-        <button onclick="document.getElementById('rnPrestaGriffeInput').click()"
-          style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.82rem">
-          📂 Charger une griffe prestataire
-        </button>
+        <!-- Zone upload griffe rapport (masquée par défaut) -->
+        <div id="rnPrestaGriffeZone" style="display:none;padding:10px;background:rgba(125,60,152,.08);border-radius:8px;border:1px solid rgba(125,60,152,.25);margin-bottom:8px">
+          <div style="margin-bottom:8px">
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Nom du prestataire</label>
+            <input class="fi" id="rnPrestaGriffeNomInput" placeholder="Ex : Société Dératisation SARL" style="height:32px;font-size:.83rem"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="file" id="rnPrestaGriffeInput" accept="image/*" onchange="uploadRnPrestaGriffe(this)" style="display:none"/>
+            <button onclick="document.getElementById('rnPrestaGriffeInput').click()"
+              style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.8rem;white-space:nowrap">
+              📂 Charger la griffe
+            </button>
+            <div id="rnPrestaGriffePreview" style="display:none;align-items:center;gap:8px">
+              <img id="rnPrestaGriffeImg" src="" style="max-height:50px;max-width:160px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
+              <button onclick="deleteRnPrestaGriffe()" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.78rem;white-space:nowrap">✕ Supprimer</button>
+            </div>
+            <span id="rnPrestaGriffePlaceholder" style="font-size:.78rem;color:#666;font-style:italic">Aucune griffe configurée</span>
+          </div>
+        </div>
+        <button class="btn btn-p" onclick="saveRapportNuisiblesConfigFromUI()" style="height:34px;font-size:.82rem;padding:0 14px;background:#9b59b6">💾 Sauvegarder config rapport</button>
       </div>
       <!-- Paramètres d'impression -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
@@ -6378,7 +6419,7 @@ function openConfigPest() {
             var rnc = document.getElementById('rnDocCodeInput');    if (rnc) rnc.value = _rnDocCode;
             var rnr = document.getElementById('rnDocRevInput');     if (rnr) rnr.value = _rnDocRev;
             var rne = document.getElementById('rnDocEditionInput'); if (rne) rne.value = _rnDocEdition;
-            _rnRenderPrestaGriffe(rn.prestataireSigUrl || '');
+            _rnRenderPrestaGriffe(rn.prestataireSigUrl || '', rn.prestataireNom || '');
           }
         })
         .withFailureHandler(function(){})
@@ -7454,6 +7495,7 @@ var _clotureIdx              = -1;
 var _clotureDocB64           = '';
 var _clotureDocMime          = '';
 var _rnPrestataireSigUrl     = '';
+var _rnPrestataireSigNom     = '';
 
 function rnHandlePhoto(input) {
   var file = input.files[0];
@@ -7522,36 +7564,51 @@ function submitCloture() {
     .cloturerRapportNuisibles({ token:S.adminKey, id:c.id, docCloture:_clotureDocB64, docMime:_clotureDocMime });
 }
 
-function _rnRenderPrestaGriffe(url) {
+// ── Rapport Nuisibles : griffe prestataire ──
+function toggleRnPrestaGriffe() {
+  var oui  = document.getElementById('rnPrestaGriffeOui');
+  var zone = document.getElementById('rnPrestaGriffeZone');
+  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
+}
+
+function _rnRenderPrestaGriffe(url, nom) {
   _rnPrestataireSigUrl = url || '';
   var prev = document.getElementById('rnPrestaGriffePreview');
   var ph   = document.getElementById('rnPrestaGriffePlaceholder');
   var img  = document.getElementById('rnPrestaGriffeImg');
+  var nomEl= document.getElementById('rnPrestaGriffeNomInput');
+  if (nomEl && nom) nomEl.value = nom;
+  // Si une griffe existe, cocher Oui et afficher la zone
+  if (url) {
+    var ouiR = document.getElementById('rnPrestaGriffeOui');
+    if (ouiR) { ouiR.checked = true; toggleRnPrestaGriffe(); }
+  }
   if (!prev) return;
   if (url) {
-    img.src = url;
-    prev.style.display = 'block';
+    if (img) img.src = url;
+    prev.style.display = 'flex';
     if (ph) ph.style.display = 'none';
   } else {
     prev.style.display = 'none';
-    if (ph) ph.style.display = 'block';
+    if (ph) ph.style.display = 'inline';
   }
 }
 
 function uploadRnPrestaGriffe(input) {
   var file = input.files[0];
   if (!file) return;
+  var nom = (document.getElementById('rnPrestaGriffeNomInput')||{}).value || '';
   var reader = new FileReader();
   reader.onload = function(e) {
     showLoader('Enregistrement de la griffe…');
     google.script.run
       .withSuccessHandler(function(r) {
         hideSplash();
-        if (r&&r.success) { _rnRenderPrestaGriffe(r.sigUrl); toast('✅ Griffe prestataire enregistrée','ok'); }
+        if (r&&r.success) { _rnRenderPrestaGriffe(r.sigUrl, nom); toast('✅ Griffe prestataire enregistrée','ok'); }
         else toast('Erreur: '+(r&&r.error||'?'),'err');
       })
       .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-      .savePrestataireSigRapport({ adminKey:S.adminKey, sigBase64:e.target.result, mime:file.type });
+      .savePrestataireSigRapport({ adminKey:S.adminKey, sigBase64:e.target.result, mime:file.type, nom:nom });
   };
   reader.readAsDataURL(file);
 }
@@ -7562,11 +7619,22 @@ function deleteRnPrestaGriffe() {
   google.script.run
     .withSuccessHandler(function(r) {
       hideSplash();
-      if (r&&r.success) { _rnRenderPrestaGriffe(''); toast('Griffe supprimée','ok'); }
+      if (r&&r.success) { _rnRenderPrestaGriffe('', ''); toast('Griffe supprimée','ok'); }
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
     .deletePrestataireSigRapport({ adminKey:S.adminKey });
+}
+
+// ── Inspection Nuisibles : griffe prestataire (future) ──
+function toggleInspPrestaGriffe() {
+  var oui  = document.getElementById('inspPrestaGriffeOui');
+  var zone = document.getElementById('inspPrestaGriffeZone');
+  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
+}
+
+function uploadInspPrestaGriffe(input) {
+  toast('Fonctionnalité bientôt disponible pour les inspections', 'info');
 }
 
 function rnTogglePresta() {
@@ -7601,7 +7669,8 @@ function openRapportNuisibles() {
       _rnDocCode           = r.docCode           || 'ENR-HSE 8';
       _rnDocRev            = r.docRev            || '01';
       _rnDocEdition        = r.docEdition        || '';
-      _rnPrestataireSigUrl = r.prestataireSigUrl || '';
+      _rnPrestataireSigUrl  = r.prestataireSigUrl || '';
+      _rnPrestataireSigNom  = r.prestataireNom    || '';
       if (r.logoUrl) _hseLogoUrl = r.logoUrl;
       if (r.sigMap)  Object.assign(_userSigMap, r.sigMap);
       // Réinitialiser champs
@@ -7836,7 +7905,7 @@ function printRapportNuisibles(idx) {
     +(showPrestaCol
       ? '<td style="width:50%"><div class="sig-title">Prestataire</div>'
         +'<div class="sig-field-label">Nom :</div>'
-        +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.prestaireNom||'')+'</span></div>'
+        +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.prestaireNom||_rnPrestataireSigNom||'')+'</span></div>'
         +'<div class="sig-field-label">Signature / Griffe :</div>'
         +'<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+_rnPrestataireSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-4px;width:200px;max-height:80px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
         +'<div class="sig-field-label">Date :</div>'

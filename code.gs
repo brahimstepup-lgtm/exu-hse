@@ -2284,6 +2284,7 @@ function getRapportNuisiblesConfig(token) {
       docEdition:        props.getProperty('PEST_RAPPORT_DOC_EDITION')    || '',
       logoUrl:           props.getProperty('HSE_LOGO_URL')                || '',
       prestataireSigUrl: props.getProperty('PEST_RAPPORT_PRESTA_SIG_URL') || '',
+      prestataireNom:    props.getProperty('PEST_RAPPORT_PRESTA_NOM')     || '',
       sigMap:            _buildSigMap_()
     };
   } catch(e) { return { success:false, error:e.message }; }
@@ -2302,6 +2303,7 @@ function savePrestataireSigRapport(p) {
     var url  = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w400';
     props.setProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID', file.getId());
     props.setProperty('PEST_RAPPORT_PRESTA_SIG_URL', url);
+    if (p.nom != null) props.setProperty('PEST_RAPPORT_PRESTA_NOM', String(p.nom).trim());
     return { success:true, sigUrl:url };
   } catch(e) { return { success:false, error:e.message }; }
 }
@@ -2314,6 +2316,7 @@ function deletePrestataireSigRapport(p) {
     if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
     props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_FILE_ID');
     props.deleteProperty('PEST_RAPPORT_PRESTA_SIG_URL');
+    props.deleteProperty('PEST_RAPPORT_PRESTA_NOM');
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
