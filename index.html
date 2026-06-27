@@ -1058,21 +1058,20 @@ img{max-width:100%;display:block;}
       <div id="nuisiblesBody"></div>
     </div>
 
-    <!-- ═══ VUE : RAPPORT PRÉSENCE NUISIBLES — ENR-HSE-24 ═══ -->
+    <!-- RAPPORT NUISIBLES ENR-HSE-24 -->
     <div class="view" id="view-rapport-nuisibles">
       <div class="ph view-hdr">
-        <h1 class="ph-title">📝 Rapport Présence Nuisibles</h1>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span style="font-size:.72rem;color:var(--t3);background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:3px 8px">ENR-HSE-24</span>
+        <h1 class="ph-title">📝 Rapport Nuisibles <span style="font-size:.7rem;font-weight:400;color:var(--t3);margin-left:4px">ENR-HSE-24</span></h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-p" onclick="openRapportNuisibleForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Nouveau rapport</button>
         </div>
       </div>
       <!-- Filtres statut -->
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="gsort-tab on" id="rntab_all"    onclick="setRapportNuisibleFilter('all')">Tous</button>
-        <button class="gsort-tab"    id="rntab_ouvert" onclick="setRapportNuisibleFilter('Ouvert')">🔴 Ouverts</button>
+        <button class="gsort-tab on" id="rntab_all"     onclick="setRapportNuisibleFilter('all')">Tous</button>
+        <button class="gsort-tab"    id="rntab_ouvert"  onclick="setRapportNuisibleFilter('Ouvert')">🔴 Ouverts</button>
         <button class="gsort-tab"    id="rntab_encours" onclick="setRapportNuisibleFilter('En cours')">🟡 En cours</button>
-        <button class="gsort-tab"    id="rntab_resolu" onclick="setRapportNuisibleFilter('Résolu')">🟢 Résolus</button>
+        <button class="gsort-tab"    id="rntab_resolu"  onclick="setRapportNuisibleFilter('Résolu')">🟢 Résolus</button>
       </div>
       <div id="rapportNuisiblesBody"></div>
     </div>
@@ -7135,22 +7134,25 @@ function _renderRapportNuisiblesList() {
       +'<div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouveau rapport » pour commencer.</div></div>';
     return;
   }
-  body.innerHTML = data.map(function(r, i) {
-    var gc = RN_GRAVITE_COLOR[r.gravite] || '#888';
-    var si = RN_STATUT_ICON[r.statut]   || '⚪';
+  body.innerHTML = data.map(function(r) {
     var realIdx = _rapportNuisiblesRecords.indexOf(r);
-    return '<div class="insp-card" onclick="openRapportNuisibleDetail('+realIdx+')" style="cursor:pointer">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="font-weight:600;font-size:.92rem;margin-bottom:2px">'+esc(r.typeNuisible||'—')+' — '+esc(r.zone||'—')+'</div>'
-      +'<div style="font-size:.78rem;color:var(--t3)">'+esc(r.dateConstatation||'')+' · '+esc(r.superviseurNom||r.matricule||'')+'</div>'
+    var gravBadge = r.gravite==='Faible' ? 'badge-ok' : r.gravite==='Critique' ? 'badge-nok' : 'badge-partial';
+    var si = RN_STATUT_ICON[r.statut] || '⚪';
+    return '<div class="hse-card" onclick="openRapportNuisibleDetail('+realIdx+')" oncontextmenu="openRapportNuisibleDetail('+realIdx+');return false" style="cursor:pointer">'
+      +'<div class="hse-card-header">'
+      +'<div><div class="hse-card-title">'+esc(r.typeNuisible||'—')+' — '+esc(r.zone||'—')+'</div>'
+      +'<div class="hse-card-meta"><span>📅 '+esc(r.dateConstatation||'—')+'</span><span>🦺 '+esc(r.superviseurNom||r.matricule||'—')+'</span></div></div>'
+      +'<span class="hse-card-badge '+gravBadge+'">'+esc(r.gravite||'—')+'</span>'
       +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-      +'<span style="font-size:.72rem;font-weight:600;color:'+gc+';background:'+gc+'22;border:1px solid '+gc+'44;border-radius:6px;padding:2px 7px">'+esc(r.gravite||'')+'</span>'
-      +'<span style="font-size:.8rem">'+si+' <span style="font-size:.72rem;color:var(--t3)">'+esc(r.statut||'')+'</span></span>'
+      +'<div style="margin-top:6px;font-size:.8rem">'+si+' <span style="color:var(--t3)">'+esc(r.statut||'')+'</span>'
+      +(r.prestataireContacte==='Oui'&&r.nomPrestataire ? ' · 🏢 '+esc(r.nomPrestataire) : '')+'</div>'
+      +(r.description ? '<div style="font-size:.8rem;color:var(--t2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.description)+'</div>' : '')
+      +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      +'<button class="btn btn-g" onclick="openRapportNuisibleDetail('+realIdx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir</button>'
+      +'<button class="btn btn-g" onclick="printRapportNuisible('+realIdx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +(isSuperOrAdmin() ? '<button class="btn btn-g" onclick="openRapportNuisibleForm(\''+r.id+'\')" style="font-size:.78rem;height:32px;padding:0 10px">✏</button>' : '')
+      +(isAdmin() ? '<button class="btn btn-g" onclick="deleteRapportNuisibleConfirm(\''+r.id+'\')" style="font-size:.78rem;height:32px;padding:0 10px;color:#ef4444">🗑</button>' : '')
       +'</div>'
-      +'</div>'
-      +(r.description ? '<div style="font-size:.8rem;color:var(--t2);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">'+esc(r.description)+'</div>' : '')
       +'</div>';
   }).join('');
 }
