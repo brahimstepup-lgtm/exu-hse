@@ -8078,6 +8078,36 @@ function deleteRapportNuisiblesRecord(idx) {
 function printRapportNuisibles(idx) {
   var c = _rapportNuisiblesRecords[idx];
   if (!c) return;
+  // Si la config n'est pas encore chargée, la charger puis relancer l'impression
+  if (!_rnPrestataireSigUrl && _prestatairesData.length === 0) {
+    showLoader('Chargement de la configuration…');
+    google.script.run
+      .withSuccessHandler(function(rn) {
+        hideSplash();
+        if (rn&&rn.success) {
+          _rnDocCode    = rn.docCode    || 'ENR-HSE 8';
+          _rnDocRev     = rn.docRev     || '01';
+          _rnDocEdition = rn.docEdition || '';
+          _prestatairesData = rn.prestataires || [];
+          var prestaId  = rn.prestaId || '';
+          var prestaObj = _prestatairesData.find(function(x){ return x.id===prestaId; }) || null;
+          _rnPrestataireSigUrl = (prestaObj&&prestaObj.sigUrl) || '';
+          _rnPrestataireSigNom = (prestaObj&&prestaObj.nom)    || '';
+          if (rn.logoUrl) _hseLogoUrl = rn.logoUrl;
+          if (rn.sigMap)  Object.assign(_userSigMap, rn.sigMap);
+        }
+        _doPrintRapportNuisibles(idx);
+      })
+      .withFailureHandler(function(e){ hideSplash(); _doPrintRapportNuisibles(idx); })
+      .getRapportNuisiblesConfig(S.adminKey);
+    return;
+  }
+  _doPrintRapportNuisibles(idx);
+}
+
+function _doPrintRapportNuisibles(idx) {
+  var c = _rapportNuisiblesRecords[idx];
+  if (!c) return;
   var statColor = RN_STATUT_COLORS[c.statut]||'#888';
   var logoUrl   = _hseLogoDataUrl || _hseLogoUrl || '';
   // Griffe Superviseur/Déclarant : chercher par matricule courant puis par nom
@@ -8102,8 +8132,8 @@ function printRapportNuisibles(idx) {
   }
 
   // Tableau de signatures
-  // Colonne prestataire : visible si prestataire informé ET griffe configurée
-  var showPrestaCol = (c.prestaireInforme === 'Oui') && !!_rnPrestataireSigUrl;
+  // Colonne prestataire : visible dès qu'une griffe prestataire est configurée
+  var showPrestaCol = !!_rnPrestataireSigUrl;
   var colW = showPrestaCol ? '50%' : '100%';
   var sigTableHTML =
     '<table class="sig-table"><tr>'
