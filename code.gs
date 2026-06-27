@@ -1787,7 +1787,8 @@ function getPestConfigData(adminKey) {
     var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
     var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
     var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_() };
+    var inspPrestaId = props.getProperty('PEST_INSP_PRESTA_ID') || '';
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_(), inspPrestaId:inspPrestaId, prestataires:_getPrestataires_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1800,6 +1801,7 @@ function savePestConfig(p) {
     if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'01');
     if (p.docEdition  != null) props.setProperty('PEST_DOC_EDITION',      String(p.docEdition).trim());
     if (p.prochaineMonths != null) props.setProperty('PEST_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||3));
+    if (p.inspPrestaId    != null) props.setProperty('PEST_INSP_PRESTA_ID',   String(p.inspPrestaId).trim());
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }

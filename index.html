@@ -6433,6 +6433,24 @@ function openConfigPest() {
       if (edEl2) edEl2.value = _pestDocEdition;
       var pmEl2 = document.getElementById('pestProchaineMonthsInput');
       if (pmEl2) pmEl2.value = _pestProchaineMonths;
+      // Prestataires inspection
+      if (r.prestataires) {
+        _prestatairesData = r.prestataires;
+        _reloadPrestatairesSelects();
+        var inspPrestaId = r.inspPrestaId || '';
+        if (inspPrestaId) {
+          var iSel = document.getElementById('inspPrestaGriffeSelect');
+          if (iSel) {
+            iSel.value = inspPrestaId;
+            previewPrestaGriffe('inspPrestaGriffePreview','inspPrestaGriffeImg', inspPrestaId);
+            var iOui = document.getElementById('inspPrestaGriffeOui');
+            if (iOui) { iOui.checked = true; toggleInspPrestaGriffe(); }
+          }
+          var ip = _prestatairesData.find(function(x){ return x.id===inspPrestaId; });
+          _pestInspPrestataireSigUrl = (ip&&ip.sigUrl) || '';
+          _pestInspPrestataireSigNom = (ip&&ip.nom)    || '';
+        }
+      }
       // Charger aussi la config du rapport présence
       google.script.run
         .withSuccessHandler(function(rn) {
@@ -6531,6 +6549,12 @@ function saveFullPestConfig() {
   _pestDocEdition = (edEl2&&edEl2.value.trim()) || '';
   var pmEl2 = document.getElementById('pestProchaineMonthsInput');
   _pestProchaineMonths = parseInt(pmEl2&&pmEl2.value) || 3;
+  // Prestataire inspection
+  var iOui     = document.getElementById('inspPrestaGriffeOui');
+  var inspPrestaId = (iOui&&iOui.checked) ? ((document.getElementById('inspPrestaGriffeSelect')||{}).value||'') : '';
+  var ip = _prestatairesData.find(function(x){ return x.id===inspPrestaId; }) || null;
+  _pestInspPrestataireSigUrl = (ip&&ip.sigUrl) || '';
+  _pestInspPrestataireSigNom = (ip&&ip.nom)    || '';
   var cfg = { docCode: _pestDocCode };
   PEST_TYPES.forEach(function(type) {
     var countEl = document.getElementById('pestCount_'+type);
@@ -6546,7 +6570,7 @@ function saveFullPestConfig() {
       else toast('Erreur: '+(r&&r.error||'?'),'err');
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig, docRev:_pestDocRev, docEdition:_pestDocEdition, prochaineMonths:_pestProchaineMonths });
+    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig, docRev:_pestDocRev, docEdition:_pestDocEdition, prochaineMonths:_pestProchaineMonths, inspPrestaId:inspPrestaId });
 }
 
 /* ─── Éditeur de points de contrôle ─── */
@@ -6675,6 +6699,13 @@ function openGlobalPestInspection(pestType) {
       _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
       _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
       _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+      // Charger le prestataire inspection en mémoire
+      if (r.prestataires && r.inspPrestaId) {
+        var _ip = (r.prestataires||[]).find(function(x){ return x.id===r.inspPrestaId; }) || null;
+        _pestInspPrestataireSigUrl = (_ip&&_ip.sigUrl) || '';
+        _pestInspPrestataireSigNom = (_ip&&_ip.nom)    || '';
+        if (r.prestataires.length) _prestatairesData = r.prestataires;
+      }
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
       _pestChecklistConfig = hasConfig ? _cl : {};
@@ -7367,22 +7398,38 @@ function _buildHSEPrintHTML(opts) {
     +'<div class="obs-section"><div class="obs-title">Observations générales / Actions correctives</div>'
     +(opts.obs?'<div class="obs-text">'+esc(opts.obs)+'</div>':'<div class="obs-lines"><div class="obs-line"></div><div class="obs-line"></div><div class="obs-line"></div></div>')
     +'</div>'
-    +'<table class="sig-table"><tr>'
-    +'<td style="width:50%"><div class="sig-title">Responsable HSE</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
-    +'<div class="sig-field-label">Signature :</div>'
-    +(opts.responsable && signatureUrl
-      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+signatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-12px;width:240px;max-height:88px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
-      : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
-    +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
-    +'<div class="sig-field-label">Signature :</div>'
-    +(supervisorSignatureUrl
-      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-4px;width:240px;max-height:88px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
-      : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
-    +'</tr></table>'
+    // Tableau signatures : 2 ou 3 colonnes selon prestataire configuré
+    +(function() {
+      var prestaSigUrl = opts.prestataireSigUrl || '';
+      var prestaNom    = opts.prestataireNom    || '';
+      var hasPresta    = !!(prestaSigUrl || prestaNom);
+      var colW         = hasPresta ? '33.33%' : '50%';
+      return '<table class="sig-table"><tr>'
+        +'<td style="width:'+colW+'"><div class="sig-title">Responsable HSE</div>'
+        +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
+        +'<div class="sig-field-label">Signature :</div>'
+        +(opts.responsable && signatureUrl
+          ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+signatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-12px;width:200px;max-height:80px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+          : '<div class="sig-line-lg"></div>')
+        +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
+        +'<td style="width:'+colW+'"><div class="sig-title">Superviseur HSE</div>'
+        +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
+        +'<div class="sig-field-label">Signature :</div>'
+        +(supervisorSignatureUrl
+          ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-4px;width:200px;max-height:80px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
+          : '<div class="sig-line-lg"></div>')
+        +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
+        +(hasPresta
+          ? '<td style="width:'+colW+'"><div class="sig-title">Prestataire</div>'
+            +'<div class="sig-field-label">Nom :</div><div class="sig-line"><span style="font-size:8pt">'+esc(prestaNom)+'</span></div>'
+            +'<div class="sig-field-label">Signature / Griffe :</div>'
+            +(prestaSigUrl
+              ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+prestaSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-4px;width:200px;max-height:80px;object-fit:contain;transform:rotate(0deg);z-index:10;pointer-events:none;"/></div>'
+              : '<div class="sig-line-lg"></div>')
+            +'<div class="sig-field-label">Date :</div><div class="sig-line"></div></td>'
+          : '')
+        +'</tr></table>';
+    })()
     +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Éd. '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
     +autoScript
     +'</body></html>';
@@ -7412,6 +7459,8 @@ function _buildPestPrintHTML(opts) {
     logoUrl:                opts.logoUrl,
     signatureUrl:           opts.signatureUrl,
     supervisorSignatureUrl: opts.supervisorSignatureUrl,
+    prestataireSigUrl:      opts.prestataireSigUrl || _pestInspPrestataireSigUrl,
+    prestataireNom:         opts.prestataireNom    || _pestInspPrestataireSigNom,
     sections:               sections
   });
 }
@@ -7542,6 +7591,8 @@ var _clotureDocB64           = '';
 var _clotureDocMime          = '';
 var _rnPrestataireSigUrl     = '';
 var _rnPrestataireSigNom     = '';
+var _pestInspPrestataireSigUrl = '';
+var _pestInspPrestataireSigNom = '';
 
 function rnHandlePhoto(input) {
   var file = input.files[0];
