@@ -5516,7 +5516,7 @@ function _buildDetailHTML(c, editMode) {
           + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
           + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
           + '</div>'
-          + '<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+          + '<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
 
         cl.forEach(function(it) {
           var checked = e.checks && e.checks[it.key];
@@ -5561,7 +5561,7 @@ function _buildDetailHTML(c, editMode) {
         + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
         + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
         + '</div>'
-        + '<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+        + '<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
       cl.forEach(function(it) {
         var checked = r.checks && r.checks[it.key];
         var cbId = 'chk_RIA_'+r.num+'_'+it.key;
@@ -6866,7 +6866,7 @@ function _buildPestDetailHTML(c, editMode) {
           +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
           +'<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
           +'</div>'
-          +'<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+          +'<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
         cl.forEach(function(it) {
           var checked = u.checks && u.checks[it.key];
           var cbId = 'pchk_'+type+'_'+u.num+'_'+it.key;
