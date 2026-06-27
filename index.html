@@ -7099,7 +7099,7 @@ function savePestEdit() {
   var supVal   = (document.getElementById('pdetSup')   ||{}).value || c.superviseurNom      || '';
 
   var newChecklist = c.checklist;
-  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+  if (c.checklist && typeof c.checklist === 'object') {
     newChecklist = {};
     PEST_TYPES.forEach(function(type) {
       var sec = c.checklist[type];
@@ -7189,7 +7189,7 @@ function _buildPestDetailHTML(c, editMode) {
   if (c.photoId) html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir rapport signé</a></div>';
   html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
 
-  if (isGlobal && c.checklist && typeof c.checklist==='object') {
+  if (c.checklist && typeof c.checklist==='object') {
     PEST_TYPES.forEach(function(type) {
       var sec = c.checklist[type];
       if (!sec||!sec.units||!sec.units.length) return;
