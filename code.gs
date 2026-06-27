@@ -1,2130 +1,7403 @@
-// ================================================================
-//  HSE TAGS — Code.gs  v10 FINAL (Profils User/Manager/Admin)
-//  ✅ Auto-increment ID basé sur la colonne A de "plan"
-//  ✅ Anti-blocage : return SUCCESS explicite
-//  ✅ Statut "Ouvert" par défaut
-//  ✅ Strict same-row photo mapping
-//  ✅ Endpoints batch + lazy pour images
-// ================================================================
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#080a10"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>HSE Tags 2025/2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ══ TOKENS ══════════════════════════════════════════════════ */
+:root{
+  --ink:#080a10; --ink1:#0e1018; --ink2:#141720; --ink3:#1c2030;
+  --ink4:#252a3a; --line:#2a3045; --line2:#343c52;
+  --t1:#f0f2f8; --t2:#9aa0b8; --t3:#5a6175;
+  --y:#f5c518; --y2:rgba(245,197,24,.12); --y3:rgba(245,197,24,.06);
+  --red:#ff4757; --red2:rgba(255,71,87,.14);
+  --grn:#2ed573; --grn2:rgba(46,213,115,.14);
+  --ora:#ff6b35; --ora2:rgba(255,107,53,.14);
+  --blu:#5e9ef4; --blu2:rgba(94,158,244,.14);
+  --fh:'Space Grotesk',sans-serif; --fm:'JetBrains Mono',monospace;
+  --r:16px; --rm:10px; --rs:7px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;overscroll-behavior:none;}
+body{background:var(--ink);color:var(--t1);font-family:var(--fh);font-size:15px;
+  min-height:100%;-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
+button{cursor:pointer;font-family:var(--fh);border:none;background:none;color:inherit;}
+input,select,textarea{font-family:var(--fh);color:var(--t1);}
+img{max-width:100%;display:block;}
 
-var SHEET_ID         = '1UPfWAHzIKBVvECIPqjg3ccgIwBlX1KzyflJ73jfPRc0';
-var SHEET_NAME       = 'plan';
-var PHOTOS_FOLDER_ID = '1AE6QUkG0hLSmnyzKAVOqWadtjVzUEUQ7';
+/* ══ SPLASH ══════════════════════════════════════════════════ */
+#splash{position:fixed;inset:0;background:var(--ink);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  transition:opacity .5s,transform .5s;}
+#splash.out{opacity:0;transform:scale(1.04);pointer-events:none;}
+.sp-logo{font-size:2.8rem;font-weight:700;letter-spacing:-2px;
+  background:linear-gradient(135deg,var(--y),var(--ora));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sp-sub{font-size:.75rem;color:var(--t3);letter-spacing:3px;text-transform:uppercase;}
+.sp-bar{width:160px;height:3px;background:var(--ink3);border-radius:2px;overflow:hidden;}
+.sp-fill{height:100%;background:linear-gradient(90deg,var(--y),var(--ora));
+  border-radius:2px;width:0%;transition:width .9s cubic-bezier(.4,0,.2,1);}
+.sp-msg{font-size:.72rem;color:var(--t3);min-height:1em;text-align:center;}
 
-var C = {
-  NUM:0, DATE_CR:1, DATE_CI:2, DANGER:3, GRAVITE:4,
-  EMPLACE:5, ZONE:6, DESC:7, RISQUE:8, ACTION:9,
-  PROPO:10, PHOTO_AV:11, STATUT:12, RESP:13, PHOTO_AP:14,
-  DATE_FERME:15, AUTEUR:16, ANON:17, LAT:18, LNG:19, QR:20,
-  EMAIL_SENT:21
+/* ══ SHELL ══════════════════════════════════════════════════ */
+.shell{display:flex;flex-direction:column;min-height:100vh;
+  padding-top:calc(60px + var(--sat));
+  padding-bottom:calc(72px + var(--sab));position:relative;z-index:1;}
+
+/* ══ TOPBAR ══════════════════════════════════════════════════ */
+.topbar{position:fixed;top:0;left:0;right:0;height:calc(60px + var(--sat));
+  padding-top:var(--sat);background:rgba(8,10,16,.94);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding-left:14px;padding-right:14px;gap:10px;z-index:100;}
+.tb-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1rem;letter-spacing:-.3px;}
+.tb-ico{width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--y),var(--ora));
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.tb-year{font-size:.6rem;color:var(--t3);display:block;font-weight:400;letter-spacing:.5px;}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px;}
+.tb-btn{height:34px;border-radius:var(--rs);display:flex;align-items:center;gap:4px;
+  padding:0 11px;font-size:.76rem;font-weight:600;
+  border:1px solid var(--line2);color:var(--t2);transition:all .2s;}
+.tb-btn:active{background:var(--ink3);}
+.tb-btn.pri{background:var(--y);color:var(--ink);border-color:var(--y);
+  box-shadow:0 0 16px rgba(245,197,24,.25);}
+.tb-btn.pri:active{opacity:.85;}
+.tb-badge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;
+  background:var(--red);font-size:.52rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);}
+.tb-notif{position:relative;}
+
+/* ══ BOTTOM NAV ══════════════════════════════════════════════ */
+.bnav{position:fixed;bottom:0;left:0;right:0;
+  height:calc(72px + var(--sab));padding-bottom:var(--sab);
+  background:rgba(8,10,16,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);display:flex;align-items:stretch;z-index:100;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;padding:7px 3px 5px;
+  font-size:.56rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--t3);transition:color .2s;}
+.nb.on{color:var(--y);}
+.nb-icon{font-size:1.2rem;line-height:1;transition:transform .2s;}
+.nb.on .nb-icon{transform:translateY(-2px);}
+.nb-dot{width:4px;height:4px;border-radius:50%;background:var(--y);display:none;margin:0 auto;}
+.nb.on .nb-dot{display:block;}
+
+/* ══ FAB ══════════════════════════════════════════════════════ */
+.fab{position:fixed;bottom:calc(86px + var(--sab));right:14px;
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,var(--y),var(--ora));
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  z-index:99;box-shadow:0 4px 18px rgba(245,197,24,.35);
+  transition:all .25s;border:none;color:var(--ink);}
+.fab:active{transform:scale(.92);}
+
+/* ══ MAIN ══════════════════════════════════════════════════════ */
+.main{flex:1;padding:14px 12px;max-width:720px;margin:0 auto;width:100%;}
+.view{display:none;animation:fu .3s ease;}
+.view.on{display:block;}
+@keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ══ PAGE HEADER ════════════════════════════════════════════ */
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.ph-title{font-size:1.15rem;font-weight:700;letter-spacing:-.3px;}
+.ph-cnt{background:var(--ink3);border:1px solid var(--line);border-radius:20px;
+  padding:3px 10px;font-size:.68rem;color:var(--t2);font-family:var(--fm);}
+
+/* ══ STAT CARDS ══════════════════════════════════════════════ */
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px;}
+@media(min-width:480px){.sg{grid-template-columns:repeat(4,1fr);}}
+.sc{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 14px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s;}
+.sc:active{transform:scale(.97);}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc.y::after{background:var(--y);}
+.sc.r::after{background:var(--red);}
+.sc.g::after{background:var(--grn);}
+.sc.b::after{background:var(--blu);}
+.sc::before{content:attr(data-i);position:absolute;right:10px;top:10px;
+  font-size:1.5rem;opacity:.1;}
+.sc-val{font-family:var(--fm);font-size:1.75rem;font-weight:700;line-height:1;margin-bottom:3px;}
+.sc.y .sc-val{color:var(--y);} .sc.r .sc-val{color:var(--red);}
+.sc.g .sc-val{color:var(--grn);}.sc.b .sc-val{color:var(--blu);}
+.sc-lbl{font-size:.68rem;color:var(--t3);}
+
+/* ══ KPI ROW ══════════════════════════════════════════════════ */
+.kr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.kc{background:var(--ink2);border:1px solid var(--line);border-radius:var(--rm);
+  padding:11px;text-align:center;}
+.kc-val{font-family:var(--fm);font-size:1.2rem;font-weight:700;color:var(--y);line-height:1;}
+.kc-lbl{font-size:.6rem;color:var(--t3);margin-top:3px;line-height:1.3;}
+
+/* ══ SLA RING ══════════════════════════════════════════════ */
+.sla-wrap{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.sla-ring{position:relative;width:68px;height:68px;flex-shrink:0;}
+.sla-ring svg{transform:rotate(-90deg);}
+.sla-ring circle{fill:none;stroke-width:6;stroke-linecap:round;}
+.sla-ring .bg{stroke:var(--line2);}
+.sla-ring .fg{stroke:var(--grn);stroke-dasharray:188;stroke-dashoffset:188;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);}
+.sla-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:.88rem;font-weight:700;color:var(--grn);}
+.sla-info .sla-ttl{font-weight:700;font-size:.88rem;margin-bottom:2px;}
+.sla-info .sla-sub{font-size:.72rem;color:var(--t2);line-height:1.4;}
+
+/* ══ CHARTS ══════════════════════════════════════════════════ */
+.charts{display:grid;grid-template-columns:1fr;gap:9px;margin-bottom:14px;}
+@media(min-width:580px){.charts{grid-template-columns:1fr 1fr;}}
+.cc{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:13px;}
+.cc-ttl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--t3);margin-bottom:10px;}
+.br{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.bl{font-size:.68rem;color:var(--t2);min-width:96px;max-width:96px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt{flex:1;height:6px;background:var(--ink4);border-radius:3px;overflow:hidden;}
+.bf{height:100%;border-radius:3px;background:var(--y);
+  width:0%;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.bn{font-size:.68rem;font-family:var(--fm);color:var(--t1);min-width:20px;text-align:right;}
+
+/* ══ HEATMAP ══════════════════════════════════════════════════ */
+.hm-wrap{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px;margin-bottom:14px;}
+.hm-grid{display:grid;gap:3px;margin-top:8px;}
+.hm-cell{border-radius:4px;height:34px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;cursor:pointer;font-size:.58rem;text-align:center;
+  transition:transform .15s;line-height:1.2;padding:2px;}
+.hm-cell:active{transform:scale(.94);}
+
+/* ══ KPI TABLE ══════════════════════════════════════════════ */
+.kt{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:5px;}
+.kt th{padding:5px 9px;text-align:left;color:var(--t3);font-size:.62rem;text-transform:uppercase;
+  letter-spacing:.8px;border-bottom:1px solid var(--line);}
+.kt td{padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.03);}
+.kt tr:last-child td{border:none;}
+.kt tr:hover td{background:var(--ink3);}
+.dp{display:inline-block;padding:2px 7px;border-radius:20px;font-family:var(--fm);font-size:.68rem;font-weight:700;}
+.dp.r{background:var(--red2);color:var(--red);}
+.dp.o{background:var(--ora2);color:var(--ora);}
+.dp.g{background:var(--grn2);color:var(--grn);}
+
+/* ══ SEARCH / FILTERS ══════════════════════════════════════ */
+.sa{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.sw{position:relative;}
+.si{width:100%;background:var(--ink2);border:1px solid var(--line);border-radius:var(--rm);
+  padding:10px 12px 10px 36px;color:var(--t1);font-size:.85rem;outline:none;
+  transition:border-color .2s;}
+.si:focus{border-color:var(--y);}
+.si-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--t3);font-size:.82rem;pointer-events:none;}
+.fc{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.fc::-webkit-scrollbar{display:none;}
+.chip{background:var(--ink2);border:1px solid var(--line);border-radius:20px;
+  padding:5px 11px;font-size:.7rem;font-weight:600;color:var(--t3);
+  white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.chip.on{background:var(--y2);border-color:var(--y);color:var(--y);}
+.chip:active{transform:scale(.95);}
+.ri{font-size:.7rem;color:var(--t3);padding:0 2px;}
+
+/* ══ TAG CARDS ════════════════════════════════════════════ */
+.tlist{display:flex;flex-direction:column;gap:8px;}
+/* ══ GALLERY VIEW (photo avant + texte incrusté) ══ */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(min-width:560px){.gallery{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:900px){.gallery{grid-template-columns:repeat(4,1fr);}}
+.gcard{position:relative;aspect-ratio:3/4;border-radius:var(--rm);overflow:hidden;
+  background:var(--ink3);border:1px solid var(--line);cursor:pointer;transition:transform .15s;}
+.gcard:active{transform:scale(.98);}
+.gcard.elevee{border-color:rgba(255,71,87,.55);}
+.gcard.moyenne{border-color:rgba(255,165,2,.5);}
+.gcard.faible{border-color:rgba(46,213,115,.45);}
+.gc-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--ink3);color:var(--t3);font-size:.85rem;}
+.gc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.gc-img.tc-lazy{width:100%;height:100%;border-radius:0;border:none;}
+.gc-noimg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;color:var(--t3);font-size:.66rem;background:var(--ink3);}
+.gc-noimg span{font-size:1.9rem;}
+.gc-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+  padding:8px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 48%,rgba(0,0,0,.82) 100%);}
+.gc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:5px;}
+.gc-id{font-family:var(--fm);font-weight:700;font-size:.74rem;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);}
+.gc-st{font-size:.58rem;font-weight:700;padding:3px 7px;border-radius:999px;
+  text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.gc-st.open{background:rgba(255,71,87,.9);color:#fff;}
+.gc-st.closed{background:rgba(46,213,115,.9);color:#06210f;}
+.gc-bot{display:flex;flex-direction:column;gap:3px;}
+.gc-resp{font-size:.74rem;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.95);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-since{display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:600;
+  color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.95);}
+.gc-since .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.tcard{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
+.tcard:active{transform:scale(.992);}
+.tcard.elevee{border-left:3px solid var(--red);}
+.tcard.moyenne{border-left:3px solid var(--ora);}
+.tcard.faible{border-left:3px solid var(--grn);}
+.tc-top{padding:11px 11px 7px;display:flex;gap:9px;}
+.tc-photos{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
+.tc-th{width:48px;height:48px;border-radius:var(--rs);object-fit:cover;
+  border:1px solid var(--line2);background:var(--ink3);cursor:pointer;transition:transform .2s;}
+.tc-th:active{transform:scale(.92);}
+.tc-no{width:48px;height:48px;border-radius:var(--rs);background:var(--ink3);
+  border:1px dashed var(--line2);display:flex;align-items:center;justify-content:center;
+  color:var(--t3);font-size:.52rem;text-align:center;line-height:1.2;}
+.tc-body{flex:1;min-width:0;}
+.tc-r1{display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap;}
+.tc-id{font-family:var(--fm);font-weight:700;font-size:.82rem;color:var(--y);}
+.tc-dt{font-size:.65rem;color:var(--t3);}
+.tc-anon{font-size:.58rem;background:var(--ink4);border:1px solid var(--line2);
+  border-radius:4px;padding:1px 5px;color:var(--t3);}
+.tc-danger{font-weight:600;font-size:.8rem;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;}
+.tc-desc{font-size:.72rem;color:var(--t2);line-height:1.4;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;margin-top:2px;}
+.tc-bot{padding:6px 11px 8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  border-top:1px solid rgba(255,255,255,.04);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;
+  font-size:.62rem;font-weight:700;white-space:nowrap;}
+.ge{background:var(--red2);color:var(--red);}
+.gm{background:var(--ora2);color:var(--ora);}
+.gf{background:var(--grn2);color:var(--grn);}
+.so{background:var(--red2);color:var(--red);}
+.sc2{background:var(--grn2);color:var(--grn);}
+.tc-zone{font-size:.62rem;color:var(--t3);margin-left:auto;}
+.tc-kpi{font-family:var(--fm);font-size:.62rem;display:flex;align-items:center;gap:3px;}
+.tc-acts{padding:6px 11px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:5px;}
+.ta{flex:1;padding:6px;border-radius:var(--rs);font-size:.7rem;font-weight:600;
+  border:1px solid var(--line);color:var(--t2);transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:3px;}
+.ta:active{transform:scale(.96);}
+.ta.v:active{border-color:var(--blu);color:var(--blu);}
+.ta.e:active{border-color:var(--y);color:var(--y);}
+.ta.d:active{border-color:var(--red);color:var(--red);}
+
+/* ══ EMPTY ════════════════════════════════════════════════ */
+.empty{text-align:center;padding:48px 16px;color:var(--t3);}
+.empty-i{font-size:2.6rem;margin-bottom:9px;}
+.empty-t{font-size:.95rem;font-weight:700;color:var(--t2);margin-bottom:5px;}
+
+/* ══ BOTTOM SHEETS ════════════════════════════════════════ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  z-index:200;display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .25s;}
+.ov.on{opacity:1;pointer-events:all;}
+@media(min-width:600px){.ov{align-items:center;justify-content:center;}}
+.sheet{background:var(--ink1);width:100%;max-height:94vh;
+  border-radius:20px 20px 0 0;overflow:hidden;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;border-top:1px solid var(--line);}
+.ov.on .sheet{transform:translateY(0);}
+@media(min-width:600px){
+  .sheet{border-radius:var(--r);max-width:700px;max-height:90vh;
+    transform:translateY(16px) scale(.97);border:1px solid var(--line);}
+  .ov.on .sheet{transform:none;}
+}
+/* Formulaire d'ajout en PLEIN ÉCRAN (pas en fenêtre centrée) */
+#quickOv{align-items:stretch;justify-content:stretch;backdrop-filter:none;-webkit-backdrop-filter:none;}
+#quickOv .sheet{max-width:none;width:100%;max-height:none;height:100%;
+  border-radius:0;border:none;transform:translateY(100%);}
+#quickOv.on .sheet{transform:none;}
+#quickOv .sform{max-width:820px;margin:0 auto;width:100%;padding:6px 6px;}
+/* Textes & boutons agrandis + meilleure lisibilité */
+#quickOv .sh-title{font-size:1.1rem;}
+#quickOv .srow{padding:16px 4px;}
+#quickOv .slabel{flex:0 0 34%;font-size:1rem;padding-top:14px;color:var(--t1);font-weight:700;}
+#quickOv .fi,#quickOv .fsel,#quickOv .ft{font-size:1.02rem;padding:15px 14px;
+  color:var(--t1);border-color:var(--line2);}
+#quickOv .fi::placeholder,#quickOv .ft::placeholder{color:var(--t3);}
+#quickOv .ft{min-height:96px;max-height:200px;}
+#quickOv .pub-ap{padding:16px 8px;font-size:.92rem;}
+#quickOv .scan-btn{padding:15px;font-size:.95rem;}
+#quickOv .sh-foot .btn{font-size:1.08rem;min-height:62px;}
+.sh-handle{width:36px;height:4px;background:var(--line2);border-radius:2px;
+  margin:10px auto 0;flex-shrink:0;}
+@media(min-width:600px){.sh-handle{display:none;}}
+.sh-hdr{padding:11px 15px 9px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.sh-title{font-weight:700;font-size:.92rem;flex:1;display:flex;align-items:center;gap:6px;}
+.sh-close{width:30px;height:30px;border-radius:var(--rs);background:var(--ink3);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  color:var(--t2);font-size:.82rem;transition:all .2s;}
+.sh-close:active{background:var(--ink4);}
+.sh-body{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.sh-foot{padding:11px 15px;border-top:1px solid var(--line);display:flex;gap:7px;flex-shrink:0;
+  padding-bottom:calc(11px + var(--sab));}
+
+/* ══ QUICK ADD STEPS ════════════════════════════════════ */
+.qw{padding:14px 15px;}
+.qa-step{display:none;}
+.qa-step.on{display:block;}
+.step-ind{display:flex;align-items:center;gap:7px;margin-bottom:18px;}
+.sd{width:26px;height:26px;border-radius:50%;background:var(--ink3);border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;
+  color:var(--t3);transition:all .25s;flex-shrink:0;}
+.sd.done{background:var(--y);border-color:var(--y);color:var(--ink);}
+.sd.act{background:var(--ink3);border-color:var(--y);color:var(--y);}
+.sl{flex:1;height:2px;background:var(--line);border-radius:1px;}
+.sl.done{background:var(--y);}
+
+/* Danger grid */
+.dg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px;}
+.dgb{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);
+  padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dgb:active,.dgb.sel{background:var(--y2);border-color:var(--y);}
+.dg-i{font-size:1.5rem;}
+.dg-l{font-size:.7rem;font-weight:600;color:var(--t2);line-height:1.2;}
+
+/* Camera */
+.cam-btns{display:flex;gap:7px;margin-bottom:10px;}
+.cam-opt{flex:1;padding:9px;border-radius:var(--rs);border:1px solid var(--line);
+  color:var(--t2);font-size:.74rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  transition:all .2s;position:relative;overflow:hidden;}
+.cam-opt:active{background:var(--ink3);}
+.cam-opt input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.cam-area{width:100%;aspect-ratio:4/3;background:var(--ink3);border-radius:var(--rm);
+  border:2px dashed var(--line2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  position:relative;overflow:hidden;transition:border-color .2s;margin-bottom:10px;}
+.cam-area:active{border-color:var(--y);}
+.cam-area img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.cam-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+
+/* Severity */
+.sev-row{display:flex;gap:7px;margin-bottom:12px;}
+.sev-btn{flex:1;padding:11px 8px;border-radius:var(--rm);border:2px solid var(--line);
+  text-align:center;cursor:pointer;transition:all .2s;}
+.sev-btn.e.sel{background:var(--red2);border-color:var(--red);}
+.sev-btn.m.sel{background:var(--ora2);border-color:var(--ora);}
+.sev-btn.f.sel{background:var(--grn2);border-color:var(--grn);}
+.sev-i{font-size:1.25rem;}
+.sev-l{font-size:.68rem;font-weight:700;margin-top:2px;}
+.sev-btn.e .sev-l{color:var(--red);}.sev-btn.m .sev-l{color:var(--ora);}.sev-btn.f .sev-l{color:var(--grn);}
+
+/* Utils row */
+.ur{display:flex;gap:7px;margin-bottom:12px;}
+.ub{flex:1;padding:9px;border-radius:var(--rs);border:1px solid var(--line);
+  color:var(--t2);font-size:.72rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s;}
+.ub.on{background:var(--y2);border-color:var(--y);color:var(--y);}
+.ub:active{transform:scale(.96);}
+
+/* Voice anim */
+.va{display:flex;align-items:center;justify-content:center;gap:3px;height:18px;margin:5px 0;}
+.vb{width:3px;border-radius:2px;background:var(--y);animation:va .8s ease-in-out infinite;}
+.vb:nth-child(1){height:6px;animation-delay:0s;}.vb:nth-child(2){height:11px;animation-delay:.1s;}
+.vb:nth-child(3){height:16px;animation-delay:.2s;}.vb:nth-child(4){height:11px;animation-delay:.3s;}
+.vb:nth-child(5){height:6px;animation-delay:.4s;}
+@keyframes va{0%,100%{transform:scaleY(.4);}50%{transform:scaleY(1.5);}}
+.va.off .vb{animation:none;transform:scaleY(.4);}
+
+/* Anonymous toggle */
+.anon-row{display:flex;align-items:center;gap:9px;background:var(--ink3);
+  border:1px solid var(--line);border-radius:var(--rs);padding:9px 11px;margin-bottom:10px;}
+.anon-txt{flex:1;font-size:.8rem;font-weight:500;}
+.anon-sub{font-size:.64rem;color:var(--t3);display:block;margin-top:1px;}
+.tgl{position:relative;width:42px;height:22px;flex-shrink:0;}
+.tgl input{opacity:0;width:0;height:0;}
+.tgl-track{position:absolute;inset:0;background:var(--ink4);border:1px solid var(--line2);
+  border-radius:11px;cursor:pointer;transition:all .25s;}
+.tgl input:checked~.tgl-track{background:var(--y);border-color:var(--y);}
+.tgl-thumb{position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;
+  background:var(--t3);transition:all .25s;}
+.tgl input:checked~.tgl-track .tgl-thumb{transform:translateX(20px);background:var(--ink);}
+
+/* ══ FULL FORM ════════════════════════════════════════════ */
+.fw{padding:13px 15px;display:flex;flex-direction:column;gap:11px;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg.full{grid-column:1/-1;}
+.fl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);}
+.fi,.fsel,.ft{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rs);
+  padding:9px 11px;color:var(--t1);font-size:.83rem;outline:none;
+  transition:border-color .2s;width:100%;}
+.fi:focus,.fsel:focus,.ft:focus{border-color:var(--y);}
+.ft{resize:vertical;min-height:62px;}
+.fsel option{background:var(--ink2);}
+/* Suggestions IA */
+.sugg{margin-top:6px;display:none;flex-wrap:wrap;align-items:center;gap:6px;}
+.sugg.on{display:flex;}
+.sugg-lead{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--y);}
+.sugg-chip{background:var(--y3);border:1px solid rgba(245,197,24,.35);border-radius:999px;
+  color:var(--t1);font-size:.74rem;padding:5px 11px;cursor:pointer;text-align:left;
+  line-height:1.3;transition:background .15s,border-color .15s;}
+.sugg-chip:hover{background:var(--y2);border-color:var(--y);}
+.sugg-x{background:none;border:none;color:var(--t3);font-size:.68rem;cursor:pointer;
+  text-decoration:underline;padding:3px 4px;}
+.sugg-x:hover{color:var(--t1);}
+/* Formulaire simple "tag informations" (libellé gauche / champ droite) */
+.sform{display:flex;flex-direction:column;}
+.srow{display:flex;align-items:flex-start;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);}
+.srow:last-child{border-bottom:none;}
+.slabel{flex:0 0 36%;font-size:.82rem;font-weight:600;color:var(--t2);padding-top:11px;line-height:1.25;}
+.srow.req .slabel::after{content:" *";color:var(--red);font-weight:700;}
+.sval{flex:1;min-width:0;}
+.sval .pth{display:none;margin-top:8px;height:96px;}
+.sval .ap-btns{border-radius:var(--rs);}
+.sval .pub-ap{border-radius:0;padding:11px 6px;}
+.sval .ap-btns .pub-ap:first-child{border-radius:var(--rs) 0 0 var(--rs);}
+.sval .ap-btns .pub-ap:last-child{border-radius:0 var(--rs) var(--rs) 0;}
+.scan-btn{margin-top:8px;width:100%;background:var(--blu2);color:var(--blu);
+  border:1px solid rgba(94,158,244,.3);border-radius:var(--rs);
+  padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;transition:filter .15s;}
+.scan-btn:active{filter:brightness(.88);}
+/* Photos */
+.pgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ps{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;}
+.ps-h{padding:5px 10px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--t3);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;}
+.ps-b{padding:8px;}
+.pub{width:100%;background:none;border:1px dashed var(--line2);border-radius:var(--rs);
+  padding:10px 5px;color:var(--t3);font-size:.7rem;transition:all .2s;
+  position:relative;text-align:center;cursor:pointer;}
+.pub:active{border-color:var(--y);}
+.pub input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.pth{width:100%;height:68px;object-fit:cover;border-radius:var(--rs);display:none;margin-top:6px;}
+.ok{color:var(--grn);display:none;font-size:.68rem;}
+.ap-btns{display:flex;border-radius:0 0 var(--rm) var(--rm);overflow:hidden;}
+.pub-ap{flex:1;display:block;position:relative;text-align:center;cursor:pointer;
+  background:var(--y);color:#0b0c0f;font-weight:700;font-size:.72rem;
+  padding:9px 6px;transition:filter .15s;}
+.pub-ap.alt{background:var(--ink4);color:var(--t1);border-left:1px solid var(--line);}
+.pub-ap.del{background:var(--red2);color:var(--red);border-left:1px solid var(--line);font-weight:700;}
+.pub-ap:active{filter:brightness(.9);}
+.pub-ap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+
+/* ══ DETAIL VIEW ══════════════════════════════════════════ */
+.dw{padding:13px 15px;}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+.df{display:flex;flex-direction:column;gap:3px;}
+.df.full{grid-column:1/-1;}
+.dk{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);}
+.dv{font-size:.82rem;line-height:1.5;}
+/* KPI duration */
+.kd{background:var(--ink3);border:1px solid var(--line);border-radius:var(--rm);
+  padding:11px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.kd-val{font-family:var(--fm);font-size:1.5rem;font-weight:700;line-height:1;}
+.kd-lbl{font-size:.7rem;color:var(--t2);}
+.kd-sub{font-size:.64rem;color:var(--t3);margin-top:1px;}
+/* Timeline */
+.tl .tl-item{display:flex;gap:9px;padding-bottom:9px;position:relative;}
+.tl .tl-item::before{content:'';position:absolute;left:8px;top:17px;bottom:0;
+  width:1px;background:var(--line);}
+.tl .tl-item:last-child::before{display:none;}
+.tl-dot{width:17px;height:17px;border-radius:50%;border:2px solid var(--line);
+  background:var(--ink3);flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:.58rem;z-index:1;}
+.tl-dot.done{background:var(--grn);border-color:var(--grn);}
+.tl-dot.act{background:var(--y);border-color:var(--y);}
+.tl-cnt{flex:1;}
+.tl-lbl{font-size:.74rem;font-weight:600;}
+.tl-dt{font-size:.65rem;color:var(--t3);}
+/* Photo compare */
+.pcs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;}
+.pcs-sl{border:1px solid var(--line);border-radius:var(--rm);overflow:hidden;background:var(--ink3);}
+.pcs-h{padding:5px 9px;font-size:.6rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--t3);border-bottom:1px solid var(--line);}
+.pcs-b img{width:100%;max-height:150px;object-fit:cover;cursor:pointer;}
+
+.pcs-lazy{height:100px;display:flex;align-items:center;justify-content:center;
+  background:var(--ink3);cursor:pointer;color:var(--t3);font-size:.78rem;}
+.pcs-lazy.loaded{height:auto;background:transparent;cursor:pointer;}
+.pcs-empty{height:72px;display:flex;align-items:center;justify-content:center;
+  color:var(--t3);font-size:.7rem;}
+
+/* ══ CONFIRM ══════════════════════════════════════════════ */
+.cfm-body{padding:22px 15px;text-align:center;}
+.cfm-i{font-size:2.4rem;margin-bottom:7px;}
+.cfm-t{font-size:.95rem;font-weight:700;margin-bottom:5px;}
+.cfm-s{font-size:.78rem;color:var(--t2);line-height:1.5;}
+
+/* ══ BUTTONS ══════════════════════════════════════════════ */
+.btn{padding:10px 16px;border-radius:var(--rs);font-size:.83rem;font-weight:700;
+  font-family:var(--fh);border:none;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn:active{transform:scale(.97);}
+.btn-p{background:var(--y);color:var(--ink);flex:1;box-shadow:0 2px 12px rgba(245,197,24,.2);}
+.btn-g{background:var(--ink3);border:1px solid var(--line);color:var(--t2);}
+.btn-b{background:var(--blu2);color:var(--blu);border:1px solid rgba(94,158,244,.3);}
+.btn-r{background:var(--red2);color:var(--red);border:1px solid rgba(255,71,87,.3);}
+.btn.sent{background:rgba(46,213,115,.15);color:var(--grn);border:1px solid rgba(46,213,115,.4);}
+.resp-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+.resp-row .rr-name{flex:0 0 38%;}
+.resp-row .rr-mail{flex:1;min-width:0;}
+.resp-row .rr-del{flex:0 0 auto;min-height:auto;padding:10px 12px;}
+.mail-to{background:var(--ink2);border:1px solid var(--line);border-radius:var(--rs);
+  padding:11px 13px;font-size:.86rem;color:var(--t2);}
+.mail-to b{color:var(--t1);}
+.cc-list{display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow-y:auto;}
+.cc-row{display:flex;align-items:center;gap:9px;background:var(--ink2);
+  border:1px solid var(--line);border-radius:var(--rs);padding:10px 12px;cursor:pointer;}
+.cc-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--y);flex-shrink:0;}
+.cc-row .cc-nm{font-size:.86rem;font-weight:600;color:var(--t1);}
+.cc-row .cc-em{font-size:.74rem;color:var(--t3);margin-left:auto;font-family:var(--fm);}
+
+/* ══ TOAST ══════════════════════════════════════════════ */
+.toast{position:fixed;bottom:calc(80px + var(--sab));left:10px;right:10px;
+  background:var(--ink2);border:1px solid var(--line);border-radius:var(--rm);
+  padding:11px 14px;font-size:.82rem;display:flex;align-items:center;gap:8px;
+  transform:translateY(18px);opacity:0;transition:all .3s;z-index:300;max-width:540px;}
+.toast.on{transform:none;opacity:1;}
+.toast.ok{border-left:3px solid var(--grn);}
+.toast.err{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blu);}
+
+/* ══ IMG FULLSCREEN ══════════════════════════════════════ */
+.ifs{position:fixed;inset:0;background:rgba(0,0,0,.97);
+  display:flex;align-items:center;justify-content:center;
+  z-index:400;opacity:0;pointer-events:none;transition:opacity .25s;cursor:zoom-out;}
+.ifs.on{opacity:1;pointer-events:all;}
+.ifs img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:8px;}
+.ifs-x{position:absolute;top:calc(14px + var(--sat));right:14px;
+  background:rgba(255,255,255,.14);border:none;border-radius:50%;
+  width:38px;height:38px;color:#fff;font-size:.95rem;
+  display:flex;align-items:center;justify-content:center;}
+
+/* ══ OFFLINE BANNERS ══════════════════════════════════════ */
+.off-banner{background:var(--red);color:var(--ink);text-align:center;
+  font-size:.72rem;font-weight:700;padding:5px;display:none;}
+.off-banner.on{display:block;}
+.sync-banner{background:var(--y);color:var(--ink);text-align:center;
+  font-size:.72rem;font-weight:700;padding:5px;display:none;cursor:pointer;}
+.sync-banner.on{display:block;}
+
+/* ══ SIDEBAR DESKTOP ══════════════════════════════════════ */
+@media(min-width:900px){
+  .sidebar{display:flex!important;}
+  .bnav{display:none;}
+  .fab{display:none;}
+  .shell{padding-left:220px;padding-bottom:20px;}
+  .topbar{left:220px;}
+}
+.sidebar{display:none;position:fixed;top:0;left:0;bottom:0;width:220px;
+  background:var(--ink1);border-right:1px solid var(--line);
+  padding:18px 9px;overflow-y:auto;z-index:101;flex-direction:column;gap:3px;}
+.sb-logo{font-size:.98rem;font-weight:700;padding:3px 10px 16px;
+  display:flex;align-items:center;gap:7px;}
+.sb-ico{width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,var(--y),var(--ora));
+  display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+.snav{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:var(--rs);
+  font-size:.78rem;color:var(--t3);cursor:pointer;transition:all .15s;
+  border:none;background:none;width:100%;text-align:left;}
+.snav:hover{background:var(--ink2);color:var(--t1);}
+.snav.on{background:var(--y2);color:var(--y);font-weight:600;}
+.snav-i{font-size:.9rem;width:18px;text-align:center;}
+.sb-sec{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--t3);padding:12px 11px 3px;}
+
+/* Lazy image placeholder */
+.tc-lazy{display:flex;align-items:center;justify-content:center;
+  background:var(--ink3);border:1px solid var(--line2);
+  width:48px;height:48px;border-radius:var(--rs);overflow:hidden;cursor:pointer;}
+.tc-lazy.loaded{background:transparent;}
+.tc-lazy img{width:100%;height:100%;object-fit:cover;}
+.tc-lazy.err{background:var(--ink3);border:1px dashed var(--red);}
+.tc-lazy.err::after{content:'⚠';color:var(--red);font-size:.9rem;}
+
+/* ══ MOBILE COLLAPSIBLE FILTERS ══════════════════════════ */
+.mfilters{
+  background:var(--ink2);border:1px solid var(--line);
+  border-radius:var(--rm);margin-bottom:10px;overflow:hidden;
+}
+.mf-head{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;
+  cursor:pointer;user-select:none;
+}
+.mf-ico{font-size:1rem;color:var(--y);}
+.mf-title{flex:1;font-size:.82rem;font-weight:600;color:var(--t1);}
+.mf-count{font-size:.65rem;color:var(--t3);font-family:var(--fm);}
+.mf-arrow{transition:transform .25s;color:var(--t2);font-size:.8rem;}
+.mfilters.expanded .mf-arrow{transform:rotate(180deg);}
+.mf-body{
+  max-height:0;overflow:hidden;transition:max-height .3s ease;
+  border-top:1px solid transparent;
+}
+.mfilters.expanded .mf-body{max-height:400px;border-top-color:var(--line);}
+.mf-content{padding:12px;display:flex;flex-direction:column;gap:9px;}
+.mf-group{display:flex;flex-direction:column;gap:4px;}
+.mf-label{font-size:.62rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--t3);}
+.mf-select{background:var(--ink3);border:1px solid var(--line);
+  border-radius:var(--rs);padding:9px 11px;color:var(--t1);font-size:.82rem;
+  outline:none;width:100%;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239aa0b8'%3e%3cpath d='M4.5 6l3.5 4 3.5-4z'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 10px center;
+  background-size:14px;padding-right:30px;}
+.mf-select:focus{border-color:var(--y);}
+.mf-toggle-row{
+  display:flex;background:var(--ink3);border:1px solid var(--line);
+  border-radius:var(--rs);overflow:hidden;
+}
+.mf-tgl{flex:1;padding:9px;text-align:center;font-size:.74rem;font-weight:600;
+  color:var(--t3);cursor:pointer;transition:all .2s;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;gap:5px;}
+.mf-tgl.on{background:var(--y2);color:var(--y);}
+.mf-tgl:active{transform:scale(.97);}
+.mf-reset{
+  align-self:flex-start;background:none;border:none;color:var(--blu);
+  font-size:.72rem;font-weight:600;padding:4px 0;cursor:pointer;
+  text-decoration:underline;
+}
+
+/* ══ HERO BUTTON (Android-first) ══════════════════════════ */
+.hero-btn{
+  width:100%;display:flex;align-items:center;gap:13px;
+  background:linear-gradient(135deg,var(--y),var(--ora));
+  border:none;border-radius:var(--r);padding:16px 18px;margin-bottom:14px;
+  box-shadow:0 6px 22px rgba(245,197,24,.3);
+  transition:transform .15s,box-shadow .2s;text-align:left;
+}
+.hero-btn:active{transform:scale(.98);box-shadow:0 3px 14px rgba(245,197,24,.25);}
+.hero-ico{font-size:1.9rem;flex-shrink:0;}
+.hero-txt{flex:1;display:flex;flex-direction:column;gap:2px;}
+.hero-t1{font-size:1.02rem;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
+.hero-t2{font-size:.72rem;font-weight:500;color:rgba(8,10,16,.7);}
+.hero-arrow{font-size:1.6rem;font-weight:700;color:var(--ink);
+  background:rgba(8,10,16,.12);width:38px;height:38px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* Bigger bottom-nav touch targets for Android */
+.bnav{height:calc(80px + var(--sab));}
+.nb{padding:9px 3px 7px;gap:3px;}
+.nb-icon{font-size:1.4rem;}
+.nb span:not(.nb-icon):not(.nb-dot){font-size:.62rem;}
+
+/* Bigger FAB */
+.fab{width:60px;height:60px;border-radius:20px;font-size:1.7rem;
+  bottom:calc(94px + var(--sab));}
+
+/* Bigger action buttons on cards */
+.ta{padding:10px 6px;font-size:.76rem;}
+
+/* Bigger quick-add danger tiles */
+.dgb{padding:15px 9px;}
+.dg-i{font-size:1.7rem;}
+.dg-l{font-size:.74rem;}
+
+/* Bigger primary buttons (mobile-first, thumb-friendly) */
+.btn{padding:15px 18px;font-size:.92rem;min-height:50px;}
+.sh-foot .btn{padding:17px 18px;font-size:.95rem;min-height:56px;}
+
+@keyframes fabPulse{0%,100%{box-shadow:0 4px 18px rgba(245,197,24,.35);}50%{box-shadow:0 4px 26px rgba(245,197,24,.55);}}
+.fab{animation:fabPulse 2.4s ease-in-out infinite;}
+
+/* ═══ SUPERVISEUR HSE ═══ */
+.hse-section{margin-bottom:20px;}
+.hse-section-title{font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.hse-card{background:var(--ink2);border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--line2);}
+.hse-card-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.hse-card-title{font-size:.95rem;font-weight:600;color:var(--t1);}
+.hse-card-badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;}
+.badge-ok{background:rgba(34,197,94,.2);color:#22c55e;}
+.badge-nok{background:rgba(239,68,68,.2);color:#ef4444;}
+.badge-partial{background:rgba(245,197,24,.2);color:#f5c518;}
+.hse-card-meta{font-size:.78rem;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap;}
+.hse-card-meta span::before{content:'';margin-right:4px;}
+.emp-chip{display:inline-flex;align-items:center;gap:5px;background:var(--ink3);border-radius:20px;padding:4px 10px;font-size:.78rem;margin:3px;}
+.emp-chip .rm-emp{background:none;border:none;color:var(--t3);cursor:pointer;padding:0;font-size:.8rem;line-height:1;}
+.emp-search-res{background:var(--ink3);border-radius:8px;margin-top:4px;overflow:hidden;max-height:220px;overflow-y:auto;}
+.emp-search-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line2);}
+.emp-search-item:hover{background:var(--ink4);}
+.emp-search-item .em-mat{font-size:.75rem;color:var(--t3);}
+.chk-group{margin-bottom:16px;}
+.chk-group-title{font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--line2);}
+.chk-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);}
+.chk-item:last-child{border-bottom:none;}
+.chk-item label{flex:1;font-size:.88rem;color:var(--t1);cursor:pointer;}
+.chk-item input[type=checkbox]{width:18px;height:18px;accent-color:#f5c518;cursor:pointer;flex-shrink:0;}
+.hse-upload-area{border:2px dashed var(--line2);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.hse-upload-area:hover{border-color:#f5c518;}
+.hse-upload-area.has-file{border-color:#22c55e;border-style:solid;}
+.hse-upload-label{font-size:.85rem;color:var(--t3);margin-top:6px;}
+.hse-upload-preview{font-size:.8rem;color:#22c55e;margin-top:6px;font-weight:600;}
+.themes-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.themes-row input{flex:1;}
+.themes-row button{flex-shrink:0;}
+.stat-pill{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:6px;}
+.stat-conforme{background:rgba(34,197,94,.18);color:#22c55e;}
+.stat-nonconforme{background:rgba(239,68,68,.18);color:#ef4444;}
+.stat-partiel{background:rgba(245,197,24,.18);color:#f5c518;}
+.hse-empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:.9rem;}
+.hse-empty .hse-empty-ico{font-size:2.5rem;margin-bottom:10px;}
+.hse-fab-wrap{position:sticky;bottom:80px;display:flex;justify-content:flex-end;padding:0 16px;z-index:10;}
+.hse-fab-btn{background:#f5c518;color:#000;border:none;border-radius:50px;padding:14px 22px;font-weight:700;font-size:.95rem;cursor:pointer;box-shadow:0 4px 18px rgba(245,197,24,.4);}
+.view-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.equip-drop-item{padding:10px 14px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line2);}
+.equip-drop-item:last-child{border-bottom:none;}
+.equip-drop-item:hover,.equip-drop-item.active{background:var(--ink4);}
+.equip-drop-item mark{background:rgba(245,197,24,.3);color:var(--t1);border-radius:2px;}
+.equip-tag{display:inline-flex;align-items:center;gap:4px;background:var(--y2);border:1px solid rgba(245,197,24,.35);border-radius:12px;padding:2px 8px;font-size:.8rem;color:var(--t1);cursor:pointer;user-select:none;}
+.equip-tag:hover{background:rgba(245,197,24,.22);}
+.equip-multi-item{padding:9px 14px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px;}
+.equip-multi-item:last-child{border-bottom:none;}
+.equip-multi-item:hover{background:var(--ink4);}
+.equip-multi-item.checked-item{background:var(--y3);}
+/* ── Inspection Globale ── */
+.global-type-section{background:var(--ink2);border-radius:10px;padding:14px 14px 10px;margin-bottom:14px;border:1px solid var(--line);}
+.global-type-title{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.global-type-count{font-size:.78rem;font-weight:400;color:var(--t3);background:var(--ink3);border-radius:10px;padding:1px 7px;}
+.global-ext-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.global-ext-accordion{border-radius:8px;overflow:hidden;border:1px solid var(--line2);}
+.global-ext-header{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--ink3);transition:background .15s;user-select:none;}
+.global-ext-header:hover{background:var(--ink4);}
+.global-ext-header.open{background:var(--ink4);}
+.global-ext-detail{background:var(--ink2);padding:10px 14px 10px;border-top:1px solid var(--line2);}
+.global-ext-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap;}
+.global-ext-badge.ok{background:rgba(39,174,96,.18);color:#2ecc71;border:1px solid rgba(39,174,96,.3);}
+.global-ext-badge.nok{background:rgba(231,76,60,.18);color:#e74c3c;border:1px solid rgba(231,76,60,.3);}
+.global-ext-note{margin:4px 0 0!important;padding:4px 9px!important;height:30px!important;font-size:.78rem!important;width:100%;box-sizing:border-box;}
+/* Sort tabs (inspection globale) */
+.gsort-tab{padding:5px 13px;border-radius:20px;border:1px solid var(--line2);background:var(--ink3);color:var(--t2);cursor:pointer;font-size:.78rem;transition:all .15s;white-space:nowrap;}
+.gsort-tab.on{background:var(--y2);border-color:rgba(245,197,24,.4);color:var(--y);font-weight:600;}
+.gsort-tab:hover:not(.on){background:var(--ink4);}
+/* Config table */
+.ext-cfg-row{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;align-items:center;padding:2px 0;}
+.ext-cfg-row:nth-child(even){background:rgba(255,255,255,.018);border-radius:4px;}
+.ext-cfg-label{font-size:.78rem;color:var(--t3);font-weight:600;text-align:center;}
+/* Zone chips */
+.zone-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.3);border-radius:12px;padding:3px 9px;font-size:.8rem;color:#3498db;margin:2px;}
+.zone-chip .zrm{cursor:pointer;opacity:.55;font-size:.75em;line-height:1;}
+.zone-chip .zrm:hover{opacity:1;}
+/* Quick range config */
+.range-cfg-row{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2);}
+.range-cfg-row:last-child{border-bottom:none;}
+.sensi-tab{flex:1;background:none;border:none;color:var(--t3);border-radius:7px;padding:10px 8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;}
+.sensi-tab.on{background:var(--ink4);color:var(--t1);}
+.profil-card{background:var(--ink2);border-radius:14px;padding:18px;border:1px solid var(--line2);margin-bottom:16px;}
+.profil-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#e67e22);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#000;flex-shrink:0;}
+.profil-name{font-size:1.05rem;font-weight:700;color:var(--t1);}
+.profil-meta{font-size:.8rem;color:var(--t3);margin-top:3px;}
+.profil-stats{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.profil-stat{flex:1;min-width:80px;background:var(--ink3);border-radius:10px;padding:12px;text-align:center;}
+.profil-stat-val{font-size:1.5rem;font-weight:700;color:#f5c518;}
+.profil-stat-lbl{font-size:.72rem;color:var(--t3);margin-top:2px;}
+.profil-history{margin-top:16px;}
+.profil-history-title{font-size:.78rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.profil-hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);}
+.profil-hist-item:last-child{border-bottom:none;}
+.profil-hist-dot{width:10px;height:10px;border-radius:50%;background:#f5c518;flex-shrink:0;margin-top:4px;}
+.profil-hist-dot.anim{background:#3b82f6;}
+.profil-hist-theme{font-size:.88rem;font-weight:600;color:var(--t1);}
+.profil-hist-meta{font-size:.75rem;color:var(--t3);margin-top:2px;}
+.role-badge{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;}
+.role-admin{background:rgba(239,68,68,.2);color:#ef4444;}
+.role-super{background:rgba(245,197,24,.2);color:#f5c518;}
+.role-user{background:rgba(107,114,128,.2);color:#9ca3af;}
+</style>
+</head>
+<body>
+<!-- ═══ AUTH WALL — shown before everything ═══ -->
+<div id="authWall" style="position:fixed;inset:0;z-index:99999;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:2.5rem;margin-bottom:8px">🔒</div>
+      <div style="font-size:1.4rem;font-weight:700;color:#f5c518">HSE Tags 2025/2026</div>
+      <div style="font-size:.85rem;color:#6b7280;margin-top:4px">Connexion requise</div>
+    </div>
+    <div style="background:#1f2937;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:.75rem;font-weight:600;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase">Matricule</label>
+        <input id="authMat" class="fi" type="text" placeholder="Ex: 1234" style="margin-top:6px;width:100%;box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('authPwd').focus()"/>
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:600;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase">Mot de passe</label>
+        <input id="authPwd" class="fi" type="password" placeholder="••••••••" style="margin-top:6px;width:100%;box-sizing:border-box" onkeydown="if(event.key==='Enter')doAuthLogin()"/>
+      </div>
+      <div id="authErr" style="color:#ef4444;font-size:.82rem;display:none"></div>
+      <button onclick="doAuthLogin()" style="background:#f5c518;color:#000;border:none;border-radius:8px;padding:13px;font-weight:700;font-size:1rem;cursor:pointer;width:100%">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sp-logo">⚠ HSE</div>
+  <div class="sp-sub">Safety Tag System 2025 / 2026</div>
+  <div class="sp-bar"><div class="sp-fill" id="spFill"></div></div>
+  <div class="sp-msg" id="spMsg">Connexion au serveur…</div>
+</div>
+
+<!-- BANNERS -->
+<div class="off-banner" id="offBanner">📵 Mode hors-ligne actif — synchronisation en attente</div>
+<div class="sync-banner" id="syncBanner" onclick="syncQueue()">🔄 Données en attente — Appuyer pour synchroniser</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- IMG FS -->
+<div class="ifs" id="ifs" onclick="closeIfs()">
+  <button class="ifs-x" onclick="closeIfs()">✕</button>
+  <img id="ifsImg" src="" alt=""/>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><div class="sb-ico">⚠</div>HSE Tags</div>
+  <button class="snav on" data-v="home"><span class="snav-i">🏠</span>Tableau de Bord</button>
+  <button class="snav" data-v="all"><span class="snav-i">🏷️</span>Tous les Tags</button>
+  <div class="sb-sec">Statut</div>
+  <button class="snav" data-v="open"><span class="snav-i">🟥</span>Ouverts</button>
+  <button class="snav" data-v="closed"><span class="snav-i">✅</span>Fermés</button>
+  <div class="sb-sec">Admin KPI</div>
+  <button class="snav" data-v="admin"><span class="snav-i">📊</span>Dashboard</button>
+  <div class="sb-sec" id="sbSecSuper" style="display:none">Superviseur HSE</div>
+  <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
+  <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
+  <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+</nav>
+
+<!-- APP -->
+<div class="shell">
+  <header class="topbar">
+    <div class="tb-logo">
+      <div class="tb-ico">⚠</div>
+      <div><div>HSE Tags</div><span class="tb-year">2025 / 2026</span></div>
+    </div>
+    <div class="tb-r">
+      <button class="tb-btn tb-notif" id="tbKpiBtn" onclick="goV('admin',null)" title="KPI Admin">
+        📊<span class="tb-badge" id="tbBadge" style="display:none">!</span>
+      </button>
+      <button class="tb-btn" onclick="loadAll()" title="Actualiser">↺</button>
+      <button class="tb-btn" id="loginBtn" onclick="openLogin()" title="Se connecter">🔒 Log In</button>
+      <button class="tb-btn pri" onclick="openQuick()">＋ Signaler</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- HOME -->
+    <div class="view on" id="view-home">
+      <div class="ph">
+        <h1 class="ph-title">📊 Tableau de Bord</h1>
+        <span class="ph-cnt" id="hCnt">—</span>
+      </div>
+      <!-- HERO : Bouton principal Signaler -->
+      <button class="hero-btn" onclick="openQuick()">
+        <span class="hero-ico">⚠️</span>
+        <span class="hero-txt">
+          <span class="hero-t1">Signaler une anomalie</span>
+          <span class="hero-t2">Photo · Voix · GPS — en 3 étapes</span>
+        </span>
+        <span class="hero-arrow">＋</span>
+      </button>
+      <div class="sg" id="homeStats"></div>
+      <div class="kr" id="kpiRow" style="display:none"></div>
+      <div id="slaWrap" style="display:none" class="sla-wrap">
+        <div class="sla-ring">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle class="bg" cx="34" cy="34" r="28"/>
+            <circle class="fg" id="slaCircle" cx="34" cy="34" r="28"/>
+          </svg>
+          <div class="sla-num" id="slaNum">—%</div>
+        </div>
+        <div class="sla-info">
+          <div class="sla-ttl">Respect des délais NC</div>
+          <div class="sla-sub" id="slaSub">Calcul en cours…</div>
+        </div>
+      </div>
+      <div class="charts" id="homeCharts"></div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="view" id="view-all">
+      <div class="ph">
+        <h1 class="ph-title" id="tagsTitle">🏷️ Tous les Tags</h1>
+        <span class="ph-cnt" id="tagsCnt">0</span>
+      </div>
+      <!-- Mobile Collapsible Filters -->
+      <div class="mfilters" id="mfilters">
+        <div class="mf-head" onclick="toggleMFilters()">
+          <span class="mf-ico">⚙</span>
+          <span class="mf-title">Filtres &amp; Tri</span>
+          <span class="mf-count" id="mfCount"></span>
+          <span class="mf-arrow">▼</span>
+        </div>
+        <div class="mf-body">
+          <div class="mf-content">
+            <div class="mf-group">
+              <label class="mf-label">📍 Zone</label>
+              <select class="mf-select" id="mfZone" onchange="applyMobileFilters()">
+                <option value="TOUT">Toutes les zones</option>
+              </select>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">👤 Responsable</label>
+              <select class="mf-select" id="mfResp" onchange="applyMobileFilters()">
+                <option value="TOUT">Tous les responsables</option>
+                <option value="NONE">Non assigné</option>
+              </select>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">🕒 Trier par ancienneté</label>
+              <div class="mf-toggle-row">
+                <button class="mf-tgl on" data-sort="recent" onclick="setMSort('recent',this)">⬇ Plus récent</button>
+                <button class="mf-tgl" data-sort="ancien" onclick="setMSort('ancien',this)">⬆ Plus ancien</button>
+              </div>
+            </div>
+            <button class="mf-reset" onclick="resetMFilters()">↻ Réinitialiser les filtres</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sa">
+        <div class="sw">
+          <span class="si-ico">🔍</span>
+          <input class="si" id="searchIn" placeholder="Rechercher N°, danger, zone, description…" oninput="doSearch()"/>
+        </div>
+        <div class="fc">
+          <button class="chip on" data-f="all" onclick="setChip('all',this)">Tous</button>
+          <button class="chip" data-f="elevee" onclick="setChip('elevee',this)">🔴 Élevée</button>
+          <button class="chip" data-f="moyenne" onclick="setChip('moyenne',this)">🟧 Moyenne</button>
+          <button class="chip" data-f="faible" onclick="setChip('faible',this)">🟢 Faible</button>
+          <button class="chip" data-f="ouvert" onclick="setChip('ouvert',this)">🟥 Ouvert</button>
+          <button class="chip" data-f="ferme" onclick="setChip('ferme',this)">✅ Fermé</button>
+        </div>
+        <div class="ri" id="resInfo"></div>
+      </div>
+      <div class="tlist" id="tagsList"></div>
+    </div>
+
+    <!-- ADMIN KPI -->
+    <div class="view" id="view-admin">
+      <div class="ph" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h1 class="ph-title">🔬 Admin — KPI & Heatmap</h1>
+        <button class="btn btn-b" onclick="openRespManager()">👥 Gérer les responsables</button>
+        <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
+        <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
+      </div>
+      <div id="adminBody"></div>
+    </div>
+
+    <!-- SENSIBILISATION -->
+    <div class="view" id="view-sensibilisation">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">📋 Sensibilisation</h1>
+        <button class="btn btn-p" id="sensiNewBtn" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
+      </div>
+      <!-- Onglets -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;background:var(--ink2);border-radius:10px;padding:4px">
+        <button class="sensi-tab on" id="stab-campagnes" onclick="switchSensiTab('campagnes',this)">📋 Campagnes</button>
+        <button class="sensi-tab" id="stab-profil" onclick="switchSensiTab('profil',this)">👤 Profil employé</button>
+      </div>
+      <!-- Campagnes -->
+      <div id="sensiTabCampagnes">
+        <div id="sensiBody"></div>
+      </div>
+      <!-- Profil employé -->
+      <div id="sensiTabProfil" style="display:none">
+        <div style="position:relative;margin-bottom:4px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:1rem">🔍</span>
+          <input class="fi" id="sensiProfilSearch" placeholder="Rechercher un employé par nom ou matricule…"
+            oninput="searchProfilEmp(this.value)"
+            style="padding-left:36px"/>
+        </div>
+        <div id="sensiProfilResults" class="emp-search-res" style="margin-top:2px"></div>
+        <div id="sensiProfilCard" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- INCENDIE -->
+    <div class="view" id="view-incendie">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🧯 Extincteurs &amp; RIA</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configExtBtn" class="btn btn-g" onclick="openConfigExt()" style="padding:7px 10px;font-size:.78rem;min-height:34px">⚙ Cfg Ext.</button>
+          <button id="configRiaBtn" class="btn btn-g" onclick="openConfigRIA()" style="padding:7px 10px;font-size:.78rem;min-height:34px">⚙ Cfg RIA</button>
+          <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌍 Insp. Ext.</button>
+          <button class="btn btn-p" onclick="openGlobalInspectionRIA()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌊 Insp. RIA</button>
+          <button class="btn btn-p" onclick="openIncendieForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Unitaire</button>
+        </div>
+      </div>
+      <!-- Tabs filtre -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="iftab_all" onclick="setIncendieFilter('all')">Tous</button>
+        <button class="gsort-tab" id="iftab_ext" onclick="setIncendieFilter('ext')">🔴 Extincteurs</button>
+        <button class="gsort-tab" id="iftab_ria" onclick="setIncendieFilter('ria')">💧 RIA</button>
+      </div>
+      <div id="incendieBody"></div>
+    </div>
+
+    <!-- NUISIBLES -->
+    <div class="view" id="view-nuisibles">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🪲 Contrôle Nuisibles</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configPestBtn" class="btn btn-g" onclick="openConfigPest()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
+          <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Globale</button>
+        </div>
+      </div>
+      <!-- Boutons d'inspection par type -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--t3);align-self:center;white-space:nowrap">Inspecter :</span>
+        <button class="btn" onclick="openGlobalPestInspection('DEI')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:var(--rs)">⚡ DEI</button>
+        <button class="btn" onclick="openGlobalPestInspection('BAP')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:var(--rs)">🐭 Boîtes d'appât</button>
+        <button class="btn" onclick="openGlobalPestInspection('PM')"  style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(230,126,34,.15);border:1px solid rgba(230,126,34,.4);color:#e67e22;border-radius:var(--rs)">🪤 Pièges méc.</button>
+        <button class="btn" onclick="openGlobalPestInspection('PGG')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.4);color:#9b59b6;border-radius:var(--rs)">📋 Plaques glu</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="pftab_all" onclick="setPestFilter('all')">Tous</button>
+        <button class="gsort-tab" id="pftab_dei" onclick="setPestFilter('DEI')">⚡ DEI</button>
+        <button class="gsort-tab" id="pftab_bap" onclick="setPestFilter('BAP')">🐭 B. d'appât</button>
+        <button class="gsort-tab" id="pftab_pm"  onclick="setPestFilter('PM')">🪤 Pièges méc.</button>
+        <button class="gsort-tab" id="pftab_pgg" onclick="setPestFilter('PGG')">📋 Plaques glu</button>
+      </div>
+      <div id="nuisiblesBody"></div>
+    </div>
+  </main>
+
+  <nav class="bnav" id="mainBnav">
+    <button class="nb on" data-v="home" id="nbHome"><span class="nb-icon">🏠</span><span>Accueil</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="all"><span class="nb-icon">🏷️</span><span>Tags</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="open" id="nbOpen"><span class="nb-icon">🟥</span><span>Ouverts</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="admin" id="nbAdmin"><span class="nb-icon">📊</span><span>KPI</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
+  </nav>
+</div>
+<button class="fab" id="fab" onclick="openQuick()">＋</button>
+
+<!-- ═══ OVERLAY: Formulaire Sensibilisation ═══ -->
+<div class="ov" id="sensiFormOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 Nouvelle Campagne de Sensibilisation</div>
+      <button class="sh-x" onclick="closeSheet('sensiFormOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div class="fg">
+        <label class="fl">Date de la campagne</label>
+        <input class="fi" type="date" id="sensiDate"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Thème de sensibilisation</label>
+        <select class="fi" id="sensiTheme">
+          <option value="">— Sélectionner un thème —</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Participants</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="sensiEmpSearch" placeholder="Rechercher par nom ou matricule…" oninput="searchEmpHSE(this.value)" style="flex:1"/>
+          <button onclick="clearEmpSearch()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--t2);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:.85rem;white-space:nowrap">✕ Vider</button>
+        </div>
+        <div id="sensiEmpResults" class="emp-search-res" style="display:none"></div>
+        <div id="sensiParticipants" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;min-height:32px;background:var(--ink3);border-radius:8px;padding:8px;"></div>
+        <div style="font-size:.75rem;color:var(--t3);margin-top:4px"><span id="sensiPartCount">0</span> participant(s) sélectionné(s)</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Fiche de présence signée (photo ou PDF)</label>
+        <div class="hse-upload-area" id="senficheArea" onclick="document.getElementById('senficheInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="senfichePreview" style="display:none"></div>
+        </div>
+        <input type="file" id="senficheInput" accept="image/*,.pdf" style="display:none" onchange="onSenficheChange(this)"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Notes (optionnel)</label>
+        <textarea class="fi" id="sensiNotes" rows="3" placeholder="Remarques, observations…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('sensiFormOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitCampagne()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Formulaire Inspection Incendie ═══ -->
+<div class="ov" id="incendieFormOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🧯 Inspection Matériel Incendie</div>
+      <button class="sh-x" onclick="closeSheet('incendieFormOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="incDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Type d'équipement</label>
+          <select class="fi" id="incType" onchange="updateIncChecklist()">
+            <option value="Extincteur">🔴 Extincteur</option>
+            <option value="RIA">💧 RIA</option>
+          </select>
+        </div>
+        <div class="fg" style="position:relative" id="equipMultiWrapper">
+          <label class="fl">ID / N° Équipement</label>
+          <div style="position:relative">
+            <div id="equipTagsArea" class="fi" style="min-height:42px;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 36px 6px 10px;" onclick="toggleEquipDropdown()">
+              <span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>
+            </div>
+            <button type="button" onclick="toggleEquipDropdown()" tabindex="-1"
+              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:1rem;padding:4px">▼</button>
+          </div>
+          <div id="equipMultiDropdown" style="display:none;position:absolute;z-index:200;left:0;right:0;border-radius:0 0 8px 8px;border:1px solid var(--line2);border-top:none;box-shadow:0 8px 24px rgba(0,0,0,.4);background:var(--ink3)">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--line2)">
+              <input type="text" id="equipMultiSearch" class="fi" placeholder="Rechercher un numéro…"
+                style="margin:0;height:34px" oninput="filterEquipMulti(this.value)" onclick="event.stopPropagation()"/>
+            </div>
+            <div id="equipMultiList" style="max-height:160px;overflow-y:auto"></div>
+            <div style="padding:6px 10px;border-top:1px solid var(--line2);display:flex;gap:6px;align-items:center">
+              <input type="text" id="equipCustomInput" class="fi" placeholder="Ajouter un numéro personnalisé…"
+                style="margin:0;height:34px;flex:1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.preventDefault();addEquipCustom();}"/>
+              <button type="button" class="btn btn-p" onclick="addEquipCustom()" style="height:34px;padding:0 12px;font-size:.85rem;white-space:nowrap">+ Ajouter</button>
+            </div>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Zone / Emplacement</label>
+          <input class="fi" type="text" id="incZone" placeholder="Ex: Atelier B"/>
+        </div>
+      </div>
+
+      <!-- Checklist dynamique -->
+      <div id="incChecklistContainer" style="margin-top:4px"></div>
+
+      <div class="fg" style="margin-top:8px">
+        <label class="fl">État global</label>
+        <select class="fi" id="incEtat">
+          <option value="Conforme">✅ Conforme</option>
+          <option value="Partiel">⚠️ Partiellement conforme</option>
+          <option value="Non conforme">❌ Non conforme</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Prochaine inspection prévue</label>
+        <input class="fi" type="date" id="incProchaine"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Observations</label>
+        <textarea class="fi" id="incObs" rows="3" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Photo de la checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="incPhotoArea" onclick="document.getElementById('incPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="incPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="incPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onIncPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('incendieFormOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitChecklist()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Extincteurs ═══ -->
+<div class="ov" id="extConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration des 100 Extincteurs</div>
+      <button class="sh-x" onclick="closeSheet('extConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Logo de l'entreprise -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖼 Logo de l'entreprise (impression)</div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div id="logoPreviewBox" style="width:80px;height:52px;border:1px solid var(--line2);border-radius:6px;background:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            <span id="logoPreviewPlaceholder" style="font-size:1.4rem">🏢</span>
+            <img id="logoPreviewImg" src="" alt="Logo" style="max-width:78px;max-height:50px;object-fit:contain;display:none"/>
+          </div>
+          <div style="flex:1">
+            <label class="btn btn-g" style="height:32px;font-size:.78rem;padding:0 12px;display:inline-flex;align-items:center;cursor:pointer;margin-bottom:6px">
+              📁 Choisir un PNG
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="onLogoUpload(this)"/>
+            </label>
+            <button id="deleteLogoBtn" class="btn btn-g" onclick="deleteAdminLogo()" style="height:32px;font-size:.78rem;padding:0 10px;color:var(--red);display:none;margin-left:6px">🗑 Supprimer</button>
+            <div style="font-size:.73rem;color:var(--t3);margin-top:2px">Apparaît en haut à gauche de toutes les fiches imprimées</div>
+          </div>
+        </div>
+      </div>
+      <!-- Code document -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="extDocCodeInput" value="ENR-HSE 1" placeholder="ex. : ENR-HSE 1" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
+          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
+      <!-- Paramètres d'impression -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Ext. &amp; RIA)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
+            <input class="fi" id="extDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
+            <input class="fi" id="extDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
+            <input class="fi" type="number" id="extProchaineMonthsInput" value="12" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
+          </div>
+        </div>
+      </div>
+      <!-- ① Gestion des zones -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="fi" id="newZoneInput" placeholder="Nouvelle zone (ex: Atelier A)…"
+            style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addConfigZone();}"/>
+          <button type="button" class="btn btn-g" onclick="addConfigZone()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+          <button type="button" class="btn btn-p" onclick="saveZonesConfig()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">💾 Zones</button>
+        </div>
+        <div id="zoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
+      </div>
+      <!-- ② Points à vérifier par type -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">Points à vérifier par type</div>
+          <button type="button" class="btn btn-g" onclick="resetChecklistToDefaults()" style="height:28px;font-size:.75rem;padding:0 10px;color:var(--t3)">↺ Défauts</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#e67e22;margin-bottom:6px">🔴 Poudre ABC</div>
+          <div id="clPoudreList"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('Poudre ABC')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#3498db;margin-bottom:6px">🔵 CO2</div>
+          <div id="clCO2List"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('CO2')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.8rem;font-weight:600;color:#27ae60;margin-bottom:6px">💧 Eau</div>
+          <div id="clEauList"></div>
+          <button type="button" class="btn btn-g" onclick="addChecklistItem('Eau')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <button class="btn btn-p" onclick="saveChecklistConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">💾 Sauvegarder les points</button>
+      </div>
+      <!-- ③ Tableau détaillé -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail extincteur par extincteur</div>
+      <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+        <div style="font-size:.72rem;color:var(--t3);text-align:center">N°</div>
+        <div style="font-size:.72rem;color:var(--t3)">Type</div>
+        <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+        <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+      </div>
+      <div id="extConfigBody"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('extConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveExtConfigLocal()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale ═══ -->
+<div class="ov" id="globalInspOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🌍 Inspection Globale — Tous extincteurs</div>
+      <button class="sh-x" onclick="closeSheet('globalInspOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalIncDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalIncProchaine"/>
+        </div>
+      </div>
+      <!-- Actions globales -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllGlobalStatut('Conforme')"    style="font-size:.78rem;padding:6px 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllGlobalStatut('Non conforme')" style="font-size:.78rem;padding:6px 12px">❌ Tout non conforme</button>
+      </div>
+      <!-- Tri -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--t3);margin-right:2px">Trier par :</span>
+        <button class="gsort-tab on" id="gsort-type" onclick="setGlobalSort('type')">🔴 Type</button>
+        <button class="gsort-tab"    id="gsort-zone" onclick="setGlobalSort('zone')">📍 Zone</button>
+        <button class="gsort-tab"    id="gsort-num"  onclick="setGlobalSort('num')">🔢 Numéro</button>
+      </div>
+      <!-- Sections générées dynamiquement -->
+      <div id="globalSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalIncObs" rows="2" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalPhotoArea" onclick="document.getElementById('globalPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="globalPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onGlobalPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalInspOv')">Annuler</button>
+      <button class="btn btn-g" onclick="printBlankExtChecklist()">🖨 Imprimer vierge</button>
+      <button class="btn btn-p" onclick="submitGlobalInspection()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config RIA ═══ -->
+<div class="ov" id="riaConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration RIA</div>
+      <button class="sh-x" onclick="closeSheet('riaConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Code document -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="riaDocCodeInput" value="ENR-HSE 2" placeholder="ex. : ENR-HSE 2" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
+          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
+      <!-- Nombre de RIA -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">Nombre de RIA dans l'usine</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" type="number" id="riaCountInput" min="1" max="50" value="20" style="height:34px;font-size:.9rem;width:80px"/>
+          <button class="btn btn-g" onclick="applyRiaCount()" style="height:34px;font-size:.82rem;padding:0 12px">Appliquer</button>
+        </div>
+      </div>
+      <!-- Tableau -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:6px">Détail par RIA</div>
+      <div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">N°</div>
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">Zone</div>
+        <div style="font-size:.72rem;color:var(--t3);padding:2px 4px">Emplacement</div>
+      </div>
+      <div id="riaConfigBody" style="display:flex;flex-direction:column;gap:3px"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('riaConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveRiaConfigLocal()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale RIA ═══ -->
+<div class="ov" id="globalRiaOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🌊 Inspection Globale RIA</div>
+      <button class="sh-x" onclick="closeSheet('globalRiaOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalRiaDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalRiaProchaine"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllRiaStatut('Conforme')" style="height:32px;font-size:.78rem;padding:0 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllRiaStatut('Non conforme')" style="height:32px;font-size:.78rem;padding:0 12px">❌ Tout non conforme</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="grsort_zone" onclick="setRiaSort('zone')">📍 Zone</button>
+        <button class="gsort-tab" id="grsort_num" onclick="setRiaSort('num')">🔢 Numéro</button>
+      </div>
+      <div id="globalRiaSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalRiaObs" rows="2" placeholder="Remarques, actions correctives…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Checklist signée (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalRiaPhotoArea" onclick="document.getElementById('globalRiaPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner</div>
+          <div class="hse-upload-preview" id="globalRiaPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalRiaPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onRiaPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalRiaOv')">Annuler</button>
+      <button class="btn btn-g" onclick="printBlankRiaChecklist()">🖨 Imprimer vierge</button>
+      <button class="btn btn-p" onclick="submitGlobalInspectionRIA()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Détail inspection incendie ═══ -->
+<div class="ov" id="incendieDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="idetTitle">Détail inspection</div>
+      <button class="sh-x" onclick="closeSheet('incendieDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="idetBody"></div>
+    <div class="sh-foot" id="idetFoot">
+      <button class="btn btn-g" onclick="closeSheet('incendieDetailOv')">Fermer</button>
+      <button class="btn btn-g" onclick="printIncendieRecord(_incendieCurrentDetailIdx)">🖨 Imprimer</button>
+      <button class="btn btn-p" id="idetEditBtn" style="display:none" onclick="toggleIdetEdit()">✏ Modifier</button>
+      <button class="btn btn-p" id="idetSaveBtn" style="display:none;background:#22c55e" onclick="saveIdetEdit()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Nuisibles ═══ -->
+<div class="ov" id="pestConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration Contrôle Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('pestConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- Code document -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
+          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+        </div>
+      </div>
+      <!-- Paramètres d'impression -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Nuisibles)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
+            <input class="fi" id="pestDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
+            <input class="fi" id="pestDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
+            <input class="fi" type="number" id="pestProchaineMonthsInput" value="3" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
+          </div>
+        </div>
+      </div>
+      <!-- Zones partagées -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📍 Gestion des zones</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="fi" id="pestNewZoneInput" placeholder="Nouvelle zone (ex: Entrepôt A)…" style="height:34px;font-size:.82rem;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addPestConfigZone();}"/>
+          <button type="button" class="btn btn-g" onclick="addPestConfigZone()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">+ Ajouter</button>
+          <button type="button" class="btn btn-p" onclick="saveZonesConfig()" style="height:34px;padding:0 12px;font-size:.82rem;white-space:nowrap">💾 Zones</button>
+        </div>
+        <div id="pestZoneChipsList" style="display:flex;flex-wrap:wrap;min-height:24px"></div>
+      </div>
+      <!-- Points de contrôle par type de dispositif -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">✅ Points de contrôle par type</div>
+          <button type="button" class="btn btn-g" onclick="resetPestChecklistToDefaults()" style="height:28px;font-size:.75rem;padding:0 10px;color:var(--t3)">↺ Défauts</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#3498db;margin-bottom:6px">⚡ Désinsectiseur Électrique (DEI)</div>
+          <div id="pestCl_DEI"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('DEI')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#2ecc71;margin-bottom:6px">🐭 Boîte d'appât (BAP)</div>
+          <div id="pestCl_BAP"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('BAP')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:600;color:#e67e22;margin-bottom:6px">🪤 Piège mécanique (PM)</div>
+          <div id="pestCl_PM"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('PM')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.8rem;font-weight:600;color:#9b59b6;margin-bottom:6px">📋 Plaque de glu (PGG)</div>
+          <div id="pestCl_PGG"></div>
+          <button type="button" class="btn btn-g" onclick="addPestChecklistItem('PGG')" style="height:30px;font-size:.78rem;margin-top:4px;padding:0 10px">+ Ajouter un point</button>
+        </div>
+        <button class="btn btn-p" onclick="savePestChecklistConfig()" style="margin-top:10px;width:100%;height:36px;font-size:.85rem">💾 Sauvegarder les points</button>
+      </div>
+      <!-- Dispositifs par type -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:10px">Détail des dispositifs par type</div>
+      <!-- DEI -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#3498db">⚡ Désinsectiseurs Électriques (DEI)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_DEI" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('DEI')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_DEI" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- BAP -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#2ecc71">🐭 Boîtes d'appât (BAP)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_BAP" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('BAP')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_BAP" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- PM -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#e67e22">🪤 Pièges mécaniques (PM)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_PM" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('PM')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_PM" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- PGG -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:.82rem;font-weight:700;color:#9b59b6">📋 Plaques de glu (PGG)</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <input class="fi" type="number" id="pestCount_PGG" min="1" max="100" value="5" style="height:30px;font-size:.85rem;width:64px"/>
+            <button class="btn btn-g" onclick="applyPestCount('PGG')" style="height:30px;font-size:.78rem;padding:0 10px">Appliquer</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;margin-bottom:4px;padding:0 2px">
+          <div style="font-size:.72rem;color:var(--t3)">N°</div>
+          <div style="font-size:.72rem;color:var(--t3)">Zone</div>
+          <div style="font-size:.72rem;color:var(--t3)">Emplacement</div>
+        </div>
+        <div id="pestBody_PGG" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('pestConfigOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveFullPestConfig()">💾 Sauvegarder tout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Inspection Globale Nuisibles ═══ -->
+<div class="ov" id="globalPestOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="globalPestOvTitle">🔍 Inspection Globale — Dispositifs Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('globalPestOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="globalPestDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="globalPestProchaine"/>
+        </div>
+      </div>
+      <!-- Actions rapides -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="setAllPestStatut('Conforme')"     style="font-size:.78rem;padding:6px 12px">✅ Tout conforme</button>
+        <button class="btn btn-g" onclick="setAllPestStatut('Non conforme')" style="font-size:.78rem;padding:6px 12px">❌ Tout non conforme</button>
+      </div>
+      <!-- Tri -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--t3);margin-right:2px">Trier par :</span>
+        <button class="gsort-tab on" id="pgsort_type" onclick="setPestInspSort('type')">🪲 Type</button>
+        <button class="gsort-tab"    id="pgsort_zone" onclick="setPestInspSort('zone')">📍 Zone</button>
+        <button class="gsort-tab"    id="pgsort_num"  onclick="setPestInspSort('num')">🔢 Numéro</button>
+      </div>
+      <!-- Sections dynamiques -->
+      <div id="globalPestSectionsContainer"></div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Observations générales</label>
+        <textarea class="fi" id="globalPestObs" rows="2" placeholder="Remarques, actions correctives, prestations effectuées…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Checklist signée / rapport (image ou PDF)</label>
+        <div class="hse-upload-area" id="globalPestPhotoArea" onclick="document.getElementById('globalPestPhotoInput').click()">
+          <div style="font-size:1.8rem">📎</div>
+          <div class="hse-upload-label">Appuyer pour sélectionner un fichier</div>
+          <div class="hse-upload-preview" id="globalPestPhotoPreview" style="display:none"></div>
+        </div>
+        <input type="file" id="globalPestPhotoInput" accept="image/*,.pdf" style="display:none" onchange="onPestPhotoChange(this)"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('globalPestOv')">Annuler</button>
+      <button class="btn btn-g" onclick="printBlankPestChecklist()" style="gap:4px">🖨 Imprimer vierge</button>
+      <button class="btn btn-p" onclick="submitGlobalPestInspection()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Détail inspection Nuisibles ═══ -->
+<div class="ov" id="pestDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="pestDetailTitle">Détail inspection</div>
+      <button class="sh-x" onclick="closeSheet('pestDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="pestDetailBody"></div>
+    <div class="sh-foot" id="pestDetailFoot">
+      <button class="btn btn-g" onclick="closeSheet('pestDetailOv')">Fermer</button>
+      <button class="btn btn-g" onclick="printPestRecord(_pestCurrentDetailIdx)" style="gap:4px">🖨 Imprimer</button>
+      <button class="btn btn-p" id="pestEditBtn" style="display:none" onclick="togglePestEdit()">✏ Modifier</button>
+      <button class="btn btn-p" id="pestSaveBtn" style="display:none;background:#22c55e" onclick="savePestEdit()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Modifier une inspection (admin) ═══ -->
+<div class="ov" id="editInspOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="editInspTitle">✏ Modifier l'inspection</div>
+      <button class="sh-x" onclick="closeSheet('editInspOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div class="fg">
+        <label class="fl">Inspecteur / Superviseur HSE</label>
+        <select class="fi" id="editInspSuperviseur" style="height:40px">
+          <option value="">Chargement…</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Date d'inspection</label>
+          <input class="fi" type="date" id="editInspDate"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Prochaine inspection</label>
+          <input class="fi" type="date" id="editInspProchaine"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">Type</label>
+          <input class="fi" id="editInspType" placeholder="ex. Extincteur, RIA…"/>
+        </div>
+        <div class="fg">
+          <label class="fl">État global</label>
+          <select class="fi" id="editInspEtat" style="height:40px">
+            <option value="Conforme">Conforme</option>
+            <option value="Non conforme">Non conforme</option>
+            <option value="Partiel">Partiel</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg">
+          <label class="fl">ID Équipement</label>
+          <input class="fi" id="editInspEquipement" placeholder="N° ou code équipement"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Zone</label>
+          <input class="fi" id="editInspZone" placeholder="Zone / Emplacement"/>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Observations</label>
+        <textarea class="fi" id="editInspObs" rows="4" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('editInspOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveEditInspection()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Admin — Thèmes de Sensibilisation ═══ -->
+<div class="ov" id="themesAdminOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 Thèmes de Sensibilisation</div>
+      <button class="sh-x" onclick="closeSheet('themesAdminOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <div style="font-size:.82rem;color:var(--t3);margin-bottom:14px">Configurez les thèmes disponibles dans le formulaire de sensibilisation.</div>
+      <div id="themesList"></div>
+      <button onclick="addThemeRow()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--t2);border-radius:8px;padding:10px 16px;width:100%;margin-top:8px;cursor:pointer;font-size:.88rem">＋ Ajouter un thème</button>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('themesAdminOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveThemes()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Quick Add (3 étapes) ═══ -->
+<div class="ov" id="quickOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title" id="qTitle">🏷️ Informations du tag</span>
+      <button class="sh-close" onclick="closeSheet('quickOv')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="sform">
+        <div class="srow req">
+          <label class="slabel">N° Cas</label>
+          <div class="sval"><input class="fi" id="qNum" readonly placeholder="Auto"/></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Photo de l'anomalie</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCam(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCam(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="camPrev" class="pth" src="" alt=""/>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Gravité</label>
+          <div class="sval">
+            <select class="fsel" id="qGravSel">
+              <option value="Élevée">🔴 Élevée</option>
+              <option value="Moyenne">🟧 Moyenne</option>
+              <option value="Faible">🟢 Faible</option>
+            </select>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Zone</label>
+          <div class="sval">
+            <select class="fsel" id="qZone">
+              <option>étage 0</option><option>étage -1</option><option>étage 1</option>
+              <option>étage Brovind</option><option>les utilités</option>
+              <option>voie exterieur</option><option>bloc vestiaire</option>
+              <option>magasin mp</option><option>autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Emplacement</label>
+          <div class="sval"><input class="fi" id="qEmplace" placeholder="Précisez l'emplacement exact…"/></div>
+        </div>
+        <div class="srow req">
+          <label class="slabel">Description</label>
+          <div class="sval">
+            <textarea class="ft" id="qDesc" placeholder="Décrivez le danger observé…" rows="2" oninput="refreshQSugg()"></textarea>
+            <button type="button" class="scan-btn" onclick="scanPhotoDesc()">🔍 Analyser la photo &amp; décrire (IA)</button>
+            <div class="sugg" id="qSuggDesc"></div>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Risque Principal</label>
+          <div class="sval"><input class="fi" id="qRisque" placeholder="Risque identifié…"/><div class="sugg" id="qSuggRisque"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Propositions</label>
+          <div class="sval"><textarea class="ft" id="qPropo" placeholder="Solution proposée…" rows="2"></textarea><div class="sugg" id="qSuggPropo"></div></div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Responsable</label>
+          <div class="sval">
+            <select class="fsel" id="qResp">
+              <option value="">— Choisir —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select>
+          </div>
+        </div>
+        <div class="srow">
+          <label class="slabel">Photo après</label>
+          <div class="sval">
+            <div class="ap-btns">
+              <label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="prevCamAp(this)"/>📷 Caméra</label>
+              <label class="pub-ap alt"><input type="file" accept="image/*" onchange="prevCamAp(this)"/>🖼 Galerie</label>
+            </div>
+            <img id="qApPrev" class="pth" src="" alt=""/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot" id="qFoot">
+      <button class="btn btn-g" onclick="closeSheet('quickOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitQuick()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Full Form ═══ -->
+<div class="ov" id="formOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title" id="formTitle">⊕ Nouveau Tag</span>
+      <button class="sh-close" onclick="closeSheet('formOv')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="fw">
+        <input type="hidden" id="fRowIdx"/>
+        <input type="hidden" id="fId"/>
+        <div class="fg2">
+          <div class="fg full"><label class="fl">Type de Danger *</label><input class="fi" id="fDanger" list="dangerList" required oninput="refreshSugg()" autocomplete="off"/>
+            <datalist id="dangerList">
+              <option value="Risque électrique"/>
+              <option value="Fuite hydraulique"/>
+              <option value="Fuite de gaz"/>
+              <option value="Fuite d'eau"/>
+              <option value="Risque de chute"/>
+              <option value="Chute d'objet"/>
+              <option value="Sol glissant"/>
+              <option value="Incendie / Explosion"/>
+              <option value="Produit chimique / Corrosif"/>
+              <option value="Déversement / Pollution"/>
+              <option value="Bruit excessif"/>
+              <option value="Risque mécanique"/>
+              <option value="Défaut EPI"/>
+              <option value="Signalisation manquante"/>
+              <option value="Éclairage insuffisant"/>
+              <option value="Extincteur non identifié"/>
+              <option value="Caniveau cassé"/>
+              <option value="Équipement défectueux"/>
+              <option value="Risque ergonomique"/>
+              <option value="Autre"/>
+            </datalist></div>
+          <div class="fg"><label class="fl">Gravité</label>
+            <select class="fsel" id="fGravite">
+              <option value="Élevée">🔴 Élevée</option>
+              <option value="Moyenne">🟧 Moyenne</option>
+              <option value="Faible">🟢 Faible</option>
+            </select></div>
+          <div class="fg"><label class="fl">Statut</label>
+            <select class="fsel" id="fStatut">
+              <option value="Ouvert">🟥 Ouvert</option>
+              <option value="Fermé">✅ Fermé</option>
+            </select></div>
+          <div class="fg"><label class="fl">Emplacement</label><input class="fi" id="fEmplace"/></div>
+          <div class="fg"><label class="fl">Zone</label>
+            <select class="fsel" id="fZone">
+              <option>étage 0</option><option>étage -1</option><option>étage 1</option>
+              <option>étage Brovind</option><option>les utilités</option>
+              <option>voie exterieur</option><option>bloc vestiaire</option>
+              <option>magasin mp</option><option>autre</option>
+            </select></div>
+          <div class="fg"><label class="fl">Date Création</label><input class="fi" type="date" id="fDateCr"/></div>
+          <div class="fg"><label class="fl">Date Cible</label><input class="fi" type="date" id="fDateCi"/></div>
+          <div class="fg full"><label class="fl">Description *</label><textarea class="ft" id="fDesc" required oninput="refreshSugg()"></textarea></div>
+          <div class="fg full"><label class="fl">Risque Principal</label><input class="fi" id="fRisque"/>
+            <div class="sugg" id="suggRisque"></div></div>
+          <div class="fg full"><label class="fl">Action Urgente <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne J)</span></label><textarea class="ft" id="fAction"></textarea>
+            <div class="sugg" id="suggAction"></div></div>
+          <div class="fg full"><label class="fl">Propositions <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(colonne K)</span></label><textarea class="ft" id="fPropo"></textarea>
+            <div class="sugg" id="suggPropo"></div></div>
+          <div class="fg full"><label class="fl">Responsable</label>
+            <select class="fsel" id="fResp">
+              <option value="">— Choisir un responsable —</option>
+              <option>Omar Ourihan</option>
+              <option>Amir Mahmoud</option>
+              <option>Kouachi Brahim</option>
+              <option>Chekalil Brahim</option>
+              <option>Salah Haloui</option>
+              <option>Kerrad Nazim</option>
+              <option>Rabah Seba</option>
+              <option>Hadoune Youcef</option>
+              <option>Media Amine</option>
+              <option>Mohamed Zerar</option>
+            </select></div>
+        </div>
+        <div class="anon-row">
+          <span style="font-size:1rem">🎭</span>
+          <div class="anon-txt">Anonyme<span class="anon-sub">Identité protégée</span></div>
+          <label class="tgl"><input type="checkbox" id="fAnon"/><div class="tgl-track"><div class="tgl-thumb"></div></div></label>
+        </div>
+        <div>
+          <div class="fl" style="margin-bottom:7px">Photos</div>
+          <div class="pgs">
+            <div class="ps"><div class="ps-h">📷 Avant <span class="ok" id="avOk">✓</span></div>
+              <div class="ps-b"><label class="pub"><input type="file" id="fPhAv" accept="image/*" onchange="prevPh(this,'avPrev','avOk')"/>📁 Choisir</label>
+              <img class="pth" id="avPrev"/></div></div>
+            <div class="ps"><div class="ps-h">✅ Après <span class="ok" id="apOk">✓</span></div>
+              <div class="ps-b"><label class="pub"><input type="file" id="fPhAp" accept="image/*" onchange="prevPh(this,'apPrev','apOk')"/>📁 Choisir</label>
+              <img class="pth" id="apPrev"/></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('formOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitFull()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Détail Tag — Ordre 9 ═══ -->
+<div class="ov" id="detailOv">
+  <div class="sheet" style="max-width:740px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title" id="detTitle">🔍 Détail Tag</span>
+      <button class="sh-close" onclick="closeSheet('detailOv')">✕</button>
+    </div>
+    <div class="sh-body"><div class="dw" id="detBody"></div></div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('detailOv')">Fermer</button>
+      <button class="btn btn-b" id="detMailBtn" style="flex:0 0 auto">📧</button>
+      <button class="btn btn-b" id="detEditBtn">✏️ Modifier</button>
+      <button class="btn btn-r" id="detDelBtn" style="flex:0 0 auto">🗑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Confirmer suppression ═══ -->
+<div class="ov" id="delOv">
+  <div class="sheet" style="max-width:420px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">🗑️ Confirmer</span>
+      <button class="sh-close" onclick="closeSheet('delOv')">✕</button></div>
+    <div class="cfm-body"><div class="cfm-i">🚨</div>
+      <div class="cfm-t">Supprimer ce tag ?</div>
+      <div class="cfm-s">Cette action est irréversible. La ligne sera supprimée du Google Sheet.</div></div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('delOv')">Annuler</button>
+      <button class="btn btn-r" id="delConfBtn">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Gestion des accès ═══ -->
+<div class="ov" id="usersOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">👥 Gestion des accès</span>
+      <button class="sh-close" onclick="closeSheet('usersOv')">✕</button></div>
+    <div class="sh-body">
+      <div style="margin-bottom:10px">
+          <input id="usersSearch" type="text" placeholder="🔍 Rechercher par matricule ou nom…"
+            oninput="filterUsers(this.value)"
+            style="width:100%;box-sizing:border-box;background:var(--ink3);border:1px solid var(--line2);color:var(--t1);border-radius:8px;padding:8px 12px;font-size:.88rem;outline:none">
+        </div>
+        <div id="usersList" style="display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--t3);font-size:.85rem">Chargement…</div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Connexion Admin ═══ -->
+<div class="ov" id="loginOv">
+  <div class="sheet" style="max-width:420px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title" id="loginTitle">🔒 Connexion Administrateur</span>
+      <button class="sh-close" onclick="closeSheet('loginOv')">✕</button></div>
+    <div class="sh-body">
+      <div class="sform">
+        <div class="srow"><label class="slabel">Mot de passe</label><div class="sval">
+          <input class="fi" id="loginPwd" type="password" placeholder="Mot de passe admin…" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--t3);margin:10px 2px 0">Les utilisateurs ordinaires n'ont pas besoin de se connecter : ils peuvent ajouter des tags et des photos.</p>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('loginOv')">Annuler</button>
+      <button class="btn btn-p" onclick="doLogin()">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Gérer les responsables (Admin) ═══ -->
+<div class="ov" id="respOv">
+  <div class="sheet" style="max-width:560px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">👥 Gérer les responsables</span>
+      <button class="sh-close" onclick="closeSheet('respOv')">✕</button></div>
+    <div class="sh-body"><div id="respList"></div>
+      <button class="btn btn-b" style="margin-top:10px;width:100%" onclick="addRespRow()">＋ Ajouter un responsable</button>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('respOv')">Annuler</button>
+      <button class="btn btn-p" onclick="saveRespList()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Envoi email + CC (Admin) ═══ -->
+<div class="ov" id="mailOv">
+  <div class="sheet" style="max-width:480px;">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr"><span class="sh-title">📧 Notifier par email</span>
+      <button class="sh-close" onclick="closeSheet('mailOv')">✕</button></div>
+    <div class="sh-body">
+      <div class="fl" style="margin-bottom:6px">À (Destinataires)</div>
+      <div id="mailToList" class="cc-list"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="fi" id="mailExtraTo" type="email" placeholder="Email destinataire libre" style="flex:1"/>
+        <button class="btn btn-p" style="padding:0 12px;flex-shrink:0" onclick="mailAddExtra('to')">+</button>
+      </div>
+      <div id="mailExtraToList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
+
+      <div class="fl" style="margin:16px 0 6px">CC (Copie)</div>
+      <div id="mailCcList" class="cc-list"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="fi" id="mailExtraCc" type="email" placeholder="Email copie libre" style="flex:1"/>
+        <button class="btn btn-p" style="padding:0 12px;flex-shrink:0" onclick="mailAddExtra('cc')">+</button>
+      </div>
+      <div id="mailExtraCcList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('mailOv')">Annuler</button>
+      <button class="btn btn-p" onclick="sendMailWithCc()">📧 Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   AUTH WALL
+══════════════════════════════════════════ */
+var S_AUTH = { token:'', role:'', name:'', matricule:'' };
+
+function doAuthLogin() {
+  var mat = (document.getElementById('authMat').value||'').trim();
+  var pwd = (document.getElementById('authPwd').value||'').trim();
+  var errEl = document.getElementById('authErr');
+  errEl.style.display='none';
+  if (!mat||!pwd) { errEl.textContent='Matricule et mot de passe requis'; errEl.style.display='block'; return; }
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success) {
+        S_AUTH.token=r.token; S_AUTH.role=r.role; S_AUTH.name=r.name; S_AUTH.matricule=r.matricule;
+        try{ sessionStorage.setItem('hse_auth', JSON.stringify(S_AUTH)); }catch(e){}
+        if (r.role==='admin') { S.role='admin'; S.adminKey=r.token; try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',r.token); }catch(e){} }
+        else if (r.role==='hse_supervisor') { S.role='hse_supervisor'; S.adminKey=r.token; try{ sessionStorage.setItem('hse_role','hse_supervisor'); sessionStorage.setItem('hse_key',r.token); }catch(e){} }
+        else { S.role='user'; }
+        document.getElementById('authWall').style.display='none';
+        updateAuthUI();
+        bootApp();
+      } else {
+        errEl.textContent=r&&r.error||'Erreur de connexion';
+        errEl.style.display='block';
+      }
+    })
+    .withFailureHandler(function(e){ errEl.textContent='Erreur réseau'; errEl.style.display='block'; })
+    .loginUser({ matricule:mat, password:pwd });
+}
+
+function updateAuthUI() {
+  var admin = S_AUTH.role==='admin';
+  var super_ = S_AUTH.role==='hse_supervisor';
+  var lb = document.getElementById('loginBtn');
+  if (lb) {
+    var ico = admin ? '🔓' : (super_ ? '🦺' : '👤');
+    lb.innerHTML = S_AUTH.name ? (ico+' '+S_AUTH.name) : (admin?'🔓 Admin':'👤');
+  }
+}
+
+function doLogout() {
+  S_AUTH.token=''; S_AUTH.role=''; S_AUTH.name=''; S_AUTH.matricule='';
+  S.role='user'; S.adminKey='';
+  try{ sessionStorage.clear(); }catch(e){}
+  applyRole();
+  document.getElementById('authWall').style.display='flex';
+  document.getElementById('authMat').value='';
+  document.getElementById('authPwd').value='';
+}
+
+/* ══ USER MANAGEMENT (admin only) ══ */
+var _usersData = [];
+
+function _sigBtnHtml(mat, role, sigUrl) {
+  var show = (role==='hse_supervisor'||role==='admin');
+  var url = sigUrl || _userSigMap[mat] || '';
+  var thumb = url
+    ? '<img src="'+url+'" style="max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px"/>'
+    : '';
+  return '<label id="sigrow-'+mat+'" class="btn btn-g"'
+    +' style="height:30px;font-size:.76rem;padding:0 10px;display:'+(show?'inline-flex':'none')+';align-items:center;gap:2px;cursor:pointer">'
+    +thumb+'✍ Griffe'
+    +'<input type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="adminUploadSig(\''+mat+'\',this)"/>'
+    +'</label>';
+}
+
+function renderUsersList(data) {
+  var list = document.getElementById('usersList');
+  if (!data.length) { list.innerHTML='<div style="color:var(--t3);font-size:.85rem">Aucun résultat</div>'; return; }
+  // Peupler la map griffe par matricule ET par nom (pour lookup dans les rapports)
+  data.forEach(function(u){
+    if (u.sigUrl) {
+      _userSigMap[u.matricule] = u.sigUrl;
+      if (u.name) _userSigMap[u.name] = u.sigUrl;
+    }
+  });
+  list.innerHTML = data.map(function(u) {
+    var statusColor = u.actif ? '#22c55e' : '#ef4444';
+    var statusLabel = u.actif ? 'Actif' : 'Inactif';
+    var hasPwd = u.hasPassword ? '🔑' : '⚠️ Sans mot de passe';
+    return '<div style="background:var(--ink3);border-radius:10px;padding:12px 14px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
+      + '<div><div style="font-weight:600">'+esc(u.name)+'</div>'
+      + '<div style="font-size:.78rem;color:var(--t3)">'+esc(u.matricule)+' · '+esc(u.dept)+'</div>'
+      + '<div style="font-size:.75rem;margin-top:3px"><span style="color:'+statusColor+'">●</span> '+statusLabel+' &nbsp; '+hasPwd+'</div></div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;min-width:120px">'
+      + '<select onchange="adminChangeRole(\''+esc(u.matricule)+'\',this.value)" style="background:var(--ink4);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:4px 8px;font-size:.8rem">'
+      + '<option value="user"'+(u.role==='user'?' selected':'')+'>👤 Utilisateur</option>'
+      + '<option value="hse_supervisor"'+(u.role==='hse_supervisor'?' selected':'')+'>🦺 Superviseur HSE</option>'
+      + '<option value="admin"'+(u.role==='admin'?' selected':'')+'>🔧 Admin</option>'
+      + '</select>'
+      + '<button onclick="openSetPwd(\''+esc(u.matricule)+'\',\''+esc(u.name)+'\')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">🔑 Définir MDP</button>'
+      + '<button onclick="adminToggle(\''+esc(u.matricule)+'\','+(!u.actif)+')" style="background:'+(u.actif?'#ef4444':'#22c55e')+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer">'+(u.actif?'🚫 Désactiver':'✅ Activer')+'</button>'
+      + _sigBtnHtml(u.matricule, u.role, u.sigUrl)
+      + '</div></div></div>';
+  }).join('');
+}
+
+function filterUsers(q) {
+  var s = q.trim().toLowerCase();
+  if (!s) { renderUsersList(_usersData); return; }
+  renderUsersList(_usersData.filter(function(u) {
+    return u.matricule.toLowerCase().indexOf(s) !== -1 || u.name.toLowerCase().indexOf(s) !== -1;
+  }));
+}
+
+function openUsersPanel() {
+  if (S_AUTH.role==='admin' && !S.adminKey) { S.role='admin'; S.adminKey=S_AUTH.token; }
+  if (!isAdmin()) { toast('Accès réservé à l\'administrateur','err'); return; }
+  openSheet('usersOv');
+  // Charger les sig URLs si pas encore en cache
+  if (!_hseSignatureUrl && !_hseSuperSignatureUrl) {
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (r && r.success) {
+          _hseSignatureUrl      = r.signatureUrl           || '';
+          _hseSuperSignatureUrl = r.supervisorSignatureUrl || ''; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+        }
+      })
+      .getExtConfig(S.adminKey);
+  }
+  var list = document.getElementById('usersList');
+  var searchEl = document.getElementById('usersSearch');
+  if (searchEl) searchEl.value = '';
+  list.innerHTML = '<div style="color:var(--t3);font-size:.85rem">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { list.innerHTML='<div style="color:red">'+( r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) { list.innerHTML='<div style="color:var(--t3)">Aucun employé</div>'; return; }
+      _usersData = r.data;
+      renderUsersList(_usersData);
+    })
+    .withFailureHandler(function(e){ list.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .adminGetUsers(S.adminKey);
+}
+
+function openSetPwd(mat, name) {
+  var pwd = prompt('Nouveau mot de passe pour '+name+' ('+mat+') :');
+  if (!pwd) return;
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success){ toast('✓ Mot de passe défini pour '+name,'ok'); openUsersPanel(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ toast('Erreur: '+e.message,'err'); })
+    .adminSetPassword({ adminKey:S.adminKey, matricule:mat, password:pwd });
+}
+
+function adminUploadSig(mat, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 512000) { toast('Fichier trop lourd (max 500 Ko)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement de la griffe…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _userSigMap[mat] = r.sigUrl;
+        // Mettre à jour le bouton en place
+        var btn = document.getElementById('sigrow-'+mat);
+        if (btn) {
+          var img = btn.querySelector('img');
+          if (img) { img.src = r.sigUrl; }
+          else {
+            var newImg = document.createElement('img');
+            newImg.src = r.sigUrl;
+            newImg.style.cssText = 'max-height:18px;max-width:48px;object-fit:contain;vertical-align:middle;margin-right:4px;border-radius:2px';
+            btn.insertBefore(newImg, btn.firstChild);
+          }
+        }
+        toast('✓ Griffe enregistrée pour '+mat,'ok');
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveUserSignatureConfig({ adminKey:S.adminKey, matricule:mat, sigBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function adminToggle(mat, actif) {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success){ toast(actif?'✓ Accès activé':'✓ Accès désactivé','ok'); openUsersPanel(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .adminToggleUser({ adminKey:S.adminKey, matricule:mat, actif:actif });
+}
+
+function adminChangeRole(mat, role) {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success) toast('✓ Rôle mis à jour','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .adminSetRole({ adminKey:S.adminKey, matricule:mat, role:role });
+  // Mettre à jour le cache local
+  var u = _usersData.find(function(x){ return x.matricule===mat; });
+  if (u) u.role = role;
+  // Toggler le bouton Griffe
+  var btn = document.getElementById('sigrow-'+mat);
+  if (btn) {
+    var show = (role==='hse_supervisor'||role==='admin');
+    btn.style.display = show ? 'inline-flex' : 'none';
+    var sigType = role==='admin'?'responsable':'superviseur';
+    btn.dataset.sigtype = sigType;
+  }
+}
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+var S = {
+  tags:[], kpis:null, view:'home', filter:'all', search:'',
+  editing:null, delRow:null, offline:false, queue:[],
+  qStep:1, qDng:'', qGrav:'Élevée', qLat:0, qLng:0, qQR:'',
+  camB64:'', camMime:'image/jpeg', voiceOn:false, recog:null,
+  booted:false, detailTag:null,
+  role:'user', adminKey:'', respList:[]
 };
+try{
+  var _sr=sessionStorage.getItem('hse_role'), _sk=sessionStorage.getItem('hse_key');
+  if((_sr==='admin'||_sr==='hse_supervisor') && _sk){ S.role=_sr; S.adminKey=_sk; }
+}catch(e){}
+var _tt; // toast timer
 
-var HEADER_ROW = 7;
-var DATA_START = 8;
-
-// ================================================================
-//  AUTHENTIFICATION / RÔLES
-//  Mot de passe admin stocké dans Propriétés du script : ADMIN_PASSWORD
-//  Les utilisateurs ordinaires (anonymes) peuvent uniquement :
-//    - ajouter un tag      (addTag)
-//    - ajouter une photo   (saveAfterPhoto)
-//  Toute action de modification/suppression/dashboard exige l'admin.
-// ================================================================
-function login(password) {
-  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
-  if (!stored) return { success:false, error:'ADMIN_PASSWORD non configuré dans les Propriétés du script' };
-  if (String(password) === String(stored)) return { success:true, role:'admin' };
-  return { success:false, error:'Mot de passe incorrect' };
-}
-function isAdmin_(key) {
-  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
-  return !!stored && key != null && String(key) === String(stored);
-}
-
-// ================================================================
-//  AUTH — Employees_DB
-// ================================================================
-var EDB = { MAT:0, NAME:1, DEPT:2, PWD:3, ROLE:4, ACTIF:5 };
-var EDB_SHEET = 'Employees_DB';
-var EDB_START = 9; // data starts row 9
-
-function hashPwd_(pwd) {
-  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(pwd));
-  return bytes.map(function(b){ return ('0'+(b&0xff).toString(16)).slice(-2); }).join('');
-}
-
-function getEdbSheet_() {
-  return SpreadsheetApp.openById(SHEET_ID).getSheetByName(EDB_SHEET);
-}
-
-function loginUser(p) {
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function(){
+  // ── Restaurer la session auth depuis sessionStorage ──
   try {
-    var mat = String(p.matricule||'').trim();
-    var pwd = String(p.password||'').trim();
-    if (!mat || !pwd) return { success:false, error:'Matricule et mot de passe requis' };
+    var _sa = sessionStorage.getItem('hse_auth');
+    if (_sa) {
+      var _parsed = JSON.parse(_sa);
+      S_AUTH.token=_parsed.token; S_AUTH.role=_parsed.role;
+      S_AUTH.name=_parsed.name; S_AUTH.matricule=_parsed.matricule;
+      if (S_AUTH.role==='admin') { S.role='admin'; S.adminKey=S_AUTH.token; }
+      else if (S_AUTH.role==='hse_supervisor') { S.role='hse_supervisor'; S.adminKey=S_AUTH.token; }
+      document.getElementById('authWall').style.display='none';
+      updateAuthUI();
+    }
+  } catch(e) {}
 
-    // ── Accès maître admin : ADMIN_PASSWORD comme mot de passe de bootstrap ──
-    var adminPwd = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
-    if (adminPwd && String(pwd) === String(adminPwd)) {
-      var secret0 = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
-      var expires0 = Date.now() + 8*3600*1000;
-      var payload0 = mat+'.admin.'+expires0;
-      var digest0 = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload0+secret0);
-      var sig0 = digest0.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
-      // Mettre à jour le rôle et actif dans la feuille si le matricule existe
-      var sh0 = getEdbSheet_();
-      var adminName = 'Administrateur';
-      if (sh0) {
-        var lr0 = sh0.getLastRow();
-        if (lr0 >= EDB_START) {
-          var rows0 = sh0.getRange(EDB_START, 1, lr0-EDB_START+1, 6).getValues();
-          for (var j=0; j<rows0.length; j++) {
-            if (String(rows0[j][EDB.MAT]).trim() === mat) {
-              adminName = String(rows0[j][EDB.NAME]).trim() || adminName;
-              sh0.getRange(EDB_START+j, EDB.ROLE+1).setValue('admin');
-              sh0.getRange(EDB_START+j, EDB.ACTIF+1).setValue(true);
-              break;
-            }
-          }
-        }
+  // Si pas de session, masquer le splash et afficher l'authWall
+  if (!S_AUTH.token) {
+    hideSplash();
+    document.getElementById('authWall').style.display='flex';
+    return;
+  }
+
+  bootApp();
+});
+
+function bootApp() {
+
+  document.querySelectorAll('[data-v]').forEach(function(b){
+    b.addEventListener('click', function(){ goV(this.getAttribute('data-v'), this); });
+  });
+
+  // Nav binding (suite — exécuté dans bootApp)
+  document.getElementById('fDateCr').value = todayStr();
+
+  // Rôle : appliquer l'état (admin/supervisor/user) + vue par défaut
+  applyRole();
+  loadRespList();
+  goV(isAdmin()?'home': isSupervisor()?'sensibilisation' :'all', null);
+
+  // Offline detection
+  window.addEventListener('online',  function(){ setOffline(false); });
+  window.addEventListener('offline', function(){ setOffline(true); });
+  if(!navigator.onLine) setOffline(true);
+
+  // Load offline queue
+  try{ S.queue = JSON.parse(localStorage.getItem('hse_q')||'[]'); }catch(e){}
+  if(S.queue.length) document.getElementById('syncBanner').classList.add('on');
+
+  // Splash animate
+  splashMsg('Chargement des données…');
+  setTimeout(function(){ document.getElementById('spFill').style.width='70%'; },80);
+
+  // Charger logo + griffes en priorité (sans attendre loadAll)
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r || !r.success) return;
+      if (r.logoUrl) { _hseLogoUrl = r.logoUrl; }
+      if (r.sigMap)  { Object.assign(_userSigMap, r.sigMap); }
+    })
+    .getLogoAndSigs(S_AUTH.token || S.adminKey);
+
+  loadAll();
+}
+
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function plusDaysStr(iso,n){
+  var d=iso?new Date(iso):new Date();
+  if(isNaN(d.getTime())) d=new Date();
+  d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+function plusMonthsStr(iso,n){
+  var d=iso?new Date(iso):new Date();
+  if(isNaN(d.getTime())) d=new Date();
+  var targetMonth=d.getMonth()+n;
+  d.setFullYear(d.getFullYear()+Math.floor(targetMonth/12));
+  d.setMonth(((targetMonth%12)+12)%12);
+  return d.toISOString().split('T')[0];
+}
+function splashMsg(m){ document.getElementById('spMsg').textContent = m; }
+
+/* ══════════════════════════════════════════
+   LOAD — Ordre 3 : withSuccessHandler / withFailureHandler
+   Loader masqué dès réception de la réponse
+══════════════════════════════════════════ */
+function loadAll(){
+  if(S.offline){ hideSplash(); toast('📵 Mode hors-ligne','info'); bootForm(); return; }
+  splashMsg('Chargement des tags…');
+  document.getElementById('spFill').style.width='40%';
+
+  google.script.run
+    .withSuccessHandler(function(r){           // Ordre 3 ✓
+      document.getElementById('spFill').style.width='100%';
+      if(r.success){
+        S.tags = r.data||[];
+        splashMsg(S.tags.length + ' tags chargés ✓');
+        populateMFilters();
+        if(isAdmin()) loadKPIs();
+        else { hideSplash(); renderCurrent(); toast('✓ '+S.tags.length+' tags chargés','ok'); bootForm(); }
+      } else {
+        hideSplash();
+        toast('Erreur getTags: '+(r.error||'?'),'err');
       }
-      return { success:true, role:'admin', name:adminName, matricule:mat,
-               token: mat+'.admin.'+expires0+'.'+sig0 };
-    }
-
-    var sh = getEdbSheet_();
-    if (!sh) return { success:false, error:'Base employés introuvable' };
-    var lr = sh.getLastRow();
-    if (lr < EDB_START) return { success:false, error:'Aucun employé enregistré' };
-    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-    var hash = hashPwd_(pwd);
-    for (var i=0; i<rows.length; i++) {
-      var r = rows[i];
-      if (String(r[EDB.MAT]).trim() !== mat) continue;
-      if (String(r[EDB.ACTIF]).toLowerCase() !== 'true') return { success:false, error:'Accès désactivé. Contactez l\'administrateur.' };
-      if (!r[EDB.PWD]) return { success:false, error:'Mot de passe non défini. Contactez l\'administrateur.' };
-      if (String(r[EDB.PWD]) !== hash) return { success:false, error:'Mot de passe incorrect' };
-      var role = String(r[EDB.ROLE]||'user').toLowerCase().trim();
-      var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
-      var expires = Date.now() + 8*3600*1000;
-      var payload = mat+'.'+role+'.'+expires;
-      var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
-      var sig = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
-      var token = payload+'.'+sig;
-      return { success:true, role:role, name:String(r[EDB.NAME]).trim(), matricule:mat, token:token };
-    }
-    return { success:false, error:'Matricule introuvable' };
-  } catch(e) { return { success:false, error:e.message }; }
+    })
+    .withFailureHandler(function(e){           // Ordre 3 ✓
+      hideSplash();
+      toast('Erreur réseau: '+e.message,'err');
+      bootForm();
+    })
+    .getTags();
 }
 
-function verifySession_(token) {
-  try {
-    var parts = String(token||'').split('.');
-    if (parts.length !== 4) return null;
-    var mat=parts[0], role=parts[1], expires=parseInt(parts[2],10), sig=parts[3];
-    if (Date.now() > expires) return null;
-    var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
-    var payload = mat+'.'+role+'.'+expires;
-    var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
-    var expected = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
-    if (sig !== expected) return null;
-    return { matricule:mat, role:role };
-  } catch(e) { return null; }
+function loadKPIs(){
+  splashMsg('Calcul KPI…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();                            // Ordre 3 : masquer loader ✓
+      if(r.success){ S.kpis = r.data; }
+      renderCurrent();
+      updateBadge();
+      toast('✓ '+S.tags.length+' tags chargés','ok');
+      bootForm();
+    })
+    .withFailureHandler(function(){
+      hideSplash();
+      renderCurrent();
+      bootForm();
+    })
+    .getKPIs(S.adminKey);
 }
 
-function isSessionAdmin_(token) {
-  var s = verifySession_(token);
-  return s && s.role === 'admin';
+/* Mobile-first : le formulaire d'ajout est la page d'accueil par défaut.
+   Au premier chargement, on ouvre directement le Signalement Rapide. */
+function bootForm(){
+  if(S.booted) return;
+  S.booted=true;
+  setTimeout(function(){
+    if(!document.querySelector('.ov.on')) openQuick();
+  }, 500);
 }
 
-function isSessionSupervisor_(token) {
-  var s = verifySession_(token);
-  return s && s.role === 'hse_supervisor';
+function hideSplash(){
+  setTimeout(function(){ document.getElementById('splash').classList.add('out'); },200);
+}
+function showLoader(msg){
+  var sp = document.getElementById('splash');
+  sp.classList.remove('out');
+  document.getElementById('spFill').style.width='0%';
+  splashMsg(msg||'Traitement…');
+  setTimeout(function(){ document.getElementById('spFill').style.width='80%'; },50);
 }
 
-function isSessionSuperOrAdmin_(token) {
-  var s = verifySession_(token);
-  return s && (s.role === 'admin' || s.role === 'hse_supervisor');
+/* ══════════════════════════════════════════
+   OFFLINE
+══════════════════════════════════════════ */
+function setOffline(v){
+  S.offline = v;
+  document.getElementById('offBanner').classList.toggle('on',v);
+}
+function syncQueue(){
+  if(!S.queue.length){ document.getElementById('syncBanner').classList.remove('on'); return; }
+  var item = S.queue[0];
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r.success){
+        S.queue.shift();
+        localStorage.setItem('hse_q', JSON.stringify(S.queue));
+        if(S.queue.length) syncQueue();
+        else{ document.getElementById('syncBanner').classList.remove('on'); loadAll(); }
+        toast('✓ Tag synchronisé','ok');
+      }
+    })
+    .withFailureHandler(function(){ toast('Erreur sync','err'); })
+    .addTag(item);
 }
 
-// Admin: list all employees with access status
-function adminGetUsers(adminKey) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getEdbSheet_();
-    var lr = sh.getLastRow();
-    if (lr < EDB_START) return { success:true, data:[] };
-    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-    var props = PropertiesService.getScriptProperties();
-    var data = rows.filter(function(r){ return String(r[EDB.MAT]).trim(); }).map(function(r,i){
-      var mat = String(r[EDB.MAT]).trim();
-      return {
-        rowIndex: EDB_START+i,
-        matricule: mat,
-        name: String(r[EDB.NAME]).trim(),
-        dept: String(r[EDB.DEPT]).trim(),
-        hasPassword: !!String(r[EDB.PWD]).trim(),
-        role: String(r[EDB.ROLE]||'user').trim(),
-        actif: String(r[EDB.ACTIF]).toLowerCase() === 'true',
-        sigUrl: props.getProperty('HSE_SIG_URL_'+mat) || ''
-      };
+/* ══════════════════════════════════════════
+   AUTHENTIFICATION / RÔLES
+══════════════════════════════════════════ */
+var ADMIN_ONLY_VIEWS = {home:true, admin:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true};
+
+function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
+function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
+function isSuperOrAdmin(){ return isAdmin() || isSupervisor(); }
+
+function openLogin(){
+  if(S_AUTH.token){ if(confirm('Se déconnecter ?')) doLogout(); }
+  else { document.getElementById('authWall').style.display='flex'; }
+}
+function doLogin(){
+  var pwd=document.getElementById('loginPwd').value;
+  if(!pwd){ toast('Saisissez le mot de passe','err'); return; }
+  showLoader('Connexion…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        S.role='admin'; S.adminKey=pwd;
+        try{ sessionStorage.setItem('hse_role','admin'); sessionStorage.setItem('hse_key',pwd); }catch(e){}
+        closeSheet('loginOv');
+        toast('✓ Connecté en tant qu\'administrateur','ok');
+        applyRole();
+        goV('home',null);
+        loadAll();
+      } else {
+        toast(r&&r.error?r.error:'Mot de passe incorrect','err');
+      }
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .login(pwd);
+}
+function logout(){
+  S.role='user'; S.adminKey='';
+  try{ sessionStorage.removeItem('hse_role'); sessionStorage.removeItem('hse_key'); }catch(e){}
+  toast('Déconnecté','info');
+  applyRole();
+  goV('all',null);
+}
+
+/* Affiche/masque les éléments selon le rôle (et bloque côté serveur en plus) */
+function applyRole(){
+  var admin=isAdmin();
+  var super_=isSupervisor();
+  document.body.classList.toggle('is-admin', admin);
+  document.body.classList.toggle('is-supervisor', super_);
+  document.body.classList.toggle('is-user', !admin && !super_);
+  // Bouton login/logout
+  var lb=document.getElementById('loginBtn');
+  if(lb){
+    lb.innerHTML = (S_AUTH.name) ? ((admin?'🔓':super_?'🦺':'👤')+' '+S_AUTH.name) : (admin?'🔓 Admin':'🔒 Log In');
+    lb.title = (S_AUTH.token)?'Se déconnecter':'Se connecter';
+  }
+  // Boutons Config (admin uniquement)
+  var ceb=document.getElementById('configExtBtn');  if(ceb)  ceb.style.display  = admin?'':'none';
+  var crb=document.getElementById('configRiaBtn');  if(crb)  crb.style.display  = admin?'':'none';
+  var cpb=document.getElementById('configPestBtn'); if(cpb)  cpb.style.display  = admin?'':'none';
+  // Bouton KPI dans le header
+  var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
+  // Navigation admin : masquer pour non-admins
+  document.querySelectorAll('[data-v="home"],[data-v="admin"]').forEach(function(b){
+    b.style.display = admin ? '' : 'none';
+  });
+  // Navigation superviseur
+  var showSuper = admin || super_;
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
+  });
+  // Redirige si vue interdite
+  if(!admin && ADMIN_ONLY_VIEWS[S.view]) goV(super_?'sensibilisation':'all', null);
+  if(!showSuper && SUPERVISOR_VIEWS[S.view]) goV('all', null);
+}
+
+/* ── Responsables : liste dynamique pour les menus déroulants ── */
+function loadRespList(){
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success&&r.data&&r.data.length){ S.respList=r.data; fillRespSelects(); }
+    })
+    .withFailureHandler(function(){})
+    .getResponsablesList();
+}
+function fillRespSelects(){
+  if(!S.respList||!S.respList.length) return;
+  ['qResp','fResp'].forEach(function(id){
+    var sel=document.getElementById(id); if(!sel) return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">— Choisir un responsable —</option>'+
+      S.respList.map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('');
+    if(cur) setRespValue(id,cur);
+  });
+}
+
+/* ── Admin : gestion des responsables (noms + emails) ── */
+function openRespManager(){
+  if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){ renderRespRows(r.data); openSheet('respOv'); }
+      else toast(r&&r.error?r.error:'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getResponsables(S.adminKey);
+}
+function renderRespRows(list){
+  document.getElementById('respList').innerHTML=(list||[]).map(respRowHtml).join('');
+}
+function respRowHtml(r){
+  r=r||{name:'',email:''};
+  return '<div class="resp-row">'+
+    '<input class="fi rr-name" placeholder="Nom" value="'+esc(r.name||'')+'"/>'+
+    '<input class="fi rr-mail" placeholder="email@exemple.com" value="'+esc(r.email||'')+'"/>'+
+    '<button class="btn btn-r rr-del" title="Retirer" onclick="this.parentNode.remove()">✕</button>'+
+  '</div>';
+}
+function addRespRow(){
+  document.getElementById('respList').insertAdjacentHTML('beforeend', respRowHtml({name:'',email:''}));
+}
+function saveRespList(){
+  var list=[];
+  document.querySelectorAll('#respList .resp-row').forEach(function(row){
+    var name=row.querySelector('.rr-name').value.trim();
+    var email=row.querySelector('.rr-mail').value.trim();
+    if(name) list.push({name:name, email:email});
+  });
+  if(!list.length){ toast('Au moins un responsable requis','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success){
+        toast('✓ Responsables enregistrés','ok');
+        S.respList=r.data.map(function(x){ return x.name; });
+        fillRespSelects();
+        closeSheet('respOv');
+        loadAll();
+      } else toast(r&&r.error?r.error:'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveResponsables(S.adminKey, list);
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+function goV(v, btn){
+  if(ADMIN_ONLY_VIEWS[v] && !isAdmin()){
+    toast('🔒 Accès réservé à l\'administrateur','err');
+    v=isSupervisor()?'sensibilisation':'all'; btn=null;
+  }
+  if(SUPERVISOR_VIEWS[v] && !isSuperOrAdmin()){
+    toast('🔒 Accès réservé au Superviseur HSE','err');
+    v='all'; btn=null;
+  }
+  S.view = v;
+  document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('on'); });
+  document.querySelectorAll('[data-v]').forEach(function(b){ b.classList.remove('on'); });
+  if(btn){ btn.classList.add('on'); }
+  document.querySelectorAll('[data-v="'+v+'"]').forEach(function(b){ b.classList.add('on'); });
+
+  var vmap = {home:'view-home',all:'view-all',open:'view-all',
+              closed:'view-all',elevee:'view-all',moyenne:'view-all',faible:'view-all',
+              admin:'view-admin',
+              sensibilisation:'view-sensibilisation',
+              incendie:'view-incendie',
+              nuisibles:'view-nuisibles'};
+  var tid = vmap[v]||'view-home';
+  document.getElementById(tid).classList.add('on');
+
+  var vtitles = {all:'🏷️ Tous les Tags',open:'🟥 Tags Ouverts',closed:'✅ Tags Fermés',
+    elevee:'🔴 Gravité Élevée',moyenne:'🟧 Gravité Moyenne',faible:'🟢 Gravité Faible'};
+  if(vtitles[v]) document.getElementById('tagsTitle').textContent = vtitles[v];
+
+  renderCurrent();
+}
+
+function renderCurrent(){
+  if(S.view==='home')  renderHome();
+  else if(S.view==='admin') renderAdmin();
+  else if(S.view==='sensibilisation') renderSensibilisation();
+  else if(S.view==='incendie')   renderIncendie();
+  else if(S.view==='nuisibles') renderNuisibles();
+  else renderTagsView();
+}
+
+function updateBadge(){
+  if(!S.kpis) return;
+  var bd = document.getElementById('tbBadge');
+  if(S.kpis.overdue>0){ bd.textContent=S.kpis.overdue; bd.style.display='flex'; }
+  else bd.style.display='none';
+}
+
+/* ══════════════════════════════════════════
+   HOME DASHBOARD
+══════════════════════════════════════════ */
+function renderHome(){
+  var t=S.tags.length;
+  var ou=S.tags.filter(function(x){return x.statut==='Ouvert';}).length;
+  var fe=S.tags.filter(function(x){return x.statut==='Fermé';}).length;
+  var el=S.tags.filter(function(x){return x.gravite==='Élevée';}).length;
+  document.getElementById('hCnt').textContent = t+' tags';
+
+  document.getElementById('homeStats').innerHTML =
+    scHtml('y',t,'Total','🏷️')+scHtml('r',ou,'Ouverts','🟥')+
+    scHtml('g',fe,'Fermés','✅')+scHtml('b',el,'Critiques','🔴');
+
+  var k=S.kpis;
+  if(k){
+    document.getElementById('kpiRow').style.display='grid';
+    document.getElementById('kpiRow').innerHTML =
+      kcHtml(k.avgDays===0?'—':k.avgDays+'j','⏱ Délai Moyen')+
+      kcHtml(k.minDays===0&&k.fermes===0?'—':k.minDays+'j','✅ Min')+
+      kcHtml(k.maxDays===0?'—':k.maxDays+'j','⚠ Max');
+
+    document.getElementById('slaWrap').style.display='flex';
+    var sla=k.sla7||0;
+    document.getElementById('slaNum').textContent=sla+'%';
+    document.getElementById('slaSub').textContent=
+      k.fermes+' fermé(s), dont '+Math.round(k.fermes*sla/100)+' en ≤7j. Objectif: ≥80%';
+    var circ=document.getElementById('slaCircle');
+    circ.style.stroke=sla>=80?'var(--grn)':sla>=50?'var(--ora)':'var(--red)';
+    setTimeout(function(){ circ.style.strokeDashoffset=176*(1-sla/100); },400);
+
+    var zones=k.byZone||{}, types=k.byDanger||{};
+    var topZ=Object.keys(zones).sort(function(a,b){return zones[b]-zones[a];}).slice(0,7);
+    var topT=Object.keys(types).sort(function(a,b){return types[b]-types[a];}).slice(0,7);
+    var mZ=topZ.length?zones[topZ[0]]:1, mT=topT.length?types[topT[0]]:1;
+    document.getElementById('homeCharts').innerHTML=
+      '<div class="cc"><div class="cc-ttl">📍 Par Zone</div>'+
+      topZ.map(function(z){return brHtml(z,zones[z],Math.round(zones[z]/mZ*100));}).join('')+'</div>'+
+      '<div class="cc"><div class="cc-ttl">⚠ Types</div>'+
+      topT.map(function(t){return brHtml(t,types[t],Math.round(types[t]/mT*100));}).join('')+'</div>';
+    setTimeout(function(){
+      document.querySelectorAll('.bf').forEach(function(b){b.style.width=b.getAttribute('data-w')+'%';});
+    },100);
+  }
+}
+function scHtml(c,v,l,i){
+  return '<div class="sc '+c+'" data-i="'+i+'" onclick="goV(\'all\',null)">'+
+    '<div class="sc-val">'+v+'</div><div class="sc-lbl">'+l+'</div></div>';
+}
+function kcHtml(v,l){
+  return '<div class="kc"><div class="kc-val">'+v+'</div><div class="kc-lbl">'+l+'</div></div>';
+}
+function brHtml(n,v,p){
+  return '<div class="br"><span class="bl" title="'+esc(n)+'">'+esc(n)+'</span>'+
+    '<div class="bt"><div class="bf" data-w="'+p+'" style="width:0%"></div></div>'+
+    '<span class="bn">'+v+'</span></div>';
+}
+
+/* ══════════════════════════════════════════
+   ADMIN KPI — Heatmap + Tables
+══════════════════════════════════════════ */
+function renderAdmin(){
+  var k=S.kpis;
+  if(!k){ document.getElementById('adminBody').innerHTML='<div class="empty"><div class="empty-i">⏳</div><div class="empty-t">Chargement KPI…</div></div>'; return; }
+
+  // Heatmap Zone × Gravité
+  var zones2=Object.keys(k.byZone||{}).sort(function(a,b){return (k.byZone[b]||0)-(k.byZone[a]||0);}).slice(0,8);
+  var gravs=['Élevée','Moyenne','Faible'];
+  var hm={};
+  zones2.forEach(function(z){ hm[z]={Élevée:0,Moyenne:0,Faible:0}; });
+  S.tags.forEach(function(t){ if(hm[t.zone]) hm[t.zone][t.gravite]=(hm[t.zone][t.gravite]||0)+1; });
+  var maxHM=0;
+  zones2.forEach(function(z){ gravs.forEach(function(g){ if(hm[z][g]>maxHM) maxHM=hm[z][g]; }); });
+
+  var hmH='<div class="hm-grid" style="grid-template-columns:repeat('+gravs.length+',1fr)">';
+  gravs.forEach(function(g){
+    var col=g==='Élevée'?'var(--red)':g==='Moyenne'?'var(--ora)':'var(--grn)';
+    hmH+='<div style="text-align:center;font-size:.62rem;font-weight:700;color:'+col+';padding:3px">'+g+'</div>';
+  });
+  zones2.forEach(function(z){
+    gravs.forEach(function(g){
+      var v=hm[z][g]||0, pct=maxHM?v/maxHM:0;
+      var col=g==='Élevée'?'rgba(255,71,87,':g==='Moyenne'?'rgba(255,107,53,':'rgba(46,213,115,';
+      var bg=v===0?'var(--ink3)':col+(0.12+pct*0.72)+')';
+      hmH+='<div class="hm-cell" style="background:'+bg+'" title="'+esc(z)+' — '+g+'">'+
+        (v>0?v:'')+'<span style="display:block;font-size:.46rem;opacity:.7">'+(v>0?z.split(' ')[0]:'')+'</span></div>';
     });
-    return { success:true, data:data };
-  } catch(e) { return { success:false, error:e.message }; }
-}
+  });
+  hmH+='</div>';
 
-// Retourner la liste des superviseurs HSE + admins (pour le menu déroulant)
-function getSuperviseursList(p) {
-  var token    = (typeof p === 'string') ? p : (p && p.token);
-  var adminKey = (typeof p === 'object') ? (p && p.adminKey) : null;
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey) && !isSessionSuperOrAdmin_(token))
-    return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getEdbSheet_();
-    var lr = sh.getLastRow();
-    if (lr < EDB_START) return { success:true, data:[] };
-    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-    var list = [];
-    rows.forEach(function(r) {
-      var role = String(r[EDB.ROLE]||'').trim();
-      var nom  = String(r[EDB.NAME]).trim();
-      if ((role === 'hse_supervisor' || role === 'admin') && nom) {
-        list.push({ matricule: String(r[EDB.MAT]).trim(), nom: nom });
-      }
-    });
-    return { success:true, data:list };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// Admin: set password for an employee
-function adminSetPassword(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getEdbSheet_();
-    var lr = sh.getLastRow();
-    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-    var mat = String(p.matricule||'').trim();
-    for (var i=0; i<rows.length; i++) {
-      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
-      var ri = EDB_START+i;
-      sh.getRange(ri, EDB.PWD+1).setValue(hashPwd_(p.password));
-      if (!String(rows[i][EDB.ROLE]).trim()) sh.getRange(ri, EDB.ROLE+1).setValue('user');
-      if (!String(rows[i][EDB.ACTIF]).trim()) sh.getRange(ri, EDB.ACTIF+1).setValue(true);
-      return { success:true };
-    }
-    return { success:false, error:'Matricule introuvable' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// Admin: toggle active status
-function adminToggleUser(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getEdbSheet_();
-    var rows = sh.getRange(EDB_START, 1, sh.getLastRow()-EDB_START+1, 6).getValues();
-    var mat = String(p.matricule||'').trim();
-    for (var i=0; i<rows.length; i++) {
-      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
-      sh.getRange(EDB_START+i, EDB.ACTIF+1).setValue(!!p.actif);
-      return { success:true };
-    }
-    return { success:false, error:'Matricule introuvable' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// Admin: set role
-function adminSetRole(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getEdbSheet_();
-    var rows = sh.getRange(EDB_START, 1, sh.getLastRow()-EDB_START+1, 6).getValues();
-    var mat = String(p.matricule||'').trim();
-    var validRoles = ['admin','user','hse_supervisor'];
-    var newRole = validRoles.indexOf(p.role)!==-1 ? p.role : 'user';
-    for (var i=0; i<rows.length; i++) {
-      if (String(rows[i][EDB.MAT]).trim() !== mat) continue;
-      sh.getRange(EDB_START+i, EDB.ROLE+1).setValue(newRole);
-      return { success:true };
-    }
-    return { success:false, error:'Matricule introuvable' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ================================================================
-//  ENTRY POINT (Web App + Image endpoint)
-// ================================================================
-// ================================================================
-//  TOKEN SIGNÉ POUR UPLOAD PHOTO APRÈS (sans PropertiesService)
-// ================================================================
-function makeApresToken_(tagId, rowIndex) {
-  var expires = Date.now() + 30 * 24 * 3600 * 1000;
-  var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
-  var payload = tagId + '.' + rowIndex + '.' + expires;
-  var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
-  var hash    = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
-  return payload + '.' + hash;
-}
-
-function verifyApresToken_(token) {
-  try {
-    var parts = token.split('.');
-    if (parts.length !== 4) return null;
-    var tagId = parts[0], rowIndex = parts[1], expires = parseInt(parts[2], 10), hash = parts[3];
-    if (Date.now() > expires) return null;
-    var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
-    var payload = tagId + '.' + rowIndex + '.' + expires;
-    var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
-    var expected = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
-    if (hash !== expected) return null;
-    return { tagId: tagId, rowIndex: parseInt(rowIndex, 10) };
-  } catch(e) { return null; }
-}
-
-function doGet(e) {
-  if (e && e.parameter && e.parameter.img) {
-    return serveImage_(e.parameter.img);
+  // Tables KPI
+  var slow='', openT='';
+  if(k.topSlow&&k.topSlow.length){
+    slow='<table class="kt"><thead><tr><th>N°</th><th>Danger</th><th>Zone</th><th>Durée</th></tr></thead><tbody>'+
+      k.topSlow.map(function(s){
+        var dc=s.days>14?'r':s.days>7?'o':'g';
+        return '<tr><td style="font-family:var(--fm);color:var(--y)">#'+s.id+'</td>'+
+          '<td>'+esc((s.danger||'').substring(0,24))+'</td>'+
+          '<td style="color:var(--t3)">'+esc(s.zone||'')+'</td>'+
+          '<td><span class="dp '+dc+'">'+s.days+'j</span></td></tr>';
+      }).join('')+'</tbody></table>';
   }
-  if (e && e.parameter && e.parameter.action === 'upload_apres' && e.parameter.token) {
-    return serveUploadApresPage_(e.parameter.token);
+  if(k.topOpen&&k.topOpen.length){
+    openT='<table class="kt"><thead><tr><th>N°</th><th>Danger</th><th>Ouvert depuis</th></tr></thead><tbody>'+
+      k.topOpen.map(function(s){
+        var dc=s.days>30?'r':s.days>14?'o':'g';
+        return '<tr><td style="font-family:var(--fm);color:var(--red)">#'+s.id+'</td>'+
+          '<td>'+esc((s.danger||'').substring(0,24))+'</td>'+
+          '<td><span class="dp '+dc+'">'+s.days+'j</span></td></tr>';
+      }).join('')+'</tbody></table>';
   }
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('HSE Tags 2025/2026')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+  document.getElementById('adminBody').innerHTML=
+    '<div class="sg" style="margin-bottom:12px;">'+
+    scHtml('y',k.total,'Total','🏷️')+scHtml('r',k.ouverts,'Ouverts','🟥')+
+    scHtml('g',k.fermes,'Fermés','✅')+scHtml('r',k.overdue,'En retard','⚠')+
+    '</div>'+
+    '<div class="kr" style="margin-bottom:12px;">'+
+    kcHtml(k.avgDays?k.avgDays+'j':'—','⏱ Délai Moyen')+
+    kcHtml(k.sla7+'%','🎯 SLA ≤7j')+
+    kcHtml(k.maxDays?k.maxDays+'j':'—','⚠ Délai Max')+
+    '</div>'+
+    '<div class="hm-wrap"><div class="cc-ttl">🌡️ Heatmap — Zone × Gravité</div>'+hmH+
+    '<div style="font-size:.62rem;color:var(--t3);margin-top:5px;">Plus la couleur est intense, plus la densité de risques est élevée</div></div>'+
+    (slow?'<div class="cc" style="margin-bottom:9px"><div class="cc-ttl">🐢 Top 5 — Délai de Traitement</div>'+slow+'</div>':'')+
+    (openT?'<div class="cc"><div class="cc-ttl">🔴 Top 5 — Tags Ouverts Depuis Longtemps</div>'+openT+'</div>':'');
 }
 
-// ================================================================
-//  PAGE D'UPLOAD PHOTO APRÈS (lien dans l'email)
-// ================================================================
-function serveUploadApresPage_(token) {
-  var data = verifyApresToken_(token);
-  if (!data) {
-    return HtmlService.createHtmlOutput('<div style="font-family:sans-serif;text-align:center;padding:40px;color:#e74c3c"><h2>Lien invalide ou expiré.</h2><p style="color:#aaa">Ce lien a expiré ou a déjà été utilisé.</p></div>');
+/* ══════════════════════════════════════════
+   TAGS LIST — Ordre 9 : liste + clic → détail
+══════════════════════════════════════════ */
+function getFiltered(){
+  var base=S.tags.slice();
+  var v=S.view;
+  if(v==='open')    base=base.filter(function(t){return t.statut==='Ouvert';});
+  if(v==='closed')  base=base.filter(function(t){return t.statut==='Fermé';});
+  if(v==='elevee')  base=base.filter(function(t){return t.gravite==='Élevée';});
+  if(v==='moyenne') base=base.filter(function(t){return t.gravite==='Moyenne';});
+  if(v==='faible')  base=base.filter(function(t){return t.gravite==='Faible';});
+
+  var f=S.filter;
+  if(f==='elevee')  base=base.filter(function(t){return t.gravite==='Élevée';});
+  if(f==='moyenne') base=base.filter(function(t){return t.gravite==='Moyenne';});
+  if(f==='faible')  base=base.filter(function(t){return t.gravite==='Faible';});
+  if(f==='ouvert')  base=base.filter(function(t){return t.statut==='Ouvert';});
+  if(f==='ferme')   base=base.filter(function(t){return t.statut==='Fermé';});
+
+  // ── MOBILE FILTERS ──
+  if(MF && MF.zone && MF.zone !== 'TOUT'){
+    base = base.filter(function(t){ return t.zone === MF.zone; });
   }
-  var tagId = data.tagId;
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
-    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
-    + '<title>Photo après — Tag #' + tagId + '</title>'
-    + '<style>body{font-family:Arial,sans-serif;background:#111;color:#eee;display:flex;flex-direction:column;align-items:center;padding:30px 16px}'
-    + 'h2{color:#f5c518;margin-bottom:4px}p{color:#aaa;margin-bottom:24px;font-size:.9rem}'
-    + '.box{background:#1f2937;border-radius:12px;padding:24px;width:100%;max-width:420px}'
-    + 'label.btn{display:block;background:#f5c518;color:#000;font-weight:700;text-align:center;padding:14px;border-radius:8px;cursor:pointer;font-size:1rem}'
-    + 'img#prev{display:none;width:100%;border-radius:8px;margin:16px 0;max-height:300px;object-fit:cover}'
-    + 'button{width:100%;margin-top:12px;padding:14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}'
-    + 'button:disabled{background:#555;cursor:default}'
-    + '.msg{margin-top:16px;font-size:.9rem;text-align:center}'
-    + '.ok{color:#27ae60}.err{color:#e74c3c}'
-    + '</style></head><body>'
-    + '<h2>📸 Photo après — Tag #' + tagId + '</h2>'
-    + '<p>Ajoutez la photo de résolution pour fermer ce tag.</p>'
-    + '<div class="box">'
-    + '<label class="btn" for="photoInput">📷 Choisir / Prendre une photo</label>'
-    + '<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="preview(this)">'
-    + '<img id="prev">'
-    + '<button id="sendBtn" disabled onclick="upload()">✅ Envoyer la photo</button>'
-    + '<div id="msg" class="msg"></div>'
-    + '</div>'
-    + '<script>'
-    + 'var b64="",mime="image/jpeg";'
-    + 'function preview(inp){'
-    + '  var f=inp.files[0];if(!f)return;'
-    + '  mime=f.type||"image/jpeg";'
-    + '  var r=new FileReader();'
-    + '  r.onload=function(ev){'
-    + '    b64=ev.target.result.replace(/^data:[^;]+;base64,/,"");'
-    + '    var img=document.getElementById("prev");img.src=ev.target.result;img.style.display="block";'
-    + '    document.getElementById("sendBtn").disabled=false;'
-    + '  };r.readAsDataURL(f);'
-    + '}'
-    + 'function upload(){'
-    + '  var btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Envoi en cours…";'
-    + '  var msg=document.getElementById("msg");msg.textContent="";'
-    + '  google.script.run'
-    + '    .withSuccessHandler(function(r){'
-    + '      if(r&&r.success){msg.className="msg ok";msg.textContent="✅ Photo enregistrée ! Le tag est maintenant fermé.";btn.textContent="Envoyé ✓";}'
-    + '      else{msg.className="msg err";msg.textContent="Erreur : "+(r&&r.error||"?");btn.disabled=false;btn.textContent="Réessayer";}'
-    + '    })'
-    + '    .withFailureHandler(function(e){msg.className="msg err";msg.textContent="Erreur réseau : "+e.message;btn.disabled=false;btn.textContent="Réessayer";})'
-    + '    .submitApresFromEmail({token:"' + token + '",photo:b64,mime:mime});'
-    + '}'
-    + '<\/script>'
-    + '</body></html>';
-  return HtmlService.createHtmlOutput(html)
-    .setTitle('Photo après — Tag #' + tagId)
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-// ================================================================
-//  SOUMISSION PHOTO APRÈS DEPUIS L'EMAIL
-// ================================================================
-function submitApresFromEmail(p) {
-  try {
-    var data = verifyApresToken_(p.token);
-    if (!data) return { success:false, error:'Lien invalide ou expiré' };
-    return saveAfterPhoto({ rowIndex:data.rowIndex, id:data.tagId, photoApres:p.photo, mime:p.mime });
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ================================================================
-//  ORDRE 3 + 4 + 5 : INSERT TAG WITH AUTO-INCREMENT
-//  Garantit ID unique +1, statut "Ouvert", retour SUCCESS rapide
-// ================================================================
-function insertTagWithAutoIncrement(payload) {
-  try {
-    var sheet = getSheet_();
-    if (!sheet) return 'ERROR: La feuille "plan" est introuvable.';
-
-    // Ordre 3 : balayage de la colonne A pour le max ID
-    var lastRow = sheet.getLastRow();
-    var nextId = 1;
-    if (lastRow >= DATA_START) {
-      var vals = sheet.getRange(DATA_START, 1, lastRow - DATA_START + 1, 1).getValues();
-      var maxId = 0;
-      for (var i = 0; i < vals.length; i++) {
-        var n = parseInt(vals[i][0], 10);
-        if (!isNaN(n) && n > 0 && n < 99999 && String(vals[i][0]).trim().length <= 6) {
-          if (n > maxId) maxId = n;
-        }
-      }
-      nextId = maxId + 1;
-    }
-
-    var ref = 'Photo_' + String(nextId).padStart(3, '0');
-
-    // Ordre 4 : appendRow avec ordre strict des colonnes
-    var dateCreation = payload.dateCreation ? new Date(payload.dateCreation) : new Date();
-    var dateCible;
-    if (payload.dateCible) {
-      dateCible = new Date(payload.dateCible);
+  if(MF && MF.resp && MF.resp !== 'TOUT'){
+    if(MF.resp === 'NONE'){
+      base = base.filter(function(t){ return !t.responsable || t.responsable.trim()===''; });
     } else {
-      dateCible = new Date(dateCreation.getTime());
-      dateCible.setDate(dateCible.getDate() + 3);
+      base = base.filter(function(t){ return t.responsable === MF.resp; });
     }
-    sheet.appendRow([
-      nextId,           // A
-      dateCreation,     // B
-      dateCible,        // C — défaut J+3 si non fourni
-      payload.dangerType || payload.danger || '',                        // D
-      toGraviteEmoji_(payload.gravity || payload.gravite),               // E
-      payload.emplacement || '',                                         // F
-      payload.zone || '',                                                // G
-      payload.description || '',                                         // H
-      payload.risk || payload.risque || '',                              // I
-      payload.actionUrgente || payload.action || '',                     // J
-      payload.propositions || '',                                        // K
-      ref,                                                                // L (sera remplacé par URL si photo)
-      '🟥 Ouvert',                                                      // M — Ordre 5 défaut "Ouvert"
-      payload.responsable || '',                                         // N
-      ''                                                                  // O
-    ]);
+  }
 
-    var ir = sheet.getLastRow();
+  var q=S.search.toLowerCase().trim();
+  if(q) base=base.filter(function(t){
+    return (t.danger||'').toLowerCase().indexOf(q)!==-1||
+           (t.description||'').toLowerCase().indexOf(q)!==-1||
+           (t.emplacement||'').toLowerCase().indexOf(q)!==-1||
+           (t.zone||'').toLowerCase().indexOf(q)!==-1||
+           String(t.id).indexOf(q)!==-1;
+  });
 
-    // Sauvegarde des photos (avant/après) sur la même ligne
-    if (payload.photoAvant && payload.photoAvant.length > 10) {
-      var fnAv  = nextId + '.Référence Photo.' + nowHHMMSS_() + '.jpg';
-      var urlAv = savePhotoToFolder_(payload.photoAvant, fnAv, payload.mime || 'image/jpeg');
-      if (urlAv) sheet.getRange(ir, C.PHOTO_AV + 1).setValue(urlAv);
+  // ── SORT BY ANCIENNETÉ ──
+  if(MF && MF.sort === 'ancien'){
+    base.sort(function(a,b){
+      return (new Date(a.dateCreation||0)) - (new Date(b.dateCreation||0));
+    });
+  } else {
+    base.sort(function(a,b){
+      return (new Date(b.dateCreation||0)) - (new Date(a.dateCreation||0));
+    });
+  }
+  return base;
+}
+
+function renderTagsView(){
+  var tags=getFiltered();
+  document.getElementById('tagsCnt').textContent=tags.length;
+  document.getElementById('resInfo').textContent=tags.length+' résultat(s)';
+  var el=document.getElementById('tagsList');
+  if(!tags.length){
+    el.className='tlist';
+    el.innerHTML='<div class="empty"><div class="empty-i">🔍</div><div class="empty-t">Aucun tag trouvé</div></div>';
+    return;
+  }
+  el.className='gallery';
+  el.innerHTML=tags.map(cardHtml).join('');
+  // Lazy loading des images
+  setupLazyImages();
+}
+
+function setChip(f,btn){
+  S.filter=f;
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  if(btn) btn.classList.add('on');
+  renderTagsView();
+}
+function doSearch(){ S.search=document.getElementById('searchIn').value; renderTagsView(); }
+
+// Galerie : photo "avant" + texte incrusté (statut, responsable, depuis)
+function cardHtml(t){
+  var gc=t.gravite==='Élevée'?'elevee':t.gravite==='Moyenne'?'moyenne':'faible';
+
+  // Durée "depuis" (ou délai de fermeture)
+  var sinceH='';
+  if(t.dateCreation){
+    var d1=new Date(t.dateCreation);
+    var d2=t.statut==='Fermé'&&t.dateFerme?new Date(t.dateFerme):new Date();
+    if(!isNaN(d1.getTime())){
+      var days=Math.round((d2-d1)/86400000);
+      var col=days>14?'var(--red)':days>7?'var(--ora)':'var(--grn)';
+      var lbl=t.statut==='Fermé'?'Fermé en '+days+'j':'Depuis '+days+'j';
+      sinceH='<div class="gc-since"><span class="dot" style="background:'+col+'"></span>⏱ '+lbl+'</div>';
     }
-    if (payload.photoApres && payload.photoApres.length > 10) {
-      var fnAp  = nextId + '.Photo après.' + nowHHMMSS_() + '.jpg';
-      var urlAp = savePhotoToFolder_(payload.photoApres, fnAp, payload.mime || 'image/jpeg');
-      if (urlAp) {
-        sheet.getRange(ir, C.PHOTO_AP + 1).setValue(urlAp);
-        sheet.getRange(ir, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
-        sheet.getRange(ir, C.DATE_FERME + 1).setValue(new Date());
-      }
+  }
+
+  var img = t.photoAvantId ?
+    '<div class="gc-img tc-lazy" data-imgid="'+esc(t.photoAvantId)+'"><span>⏳</span></div>':
+    '<div class="gc-noimg"><span>📷</span>Pas de photo</div>';
+  var st = t.statut==='Ouvert'
+    ? '<span class="gc-st open">🟥 Ouvert</span>'
+    : '<span class="gc-st closed">✅ Fermé</span>';
+  var resp = t.responsable ? esc(t.responsable) : 'Non assigné';
+
+  return '<div class="gcard '+gc+'" onclick="openDetail(\''+t.id+'\')" title="'+esc(t.danger||'')+'">'+
+    img+
+    '<div class="gc-overlay">'+
+      '<div class="gc-top"><span class="gc-id">#'+t.id+'</span>'+st+'</div>'+
+      '<div class="gc-bot">'+
+        '<div class="gc-resp">👤 '+resp+'</div>'+
+        sinceH+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ══════════════════════════════════════════
+   ORDRE 9 : DETAIL VIEW POPUP
+   Affiche : N° Cas, Date, Auteur, Localisation,
+             Description, Photos, Historique statuts
+══════════════════════════════════════════ */
+function openDetail(id){
+  var t=S.tags.find(function(x){return String(x.id)===String(id);});
+  if(!t) return;
+  S.detailTag=t;
+
+  document.getElementById('detTitle').textContent='🔍 Tag HSE #'+t.id;
+  // Actions de modification réservées à l'admin
+  var admin=isAdmin();
+  var eb=document.getElementById('detEditBtn'), db=document.getElementById('detDelBtn'), mailBtn=document.getElementById('detMailBtn');
+  eb.style.display = admin?'':'none';
+  db.style.display = admin?'':'none';
+  mailBtn.style.display = admin?'':'none';
+  eb.onclick=function(){ closeSheet('detailOv'); editTag(id); };
+  db.onclick=function(){ closeSheet('detailOv'); confirmDel(t.rowIndex); };
+  mailBtn.onclick=function(){ openMailModal(t); };
+  setMailBtnState(!!t.emailSent);
+
+  // KPI durée de résolution — Ordre 8
+  var kpiBlock='';
+  if(t.dateCreation){
+    var d1=new Date(t.dateCreation);
+    var d2=t.statut==='Fermé'&&t.dateFerme?new Date(t.dateFerme):new Date();
+    if(!isNaN(d1.getTime())){
+      var days=Math.round((d2-d1)/86400000);
+      var col=days>14?'var(--red)':days>7?'var(--ora)':'var(--grn)';
+      var lbl=t.statut==='Fermé'?'Durée de traitement (Ouvert → Fermé)':'Ouvert depuis';
+      kpiBlock='<div class="kd"><div class="kd-val" style="color:'+col+'">'+days+'j</div>'+
+        '<div><div class="kd-lbl">⏱ '+lbl+'</div>'+
+        '<div class="kd-sub">'+
+        (t.statut==='Fermé'?'Créé: '+t.dateCreation+' → Fermé: '+(t.dateFerme||'?'):
+         'Depuis le '+t.dateCreation)+
+        '</div></div></div>';
     }
-
-    routeNotification_(payload, nextId);
-    return { success: true, id: nextId, status: 'SUCCESS' };
-  } catch (e) {
-    return { success: false, error: e.toString() };
   }
+
+  // Timeline statuts
+  var tl='<div class="tl">'+
+    tlI('done','✓','Signalement créé',t.dateCreation||'—')+
+    tlI(t.statut!=='Ouvert'?'done':'act','⚙','Prise en charge',t.responsable||'En attente')+
+    (t.emailSent?tlI('done','📧','Email envoyé au responsable',t.emailSent):'')+
+    (t.statut==='Fermé'?tlI('done','✅','Résolu / Fermé',t.dateFerme||'—'):'')+
+    '</div>';
+
+  var gb=t.gravite==='Élevée'?'<span class="badge ge">🔴 Élevée</span>':
+         t.gravite==='Moyenne'?'<span class="badge gm">🟧 Moyenne</span>':'<span class="badge gf">🟢 Faible</span>';
+  var sb=t.statut==='Ouvert'?'<span class="badge so">🟥 Ouvert</span>':'<span class="badge sc2">✅ Fermé</span>';
+
+  var avH = t.photoAvantId ?
+    '<div class="pcs-lazy" data-imgid="'+esc(t.photoAvantId)+'" onclick="openLazyImg(\''+esc(t.photoAvantId)+'\')"><span style="color:var(--t3);font-size:.85rem">⏳ Chargement…</span></div>':
+    '<div class="pcs-empty">Aucune photo</div>';
+  var apH = t.photoApresId ?
+    '<div class="pcs-lazy" data-imgid="'+esc(t.photoApresId)+'" onclick="openLazyImg(\''+esc(t.photoApresId)+'\')"><span style="color:var(--t3);font-size:.85rem">⏳ Chargement…</span></div>':
+    '<div class="pcs-empty">Aucune photo</div>';
+
+  document.getElementById('detBody').innerHTML=
+    '<div class="dgrid">'+
+    dfH('N° Cas','<strong style="color:var(--y);font-family:var(--fm)">#'+t.id+'</strong>')+
+    dfH('Date Création',t.dateCreation||'—')+
+    dfH('Date Cible',t.dateCible||'—')+
+    dfH('Responsable',esc(t.responsable||'—'))+
+    (t.auteur||t.anonymous?dfH('Auteur',t.anonymous?'<span class="badge" style="background:var(--ink4)">🎭 Anonyme</span>':esc(t.auteur||'—')):'') +
+    (t.lat?dfH('Localisation GPS',t.lat.toFixed(5)+', '+t.lng.toFixed(5)):'')+
+    dfH('Gravité',gb)+dfH('Statut',sb)+
+    dfHf('Type de Danger',esc(t.danger||'—'))+
+    dfHf('Emplacement',esc(t.emplacement||'—')+' — <em style="color:var(--t3)">'+esc(t.zone||'')+'</em>')+
+    dfHf('Description',esc(t.description||'—'))+
+    dfHf('Risque Principal',esc(t.risque||'—'))+
+    dfHf('Action Urgente',esc(t.action||'—'))+
+    dfHf('Propositions',esc(t.propositions||'—'))+
+    '</div>'+
+    kpiBlock+
+    '<div class="fl" style="margin:11px 0 7px">📷 Photos Avant / Après</div>'+
+    '<div class="pcs">'+
+      '<div class="pcs-sl"><div class="pcs-h">Avant</div><div class="pcs-b" id="detAvSlot">'+avH+'</div>'+
+        (admin&&t.photoAvantId?'<div class="ap-btns"><button class="pub-ap del" onclick="deletePhoto(\'avant\')">🗑 Supprimer</button></div>':'')+
+      '</div>'+
+      '<div class="pcs-sl"><div class="pcs-h">Après</div><div class="pcs-b" id="detApSlot">'+apH+'</div>'+
+        '<div class="ap-btns">'+
+          '<label class="pub-ap"><input type="file" accept="image/*" capture="environment" onchange="uploadAfterPhoto(this)"/>📷 Caméra</label>'+
+          '<label class="pub-ap alt"><input type="file" accept="image/*" onchange="uploadAfterPhoto(this)"/>🖼 Galerie</label>'+
+          (admin&&t.photoApresId?'<button class="pub-ap del" onclick="deletePhoto(\'apres\')">🗑 Supprimer</button>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="fl" style="margin:11px 0 7px">📋 Historique des Statuts</div>'+tl;
+
+  openSheet('detailOv');
+  // Lancer le chargement des images du détail
+  setTimeout(function(){
+    document.querySelectorAll('#detBody .pcs-lazy[data-imgid]').forEach(function(el){
+      var id = el.getAttribute('data-imgid');
+      if(_imgCache[id]){ applyDetailImg(el, _imgCache[id]); return; }
+      google.script.run
+        .withSuccessHandler(function(r){
+          if(r.success && r.data){
+            _imgCache[id] = r.data;
+            applyDetailImg(el, r.data);
+          } else { el.innerHTML = '<div class="pcs-empty">Image indisponible</div>'; }
+        })
+        .withFailureHandler(function(){ el.innerHTML = '<div class="pcs-empty">Erreur</div>'; })
+        .getImageBase64(id);
+    });
+  }, 100);
 }
-
-// Alias historique (utilisé par la version Quick Add du HTML)
-function addTag(d) { return insertTagWithAutoIncrement(d); }
-
-// ================================================================
-//  IMAGE ENDPOINTS
-// ================================================================
-function serveImage_(fileId) {
-  try {
-    var file = DriveApp.getFileById(fileId);
-    var blob = file.getBlob();
-    return ContentService.createTextOutput(
-      'data:' + blob.getContentType() + ';base64,' +
-      Utilities.base64Encode(blob.getBytes())
-    ).setMimeType(ContentService.MimeType.TEXT);
-  } catch(e) {
-    return ContentService.createTextOutput('').setMimeType(ContentService.MimeType.TEXT);
-  }
+function applyDetailImg(el, dataUrl){
+  el.classList.add('loaded');
+  el.innerHTML = '<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;cursor:pointer;"/>';
 }
-
-function getImageBase64(fileId) {
-  try {
-    var file = DriveApp.getFileById(fileId);
-    var blob = file.getBlob();
-    return {
-      success: true,
-      data: 'data:' + blob.getContentType() + ';base64,' +
-            Utilities.base64Encode(blob.getBytes())
-    };
-  } catch(e) { return { success: false, error: e.message }; }
-}
-
-function getImagesBatch(fileIds) {
-  var results = {};
-  for (var i = 0; i < fileIds.length; i++) {
-    var id = fileIds[i];
-    if (!id) continue;
-    try {
-      var file = DriveApp.getFileById(id);
-      var blob = file.getBlob();
-      results[id] = 'data:' + blob.getContentType() + ';base64,' +
-                    Utilities.base64Encode(blob.getBytes());
-    } catch(e) { results[id] = ''; }
-  }
-  return { success: true, data: results };
-}
-
-// ================================================================
-//  GET SHEET
-// ================================================================
-function getSheet_() {
-  var ss    = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    var all = ss.getSheets();
-    for (var i = 0; i < all.length; i++) {
-      try {
-        var v = String(all[i].getRange(HEADER_ROW, 1).getValue()).toLowerCase();
-        if (v.indexOf('cas') !== -1) { sheet = all[i]; break; }
-      } catch(e) {}
-    }
-    if (!sheet) sheet = ss.getSheets()[0];
-  }
-  return sheet;
-}
-
-// ================================================================
-//  EXTRACT FILE ID FROM ANY CELL CONTENT
-// ================================================================
-function extractFileId_(cellValue, formulaValue) {
-  if (formulaValue) {
-    var f = String(formulaValue);
-    var m = f.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
-    if (m) return m[1];
-    m = f.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
-    if (m) return m[1];
-    m = f.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})/);
-    if (m) return m[1];
-  }
-  if (cellValue === null || cellValue === undefined) return '';
-  var s = String(cellValue).trim();
-  if (!s) return '';
-  var m2 = s.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
-  if (m2) return m2[1];
-  m2 = s.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
-  if (m2) return m2[1];
-  m2 = s.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})/);
-  if (m2) return m2[1];
-  if (/^[a-zA-Z0-9_-]{25,50}$/.test(s)) return s;
-  return '';
-}
-
-// ================================================================
-//  FOLDER CACHE (fallback Photo_NNN)
-// ================================================================
-var _folderCache = null;
-
-function loadFolderCache_() {
-  if (_folderCache) return;
-  _folderCache = {};
-  try {
-    var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
-    var files  = folder.getFiles();
-    while (files.hasNext()) {
-      var f      = files.next();
-      var name   = f.getName();
-      var fileId = f.getId();
-      var m = name.match(/^(\d+)\.(Référence Photo|Reference Photo|Photo apr[èe]s|Photo avant)\b/i);
-      if (m) {
-        var id   = m[1];
-        var type = m[2].toLowerCase();
-        if (!_folderCache[id]) _folderCache[id] = { avantId:'', apresId:'' };
-        if (type.indexOf('apr') !== -1) {
-          if (!_folderCache[id].apresId) _folderCache[id].apresId = fileId;
-        } else {
-          if (!_folderCache[id].avantId) _folderCache[id].avantId = fileId;
+/* Ajout direct de la "Photo après" depuis le détail du tag */
+function uploadAfterPhoto(input){
+  if(!input.files||!input.files[0]) return;
+  var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
+  var f=input.files[0];
+  compressImage(f,function(dataUrl){
+    var b64=dataUrl.split(',')[1];
+    // Aperçu immédiat
+    var slot=document.getElementById('detApSlot');
+    if(slot) slot.innerHTML='<img src="'+dataUrl+'" style="width:100%;max-height:160px;object-fit:cover;"/>';
+    showLoader('Envoi de la photo après…');
+    google.script.run
+      .withSuccessHandler(function(res){
+        hideSplash();
+        if(res&&res.success){
+          var msg = res.statut==='Fermé' ? '✓ Photo après ajoutée — Tag fermé ✅' : '✓ Photo après ajoutée';
+          toast(msg,'ok');
+          loadAll();
         }
-        continue;
-      }
-      var m2 = name.match(/^[Pp]hoto[_ ]?(\d+)/);
-      if (m2) {
-        var id2 = m2[1].replace(/^0+/, '') || '0';
-        if (!_folderCache[id2]) _folderCache[id2] = { avantId:'', apresId:'' };
-        if (!_folderCache[id2].avantId) _folderCache[id2].avantId = fileId;
-      }
-    }
-  } catch(e) { Logger.log('loadFolderCache_: ' + e.message); }
+        else toast('Erreur: '+((res&&res.error)||'?'),'err');
+      })
+      .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+      .saveAfterPhoto({ rowIndex:t.rowIndex, id:t.id, photoApres:b64, mime:'image/jpeg' });
+  });
 }
-
-function getFolderPhotoFor_(num) {
-  if (!_folderCache) loadFolderCache_();
-  return _folderCache[String(num)] || { avantId:'', apresId:'' };
+function setMailBtnState(sent){
+  var b=document.getElementById('detMailBtn');
+  if(!b) return;
+  if(sent){ b.textContent='✓ 📧'; b.title='Email déjà envoyé au responsable'; b.classList.add('sent'); }
+  else{ b.textContent='📧'; b.title='Notifier le responsable par email'; b.classList.remove('sent'); }
 }
-
-// ================================================================
-//  GET TAGS — same-row strict matching
-// ================================================================
-function getTags() {
-  try {
-    var sheet = getSheet_();
-    var lr    = sheet.getLastRow();
-    var lc    = Math.max(sheet.getLastColumn(), 15);
-    if (lr < DATA_START) return { success: true, data: [] };
-
-    var numRows = lr - DATA_START + 1;
-    var range   = sheet.getRange(DATA_START, 1, numRows, Math.min(lc, 22));
-    var vals     = range.getValues();
-    var formulas = range.getFormulas();
-
-    var richValuesAv = null, richValuesAp = null;
-    try { richValuesAv = sheet.getRange(DATA_START, C.PHOTO_AV+1, numRows, 1).getRichTextValues(); } catch(e) {}
-    try { if (lc > 14) richValuesAp = sheet.getRange(DATA_START, C.PHOTO_AP+1, numRows, 1).getRichTextValues(); } catch(e) {}
-
-    loadFolderCache_();
-
-    var tags = [];
-    var cellRepairs = []; // collect {row, col, url} to write back missing links
-    for (var i = 0; i < vals.length; i++) {
-      var row    = vals[i];
-      var rawNum = row[C.NUM];
-      var num    = parseInt(rawNum, 10);
-      if (isNaN(num) || num < 1 || num > 99999) continue;
-      if (String(rawNum).trim().length > 6)     continue;
-
-      var richAv = '', richAp = '';
-      if (richValuesAv && richValuesAv[i] && richValuesAv[i][0]) {
-        try {
-          var runs = richValuesAv[i][0].getRuns();
-          for (var rj = 0; rj < runs.length; rj++) {
-            var lk = runs[rj].getLinkUrl();
-            if (lk) { richAv = lk; break; }
-          }
-        } catch(e) {}
-      }
-      if (richValuesAp && richValuesAp[i] && richValuesAp[i][0]) {
-        try {
-          var runs2 = richValuesAp[i][0].getRuns();
-          for (var rk = 0; rk < runs2.length; rk++) {
-            var lk2 = runs2[rk].getLinkUrl();
-            if (lk2) { richAp = lk2; break; }
-          }
-        } catch(e) {}
-      }
-
-      var avId = extractFileId_(row[C.PHOTO_AV], formulas[i][C.PHOTO_AV])
-              || extractFileId_(richAv, '');
-      var apId = extractFileId_(lc > 14 ? row[C.PHOTO_AP] : '', lc > 14 ? formulas[i][C.PHOTO_AP] : '')
-              || extractFileId_(richAp, '');
-
-      // Fallback Drive uniquement pour la photo avant.
-      // La photo après ne doit jamais être déduite du dossier :
-      // c'est une action intentionnelle (fermeture du tag).
-      if (!avId) {
-        var fp = getFolderPhotoFor_(num);
-        if (fp.avantId) {
-          avId = fp.avantId;
-          cellRepairs.push({ rowIndex: DATA_START + i, col: C.PHOTO_AV + 1, fileId: avId });
+/* Suppression d'une photo avant/après (admin uniquement) */
+function deletePhoto(which){
+  var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
+  if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
+  var lbl=which==='avant'?'AVANT':'APRÈS';
+  if(!confirm('Supprimer la photo '+lbl+' de ce tag ?\nLe fichier sera mis à la corbeille.')) return;
+  if(S.offline){ toast('📵 Hors-ligne — suppression impossible','err'); return; }
+  showLoader('Suppression de la photo…');
+  google.script.run
+    .withSuccessHandler(function(res){
+      hideSplash();
+      if(res&&res.success){
+        toast('✓ Photo '+lbl+' supprimée','ok');
+        if(which==='avant'){ t.photoAvantId=''; t.photoAvant=''; }
+        else {
+          t.photoApresId=''; t.photoApres='';
+          // La photo après supprimée → tag redevient Ouvert
+          t.statut='Ouvert'; t.dateFerme='';
         }
+        openDetail(t.id);   // re-render avec l'objet mis à jour
+        loadAll();          // resynchronise en arrière-plan
       }
+      else toast('Erreur: '+((res&&res.error)||'?'),'err');
+    })
+    .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+    .deletePhoto({ rowIndex:t.rowIndex, id:t.id, which:which, adminKey:S.adminKey });
+}
 
-      tags.push({
-        id:           num,
-        rowIndex:     DATA_START + i,
-        dateCreation: fmtDate_(row[C.DATE_CR]),
-        dateCible:    fmtDate_(row[C.DATE_CI]),
-        dateFerme:    fmtDate_(lc > 15 ? (row[C.DATE_FERME]||'') : ''),
-        danger:       noFormula_(row[C.DANGER]),
-        gravite:      parseGravite_(row[C.GRAVITE]),
-        emplacement:  txt_(row[C.EMPLACE]),
-        zone:         txt_(row[C.ZONE]),
-        description:  txt_(row[C.DESC]),
-        risque:       txt_(row[C.RISQUE]),
-        action:       noFormula_(row[C.ACTION]),
-        propositions: noFormula_(row[C.PROPO]),
-        photoAvantId: avId,
-        photoApresId: apId,
-        statut:       parseStatut_(row[C.STATUT]),
-        responsable:  txt_(row[C.RESP]),
-        auteur:       lc > 16 ? txt_(row[C.AUTEUR]||'') : '',
-        anonymous:    lc > 17 ? String(row[C.ANON]||'').toLowerCase() === 'true' : false,
-        lat:          lc > 18 ? (parseFloat(row[C.LAT])||0) : 0,
-        lng:          lc > 19 ? (parseFloat(row[C.LNG])||0) : 0,
-        qrZone:       lc > 20 ? txt_(row[C.QR]||'') : '',
-        emailSent:    lc > 21 ? txt_(row[C.EMAIL_SENT]||'') : ''
+/* Ouvre le modal email avec deux sections TO / CC */
+function openMailModal(t){
+  if(!t){ t=S.detailTag; }
+  if(!t){ toast('Tag introuvable','err'); return; }
+  if(!isAdmin()){ toast('🔒 Réservé à l\'administrateur','err'); return; }
+  S.detailTag=t;
+  ['mailExtraTo','mailExtraCc'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['mailExtraToList','mailExtraCcList'].forEach(function(id){ document.getElementById(id).innerHTML=''; });
+  var boxTo=document.getElementById('mailToList');
+  var boxCc=document.getElementById('mailCcList');
+  boxTo.innerHTML=boxCc.innerHTML='<div style="color:var(--t3);font-size:.8rem">Chargement…</div>';
+  openSheet('mailOv');
+  google.script.run
+    .withSuccessHandler(function(r){
+      var dir=(r&&r.success&&r.data)?r.data:[];
+      var rows=dir.filter(function(d){ return d.email; });
+      if(!rows.length){
+        var msg='<div style="color:var(--t3);font-size:.8rem">Aucun responsable avec email configuré.</div>';
+        boxTo.innerHTML=boxCc.innerHTML=msg; return;
+      }
+      var rk=(t.responsable||'').trim().toLowerCase();
+      var toHtml='', ccHtml='';
+      rows.forEach(function(d){
+        var isPrimary=(d.name||'').trim().toLowerCase()===rk;
+        var badge=isPrimary?' <span style="font-size:.7rem;background:var(--accent);color:#000;padding:1px 6px;border-radius:99px;margin-left:4px">Responsable</span>':'';
+        var row='<label class="cc-row"><input type="checkbox" data-role="'+(isPrimary?'to':'cc')+'" value="'+esc(d.name)+'"'+(isPrimary?' checked':'')+'/>'
+               +'<span class="cc-nm">'+esc(d.name)+badge+'</span>'
+               +'<span class="cc-em">'+esc(d.email)+'</span></label>';
+        if(isPrimary) toHtml+=row; else ccHtml+=row;
       });
-    }
-    // Write Drive URLs back to sheet for any cells that were missing
-    if (cellRepairs.length > 0) {
-      try {
-        for (var ci = 0; ci < cellRepairs.length; ci++) {
-          var rep = cellRepairs[ci];
-          var url = 'https://drive.google.com/uc?export=view&id=' + rep.fileId;
-          sheet.getRange(rep.rowIndex, rep.col).setValue(url);
-        }
-      } catch(repErr) { Logger.log('cellRepair error: ' + repErr.message); }
-    }
-
-    tags.sort(function(a, b) { return b.id - a.id; });
-    return { success: true, data: tags };
-  } catch(e) { return { success: false, error: e.message }; }
+      // non-primary dans la liste TO aussi (décochés par défaut)
+      var toExtra=rows.filter(function(d){ return (d.name||'').trim().toLowerCase()!==rk; });
+      toExtra.forEach(function(d){
+        toHtml+='<label class="cc-row"><input type="checkbox" data-role="to" value="'+esc(d.name)+'"/>'+
+                '<span class="cc-nm">'+esc(d.name)+'</span>'+
+                '<span class="cc-em">'+esc(d.email)+'</span></label>';
+      });
+      boxTo.innerHTML=toHtml||'<div style="color:var(--t3);font-size:.8rem">—</div>';
+      boxCc.innerHTML=ccHtml||'<div style="color:var(--t3);font-size:.8rem">—</div>';
+    })
+    .withFailureHandler(function(){ boxTo.innerHTML=boxCc.innerHTML='<div class="cc-em">Erreur</div>'; })
+    .getResponsables(S.adminKey);
 }
 
-// ================================================================
-//  GET ZONES + RESPONSABLES UNIQUES (pour filtres mobile)
-// ================================================================
-// Liste officielle des responsables (référence pour dédoublonnage)
-var RESP_LIST = [
-  'Omar Ourihan', 'Amir Mahmoud', 'Kouachi Brahim', 'Chekalil Brahim',
-  'Salah Haloui', 'Kerrad Nazim', 'Rabah Seba', 'Hadoune Youcef',
-  'Media Amine', 'Mohamed Zerar'
+/* Ajoute un email libre dans la section TO ou CC */
+function mailAddExtra(section){
+  var inpId=section==='to'?'mailExtraTo':'mailExtraCc';
+  var listId=section==='to'?'mailExtraToList':'mailExtraCcList';
+  var inp=document.getElementById(inpId);
+  var em=(inp.value||'').trim();
+  if(!em||em.indexOf('@')<0){ toast('Email invalide','err'); return; }
+  var list=document.getElementById(listId);
+  var existing=list.querySelectorAll('[data-em]');
+  for(var i=0;i<existing.length;i++){ if(existing[i].getAttribute('data-em')===em) return; }
+  var tag=document.createElement('div');
+  tag.setAttribute('data-em',em);
+  tag.setAttribute('data-role',section);
+  tag.style.cssText='display:flex;align-items:center;gap:5px;background:var(--ink3);border-radius:99px;padding:3px 10px;font-size:.82rem';
+  tag.innerHTML='<span>'+esc(em)+'</span><button onclick="this.parentNode.remove()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:1rem;line-height:1">×</button>';
+  list.appendChild(tag);
+  inp.value='';
+}
+
+/* Envoie l'email avec TO et CC distincts */
+function sendMailWithCc(){
+  var t=S.detailTag; if(!t){ toast('Tag introuvable','err'); return; }
+  if(S.offline){ toast('📵 Hors-ligne — email impossible','err'); return; }
+  var toList=[], cc=[];
+  document.querySelectorAll('#mailToList input[type=checkbox]:checked').forEach(function(c){ toList.push(c.value); });
+  document.querySelectorAll('#mailExtraToList [data-em]').forEach(function(el){ toList.push(el.getAttribute('data-em')); });
+  document.querySelectorAll('#mailCcList input[type=checkbox]:checked').forEach(function(c){ cc.push(c.value); });
+  document.querySelectorAll('#mailExtraCcList [data-em]').forEach(function(el){ cc.push(el.getAttribute('data-em')); });
+  if(!toList.length){ toast('Sélectionnez au moins un destinataire (À)','err'); return; }
+  closeSheet('mailOv');
+  showLoader('Envoi de l\'email au responsable…');
+  google.script.run
+    .withSuccessHandler(function(res){
+      hideSplash();
+      if(res&&res.success){
+        toast('✓ Email envoyé à '+(res.to||t.responsable)+(res.cc?' (CC: '+res.cc+')':''),'ok');
+        if(S.detailTag) S.detailTag.emailSent=res.emailSent||'envoyé';
+        setMailBtnState(true);
+        loadAll();
+      }
+      else toast('Erreur: '+((res&&res.error)||'?'),'err');
+    })
+    .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+    .sendTagEmail({ rowIndex:t.rowIndex, id:t.id, adminKey:S.adminKey, toList:toList, cc:cc });
+}
+function dfH(k,v){ return '<div class="df"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
+function dfHf(k,v){ return '<div class="df full"><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
+function tlI(cls,ico,lbl,dt){
+  return '<div class="tl-item"><div class="tl-dot '+cls+'">'+ico+'</div>'+
+    '<div class="tl-cnt"><div class="tl-lbl">'+lbl+'</div><div class="tl-dt">'+dt+'</div></div></div>';
+}
+
+/* ══════════════════════════════════════════
+   FORMULAIRE D'AJOUT (page unique "tag informations")
+══════════════════════════════════════════ */
+function openQuick(){
+  S.qDng=''; S.qGrav='Élevée'; S.camB64=''; S.camMime='image/jpeg';
+  S.camApB64=''; S.camApMime='image/jpeg';
+  S.qLat=0; S.qLng=0; S.qQR='';
+  // N° Cas prévisionnel (le serveur attribue l'ID définitif)
+  var maxId=0; (S.tags||[]).forEach(function(t){ if(t.id>maxId) maxId=t.id; });
+  document.getElementById('qNum').value=(maxId+1);
+  document.getElementById('qGravSel').value='Élevée';
+  document.getElementById('qZone').value='étage 0';
+  document.getElementById('qEmplace').value='';
+  document.getElementById('qDesc').value='';
+  document.getElementById('qRisque').value='';
+  document.getElementById('qPropo').value='';
+  document.getElementById('qResp').value='';
+  var cp=document.getElementById('camPrev'); cp.src=''; cp.style.display='none';
+  var ap=document.getElementById('qApPrev'); ap.src=''; ap.style.display='none';
+  SUGG_IGNORED={};
+  ['qSuggRisque','qSuggPropo','qSuggDesc'].forEach(function(b){renderSugg(b,'','');});
+  openSheet('quickOv');
+}
+
+function submitQuick(){
+  var desc=document.getElementById('qDesc').value.trim();
+  if(!desc){ toast('Description requise','err'); return; }
+  var data={
+    danger:S.qDng||'',
+    gravite:document.getElementById('qGravSel').value,
+    zone:document.getElementById('qZone').value,
+    emplacement:document.getElementById('qEmplace').value.trim(),
+    description:desc,
+    risque:document.getElementById('qRisque').value.trim(),
+    propositions:document.getElementById('qPropo').value.trim(),
+    responsable:document.getElementById('qResp').value.trim(),
+    anonymous:false,
+    auteur:'',lat:0,lng:0,qrZone:'',
+    photoAvant:S.camB64, photoApres:S.camApB64, mime:S.camMime
+  };
+  closeSheet('quickOv');
+  if(S.offline){
+    S.queue.push(data);
+    localStorage.setItem('hse_q',JSON.stringify(S.queue));
+    document.getElementById('syncBanner').classList.add('on');
+    toast('📵 Sauvegardé hors-ligne','info');
+    return;
+  }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r.success){ toast('✓ Tag #'+r.id+' créé ! Statut: Ouvert','ok'); loadAll(); }
+      else toast('Erreur: '+(r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .addTag(data);
+}
+
+function prevCam(input){
+  if(!input.files||!input.files[0]) return;
+  S.camMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camB64=dataUrl.split(',')[1];
+    var p=document.getElementById('camPrev'); p.src=dataUrl; p.style.display='block';
+  });
+}
+function prevCamAp(input){
+  if(!input.files||!input.files[0]) return;
+  S.camApMime='image/jpeg';
+  compressImage(input.files[0],function(dataUrl){
+    S.camApB64=dataUrl.split(',')[1];
+    var p=document.getElementById('qApPrev'); p.src=dataUrl; p.style.display='block';
+  });
+}
+/* Compression d'image côté client (réduit la taille avant envoi)
+   Redimensionne au plus à maxDim px et ré-encode en JPEG. */
+function compressImage(file,cb,maxDim,quality){
+  maxDim=maxDim||1280; quality=quality||0.72;
+  var r=new FileReader();
+  r.onload=function(e){
+    var src=e.target.result;
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width, h=img.height;
+      if(w>=h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+      else if(h>w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+      try{
+        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cb(cv.toDataURL('image/jpeg',quality));
+      }catch(err){ cb(src); }
+    };
+    img.onerror=function(){ cb(src); };
+    img.src=src;
+  };
+  r.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════
+   SUGGESTIONS (Risque / Action / Propositions)
+   Proposées selon le type de danger + la description.
+   L'utilisateur peut les appliquer ou les ignorer.
+══════════════════════════════════════════ */
+/* Bases par type de danger (mot-clé recherché dans le type) */
+var SUGG_BASE=[
+  {k:/[eé]lectr/i, risque:'Électrocution, court-circuit ou départ de feu',
+   action:'Consigner et couper l’alimentation électrique (LOTO) avant toute intervention',
+   propo:'Installer des coffrets/prises conformes (NF) et protéger les câbles exposés'},
+  {k:/chute|hauteur/i, risque:'Chute de hauteur ou de plain-pied',
+   action:'Baliser la zone et installer un garde-corps ou une ligne de vie conforme',
+   propo:'Mettre en place un échafaudage sécurisé ou un accès permanent conforme'},
+  {k:/incendie|feu|explos/i, risque:'Incendie / propagation des flammes',
+   action:'Dégager les issues, vérifier les moyens d’extinction et baliser la zone',
+   propo:'Installer/repositionner les extincteurs et respecter les consignes de stockage'},
+  {k:/fuite|d[eé]versement|eau|hydraul/i, risque:'Pollution, glissade ou atteinte à l’environnement',
+   action:'Contenir la fuite, baliser la zone et absorber le déversement',
+   propo:'Réparer la fuite, remplacer le joint/raccord défectueux et nettoyer la zone'},
+  {k:/m[eé]can/i, risque:'Happement, coupure ou écrasement par un organe mobile',
+   action:'Arrêter et consigner la machine (LOTO) avant toute intervention',
+   propo:'Installer une protection fixe ou asservie conforme aux normes (NF EN ISO)'},
+  {k:/chimiq|corros|toxi/i, risque:'Brûlure, intoxication ou réaction chimique',
+   action:'Isoler le produit, ventiler la zone et porter les EPI adaptés',
+   propo:'Stocker les produits dans la zone dédiée (rétention) et afficher les FDS'},
+  {k:/obstruction|voie|[eé]vacuation/i, risque:'Gêne d’évacuation / blocage des secours',
+   action:'Dégager immédiatement la voie ou l’issue de secours',
+   propo:'Matérialiser et maintenir les voies de circulation dégagées'}
+];
+var SUGG_DEFAULT={risque:'Risque pour la santé et la sécurité du personnel',
+  action:'Sécuriser et baliser immédiatement la zone concernée',
+  propo:'Mettre en place une mesure corrective adaptée et durable'};
+/* Raffinements selon des mots-clés de la description (surchargent la base) */
+var SUGG_KW=[
+  {k:/palette|stockage|gerbage/i, risque:'Chute d’objet (stockage non conforme)',
+   action:'Stabiliser et réorganiser le stockage en sécurité',
+   propo:'Stocker les palettes horizontalement et de manière sécurisée'},
+  {k:/mouche|insecte|nuisible|rongeur/i, risque:'Contamination / présence de nuisibles',
+   action:'Nettoyer et assainir la zone immédiatement',
+   propo:'Installer un fly killer / dispositif anti-nuisibles'},
+  {k:/glissant|glissade|tr[eé]buch|sol/i, risque:'Glissade ou trébuchement',
+   action:'Nettoyer, sécher et baliser le sol',
+   propo:'Éliminer la source et signaler durablement la zone'},
+  {k:/clou|verre|coupant|contondant/i, risque:'Blessure par objet contondant',
+   action:'Retirer immédiatement l’objet du sol',
+   propo:'Mettre en place un ramassage régulier et une zone de dépôt dédiée'},
+  {k:/trou|mural|ouverture/i, risque:'Chute / blessure (ouverture non protégée)',
+   action:'Baliser et condamner immédiatement l’ouverture',
+   propo:'Réparer ou combler le trou de manière conforme'},
+  {k:/garde-?corps|protection/i, risque:'Chute de hauteur (protection manquante)',
+   action:'Installer un garde-corps permanent conforme (NF E85-015)',
+   propo:'Mettre en place une protection collective pérenne'}
+];
+var SUGG_IGNORED={};
+function computeSugg(danger,desc){
+  var hay=((danger||'')+' '+(desc||'')).toLowerCase();
+  var out=null;
+  for(var i=0;i<SUGG_BASE.length;i++){ if(SUGG_BASE[i].k.test(hay)){ out=SUGG_BASE[i]; break; } }
+  if(!out) out=SUGG_DEFAULT;
+  var res={risque:out.risque,action:out.action,propo:out.propo};
+  for(var j=0;j<SUGG_KW.length;j++){
+    if(SUGG_KW[j].k.test(desc||'')){
+      var kw=SUGG_KW[j];
+      if(kw.risque) res.risque=kw.risque;
+      if(kw.action) res.action=kw.action;
+      if(kw.propo)  res.propo=kw.propo;
+      break;
+    }
+  }
+  return res;
+}
+function renderSugg(boxId,fieldId,text){
+  var box=document.getElementById(boxId);
+  if(!box) return;
+  if(!text||SUGG_IGNORED[boxId]){ box.className='sugg'; box.innerHTML=''; return; }
+  box.innerHTML='<span class="sugg-lead">💡 Suggestion</span>'+
+    '<button type="button" class="sugg-chip" onclick="applySugg(\''+fieldId+'\',\''+boxId+'\')"></button>'+
+    '<button type="button" class="sugg-x" onclick="ignoreSugg(\''+boxId+'\')">Ignorer</button>';
+  box.querySelector('.sugg-chip').textContent=text;
+  box.querySelector('.sugg-chip').dataset.txt=text;
+  box.className='sugg on';
+}
+function refreshSugg(){
+  var danger=document.getElementById('fDanger').value;
+  var desc=document.getElementById('fDesc').value;
+  if(!danger&&!desc){
+    ['suggRisque','suggAction','suggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg(danger,desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('suggRisque','fRisque',empty('fRisque')?s.risque:'');
+  renderSugg('suggAction','fAction',empty('fAction')?s.action:'');
+  renderSugg('suggPropo','fPropo',empty('fPropo')?s.propo:'');
+}
+/* Scanner la photo (IA Gemini) → suggérer la description de l'anomalie */
+function scanPhotoDesc(){
+  if(!S.camB64){ toast('Ajoutez d’abord une photo de l’anomalie','err'); return; }
+  showLoader('Analyse de la photo…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if(r&&r.success&&r.text){
+        SUGG_IGNORED['qSuggDesc']=false;
+        renderSugg('qSuggDesc','qDesc',r.text);
+        toast('✓ Description suggérée','ok');
+      } else {
+        toast('Analyse impossible : '+((r&&r.error)||'?'),'err');
+      }
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur : '+e.message,'err'); })
+    .analyzePhoto({ photo:S.camB64, mime:S.camMime||'image/jpeg' });
+}
+/* Suggestions pour le formulaire d'ajout (basées sur la description) */
+function refreshQSugg(){
+  var desc=document.getElementById('qDesc').value;
+  if(!desc){
+    ['qSuggRisque','qSuggPropo'].forEach(function(b){renderSugg(b,'','');});
+    return;
+  }
+  var s=computeSugg('',desc);
+  var empty=function(id){return !document.getElementById(id).value.trim();};
+  renderSugg('qSuggRisque','qRisque',empty('qRisque')?s.risque:'');
+  renderSugg('qSuggPropo','qPropo',empty('qPropo')?s.propo:'');
+}
+function applySugg(fieldId,boxId){
+  var box=document.getElementById(boxId);
+  var chip=box?box.querySelector('.sugg-chip'):null;
+  if(chip){ document.getElementById(fieldId).value=chip.dataset.txt||chip.textContent; }
+  SUGG_IGNORED[boxId]=true;
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+  // Si on vient de remplir la description, recalculer Risque/Propositions
+  if(fieldId==='qDesc' && typeof refreshQSugg==='function') refreshQSugg();
+}
+function ignoreSugg(boxId){
+  SUGG_IGNORED[boxId]=true;
+  var box=document.getElementById(boxId);
+  if(box){ box.className='sugg'; box.innerHTML=''; }
+}
+
+/* ══════════════════════════════════════════
+   FULL FORM (Modifier)
+══════════════════════════════════════════ */
+/* Sélectionne le responsable dans le menu déroulant.
+   Tolère les anciennes valeurs (casse/espaces différents) et,
+   si la valeur n'existe pas dans la liste, l'ajoute en option. */
+function setRespValue(selId,val){
+  var sel=document.getElementById(selId);
+  if(!sel) return;
+  val=(val||'').trim();
+  if(!val){ sel.value=''; return; }
+  var norm=function(s){return s.toLowerCase().replace(/\s+/g,' ').trim();};
+  var target=norm(val), matched=null;
+  for(var i=0;i<sel.options.length;i++){
+    if(norm(sel.options[i].value||sel.options[i].text)===target){ matched=sel.options[i]; break; }
+  }
+  if(matched){ sel.value=matched.value||matched.text; }
+  else{
+    var opt=document.createElement('option');
+    opt.value=val; opt.text=val;
+    sel.appendChild(opt);
+    sel.value=val;
+  }
+}
+function editTag(id){
+  var t=S.tags.find(function(x){return String(x.id)===String(id);});
+  if(!t) return;
+  S.editing=t;
+  document.getElementById('formTitle').textContent='✏️ Modifier Tag #'+t.id;
+  document.getElementById('fRowIdx').value=t.rowIndex;
+  document.getElementById('fId').value=t.id;
+  document.getElementById('fDanger').value=t.danger||'';
+  document.getElementById('fGravite').value=t.gravite||'Élevée';
+  document.getElementById('fStatut').value=t.statut||'Ouvert';
+  document.getElementById('fEmplace').value=t.emplacement||'';
+  document.getElementById('fZone').value=t.zone||'étage 0';
+  document.getElementById('fDateCr').value=t.dateCreation||todayStr();
+  document.getElementById('fDateCi').value=t.dateCible||plusDaysStr(t.dateCreation||todayStr(),3);
+  document.getElementById('fDesc').value=t.description||'';
+  document.getElementById('fRisque').value=t.risque||'';
+  document.getElementById('fAction').value=t.action||'';
+  document.getElementById('fPropo').value=t.propositions||'';
+  setRespValue('fResp',t.responsable||'');
+  document.getElementById('fAnon').checked=t.anonymous||false;
+  SUGG_IGNORED={};
+  refreshSugg();
+  ['avPrev','apPrev'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['avOk','apOk'].forEach(function(id){document.getElementById(id).style.display='none';});
+  openSheet('formOv');
+}
+function prevPh(input,prevId,okId){
+  if(!input.files||!input.files[0]) return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var el=document.getElementById(prevId); el.src=e.target.result; el.style.display='block';
+    document.getElementById(okId).style.display='inline';
+  };
+  r.readAsDataURL(input.files[0]);
+}
+function submitFull(){
+  var danger=document.getElementById('fDanger').value.trim();
+  var desc=document.getElementById('fDesc').value.trim();
+  if(!danger||!desc){ toast('Danger et description requis','err'); return; }
+  var data={
+    danger,gravite:document.getElementById('fGravite').value,
+    statut:document.getElementById('fStatut').value,
+    emplacement:document.getElementById('fEmplace').value.trim(),
+    zone:document.getElementById('fZone').value,
+    dateCreation:document.getElementById('fDateCr').value,
+    dateCible:document.getElementById('fDateCi').value,
+    description:desc,
+    risque:document.getElementById('fRisque').value.trim(),
+    action:document.getElementById('fAction').value.trim(),
+    propositions:document.getElementById('fPropo').value.trim(),
+    responsable:document.getElementById('fResp').value.trim(),
+    anonymous:document.getElementById('fAnon').checked
+  };
+  closeSheet('formOv');
+  showLoader('Enregistrement…');
+  var avF=document.getElementById('fPhAv').files[0];
+  var apF=document.getElementById('fPhAp').files[0];
+  function doSave(av,ap,mime){
+    data.photoAvant=av||''; data.photoApres=ap||''; data.mime=mime||'image/jpeg';
+    function onSaved(r){
+      hideSplash();                          // Ordre 3 ✓
+      if(r.success){ toast('✓ Tag enregistré !','ok'); loadAll(); }
+      else toast('Erreur: '+(r.error||'?'),'err');
+    }
+    function onErr(e){ hideSplash(); toast(e.message,'err'); }
+    if(S.editing){
+      data.rowIndex=document.getElementById('fRowIdx').value;
+      data.adminKey=S.adminKey;
+      google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).updateTag(data);
+    } else {
+      google.script.run.withSuccessHandler(onSaved).withFailureHandler(onErr).addTag(data);
+    }
+  }
+  function rf(f,cb){ compressImage(f,function(dataUrl){ cb(dataUrl.split(',')[1],'image/jpeg'); }); }
+  if(avF&&apF) rf(avF,function(a,m){ rf(apF,function(b){ doSave(a,b,m); }); });
+  else if(avF) rf(avF,function(a,m){ doSave(a,'',m); });
+  else if(apF) rf(apF,function(b,m){ doSave('',b,m); });
+  else doSave('','','image/jpeg');
+}
+
+/* ══════════════════════════════════════════
+   DELETE
+══════════════════════════════════════════ */
+function confirmDel(row){
+  S.delRow=row;
+  document.getElementById('delConfBtn').onclick=function(){
+    closeSheet('delOv');
+    showLoader('Suppression…');
+    google.script.run
+      .withSuccessHandler(function(r){       // Ordre 3 ✓
+        hideSplash();
+        if(r.success){ toast('Tag supprimé','ok'); loadAll(); }
+        else toast('Erreur','err');
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .deleteTag(S.delRow, S.adminKey);
+  };
+  openSheet('delOv');
+}
+
+/* ══════════════════════════════════════════
+   SHEETS / OVERLAYS
+══════════════════════════════════════════ */
+function openSheet(id){ document.getElementById(id).classList.add('on'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('on'); }
+
+/* ══════════════════════════════════════════
+   IMAGE FULLSCREEN
+══════════════════════════════════════════ */
+function openIfs(src){ document.getElementById('ifsImg').src=src; document.getElementById('ifs').classList.add('on'); }
+function closeIfs(){ document.getElementById('ifs').classList.remove('on'); }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast '+(type||'ok')+' on';
+  clearTimeout(_tt); _tt=setTimeout(function(){ el.classList.remove('on'); },3600);
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   LAZY IMAGE LOADING via getImagesBatch
+══════════════════════════════════════════ */
+var _imgCache = {};        // fileId -> data URL
+var _imgInFlight = {};     // fileId -> true (en cours)
+var _imgObserver = null;
+var _imgQueue = [];        // batching queue
+var _imgQueueTimer = null;
+
+function setupLazyImages(){
+  if(_imgObserver) _imgObserver.disconnect();
+  _imgObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        var el = en.target;
+        var id = el.getAttribute('data-imgid');
+        if(id && !el.classList.contains('loaded')){
+          loadLazyImage(el, id);
+          _imgObserver.unobserve(el);
+        }
+      }
+    });
+  }, { rootMargin: '200px 0px', threshold: 0.01 });
+
+  document.querySelectorAll('.tc-lazy[data-imgid]').forEach(function(el){
+    var id = el.getAttribute('data-imgid');
+    if(_imgCache[id]){
+      applyImgToEl(el, _imgCache[id]);
+    } else {
+      _imgObserver.observe(el);
+    }
+  });
+}
+
+function loadLazyImage(el, fileId){
+  if(_imgCache[fileId]){ applyImgToEl(el, _imgCache[fileId]); return; }
+  if(_imgInFlight[fileId]) return;
+  _imgInFlight[fileId] = true;
+  _imgQueue.push({ el:el, id:fileId });
+  // Batch les requêtes : attendre 50ms pour grouper plusieurs IDs
+  if(_imgQueueTimer) clearTimeout(_imgQueueTimer);
+  _imgQueueTimer = setTimeout(flushImgQueue, 50);
+}
+
+function flushImgQueue(){
+  if(!_imgQueue.length) return;
+  // Prendre jusqu'à 8 images par batch
+  var batch = _imgQueue.splice(0, 8);
+  var ids   = batch.map(function(x){ return x.id; });
+
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r.success && r.data){
+        batch.forEach(function(item){
+          var dataUrl = r.data[item.id];
+          if(dataUrl){
+            _imgCache[item.id] = dataUrl;
+            applyImgToEl(item.el, dataUrl);
+          } else {
+            item.el.classList.add('err');
+          }
+          delete _imgInFlight[item.id];
+        });
+      } else {
+        batch.forEach(function(item){
+          item.el.classList.add('err');
+          delete _imgInFlight[item.id];
+        });
+      }
+      // Continuer si la queue n'est pas vide
+      if(_imgQueue.length) setTimeout(flushImgQueue, 100);
+    })
+    .withFailureHandler(function(){
+      batch.forEach(function(item){
+        item.el.classList.add('err');
+        delete _imgInFlight[item.id];
+      });
+    })
+    .getImagesBatch(ids);
+}
+
+function applyImgToEl(el, dataUrl){
+  el.classList.add('loaded');
+  el.innerHTML = '<img src="'+dataUrl+'" alt=""/>';
+}
+
+// Ouvrir image en plein écran (charge à la demande si pas en cache)
+function openLazyImg(fileId){
+  if(_imgCache[fileId]){
+    openIfs(_imgCache[fileId]);
+    return;
+  }
+  toast('⏳ Chargement de l\'image…','info');
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r.success && r.data){
+        _imgCache[fileId] = r.data;
+        openIfs(r.data);
+      } else { toast('Image indisponible','err'); }
+    })
+    .withFailureHandler(function(){ toast('Erreur chargement image','err'); })
+    .getImageBase64(fileId);
+}
+
+
+/* ══════════════════════════════════════════
+   MOBILE FILTERS (Ordres 1 + 2)
+══════════════════════════════════════════ */
+var MF = { zone:'TOUT', resp:'TOUT', sort:'recent' };
+
+function toggleMFilters(){
+  document.getElementById('mfilters').classList.toggle('expanded');
+}
+
+function populateMFilters(){
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(!r.success) return;
+      var z = document.getElementById('mfZone');
+      var p = document.getElementById('mfResp');
+      // Reset (garder les premières options)
+      while(z.options.length > 1) z.remove(1);
+      while(p.options.length > 2) p.remove(2);
+      (r.data.zones||[]).forEach(function(zone){
+        var o = document.createElement('option');
+        o.value = zone; o.textContent = zone;
+        z.appendChild(o);
+      });
+      (r.data.responsables||[]).forEach(function(resp){
+        var o = document.createElement('option');
+        o.value = resp; o.textContent = resp;
+        p.appendChild(o);
+      });
+    })
+    .getFilterOptions();
+}
+
+function setMSort(s, btn){
+  MF.sort = s;
+  document.querySelectorAll('.mf-tgl').forEach(function(b){ b.classList.remove('on'); });
+  if(btn) btn.classList.add('on');
+  applyMobileFilters();
+}
+
+function applyMobileFilters(){
+  MF.zone = document.getElementById('mfZone').value;
+  MF.resp = document.getElementById('mfResp').value;
+  updateMFCount();
+  renderTagsView();
+}
+
+function resetMFilters(){
+  MF = { zone:'TOUT', resp:'TOUT', sort:'recent' };
+  document.getElementById('mfZone').value = 'TOUT';
+  document.getElementById('mfResp').value = 'TOUT';
+  document.querySelectorAll('.mf-tgl').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sort')==='recent');
+  });
+  updateMFCount();
+  renderTagsView();
+}
+
+function updateMFCount(){
+  var active = 0;
+  if(MF.zone !== 'TOUT') active++;
+  if(MF.resp !== 'TOUT') active++;
+  if(MF.sort !== 'recent') active++;
+  document.getElementById('mfCount').textContent = active>0 ? '('+active+' actif'+(active>1?'s':'')+')' : '';
+}
+
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ══════════════════════════════════════════
+   SUPERVISEUR HSE — SENSIBILISATION
+══════════════════════════════════════════ */
+
+var _sensiParticipants = [];
+var _senficheB64 = '';
+var _senficheMime = '';
+var _sensiThemes = [];
+
+var _sensiActiveTab = 'campagnes';
+
+function switchSensiTab(tab, btn) {
+  _sensiActiveTab = tab;
+  document.querySelectorAll('.sensi-tab').forEach(function(b){ b.classList.remove('on'); });
+  if (btn) btn.classList.add('on');
+  document.getElementById('sensiTabCampagnes').style.display = tab==='campagnes' ? '' : 'none';
+  document.getElementById('sensiTabProfil').style.display    = tab==='profil'    ? '' : 'none';
+  var newBtn = document.getElementById('sensiNewBtn');
+  if (newBtn) newBtn.style.display = tab==='campagnes' ? '' : 'none';
+  if (tab==='campagnes') renderSensibilisation();
+}
+
+function renderSensibilisation() {
+  var body = document.getElementById('sensiBody');
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">📋</div><div>Aucune campagne enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouvelle campagne » pour commencer.</div></div>';
+        return;
+      }
+      body.innerHTML = r.data.map(function(c) {
+        var nbPart = (c.participants||[]).length;
+        var partNames = (c.participants||[]).slice(0,3).map(function(p){ return esc(p.name); }).join(', ');
+        if (nbPart>3) partNames += ' +' + (nbPart-3);
+        var animInitials = (c.animateurNom||'?').split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase()||'?';
+        return '<div class="hse-card">'
+          // En-tête : thème + badge participants
+          + '<div class="hse-card-header">'
+          + '<div><div class="hse-card-title">'+esc(c.theme||'—')+'</div>'
+          + '<div class="hse-card-meta"><span>📅 '+esc(c.dateCampagne)+'</span></div></div>'
+          + '<span class="hse-card-badge badge-ok">'+nbPart+' part.</span>'
+          + '</div>'
+          // Superviseur bien visible
+          + '<div style="display:flex;align-items:center;gap:10px;background:var(--ink3);border-radius:8px;padding:9px 12px;margin-bottom:10px">'
+          + '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#e67e22);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#000;flex-shrink:0">'+animInitials+'</div>'
+          + '<div><div style="font-size:.8rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Superviseur / Animateur</div>'
+          + '<div style="font-size:.9rem;font-weight:700;color:var(--t1)">'+esc(c.animateurNom||'—')+'</div>'
+          + (c.animateurMatricule ? '<div style="font-size:.72rem;color:var(--t3)">Matricule : '+esc(c.animateurMatricule)+'</div>' : '')
+          + '</div></div>'
+          // Participants
+          + (partNames ? '<div style="font-size:.78rem;color:var(--t2);margin-bottom:8px">👥 '+partNames+'</div>' : '')
+          + (c.notes ? '<div style="font-size:.8rem;color:var(--t3);margin-bottom:8px">📝 '+esc(c.notes)+'</div>' : '')
+          + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir fiche de présence</a>' : '<span style="font-size:.78rem;color:var(--t3)">Pas de fiche jointe</span>')
+          + '</div>';
+      }).join('');
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getCampagnes(S.adminKey);
+}
+
+/* ── Onglet Profil employé ── */
+var _profilSearchTimer = null;
+
+function searchProfilEmp(q) {
+  clearTimeout(_profilSearchTimer);
+  var res = document.getElementById('sensiProfilResults');
+  var card = document.getElementById('sensiProfilCard');
+  q = (q||'').trim();
+  if (!q) { res.innerHTML=''; res.style.display='none'; return; }
+  res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Recherche…</div>';
+  res.style.display = 'block';
+  _profilSearchTimer = setTimeout(function() {
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (!r||!r.success||!r.data.length) {
+          res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Aucun employé trouvé</div>';
+          return;
+        }
+        res.innerHTML = r.data.map(function(e) {
+          return '<div class="emp-search-item" onclick="loadProfilEmp(\''+esc(e.matricule)+'\',\''+esc(e.name)+'\')">'
+            + '<div style="font-weight:600">'+esc(e.name)+'</div>'
+            + '<div class="em-mat">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+            + '</div>';
+        }).join('');
+      })
+      .withFailureHandler(function(){
+        res.innerHTML = '<div style="padding:8px 14px;color:red;font-size:.82rem">Erreur réseau</div>';
+      })
+      .searchEmployeesHSE({ token:S.adminKey, query:q });
+  }, 300);
+}
+
+function loadProfilEmp(mat, name) {
+  document.getElementById('sensiProfilResults').style.display = 'none';
+  document.getElementById('sensiProfilSearch').value = name + ' (' + mat + ')';
+  var card = document.getElementById('sensiProfilCard');
+  card.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:12px 0">Chargement du profil…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { card.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      renderProfilCard(r.employee, r.campagnes, r.total, mat, name);
+    })
+    .withFailureHandler(function(e){ card.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getEmployeeSensibilisations({ token:S.adminKey, matricule:mat });
+}
+
+function renderProfilCard(emp, campagnes, total, mat, fallbackName) {
+  var card = document.getElementById('sensiProfilCard');
+  var e = emp || { matricule:mat, name:fallbackName||mat, dept:'', role:'user', actif:false };
+  var initials = (e.name||'?').split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase() || '?';
+  var roleLbl = e.role==='admin' ? '<span class="role-badge role-admin">Admin</span>'
+              : e.role==='hse_supervisor' ? '<span class="role-badge role-super">Superviseur HSE</span>'
+              : '<span class="role-badge role-user">Utilisateur</span>';
+  var lastDate = campagnes.length ? campagnes[0].dateCampagne : '—';
+  var asAnim = campagnes.filter(function(c){ return c.wasAnimateur; }).length;
+
+  var html = '<div class="profil-card">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div class="profil-avatar">'+initials+'</div>'
+    + '<div><div class="profil-name">'+esc(e.name)+roleLbl+'</div>'
+    + '<div class="profil-meta">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div>'
+    + '<div class="profil-meta" style="margin-top:2px">'+(e.actif?'<span style="color:#22c55e">● Accès actif</span>':'<span style="color:#6b7280">● Pas d\'accès app</span>')+'</div>'
+    + '</div></div>'
+    + '<div class="profil-stats">'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+total+'</div><div class="profil-stat-lbl">Sensibilisations</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val">'+asAnim+'</div><div class="profil-stat-lbl">Animées</div></div>'
+    + '<div class="profil-stat"><div class="profil-stat-val" style="font-size:1rem">'+esc(lastDate)+'</div><div class="profil-stat-lbl">Dernière session</div></div>'
+    + '</div>'
+    + '</div>';
+
+  if (!campagnes.length) {
+    html += '<div class="hse-empty" style="margin-top:12px"><div class="hse-empty-ico">📭</div><div>Aucune sensibilisation enregistrée pour cet employé.</div></div>';
+  } else {
+    html += '<div class="profil-history"><div class="profil-history-title">Historique ('+total+')</div>'
+      + campagnes.map(function(c) {
+          return '<div class="profil-hist-item">'
+            + '<div class="profil-hist-dot'+(c.wasAnimateur?' anim':'')+'"></div>'
+            + '<div style="flex:1"><div class="profil-hist-theme">'+esc(c.theme)+'</div>'
+            + '<div class="profil-hist-meta">'+esc(c.dateCampagne)+' · '+esc(c.nbParticipants)+' participants</div>'
+            + (c.wasAnimateur
+                ? '<div style="font-size:.73rem;margin-top:2px"><span style="background:rgba(59,130,246,.15);color:#3b82f6;font-weight:700;padding:2px 7px;border-radius:8px">🎤 A animé cette session</span></div>'
+                : (c.animateurNom ? '<div style="font-size:.73rem;color:var(--t3);margin-top:2px">Superviseur : <span style="color:var(--t2);font-weight:600">'+esc(c.animateurNom)+'</span></div>' : ''))
+            + (c.notes ? '<div style="font-size:.75rem;color:var(--t3);margin-top:2px">'+esc(c.notes)+'</div>' : '')
+            + (c.ficheId ? '<a onclick="openIfsId(\''+esc(c.ficheId)+'\')" style="font-size:.75rem;color:#3b82f6;cursor:pointer;white-space:nowrap">📎 Fiche</a>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  card.innerHTML = html;
+}
+
+function openSensiForm() {
+  _sensiParticipants = [];
+  _senficheB64 = '';
+  _senficheMime = '';
+  document.getElementById('sensiDate').value = todayStr();
+  document.getElementById('sensiNotes').value = '';
+  document.getElementById('sensiEmpSearch').value = '';
+  document.getElementById('sensiEmpResults').style.display = 'none';
+  document.getElementById('sensiEmpResults').innerHTML = '';
+  renderParticipants();
+  document.getElementById('senfichePreview').style.display = 'none';
+  document.getElementById('senficheArea').classList.remove('has-file');
+  document.getElementById('senficheInput').value = '';
+  // Load themes
+  google.script.run
+    .withSuccessHandler(function(r) {
+      _sensiThemes = (r&&r.success&&r.data)||[];
+      var sel = document.getElementById('sensiTheme');
+      sel.innerHTML = '<option value="">— Sélectionner un thème —</option>'
+        + _sensiThemes.map(function(t){ return '<option>'+esc(t)+'</option>'; }).join('');
+    })
+    .withFailureHandler(function(){})
+    .getSensibilisationThemes(S.adminKey);
+  openSheet('sensiFormOv');
+}
+
+var _empSearchTimer = null;
+function searchEmpHSE(q) {
+  clearTimeout(_empSearchTimer);
+  var res = document.getElementById('sensiEmpResults');
+  if (!q.trim()) { res.style.display='none'; res.innerHTML=''; return; }
+  _empSearchTimer = setTimeout(function() {
+    res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Recherche…</div>';
+    res.style.display = 'block';
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (!r||!r.success||!r.data.length) {
+          res.innerHTML = '<div style="padding:8px 14px;color:var(--t3);font-size:.82rem">Aucun résultat</div>';
+          return;
+        }
+        res.innerHTML = r.data.map(function(e) {
+          var already = _sensiParticipants.some(function(p){ return p.matricule===e.matricule; });
+          return '<div class="emp-search-item'+(already?' already':'') +'" onclick="addParticipant(\''+esc(e.matricule)+'\',\''+esc(e.name)+'\',\''+esc(e.dept)+'\')" style="'+(already?'opacity:.5;pointer-events:none':'')+'"><div>'+esc(e.name)+'</div><div class="em-mat">'+esc(e.matricule)+(e.dept?' · '+esc(e.dept):'')+'</div></div>';
+        }).join('');
+      })
+      .withFailureHandler(function(){})
+      .searchEmployeesHSE({ token:S.adminKey, query:q });
+  }, 300);
+}
+
+function clearEmpSearch() {
+  document.getElementById('sensiEmpSearch').value = '';
+  var res = document.getElementById('sensiEmpResults');
+  res.style.display = 'none';
+  res.innerHTML = '';
+}
+
+function addParticipant(mat, name, dept) {
+  if (_sensiParticipants.some(function(p){ return p.matricule===mat; })) return;
+  _sensiParticipants.push({ matricule:mat, name:name, dept:dept });
+  renderParticipants();
+  document.getElementById('sensiEmpSearch').value = '';
+  document.getElementById('sensiEmpResults').style.display = 'none';
+}
+
+function removeParticipant(mat) {
+  _sensiParticipants = _sensiParticipants.filter(function(p){ return p.matricule!==mat; });
+  renderParticipants();
+}
+
+function renderParticipants() {
+  var el = document.getElementById('sensiParticipants');
+  var cnt = document.getElementById('sensiPartCount');
+  cnt.textContent = _sensiParticipants.length;
+  el.innerHTML = _sensiParticipants.map(function(p) {
+    return '<span class="emp-chip">'+esc(p.name)+' <span style="color:var(--t3);font-size:.72rem">'+esc(p.matricule)+'</span>'
+      +'<button class="rm-emp" onclick="removeParticipant(\''+esc(p.matricule)+'\')">✕</button></span>';
+  }).join('');
+}
+
+function onSenficheChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _senficheB64 = e.target.result;
+    _senficheMime = file.type;
+    var area = document.getElementById('senficheArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('senfichePreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitCampagne() {
+  var theme = document.getElementById('sensiTheme').value;
+  var date  = document.getElementById('sensiDate').value;
+  if (!theme) { toast('Sélectionnez un thème','err'); return; }
+  if (!date)  { toast('Saisissez une date','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Campagne #'+r.id+' enregistrée','ok');
+        closeSheet('sensiFormOv');
+        renderSensibilisation();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .saveCampagne({
+      token: S.adminKey,
+      dateCampagne: date,
+      theme: theme,
+      animateurNom: S_AUTH.name||S_AUTH.matricule,
+      participants: _sensiParticipants,
+      fichePhoto: _senficheB64,
+      fiche_mime: _senficheMime,
+      notes: document.getElementById('sensiNotes').value
+    });
+}
+
+/* ══════════════════════════════════════════
+   SUPERVISEUR HSE — SUIVI INCENDIE
+══════════════════════════════════════════ */
+
+var _incPhotoB64 = '';
+var _incPhotoMime = '';
+
+var CHECKLIST_EXTINCTEUR = [
+  { key:'pression',   label:'Pression dans la zone verte (manomètre)' },
+  { key:'goupille',   label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette',  label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',      label:'Accès dégagé (1 m autour de l\'appareil)' },
+  { key:'aspect',     label:'Aspect général correct (pas de rouille/dommage)' },
+  { key:'position',   label:'Position et hauteur réglementaires (≤ 1,2 m)' },
+  { key:'signalet',   label:'Signalétique visible et lisible' }
 ];
 
-// Clé normalisée : minuscules, sans accents, espaces réduits
-function normRespKey_(s) {
-  return String(s || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase().replace(/\s+/g, ' ').trim();
+var CHECKLIST_RIA = [
+  { key:'robinet',    label:'Robinet de fermeture opérationnel' },
+  { key:'tuyau',      label:'Tuyau en bon état (pas de fissure ni détérioration)' },
+  { key:'lance',      label:'Lance/diffuseur présent et intact' },
+  { key:'devidoir',   label:'Dévidoir fonctionne correctement (déroulement libre)' },
+  { key:'etiquette',  label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',      label:'Accès dégagé et non encombré' },
+  { key:'signalet',   label:'Signalétique visible et lisible' }
+];
+
+/* ─── Checklists par type d'extincteur (Inspection Globale) ─── */
+var CHECKLIST_POUDRE_ABC = [
+  { key:'pression',  label:'Pression dans la zone verte (manomètre)' },
+  { key:'goupille',  label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé (1 m autour de l\'appareil)' },
+  { key:'aspect',    label:'Aspect général correct (pas de rouille/dommage)' },
+  { key:'position',  label:'Position et hauteur réglementaires (≤ 1,2 m)' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+var CHECKLIST_CO2 = [
+  { key:'poids',     label:'Poids vérifié / indicateur de charge OK' },
+  { key:'goupille',  label:'Goupille et plombage intacts' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé' },
+  { key:'aspect',    label:'Aspect général correct (pas de corrosion)' },
+  { key:'tuyere',    label:'Tuyère / corne de diffusion en bon état' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+var CHECKLIST_EAU_EXT = [
+  { key:'pression',  label:'Pression dans la zone verte' },
+  { key:'goupille',  label:'Goupille de sécurité présente et intacte' },
+  { key:'etiquette', label:'Étiquette d\'inspection à jour (≤ 12 mois)' },
+  { key:'acces',     label:'Accès dégagé' },
+  { key:'aspect',    label:'Aspect général correct (pas de rouille)' },
+  { key:'lance',     label:'Lance et tuyau en bon état' },
+  { key:'signalet',  label:'Signalétique visible et lisible' }
+];
+
+var _checklistConfig = {};
+
+function _checklistByType(type) {
+  var cfg = _checklistConfig[type];
+  if (cfg && cfg.length) return cfg;
+  if (type==='CO2') return CHECKLIST_CO2;
+  if (type==='Eau') return CHECKLIST_EAU_EXT;
+  return CHECKLIST_POUDRE_ABC;
 }
 
-// Renvoie le nom officiel si correspondance, sinon le nom nettoyé
-function canonResp_(s, lookup) {
-  var k = normRespKey_(s);
-  if (lookup[k]) return lookup[k];
-  return String(s || '').replace(/\s+/g, ' ').trim();
+/* ══════════════════════════════════════════
+   CONFIG EXTINCTEURS + ZONES
+══════════════════════════════════════════ */
+var _extConfig       = [];
+var _configuredZones = [];
+
+/* ─── Helpers zones ─── */
+function _zoneOptions(current) {
+  var opts = '<option value="">— Zone —</option>';
+  _configuredZones.forEach(function(z){
+    opts += '<option value="'+esc(z)+'"'+(z===current?' selected':'')+'>'+esc(z)+'</option>';
+  });
+  return opts;
 }
 
-// ── Annuaire des responsables (noms + emails) ──────────────────
-// Modifiable par l'admin, stocké dans la propriété RESP_DIRECTORY (JSON).
-// À défaut, construit depuis RESP_LIST + RESP_EMAILS (valeurs par défaut).
-function getRespDirectory_() {
-  try {
-    var raw = PropertiesService.getScriptProperties().getProperty('RESP_DIRECTORY');
-    if (raw) {
-      var arr = JSON.parse(raw);
-      if (arr && arr.length) {
-        return arr.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
-                  .filter(function(r){ return r.name; });
-      }
-    }
-  } catch(e) {}
-  return RESP_LIST.map(function(n){ return { name:n, email:(RESP_EMAILS[n]||'') }; });
+function _renderZoneChips() {
+  var el = document.getElementById('zoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removeConfigZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
 }
 
-// Public : noms seulement (pour les menus déroulants de l'app)
-function getResponsablesList() {
-  return { success:true, data: getRespDirectory_().map(function(r){ return r.name; }) };
-}
-
-// Admin : noms + emails (pour l'édition)
-function getResponsables(adminKey) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  return { success:true, data: getRespDirectory_() };
-}
-
-// Admin : enregistre l'annuaire (noms + emails)
-function saveResponsables(adminKey, list) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  if (!Array.isArray(list)) return { success:false, error:'Liste invalide' };
-  var clean = list.map(function(r){ return { name:String(r.name||'').trim(), email:String(r.email||'').trim() }; })
-                  .filter(function(r){ return r.name; });
-  if (!clean.length) return { success:false, error:'Au moins un responsable requis' };
-  PropertiesService.getScriptProperties().setProperty('RESP_DIRECTORY', JSON.stringify(clean));
-  return { success:true, data:clean };
-}
-
-function getFilterOptions() {
-  try {
-    var res = getTags();
-    if (!res.success) return res;
-    // Table de correspondance clé normalisée -> nom officiel
-    var lookup = {};
-    getRespDirectory_().forEach(function(r){ lookup[normRespKey_(r.name)] = r.name; });
-
-    var zones = {}, resps = {};
-    res.data.forEach(function(t) {
-      if (t.zone) zones[String(t.zone).replace(/\s+/g, ' ').trim()] = true;
-      if (t.responsable) {
-        var name = canonResp_(t.responsable, lookup);
-        if (name) resps[name] = true;
-      }
-    });
-    return {
-      success: true,
-      data: {
-        zones:        Object.keys(zones).sort(),
-        responsables: Object.keys(resps).sort()
-      }
-    };
-  } catch(e) { return { success: false, error: e.message }; }
-}
-
-// ================================================================
-//  KPI
-// ================================================================
-function getKPIs(adminKey) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  try {
-    var res = getTags();
-    if (!res.success) return res;
-    var tags  = res.data;
-    var today = new Date();
-    var total = tags.length, ouverts = 0, fermes = 0, overdue = 0;
-    var byZone={}, byDanger={}, byMonth={}, byGravite={Élevée:0,Moyenne:0,Faible:0};
-    var durClosed = [], durOpen = [];
-
-    tags.forEach(function(t) {
-      if (t.statut === 'Fermé') fermes++;
-      else {
-        ouverts++;
-        if (t.dateCible) {
-          var dc = new Date(t.dateCible);
-          if (!isNaN(dc.getTime()) && dc < today) overdue++;
-        }
-      }
-      if (t.dateCreation) {
-        var d1 = new Date(t.dateCreation);
-        if (!isNaN(d1.getTime())) {
-          if (t.statut === 'Fermé') {
-            var d2 = t.dateFerme ? new Date(t.dateFerme) : today;
-            var days = Math.max(0, Math.round((d2 - d1) / 86400000));
-            durClosed.push({ id:t.id, danger:t.danger, zone:t.zone, days:days });
-          } else {
-            var daysSince = Math.round((today - d1) / 86400000);
-            durOpen.push({ id:t.id, danger:t.danger, zone:t.zone, days:daysSince });
-          }
-        }
-      }
-      var z = t.zone || 'Inconnu';
-      byZone[z] = (byZone[z]||0) + 1;
-      var d = (t.danger||'Inconnu').substring(0, 32);
-      byDanger[d] = (byDanger[d]||0) + 1;
-      if (t.dateCreation) {
-        var m = t.dateCreation.substring(0, 7);
-        byMonth[m] = (byMonth[m]||0) + 1;
-      }
-      if (byGravite[t.gravite] !== undefined) byGravite[t.gravite]++;
-    });
-
-    var avgDays=0, maxDays=0, minDays=0, sla7=0;
-    if (durClosed.length) {
-      var sum = durClosed.reduce(function(s,d){return s+d.days;}, 0);
-      avgDays = Math.round(sum / durClosed.length * 10) / 10;
-      maxDays = Math.max.apply(null, durClosed.map(function(d){return d.days;}));
-      minDays = Math.min.apply(null, durClosed.map(function(d){return d.days;}));
-      sla7    = Math.round(durClosed.filter(function(d){return d.days<=7;}).length / durClosed.length * 100);
-    }
-
-    return { success: true, data: {
-      total, ouverts, fermes, overdue, avgDays, maxDays, minDays, sla7,
-      byZone, byDanger, byMonth, byGravite,
-      topSlow: durClosed.sort(function(a,b){return b.days-a.days;}).slice(0,5),
-      topOpen: durOpen.sort(function(a,b){return b.days-a.days;}).slice(0,5)
-    }};
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ================================================================
-//  UPDATE / DELETE
-// ================================================================
-function updateTag(d) {
-  if (!isAdmin_(d && d.adminKey) && !isSessionAdmin_(d && d.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  try {
-    var sheet = getSheet_();
-    var ri    = parseInt(d.rowIndex, 10);
-    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
-
-    var sv = function(col, val) { sheet.getRange(ri, col + 1).setValue(val); };
-    var oldStatut = parseStatut_(sheet.getRange(ri, C.STATUT + 1).getValue());
-    if (oldStatut === 'Ouvert' && d.statut === 'Fermé') {
-      sv(C.DATE_FERME, new Date());
-    }
-
-    sv(C.DATE_CI,   d.dateCible ? new Date(d.dateCible) : '');
-    sv(C.DANGER,    d.danger || '');
-    sv(C.GRAVITE,   toGraviteEmoji_(d.gravite));
-    sv(C.EMPLACE,   d.emplacement || '');
-    sv(C.ZONE,      d.zone || '');
-    sv(C.DESC,      d.description || '');
-    sv(C.RISQUE,    d.risque || '');
-    sv(C.ACTION,    d.action || '');
-    sv(C.PROPO,     d.propositions || '');
-    sv(C.STATUT,    toStatutEmoji_(d.statut));
-    sv(C.RESP,      d.responsable || '');
-
-    var tagId = parseInt(d.id, 10) || (ri - (HEADER_ROW - 1));
-    if (d.photoAvant && d.photoAvant.length > 10) {
-      var fnAv  = tagId + '.Référence Photo.' + nowHHMMSS_() + '.jpg';
-      var urlAv = savePhotoToFolder_(d.photoAvant, fnAv, d.mime||'image/jpeg');
-      if (urlAv) sv(C.PHOTO_AV, urlAv);
-    }
-    if (d.photoApres && d.photoApres.length > 10) {
-      var fnAp  = tagId + '.Photo après.' + nowHHMMSS_() + '.jpg';
-      var urlAp = savePhotoToFolder_(d.photoApres, fnAp, d.mime||'image/jpeg');
-      if (urlAp) sv(C.PHOTO_AP, urlAp);
-    }
-    return { success: true, status: 'SUCCESS' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function deleteTag(rowIndex, adminKey) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  try {
-    getSheet_().deleteRow(parseInt(rowIndex, 10));
-    return { success: true, status: 'SUCCESS' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ================================================================
-//  SUPPRESSION D'UNE PHOTO (avant / après) — Admin uniquement
-//  Vide la cellule correspondante et met le fichier Drive à la corbeille.
-// ================================================================
-function deletePhoto(p) {
-  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  try {
-    var sheet = getSheet_();
-    var ri = parseInt(p.rowIndex, 10);
-    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
-    var which = String(p.which || '').toLowerCase();
-    var col = which === 'apres' ? C.PHOTO_AP : which === 'avant' ? C.PHOTO_AV : -1;
-    if (col < 0) return { success:false, error:'Type de photo invalide (avant/apres)' };
-
-    // Récupère l'ID de la ligne pour retrouver le tag
-    var tagId = String(sheet.getRange(ri, C.NUM + 1).getValue() || '').trim();
-
-    // Supprime le fichier Drive depuis la cellule (best-effort)
-    try {
-      var url = String(sheet.getRange(ri, col + 1).getValue() || '').trim();
-      var fileId = extractFileId_(url, '');
-      if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
-    } catch(e) {}
-
-    // Supprime AUSSI tous les fichiers correspondants dans le dossier Drive
-    // pour éviter qu'ils soient retrouvés par le cache dossier
-    if (tagId) {
-      try {
-        var isApres = (which === 'apres');
-        var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
-        var files = folder.getFiles();
-        while (files.hasNext()) {
-          var f = files.next();
-          var name = f.getName();
-          var m = name.match(/^(\d+)\.(Référence Photo|Reference Photo|Photo apr[èe]s|Photo avant)\b/i);
-          if (m && String(parseInt(m[1], 10)) === String(parseInt(tagId, 10))) {
-            var isApresFile = /apr/i.test(m[2]);
-            if (isApres === isApresFile) {
-              try { f.setTrashed(true); } catch(fe) {}
-            }
-          }
-        }
-      } catch(e) {}
-    }
-
-    sheet.getRange(ri, col + 1).setValue('');
-
-    // Si la photo après est supprimée, repasser le statut à "Ouvert"
-    if (which === 'apres') {
-      sheet.getRange(ri, C.STATUT + 1).setValue('🟥 Ouvert');
-      sheet.getRange(ri, C.DATE_FERME + 1).setValue('');
-    }
-
-    return { success:true, status:'SUCCESS', which:which };
-  } catch(e) { return { success:false, error:e.toString() }; }
-}
-
-// ================================================================
-//  SAVE AFTER-PHOTO ONLY (sans réécrire les autres colonnes)
-//  Permet d'ajouter la "Photo après" directement depuis le détail
-// ================================================================
-function saveAfterPhoto(p) {
-  try {
-    var sheet = getSheet_();
-    var ri = parseInt(p.rowIndex, 10);
-    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
-    if (!p.photoApres || p.photoApres.length < 10) return { success:false, error:'Photo manquante' };
-    var tagId = parseInt(p.id, 10) || ri;
-    var fn  = tagId + '.Photo après.' + nowHHMMSS_() + '.jpg';
-    var url = savePhotoToFolder_(p.photoApres, fn, p.mime || 'image/jpeg');
-    if (!url) return { success:false, error:'Échec de la sauvegarde' };
-    sheet.getRange(ri, C.PHOTO_AP + 1).setValue(url);
-
-    var oldStatut = parseStatut_(sheet.getRange(ri, C.STATUT + 1).getValue());
-    if (oldStatut === 'Ouvert') {
-      sheet.getRange(ri, C.STATUT + 1).setValue(toStatutEmoji_('Fermé'));
-      sheet.getRange(ri, C.DATE_FERME + 1).setValue(new Date());
-    }
-
-    return { success:true, status:'SUCCESS', url:url, statut:'Fermé' };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ================================================================
-//  TEST D'AUTORISATION MAIL — à exécuter UNE FOIS depuis l'éditeur
-//  (sélectionner "testMailAuth" puis ▶ Exécuter) pour déclencher
-//  l'écran d'autorisation de script.send_mail. Peut être supprimée
-//  après l'autorisation accordée.
-// ================================================================
-function testMailAuth() {
-  MailApp.sendEmail('brahimstepup@gmail.com', 'Test HSE Tags', 'Autorisation Mail OK.');}
-
-// ================================================================
-//  EMAIL AU RESPONSABLE (bouton manuel dans la vue détail)
-//  Correspondance noms → emails. Complétez les adresses ci-dessous.
-//  Vous pouvez aussi ajouter/surcharger via Propriétés du script :
-//    clé RESP_EMAILS = {"Kouachi Brahim":"BrahimKOUACHI@palmaryfood.com", ...}
-// ================================================================
-var RESP_EMAILS = {
-  'Omar Ourihan':    '',
-  'Amir Mahmoud':    '',
-  'Kouachi Brahim':  'BrahimKOUACHI@palmaryfood.com',
-  'Chekalil Brahim': '',
-  'Salah Haloui':    '',
-  'Kerrad Nazim':    '',
-  'Rabah Seba':      '',
-  'Hadoune Youcef':  '',
-  'Media Amine':     '',
-  'Mohamed Zerar':   ''
-};
-
-function respEmailFor_(name) {
-  var k = normRespKey_(name);
-  // 1) Annuaire (modifiable par l'admin) — source principale
-  var dir = getRespDirectory_();
-  for (var i = 0; i < dir.length; i++) {
-    if (normRespKey_(dir[i].name) === k && dir[i].email) return dir[i].email;
+function _refreshZoneSelects() {
+  /* met à jour les selects de plage ET du tableau */
+  ['zonePoudre','zoneCO2','zoneEau'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (sel && sel.tagName==='SELECT') { var v=sel.value; sel.innerHTML=_zoneOptions(v); }
+  });
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  for (var i=1; i<=100; i++) {
+    var sel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    if (sel && sel.tagName==='SELECT') { var v2=sel.value; sel.innerHTML=_zoneOptions(v2); }
   }
-  // 2) Surcharge héritée via propriété RESP_EMAILS (JSON)
-  try {
-    var raw = PropertiesService.getScriptProperties().getProperty('RESP_EMAILS');
-    if (raw) {
-      var extra = JSON.parse(raw);
-      for (var key in extra) {
-        if (normRespKey_(key) === k && extra[key]) return String(extra[key]).trim();
-      }
-    }
-  } catch(e) {}
-  return '';
 }
 
-function sendTagEmail(p) {
-  if (!isAdmin_(p && p.adminKey) && !isSessionAdmin_(p && p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
-  try {
-    var sheet = getSheet_();
-    var ri = parseInt(p.rowIndex, 10);
-    if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
-
-    var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
-
-    // Résoudre les destinataires principaux (toList) envoyés depuis le client
-    var toEmails = [];
-    if (p.toList && p.toList.length) {
-      for (var ti = 0; ti < p.toList.length; ti++) {
-        var tEntry = String(p.toList[ti] || '').trim();
-        if (!tEntry) continue;
-        var tEm = tEntry.indexOf('@') >= 0 ? tEntry : respEmailFor_(tEntry);
-        if (tEm && toEmails.indexOf(tEm) < 0) toEmails.push(tEm);
-      }
-    }
-    // Fallback : responsable du tag
-    if (!toEmails.length) {
-      var resp = txt_(row[C.RESP]);
-      if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
-      var fallbackTo = respEmailFor_(resp);
-      if (!fallbackTo) return { success:false, error:'Email non configuré pour « ' + resp + ' ».' };
-      toEmails.push(fallbackTo);
-    }
-    var to = toEmails[0];
-    var extraTo = toEmails.slice(1); // destinataires supplémentaires → ajoutés en CC
-
-    // Destinataires en copie (CC)
-    var ccEmails = [].concat(extraTo);
-    if (p.cc && p.cc.length) {
-      for (var ci = 0; ci < p.cc.length; ci++) {
-        var c = String(p.cc[ci] || '').trim();
-        if (!c) continue;
-        var em = c.indexOf('@') >= 0 ? c : respEmailFor_(c);
-        if (em && em.toLowerCase() !== to.toLowerCase() && ccEmails.indexOf(em) < 0) ccEmails.push(em);
-      }
-    }
-
-    var id       = txt_(row[C.NUM]) || p.id || ri;
-    var danger   = noFormula_(row[C.DANGER]);
-    var gravite  = parseGravite_(row[C.GRAVITE]);
-    var statut   = parseStatut_(row[C.STATUT]);
-    var zone     = noFormula_(row[C.ZONE]);
-    var emplace  = noFormula_(row[C.EMPLACE]);
-    var desc     = noFormula_(row[C.DESC]);
-    var risque   = noFormula_(row[C.RISQUE]);
-    var action   = noFormula_(row[C.ACTION]);
-    var propo    = noFormula_(row[C.PROPO]);
-    var dateCr   = fmtDate_(row[C.DATE_CR]);
-    var dateCi   = fmtDate_(row[C.DATE_CI]);
-
-    var subject = '[HSE] Tag #' + id + ' qui vous est assigné — ' + (danger || 'Anomalie') + ' (' + gravite + ')';
-
-    // Token signé (tagId.rowIndex.expires.hash) — valable 30 jours, sans PropertiesService
-    var token     = makeApresToken_(id, ri);
-    var appUrl    = ScriptApp.getService().getUrl();
-    var uploadUrl = appUrl + '?action=upload_apres&token=' + encodeURIComponent(token);
-
-    var line = function(k, v) {
-      if (!v) return '';
-      return '<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap;vertical-align:top">' + k +
-             '</td><td style="padding:6px 12px;color:#111">' + String(v).replace(/\n/g, '<br>') + '</td></tr>';
-    };
-    var gravColor = gravite === 'Élevée' ? '#e74c3c' : gravite === 'Moyenne' ? '#e67e22' : '#27ae60';
-
-    // Récupère la photo avant depuis Drive (best-effort)
-    var photoBlob = null;
-    try {
-      var avUrl = String(row[C.PHOTO_AV] || '').trim();
-      var avId  = extractFileId_(avUrl, '');
-      if (!avId) {
-        var fp = getFolderPhotoFor_(parseInt(id, 10));
-        avId = fp.avantId || '';
-      }
-      if (avId) photoBlob = DriveApp.getFileById(avId).getBlob().setName('photo_avant.jpg');
-    } catch(e) {}
-
-    var photoHtml = photoBlob
-      ? '<div style="padding:0 20px 16px"><img src="cid:photoAvant" style="max-width:100%;border-radius:6px;border:1px solid #eee"></div>'
-      : '';
-
-    var html =
-      '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden">' +
-        '<div style="background:#1f2937;color:#fff;padding:16px 20px">' +
-          '<div style="font-size:18px;font-weight:700">⚠️ Tag HSE #' + id + '</div>' +
-          '<div style="font-size:13px;opacity:.85;margin-top:2px">Hygiène · Sécurité · Environnement</div>' +
-        '</div>' +
-        '<div style="padding:16px 20px;color:#111">' +
-          '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
-          '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
-          '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
-            line('N° Cas', '#' + id) +
-            line('Type de danger', danger) +
-            '<tr><td style="padding:6px 12px;font-weight:600;color:#555">Gravité</td>' +
-              '<td style="padding:6px 12px"><span style="background:' + gravColor + ';color:#fff;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700">' + gravite + '</span></td></tr>' +
-            line('Statut', statut) +
-            line('Zone', zone) +
-            line('Emplacement', emplace) +
-            line('Description', desc) +
-            line('Risque principal', risque) +
-            line('Action', action) +
-            line('Propositions', propo) +
-            line('Date création', dateCr) +
-            line('Date cible', dateCi) +
-          '</table>' +
-          '<p style="margin:18px 0 0;font-size:13px;color:#666">Merci de prendre en charge ce signalement.</p>' +
-        '</div>' +
-        (uploadUrl
-          ? '<div style="padding:16px 20px;border-top:1px solid #eee;text-align:center">' +
-              '<p style="margin:0 0 12px;font-size:13px;color:#555">Une fois le problème résolu, ajoutez la photo après pour fermer ce tag :</p>' +
-              '<a href="' + uploadUrl + '" style="display:inline-block;background:#27ae60;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px">📸 Ajouter la photo après</a>' +
-            '</div>'
-          : '') +
-        photoHtml +
-        '<div style="background:#f7f7f7;padding:12px 20px;font-size:11px;color:#999;text-align:center">HSE Tags 2025/2026 — message automatique</div>' +
-      '</div>';
-
-    var mailOpts = { to:to, subject:subject, htmlBody:html, name:'HSE Tags' };
-    if (ccEmails.length) mailOpts.cc = ccEmails.join(',');
-    if (photoBlob) mailOpts.inlineImages = { photoAvant: photoBlob };
-    MailApp.sendEmail(mailOpts);
-
-    // Trace de l'envoi (colonne V) : "yyyy-MM-dd HH:mm → destinataire"
-    var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
-    var trace = stamp + ' → ' + to + (ccEmails.length ? ' (CC: ' + ccEmails.join(', ') + ')' : '');
-    try { sheet.getRange(ri, C.EMAIL_SENT + 1).setValue(trace); } catch(e) {}
-
-    return { success:true, to:to, cc:ccEmails.join(', '), responsable:resp, emailSent:trace };
-  } catch(e) { return { success:false, error:e.toString() }; }
+function addConfigZone() {
+  var inp = document.getElementById('newZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderZoneChips();
+  _refreshZoneSelects();
 }
 
-// ================================================================
-//  ANALYSE IA DE LA PHOTO → description suggérée
-//  Compatible OpenAI (Groq par défaut, gratuit). Configurable via
-//  Propriétés du script :
-//    AI_API_KEY  (obligatoire)  ex: clé Groq (gsk_...) ou OpenRouter
-//    AI_API_URL  (optionnel)    défaut Groq
-//    AI_MODEL    (optionnel)    défaut Llama 4 Scout (vision)
-//  Pour OpenRouter : AI_API_URL=https://openrouter.ai/api/v1/chat/completions
-//                    AI_MODEL=meta-llama/llama-3.2-11b-vision-instruct:free
-// ================================================================
-function analyzePhoto(p) {
-  try {
-    if (!p || !p.photo || p.photo.length < 10) return { success:false, error:'Photo manquante' };
-    var props = PropertiesService.getScriptProperties();
-    var key   = props.getProperty('AI_API_KEY') || props.getProperty('GROQ_API_KEY');
-    if (!key) return { success:false, error:'Clé AI_API_KEY non configurée (Propriétés du script)' };
-    var url   = props.getProperty('AI_API_URL') || 'https://api.groq.com/openai/v1/chat/completions';
-    var model = props.getProperty('AI_MODEL')   || 'meta-llama/llama-4-scout-17b-16e-instruct';
-
-    var clean   = String(p.photo).replace(/^data:[^;]+;base64,/, '');
-    var dataUrl = 'data:' + (p.mime || 'image/jpeg') + ';base64,' + clean;
-
-    var prompt = "Tu es un inspecteur HSE (Hygiène Sécurité Environnement) en milieu industriel. " +
-      "Décris en UNE seule phrase concise et factuelle, en français, l'anomalie ou le danger de sécurité " +
-      "visible sur la photo (équipement concerné, défaut observé, risque). " +
-      "Pas de préambule ni de liste : uniquement la description.";
-
-    var payload = {
-      model: model,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: dataUrl } }
-        ]
-      }],
-      temperature: 0.4,
-      max_tokens: 200
-    };
-
-    var res = UrlFetchApp.fetch(url, {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { 'Authorization': 'Bearer ' + key, 'HTTP-Referer': 'https://hse-tags.app', 'X-Title': 'HSE Tags' },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    });
-
-    var code = res.getResponseCode();
-    var raw  = res.getContentText() || '{}';
-    var data = {};
-    try { data = JSON.parse(raw); } catch(e) {}
-    if (code !== 200) {
-      var msg = (data.error && (data.error.message || data.error)) || raw.substring(0, 200);
-      return { success:false, error:'IA ' + code + ': ' + msg };
-    }
-    var text = '';
-    try { text = data.choices[0].message.content.trim(); } catch(e) {}
-    if (!text) return { success:false, error:'Réponse vide de l\'IA' };
-    return { success:true, text:text };
-  } catch(e) { return { success:false, error:e.toString() }; }
+function removeConfigZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderZoneChips();
+  _refreshZoneSelects();
 }
 
-// ================================================================
-//  HELPERS
-// ================================================================
-function nowHHMMSS_() {
-  var n = new Date();
-  return pad2_(n.getHours()) + pad2_(n.getMinutes()) + pad2_(n.getSeconds());
-}
-function pad2_(n) { return String(n).padStart(2, '0'); }
-
-function savePhotoToFolder_(b64, name, mime) {
-  try {
-    var clean = b64.replace(/^data:[^;]+;base64,/, '');
-    var blob  = Utilities.newBlob(Utilities.base64Decode(clean), mime, name);
-    var folder= DriveApp.getFolderById(PHOTOS_FOLDER_ID);
-    var file  = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    _folderCache = null;
-    return 'https://drive.google.com/uc?export=view&id=' + file.getId();
-  } catch(e) { Logger.log('savePhotoToFolder_: ' + e.message); return ''; }
+function saveZonesConfig() {
+  showLoader('Sauvegarde des zones…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Zones sauvegardées','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveZones({ adminKey:S.adminKey, zones:_configuredZones });
 }
 
-function routeNotification_(d, id) {
-  try {
-    var danger = (d.danger||d.dangerType||'').toLowerCase();
-    var dept = /[eé]lectr/i.test(danger) ? 'Maintenance Électrique' :
-               /fuite|pompe|mécan|hydraul/i.test(danger) ? 'Maintenance Mécanique' :
-               /incendie|explos|gaz|feu/i.test(danger) ? 'Sécurité/HSE' :
-               /chimiq|corros|dévers/i.test(danger) ? 'HSE/Environnement' : 'HSE';
-    Logger.log('[HSE #' + id + '] → ' + dept);
-  } catch(e) {}
-}
-
-function fmtDate_(v) {
-  if (!v) return '';
-  try {
-    var d = (v instanceof Date) ? v : new Date(v);
-    if (isNaN(d.getTime())) return String(v).replace(/\s+0:00:?0?$/, '').trim();
-    return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-  } catch(e) { return String(v).replace(/\s+0:00:?0?$/, '').trim(); }
-}
-function txt_(v) { return (v==null||v===undefined)?'':String(v).trim(); }
-function noFormula_(v) { var s=txt_(v); return (s.startsWith('=')||s.startsWith('\\='))?'':s; }
-function parseGravite_(v) {
-  var s=txt_(v);
-  if(/[eé]lev[eé]/i.test(s)||s.indexOf('🟥')!==-1) return 'Élevée';
-  if(/moyen/i.test(s)||s.indexOf('🟧')!==-1) return 'Moyenne';
-  if(/faib/i.test(s)||s.indexOf('🟢')!==-1) return 'Faible';
-  return 'Élevée';
-}
-function parseStatut_(v) {
-  var s=txt_(v);
-  return (/ferm/i.test(s)||s.indexOf('✅')!==-1)?'Fermé':'Ouvert';
-}
-function toGraviteEmoji_(g) {
-  if(g==='Moyenne'||g==='🟧 Moyenne') return '🟧 Moyenne';
-  if(g==='Faible'||g==='🟢 Faible')   return '🟢 Faible';
-  return '🟥 Élevée';
-}
-function toStatutEmoji_(s) {
-  return (s==='Fermé')?'✅ Fermé':'🟥 Ouvert';
-}
-
-// ================================================================
-//  DEBUG
-// ================================================================
-function debugPhotoMapping() {
-  var res = getTags();
-  if (!res.success) { Logger.log('Erreur: ' + res.error); return; }
-  Logger.log('=== Diagnostic photos (premiers 20 tags) ===');
-  res.data.slice(0, 20).forEach(function(t) {
-    Logger.log('#' + t.id + ' (ligne ' + t.rowIndex + ') | ' +
-      'avantId=' + (t.photoAvantId || '∅') + ' | ' +
-      'apresId=' + (t.photoApresId || '∅'));
+/* ─── Éditeur de points de contrôle par type ─── */
+function _renderChecklistEditor() {
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  Object.keys(map).forEach(function(type) {
+    var cont = document.getElementById(map[type]);
+    if (!cont) return;
+    var items = _checklistConfig[type] || [];
+    cont.innerHTML = items.map(function(it) {
+      return '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">'
+        +'<input class="fi" type="text" value="'+esc(it.label)+'" data-cltype="'+esc(type)+'" data-clkey="'+esc(it.key)+'" '
+        +'style="height:30px;font-size:.78rem;flex:1" placeholder="Libellé du point…"/>'
+        +'<button type="button" onclick="removeChecklistItem(\''+esc(type)+'\',\''+esc(it.key)+'\')" '
+        +'style="height:30px;width:30px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:6px;color:#e74c3c;cursor:pointer;font-size:.85rem;flex-shrink:0">✕</button>'
+        +'</div>';
+    }).join('');
   });
 }
 
-// ================================================================
-//  SUPERVISEUR HSE — Feuilles Sensibilisation & Suivi Incendie
-// ================================================================
+function _syncChecklistFromDOM() {
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  Object.keys(map).forEach(function(type) {
+    var cont = document.getElementById(map[type]);
+    if (!cont) return;
+    _checklistConfig[type] = [];
+    cont.querySelectorAll('input[data-clkey]').forEach(function(inp) {
+      var label = inp.value.trim();
+      var key   = inp.getAttribute('data-clkey');
+      if (label) _checklistConfig[type].push({ key:key, label:label });
+    });
+  });
+}
 
-var SENSI_SHEET    = 'Sensibilisation';
-var INCENDIE_SHEET = 'Suivi_Incendie';
+function addChecklistItem(type) {
+  _syncChecklistFromDOM();
+  if (!_checklistConfig[type]) _checklistConfig[type] = [];
+  _checklistConfig[type].push({ key:'custom_'+(Date.now()%1e7), label:'' });
+  _renderChecklistEditor();
+  var map = { 'Poudre ABC':'clPoudreList', 'CO2':'clCO2List', 'Eau':'clEauList' };
+  var cont = document.getElementById(map[type]);
+  if (cont) { var ins = cont.querySelectorAll('input[data-clkey]'); if (ins.length) ins[ins.length-1].focus(); }
+}
 
-function getSensiSheet_() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sh = ss.getSheetByName(SENSI_SHEET);
-  if (!sh) {
-    sh = ss.insertSheet(SENSI_SHEET);
-    sh.getRange(1,1,1,9).setValues([[
-      'ID','Date Campagne','Thème','Matricule Animateur','Nom Animateur',
-      'Participants (JSON)','Fiche de présence (URL)','Notes','Date Création'
-    ]]);
-    sh.getRange(1,1,1,9).setFontWeight('bold').setBackground('#f5c518').setFontColor('#000000');
-    sh.setColumnWidth(6, 300);
-    sh.setColumnWidth(7, 200);
+function removeChecklistItem(type, key) {
+  _syncChecklistFromDOM();
+  _checklistConfig[type] = (_checklistConfig[type]||[]).filter(function(it){ return it.key!==key; });
+  _renderChecklistEditor();
+}
+
+function resetChecklistToDefaults() {
+  _checklistConfig = {
+    'Poudre ABC': CHECKLIST_POUDRE_ABC.slice(),
+    'CO2':        CHECKLIST_CO2.slice(),
+    'Eau':        CHECKLIST_EAU_EXT.slice()
+  };
+  _renderChecklistEditor();
+  toast('Points restaurés — cliquez 💾 pour sauvegarder','ok');
+}
+
+function saveChecklistConfig() {
+  _syncChecklistFromDOM();
+  showLoader('Sauvegarde des points de contrôle…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Points de contrôle sauvegardés','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklistsConfig({ adminKey:S.adminKey, checklists:_checklistConfig });
+}
+
+/* ─── Ouverture config panel ─── */
+function openConfigExt() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement de la configuration…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _configuredZones       = r.zones||[];
+      _extConfig             = r.extConfig||[];
+      _extDocCode            = r.extDocCode            || 'ENR-HSE 1';
+      _extDocRev             = r.extDocRev             || '01';
+      _extDocEdition         = r.extDocEdition         || '';
+      _extProchaineMonths    = parseInt(r.extProchaineMonths)  || 12;
+      _hseLogoUrl            = r.logoUrl               || '';
+      _hseSignatureUrl       = r.signatureUrl          || '';
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| '';
+      var dcEl = document.getElementById('extDocCodeInput');
+      if (dcEl) dcEl.value = _extDocCode;
+      var rvEl = document.getElementById('extDocRevInput');
+      if (rvEl) rvEl.value = _extDocRev;
+      var edEl = document.getElementById('extDocEditionInput');
+      if (edEl) edEl.value = _extDocEdition;
+      var pmEl = document.getElementById('extProchaineMonthsInput');
+      if (pmEl) pmEl.value = _extProchaineMonths;
+      _renderLogoPreview();
+      var _cl = r.checklists || {};
+      var _hasConfig = ['Poudre ABC','CO2','Eau'].some(function(t){ return _cl[t] && _cl[t].length; });
+      _checklistConfig = _hasConfig ? _cl : {
+        'Poudre ABC': CHECKLIST_POUDRE_ABC.slice(),
+        'CO2':        CHECKLIST_CO2.slice(),
+        'Eau':        CHECKLIST_EAU_EXT.slice()
+      };
+      _renderZoneChips();
+      _renderExtConfigTable();
+      _renderChecklistEditor();
+      _refreshZoneSelects();
+      openSheet('extConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
+}
+
+function _renderExtConfigTable() {
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  var rows = [];
+  for (var i=1; i<=100; i++) {
+    var conf = null;
+    for (var j=0; j<_extConfig.length; j++) { if (_extConfig[j].num===i) { conf=_extConfig[j]; break; } }
+    if (!conf) conf = { num:i, type:'Poudre ABC', zone:'', emplacement:'' };
+    rows.push(
+      '<div class="ext-cfg-row">'
+      +'<div class="ext-cfg-label" style="color:var(--t3)">EXT-'+String(i).padStart(2,'0')+'</div>'
+      +'<select class="fi" data-num="'+i+'" data-field="type" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +'<option value="Poudre ABC"'+(conf.type==='Poudre ABC'?' selected':'')+'>🔴 Poudre ABC</option>'
+      +'<option value="CO2"'+(conf.type==='CO2'?' selected':'')+'>🔵 CO2</option>'
+      +'<option value="Eau"'+(conf.type==='Eau'?' selected':'')+'>💧 Eau</option>'
+      +'</select>'
+      +'<select class="fi" data-num="'+i+'" data-field="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +_zoneOptions(conf.zone||'')
+      +'</select>'
+      +'<input class="fi" type="text" data-num="'+i+'" data-field="emplacement" value="'+esc(conf.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+      +'</div>'
+    );
   }
-  return sh;
+  body.innerHTML = rows.join('');
 }
 
-function getIncendieSheet_() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sh = ss.getSheetByName(INCENDIE_SHEET);
-  if (!sh) {
-    sh = ss.insertSheet(INCENDIE_SHEET);
-    sh.getRange(1,1,1,13).setValues([[
-      'ID','Date Inspection','Matricule Superviseur','Nom Superviseur',
-      'Type','ID Équipement','Zone','Checklist (JSON)','État Global',
-      'Observations','Prochaine Inspection','Photo Checklist (URL)','Date Création'
-    ]]);
-    sh.getRange(1,1,1,13).setFontWeight('bold').setBackground('#e74c3c').setFontColor('#ffffff');
-    sh.setColumnWidth(8, 300);
-    sh.setColumnWidth(12, 200);
+function applyRangeConfig() {
+  var specs = [
+    { type:'Poudre ABC', rangeId:'rangePoudre', zoneId:'zonePoudre' },
+    { type:'CO2',        rangeId:'rangeCO2',    zoneId:'zoneCO2' },
+    { type:'Eau',        rangeId:'rangeEau',    zoneId:'zoneEau' }
+  ];
+  var assignments = {};
+  specs.forEach(function(sp) {
+    var rangeStr = (document.getElementById(sp.rangeId).value||'').trim();
+    var zoneEl   = document.getElementById(sp.zoneId);
+    var zone     = zoneEl ? (zoneEl.value||'').trim() : '';
+    if (!rangeStr) return;
+    _parseRanges(rangeStr).forEach(function(n){ assignments[n] = { type:sp.type, zone:zone }; });
+  });
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  body.querySelectorAll('[data-field="type"]').forEach(function(sel) {
+    var n = parseInt(sel.getAttribute('data-num'),10);
+    if (assignments[n]) {
+      sel.value = assignments[n].type;
+      var zSel = body.querySelector('[data-num="'+n+'"][data-field="zone"]');
+      if (zSel && assignments[n].zone) zSel.value = assignments[n].zone;
+    }
+  });
+  toast('Plages appliquées au tableau','ok');
+}
+
+function _parseRanges(str) {
+  var nums = [];
+  str.split(',').forEach(function(part) {
+    part = part.trim();
+    if (part.indexOf('-')!==-1) {
+      var pts = part.split('-');
+      var a = parseInt(pts[0].trim(),10), b = parseInt(pts[1].trim(),10);
+      if (!isNaN(a)&&!isNaN(b)) for (var i=Math.min(a,b);i<=Math.max(a,b);i++) nums.push(i);
+    } else {
+      var n = parseInt(part,10);
+      if (!isNaN(n)) nums.push(n);
+    }
+  });
+  var unique = {};
+  nums.forEach(function(n){ unique[n]=true; });
+  return Object.keys(unique).map(Number).sort(function(a,b){ return a-b; });
+}
+
+function saveExtConfigLocal() {
+  var body = document.getElementById('extConfigBody');
+  if (!body) return;
+  var config = [];
+  for (var i=1; i<=100; i++) {
+    var sel  = body.querySelector('[data-num="'+i+'"][data-field="type"]');
+    var zsel = body.querySelector('[data-num="'+i+'"][data-field="zone"]');
+    var emp  = body.querySelector('[data-num="'+i+'"][data-field="emplacement"]');
+    if (!sel) continue;
+    config.push({ num:i, type:sel.value, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
   }
-  return sh;
+  _extConfig = config;
+  var dcEl = document.getElementById('extDocCodeInput');
+  _extDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 1';
+  var rvEl = document.getElementById('extDocRevInput');
+  _extDocRev = (rvEl&&rvEl.value.trim()) || '01';
+  var edEl = document.getElementById('extDocEditionInput');
+  _extDocEdition = (edEl&&edEl.value.trim()) || '';
+  var pmEl = document.getElementById('extProchaineMonthsInput');
+  _extProchaineMonths = parseInt(pmEl&&pmEl.value) || 12;
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration sauvegardée','ok'); closeSheet('extConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveExtConfig({ adminKey:S.adminKey, config:config, docCode:_extDocCode, docRev:_extDocRev, docEdition:_extDocEdition, prochaineMonths:_extProchaineMonths });
 }
 
-// ── Recherche d'employés pour sélection des participants (tous les employés du registre) ──
-function searchEmployeesHSE(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
-  try {
-    var q = String(p.query||'').trim().toLowerCase();
-    var sh = getEdbSheet_();
-    if (!sh) return { success:true, data:[] };
-    var lr = sh.getLastRow();
-    if (lr < EDB_START) return { success:true, data:[] };
-    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-    var results = [];
-    for (var i=0; i<rows.length; i++) {
-      var r = rows[i];
-      var mat  = String(r[EDB.MAT]).trim();
-      var name = String(r[EDB.NAME]).trim();
-      var dept = String(r[EDB.DEPT]).trim();
-      if (!mat) continue;
-      if (!q || mat.toLowerCase().indexOf(q)!==-1 || name.toLowerCase().indexOf(q)!==-1) {
-        results.push({ matricule:mat, name:name, dept:dept });
-      }
-      if (results.length >= 30) break;
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE (tous extincteurs)
+══════════════════════════════════════════ */
+var _extDocCode           = 'ENR-HSE 1';
+var _riaDocCode           = 'ENR-HSE 2';
+var _extDocRev            = '01';
+var _extDocEdition        = '';
+var _extProchaineMonths   = 12;
+var _pestDocRev           = '01';
+var _pestDocEdition       = '';
+var _pestProchaineMonths  = 3;
+var _hseLogoUrl               = '';
+var _hseLogoDataUrl           = '';
+var _hseSignatureUrl          = '';
+var _hseSignatureDataUrl      = '';
+var _hseSuperSignatureUrl     = '';
+var _hseSuperSignatureDataUrl = '';
+var _adminSigLoaded           = false;
+// Griffe par matricule { mat: url } — chargé depuis adminGetUsers
+var _userSigMap               = {};
+var _incendieCurrentDetailIdx = -1;
+var _globalStatuts  = {};
+var _globalNotes    = {};
+var _globalChecks   = {};
+var _globalPhotoB64 = '';
+var _globalPhotoMime = '';
+
+/* ── Logo admin ─────────────────────────────────── */
+function _renderLogoPreview() {
+  var img  = document.getElementById('logoPreviewImg');
+  var ph   = document.getElementById('logoPreviewPlaceholder');
+  var delB = document.getElementById('deleteLogoBtn');
+  if (!img) return;
+  var src = _hseLogoDataUrl || _hseLogoUrl;
+  if (src) {
+    img.onerror = function() {
+      img.style.display = 'none';
+      if (ph) { ph.style.display = ''; ph.textContent = '✓'; ph.title = 'Logo enregistré'; }
+    };
+    img.src = src;
+    img.style.display = 'block';
+    if (ph)  ph.style.display  = 'none';
+    if (delB) delB.style.display = 'inline-flex';
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+    if (ph)  { ph.style.display = ''; ph.textContent = '🏢'; ph.title = ''; }
+    if (delB) delB.style.display = 'none';
+  }
+}
+
+function onLogoUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 500*1024) { toast('Fichier trop grand (max 500 Ko)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _hseLogoDataUrl = dataUrl;
+    _renderLogoPreview();
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement du logo…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _hseLogoUrl = r.logoUrl || '';
+        toast('✓ Logo mis à jour','ok');
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveLogoConfig({ adminKey:S.adminKey, logoBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteAdminLogo() {
+  if (!confirm('Supprimer le logo de l\'entreprise ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _hseLogoUrl     = '';
+      _hseLogoDataUrl = '';
+      _renderLogoPreview();
+      toast('✓ Logo supprimé','ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteLogoConfig({ adminKey:S.adminKey });
+}
+
+/* ── Signature / griffe Responsable HSE ────────── */
+function _renderSigPreview() {
+  var img  = document.getElementById('sigPreviewImg');
+  var ph   = document.getElementById('sigPreviewPlaceholder');
+  var delB = document.getElementById('deleteSigBtn');
+  if (!img) return;
+  var src = _hseSignatureDataUrl || _hseSignatureUrl;
+  if (src) {
+    img.onerror = function() {
+      img.style.display = 'none';
+      if (ph) { ph.style.display = ''; ph.textContent = '✓'; }
+    };
+    img.src = src;
+    img.style.display = 'block';
+    if (ph)  ph.style.display  = 'none';
+    if (delB) delB.style.display = 'inline-flex';
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+    if (ph)  { ph.style.display = ''; ph.textContent = '✍'; }
+    if (delB) delB.style.display = 'none';
+  }
+}
+
+function onSignatureUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 500*1024) { toast('Fichier trop grand (max 500 Ko)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _hseSignatureDataUrl = dataUrl;
+    _renderSigPreview();
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement de la signature…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _hseSignatureUrl = r.signatureUrl || '';
+        toast('✓ Signature mise à jour','ok');
+        if (_usersData.length) renderUsersList(_usersData);
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteAdminSignature() {
+  if (!confirm('Supprimer la signature du Responsable HSE ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _hseSignatureUrl     = '';
+      _hseSignatureDataUrl = '';
+      _renderSigPreview();
+      toast('✓ Signature supprimée','ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteSignatureConfig({ adminKey:S.adminKey });
+}
+
+/* ── Signature / griffe Superviseur HSE ────────── */
+function _renderSuperSigPreview() {
+  var img  = document.getElementById('superSigPreviewImg');
+  var ph   = document.getElementById('superSigPreviewPlaceholder');
+  var delB = document.getElementById('deleteSuperSigBtn');
+  if (!img) return;
+  var src = _hseSuperSignatureDataUrl || _hseSuperSignatureUrl;
+  if (src) {
+    img.onerror = function() {
+      img.style.display = 'none';
+      ph.textContent = '✓';
+      ph.style.display = 'flex';
+    };
+    img.src = src;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+    if (delB) delB.style.display = 'inline-flex';
+  } else {
+    img.style.display = 'none';
+    ph.textContent    = '✍';
+    ph.style.display  = 'flex';
+    if (delB) delB.style.display = 'none';
+  }
+}
+
+function onSuperSignatureUpload(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _hseSuperSignatureDataUrl = dataUrl;
+    _renderSuperSigPreview();
+    var b64 = dataUrl.split(',')[1];
+    showLoader('Téléversement de la signature superviseur…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+        _hseSuperSignatureUrl = r.supervisorSignatureUrl || ''; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+        toast('✓ Signature superviseur mise à jour','ok');
+        if (_usersData.length) renderUsersList(_usersData);
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+      .saveSupervisorSignatureConfig({ adminKey:S.adminKey, sigBase64:b64, mime:file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteAdminSuperSignature() {
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _hseSuperSignatureUrl     = '';
+      _hseSuperSignatureDataUrl = '';
+      _renderSuperSigPreview();
+      toast('✓ Signature superviseur supprimée','ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteSupervisorSignatureConfig({ adminKey:S.adminKey });
+}
+
+function openGlobalInspection() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur config: '+(r&&r.error||'?'),'err'); return; }
+      _extConfig             = r.data||[];
+      _extDocCode            = r.extDocCode            || _extDocCode;
+      _extDocRev             = r.extDocRev             || _extDocRev;
+      _extDocEdition         = r.extDocEdition         || _extDocEdition;
+      _extProchaineMonths    = parseInt(r.extProchaineMonths)  || _extProchaineMonths;
+      _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
+      _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+      if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
+      _initGlobalForm();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getExtConfig(S.adminKey);
+}
+
+function _initGlobalForm() {
+  _globalStatuts   = {};
+  _globalNotes     = {};
+  _globalChecks    = {};
+  _globalPhotoB64  = '';
+  _globalPhotoMime = '';
+  _globalSortMode  = 'type';
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m==='type'?' on':'');
+  });
+  _extConfig.forEach(function(c){
+    _globalStatuts[c.num] = 'Conforme';
+    _globalNotes[c.num]   = '';
+    var cl = _checklistByType(c.type);
+    _globalChecks[c.num]  = {};
+    cl.forEach(function(it){ _globalChecks[c.num][it.key] = true; });
+  });
+  document.getElementById('globalIncDate').value = todayStr();
+  document.getElementById('globalIncProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
+  document.getElementById('globalIncObs').value = '';
+  document.getElementById('globalPhotoPreview').style.display = 'none';
+  document.getElementById('globalPhotoArea').classList.remove('has-file');
+  document.getElementById('globalPhotoInput').value = '';
+  _renderGlobalSections();
+  openSheet('globalInspOv');
+}
+
+var _globalSortMode = 'type';
+
+function setGlobalSort(mode) {
+  /* Sauvegarder les notes saisies avant de reconstruire le DOM */
+  _extConfig.forEach(function(c){
+    var el = document.getElementById('gnote_'+c.num);
+    if (el) _globalNotes[c.num] = el.value;
+  });
+  _globalSortMode = mode;
+  ['type','zone','num'].forEach(function(m){
+    var btn = document.getElementById('gsort-'+m);
+    if (btn) btn.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderGlobalSections();
+}
+
+function _renderExtAccordionItem(c) {
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var checklist = _checklistByType(c.type);
+  var checks    = _globalChecks[c.num]||{};
+  var total     = checklist.length;
+  var okCount   = checklist.filter(function(it){ return checks[it.key]; }).length;
+  var isOk      = okCount===total;
+
+  var checkItems = checklist.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="gchk_'+c.num+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onExtCheckChange('+c.num+',\''+it.key+'\',this.checked)"/>'
+      +'<label for="gchk_'+c.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  /* Badge type visible seulement quand non groupé par type */
+  var typePill = (_globalSortMode!=='type')
+    ? '<span style="font-size:.7rem;color:'+TY_COLORS[c.type]+';background:'+TY_COLORS[c.type]+'22;border-radius:10px;padding:1px 7px;margin-right:4px">'+TY_ICONS[c.type]+' '+esc(c.type)+'</span>'
+    : '';
+  /* Zone visible seulement quand non groupé par zone */
+  var zoneSpan = (_globalSortMode!=='zone' && c.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(c.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+
+  /* Emplacement pill in header if set */
+  var emplacePill = c.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(c.emplacement)+'</span>'
+    : '';
+
+  /* Meta line inside detail: zone + emplacement */
+  var detailMeta = (c.zone||c.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(c.zone ? '<span>🏷 '+esc(c.zone)+'</span>' : '')
+      +(c.emplacement ? '<span>📌 '+esc(c.emplacement)+'</span>' : '')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="ghdr_'+c.num+'" onclick="toggleExtAccordion('+c.num+')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(c.num).padStart(2,'0')+'</span>'
+    +typePill+zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="gbadge_'+c.num+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+total+'</span>'
+    +'<span id="gchev_'+c.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="gdet_'+c.num+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="gnote_'+c.num+'" placeholder="Note / observation…" '
+    +'value="'+esc(_globalNotes[c.num]||'')+'" onchange="_globalNotes['+c.num+']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function _renderGlobalSections() {
+  var container = document.getElementById('globalSectionsContainer');
+  if (!container) return;
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var by = _globalSortMode;
+
+  if (by === 'type') {
+    container.innerHTML = ['Poudre ABC','CO2','Eau'].map(function(type) {
+      var exts = _extConfig.filter(function(c){ return c.type===type; })
+                           .sort(function(a,b){ return a.num-b.num; });
+      if (!exts.length) return '';
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span style="color:'+TY_COLORS[type]+'">'+TY_ICONS[type]+'</span> '+esc(type)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else if (by === 'zone') {
+    var zoneMap = {};
+    _extConfig.forEach(function(c){
+      var z = (c.zone||'').trim()||'— Zone non définie';
+      if (!zoneMap[z]) zoneMap[z] = [];
+      zoneMap[z].push(c);
+    });
+    var zones = Object.keys(zoneMap).sort();
+    container.innerHTML = zones.map(function(zone) {
+      var exts = zoneMap[zone].sort(function(a,b){ return a.num-b.num; });
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+exts.length+' extincteur'+(exts.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderExtAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else { /* num */
+    var allExts = _extConfig.slice().sort(function(a,b){ return a.num-b.num; });
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les extincteurs'
+      +' <span class="global-type-count">'+allExts.length+' extincteur'+(allExts.length>1?'s':'')+'</span></div>'
+      +'<div class="global-ext-list">'+allExts.map(_renderExtAccordionItem).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function toggleExtAccordion(num) {
+  var det  = document.getElementById('gdet_'+num);
+  var hdr  = document.getElementById('ghdr_'+num);
+  var chev = document.getElementById('gchev_'+num);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (hdr)  hdr.classList.toggle('open', !open);
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function onExtCheckChange(num, key, checked) {
+  if (!_globalChecks[num]) _globalChecks[num] = {};
+  _globalChecks[num][key] = checked;
+  var extConf = null;
+  for (var i=0; i<_extConfig.length; i++) { if (_extConfig[i].num===num){ extConf=_extConfig[i]; break; } }
+  if (!extConf) return;
+  var cl      = _checklistByType(extConf.type);
+  var total   = cl.length;
+  var okCount = cl.filter(function(it){ return (_globalChecks[num]||{})[it.key]; }).length;
+  var isOk    = okCount===total;
+  _globalStatuts[num] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('gbadge_'+num);
+  if (badge) {
+    badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+    badge.innerHTML = (isOk?'✅':'❌')+' '+okCount+'/'+total;
+  }
+}
+
+function setAllGlobalStatut(statut) {
+  var isOk = statut==='Conforme';
+  _extConfig.forEach(function(c){
+    var cl = _checklistByType(c.type);
+    if (!_globalChecks[c.num]) _globalChecks[c.num]={};
+    cl.forEach(function(it){
+      _globalChecks[c.num][it.key] = isOk;
+      var el = document.getElementById('gchk_'+c.num+'_'+it.key);
+      if (el) el.checked = isOk;
+    });
+    _globalStatuts[c.num] = statut;
+    var badge = document.getElementById('gbadge_'+c.num);
+    if (badge) {
+      badge.className = 'global-ext-badge '+(isOk?'ok':'nok');
+      badge.innerHTML = (isOk?'✅':'❌')+' '+(isOk?cl.length:0)+'/'+cl.length;
     }
-    return { success:true, data:results };
-  } catch(e) { return { success:false, error:e.message }; }
+  });
 }
 
-// ── Thèmes de sensibilisation (configurés par l'admin) ──
-function getSensibilisationThemes(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
-  try {
-    var raw = PropertiesService.getScriptProperties().getProperty('SENSI_THEMES')||'[]';
-    return { success:true, data:JSON.parse(raw) };
-  } catch(e) { return { success:true, data:[] }; }
+function submitGlobalInspection() {
+  var date = document.getElementById('globalIncDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  if (!_extConfig.length) { toast('Configurez les extincteurs d\'abord','err'); return; }
+  _extConfig.forEach(function(c){
+    var el = document.getElementById('gnote_'+c.num);
+    if (el) _globalNotes[c.num] = el.value;
+  });
+  var nonConf = _extConfig.filter(function(c){ return _globalStatuts[c.num]==='Non conforme'; });
+  var etatGlobal = nonConf.length===0 ? 'Conforme'
+                 : nonConf.length < _extConfig.length/2 ? 'Partiel' : 'Non conforme';
+  var types = ['Poudre ABC','CO2','Eau'];
+  var sections = {};
+  types.forEach(function(type) {
+    var exts = _extConfig.filter(function(c){ return c.type===type; })
+                         .sort(function(a,b){ return a.num-b.num; });
+    if (!exts.length) return;
+    sections[type] = {
+      extincteurs: exts.map(function(c){
+        return { num:c.num, zone:c.zone||'', emplacement:c.emplacement||'', checks:_globalChecks[c.num]||{}, statut:_globalStatuts[c.num]||'Conforme', note:_globalNotes[c.num]||'' };
+      })
+    };
+  });
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection globale #'+r.id+' enregistrée','ok');
+        closeSheet('globalInspOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: 'Inspection Globale',
+      idEquipement: 'GLOBAL — '+_extConfig.length+' extincteurs',
+      zone: '',
+      checklist: sections,
+      etatGlobal: etatGlobal,
+      observations: document.getElementById('globalIncObs').value,
+      prochaineInspection: document.getElementById('globalIncProchaine').value,
+      photoChecklist: _globalPhotoB64,
+      photo_mime: _globalPhotoMime
+    });
 }
 
-function saveSensibilisationThemes(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var themes = (p.themes||[]).filter(function(t){ return String(t).trim(); });
-    PropertiesService.getScriptProperties().setProperty('SENSI_THEMES', JSON.stringify(themes));
-    return { success:true, data:themes };
-  } catch(e) { return { success:false, error:e.message }; }
+function onGlobalPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _globalPhotoB64  = e.target.result;
+    _globalPhotoMime = file.type;
+    var area = document.getElementById('globalPhotoArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('globalPhotoPreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
 
-// ── Enregistrer une campagne de sensibilisation ──
-function saveCampagne(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sess = verifySession_(p.token);
-    var sh = getSensiSheet_();
-    var lr = sh.getLastRow();
-    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+var _incendieRecords = [];
+var _incendieFilter  = 'all';
 
-    var ficheUrl = '';
-    if (p.fichePhoto && String(p.fichePhoto).length > 10) {
-      var ext  = (p.fiche_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
-      var fname = 'Sensi_' + nextId + '_' + new Date().getTime() + '.' + ext;
-      ficheUrl = savePhotoToFolder_(p.fichePhoto, fname, p.fiche_mime||'image/jpeg');
-    }
-
-    sh.appendRow([
-      nextId,
-      p.dateCampagne ? new Date(p.dateCampagne) : new Date(),
-      String(p.theme||''),
-      sess.matricule,
-      String(p.animateurNom||sess.matricule),
-      JSON.stringify(p.participants||[]),
-      ficheUrl,
-      String(p.notes||''),
-      new Date()
-    ]);
-    return { success:true, id:nextId };
-  } catch(e) { return { success:false, error:e.message }; }
+/* ══════════════════════════════════════════
+   FILTRE LISTE INCENDIE
+══════════════════════════════════════════ */
+function setIncendieFilter(f) {
+  _incendieFilter = f;
+  ['all','ext','ria'].forEach(function(k){
+    var el = document.getElementById('iftab_'+k);
+    if (el) el.className = 'gsort-tab'+(k===f?' on':'');
+  });
+  _renderIncendieList();
 }
 
-// ── Lire toutes les campagnes de sensibilisation ──
-function getCampagnes(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getSensiSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:true, data:[] };
-    var rows = sh.getRange(2, 1, lr-1, 9).getValues();
-    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+function _renderIncendieList() {
+  var body = document.getElementById('incendieBody');
+  if (!body || !_incendieRecords.length) return;
+  var filtered = _incendieRecords.filter(function(c) {
+    if (_incendieFilter === 'ext') return c.type !== 'RIA' && c.type !== 'Inspection Globale RIA';
+    if (_incendieFilter === 'ria') return c.type === 'RIA' || c.type === 'Inspection Globale RIA';
+    return true;
+  });
+  filtered.sort(function(a,b){ return (b.dateInspection||'').localeCompare(a.dateInspection||''); });
+  if (!filtered.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
+    return;
+  }
+  body.innerHTML = filtered.map(function(c) {
+    var idx = _incendieRecords.indexOf(c);
+    var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+    var isGlobalExt = c.type==='Inspection Globale';
+    var isGlobalRia = c.type==='Inspection Globale RIA';
+    var typeIcon = isGlobalRia ? '🌊 Inspection Globale RIA'
+                 : c.type==='RIA' ? '💧 RIA'
+                 : isGlobalExt ? '🌍 Inspection Globale'
+                 : '🔴 Extincteur';
+    var statsLine = '';
+    if (isGlobalExt && c.checklist && typeof c.checklist==='object') {
+      var types2 = ['Poudre ABC','CO2','Eau'];
+      var icons2  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
       var parts = [];
-      try { parts = JSON.parse(r[5]||'[]'); } catch(e) { parts = []; }
-      return {
-        id: r[0],
-        dateCampagne: fmtDate_(r[1]),
-        theme: String(r[2]),
-        animateurMatricule: String(r[3]),
-        animateurNom: String(r[4]),
-        participants: parts,
-        ficheUrl: String(r[6]),
-        ficheId: extractFileId_(r[6]),
-        notes: String(r[7]),
-        dateCreation: fmtDate_(r[8])
-      };
-    });
-    return { success:true, data:data.reverse() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Profil employé : campagnes dont il a bénéficié ──
-function getEmployeeSensibilisations(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
-  try {
-    var mat = String(p.matricule||'').trim();
-    if (!mat) return { success:false, error:'Matricule requis' };
-
-    // Profil depuis Employees_DB
-    var employee = null;
-    var sh = getEdbSheet_();
-    if (sh) {
-      var lr = sh.getLastRow();
-      if (lr >= EDB_START) {
-        var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
-        for (var i=0; i<rows.length; i++) {
-          if (String(rows[i][EDB.MAT]).trim() === mat) {
-            employee = {
-              matricule: mat,
-              name:  String(rows[i][EDB.NAME]).trim(),
-              dept:  String(rows[i][EDB.DEPT]).trim(),
-              role:  String(rows[i][EDB.ROLE]).trim(),
-              actif: String(rows[i][EDB.ACTIF]).toLowerCase() === 'true'
-            };
-            break;
-          }
-        }
-      }
-    }
-
-    // Campagnes de la feuille Sensibilisation
-    var sensiSh = getSensiSheet_();
-    var lr2 = sensiSh.getLastRow();
-    var campagnes = [];
-    if (lr2 >= 2) {
-      var rows2 = sensiSh.getRange(2, 1, lr2-1, 9).getValues();
-      for (var j=0; j<rows2.length; j++) {
-        var r = rows2[j];
-        if (!r[0]) continue;
-        var parts = [];
-        try { parts = JSON.parse(r[5]||'[]'); } catch(e2) { parts = []; }
-        var wasParticipant = parts.some(function(pp){ return String(pp.matricule).trim() === mat; });
-        var wasAnimateur   = String(r[3]).trim() === mat;
-        if (wasParticipant || wasAnimateur) {
-          campagnes.push({
-            id:             r[0],
-            dateCampagne:   fmtDate_(r[1]),
-            theme:          String(r[2]),
-            animateurNom:   String(r[4]),
-            nbParticipants: parts.length,
-            wasAnimateur:   wasAnimateur,
-            ficheId:        extractFileId_(r[6]),
-            notes:          String(r[7])
-          });
-        }
-      }
-    }
-
-    return { success:true, employee:employee, campagnes:campagnes.reverse(), total:campagnes.length };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Enregistrer une inspection incendie (extincteur / RIA) ──
-function saveChecklist(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sess = verifySession_(p.token);
-    var sh = getIncendieSheet_();
-    var lr = sh.getLastRow();
-    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
-
-    var photoUrl = '';
-    if (p.photoChecklist && String(p.photoChecklist).length > 10) {
-      var ext2 = (p.photo_mime||'image/jpeg').indexOf('pdf')!==-1 ? 'pdf' : 'jpg';
-      var fname2 = 'Incendie_' + nextId + '_' + new Date().getTime() + '.' + ext2;
-      photoUrl = savePhotoToFolder_(p.photoChecklist, fname2, p.photo_mime||'image/jpeg');
-    }
-
-    sh.appendRow([
-      nextId,
-      p.dateInspection ? new Date(p.dateInspection) : new Date(),
-      sess.matricule,
-      String(p.superviseurNom||sess.matricule),
-      String(p.type||'Extincteur'),
-      String(p.idEquipement||''),
-      String(p.zone||''),
-      JSON.stringify(p.checklist||{}),
-      String(p.etatGlobal||'Conforme'),
-      String(p.observations||''),
-      p.prochaineInspection ? new Date(p.prochaineInspection) : '',
-      photoUrl,
-      new Date()
-    ]);
-    return { success:true, id:nextId };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Modifier une inspection incendie (admin uniquement) ──
-function updateChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getIncendieSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
-    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
-    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
-    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
-    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
-    if (p.checklistJson  != null) sh.getRange(rowNum, 8).setValue(String(p.checklistJson));
-    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
-    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
-    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Dupliquer une inspection incendie (admin uniquement) ──
-function duplicateChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getIncendieSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    var cols = Math.max(sh.getLastColumn(), 13);
-    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
-    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
-    sh.appendRow([
-      nextId,
-      new Date(),   // date = aujourd'hui
-      src[2],       // matricule superviseur
-      src[3],       // nom superviseur
-      src[4],       // type
-      src[5],       // idEquipement
-      src[6],       // zone
-      src[7],       // checklist JSON
-      src[8],       // etatGlobal
-      src[9],       // observations
-      '',           // prochaineInspection (reset)
-      '',           // photo (reset)
-      new Date(),   // dateCreation
-      ''            // responsableNom (reset — nouvelle validation requise)
-    ]);
-    return { success:true, id:nextId };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Valider une inspection incendie (admin uniquement) ──
-function validateChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getIncendieSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
-    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Lire toutes les inspections incendie ──
-function getChecklists(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getIncendieSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:true, data:[] };
-    var cols = Math.max(sh.getLastColumn(), 13);
-    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
-    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
-      var checks = {};
-      try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
-      return {
-        id: r[0],
-        dateInspection: fmtDate_(r[1]),
-        superviseurMatricule: String(r[2]),
-        superviseurNom: String(r[3]),
-        type: String(r[4]),
-        idEquipement: String(r[5]),
-        zone: String(r[6]),
-        checklist: checks,
-        etatGlobal: String(r[8]),
-        observations: String(r[9]),
-        prochaineInspection: fmtDate_(r[10]),
-        photoId: extractFileId_(r[11]),
-        photoUrl: String(r[11]),
-        dateCreation: fmtDate_(r[12]),
-        responsableNom: String(r[13]||'')
-      };
-    });
-    return { success:true, data:data.reverse() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Configuration des extincteurs (type + zone + emplacement par numéro) ──
-function getExtConfig(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var raw    = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
-    var config = JSON.parse(raw);
-    if (!config.length) {
-      for (var i=1; i<=100; i++) config.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
-    }
-    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
-    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
-    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
-    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
-    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
-    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
-    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function saveExtConfig(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var config = (p.config||[]).map(function(c){
-      return { num:parseInt(c.num)||0, type:String(c.type||'Poudre ABC'), zone:String(c.zone||''), emplacement:String(c.emplacement||'') };
-    }).filter(function(c){ return c.num>=1 && c.num<=200; });
-    var props = PropertiesService.getScriptProperties();
-    props.setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
-    if (p.docCode)          props.setProperty('EXT_DOC_CODE',          String(p.docCode));
-    if (p.docRev      != null) props.setProperty('EXT_DOC_REV',         String(p.docRev).trim()||'01');
-    if (p.docEdition  != null) props.setProperty('EXT_DOC_EDITION',     String(p.docEdition).trim());
-    if (p.prochaineMonths != null) props.setProperty('EXT_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||12));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function saveZones(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var zones = (p.zones||[]).map(function(z){ return String(z).trim(); }).filter(Boolean);
-    PropertiesService.getScriptProperties().setProperty('ZONES_CONFIG', JSON.stringify(zones));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function getConfigData(adminKey) {
-  if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props = PropertiesService.getScriptProperties();
-    var rawExt        = props.getProperty('EXTINCTEUR_CONFIG')||'[]';
-    var rawZones      = props.getProperty('ZONES_CONFIG')||'[]';
-    var rawChecklists = props.getProperty('CHECKLISTS_CONFIG')||'{}';
-    var rawRia        = props.getProperty('RIA_CONFIG')||'{}';
-    var extConfig  = JSON.parse(rawExt);
-    var zones      = JSON.parse(rawZones);
-    var checklists = JSON.parse(rawChecklists);
-    var riaConfig  = JSON.parse(rawRia);
-    if (!extConfig.length) {
-      for (var i=1; i<=100; i++) extConfig.push({ num:i, type:'Poudre ABC', zone:'', emplacement:'' });
-    }
-    if (!riaConfig || typeof riaConfig !== 'object') riaConfig = { count:20, items:[] };
-    if (!riaConfig.items)  riaConfig.items = [];
-    if (!riaConfig.count)  riaConfig.count = 20;
-    var extDocCode             = props.getProperty('EXT_DOC_CODE')         || 'ENR-HSE 1';
-    var riaDocCode             = props.getProperty('RIA_DOC_CODE')         || 'ENR-HSE 2';
-    var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
-    var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
-    var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
-    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
-    var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
-    var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function saveRiaConfig(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var cfg   = p.riaConfig || { count:20, items:[] };
-    var props = PropertiesService.getScriptProperties();
-    props.setProperty('RIA_CONFIG', JSON.stringify(cfg));
-    if (p.riaDocCode) props.setProperty('RIA_DOC_CODE', String(p.riaDocCode));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function saveChecklistsConfig(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var checklists = p.checklists || {};
-    PropertiesService.getScriptProperties().setProperty('CHECKLISTS_CONFIG', JSON.stringify(checklists));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// CONTRÔLE DES DISPOSITIFS DE LUTTE CONTRE LES NUISIBLES
-// Types : DEI (désinsectiseur électrique), BAP (boîte d'appât),
-//         PM  (piège mécanique),           PGG (plaque de glu)
-// ══════════════════════════════════════════════════════════════════
-
-function getNuisiblesSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName('Suivi_Nuisibles');
-  if (!sh) {
-    sh = ss.insertSheet('Suivi_Nuisibles');
-    sh.appendRow(['ID','DateInspection','Matricule','Superviseur','Type',
-                  'IDEquipement','Zone','Checklist','EtatGlobal',
-                  'Observations','ProchaineInspection','Photo','DateCreation']);
-    sh.getRange(1,1,1,13).setFontWeight('bold');
-  }
-  return sh;
-}
-
-// ── Charger la configuration complète (nuisibles) ──────────────
-function getPestConfigData(adminKey) {
-  if (!isSessionSuperOrAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props         = PropertiesService.getScriptProperties();
-    var rawPest       = props.getProperty('PEST_CONFIG')       || '{}';
-    var rawZones      = props.getProperty('ZONES_CONFIG')      || '[]';
-    var rawChecklists = props.getProperty('PEST_CHECKLISTS_CONFIG') || '{}';
-    var pestConfig    = JSON.parse(rawPest);
-    var zones         = JSON.parse(rawZones);
-    var checklists    = JSON.parse(rawChecklists);
-    // Initialisation par défaut : 5 unités par type
-    ['DEI','BAP','PM','PGG'].forEach(function(t) {
-      if (!pestConfig[t] || typeof pestConfig[t] !== 'object') {
-        pestConfig[t] = { count:5, items:[] };
-      }
-      if (!pestConfig[t].items)  pestConfig[t].items  = [];
-      if (!pestConfig[t].count)  pestConfig[t].count  = 5;
-    });
-    if (!pestConfig.docCode) pestConfig.docCode = 'ENR-HSE 7';
-    var logoUrl                 = props.getProperty('HSE_LOGO_URL')          || '';
-    var signatureUrl            = props.getProperty('HSE_SIG_URL')           || '';
-    var supervisorSignatureUrl  = props.getProperty('HSE_SUP_SIG_URL')       || '';
-    var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
-    var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
-    var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Sauvegarder la configuration des dispositifs ───────────────
-function savePestConfig(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props = PropertiesService.getScriptProperties();
-    props.setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
-    if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'01');
-    if (p.docEdition  != null) props.setProperty('PEST_DOC_EDITION',      String(p.docEdition).trim());
-    if (p.prochaineMonths != null) props.setProperty('PEST_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||3));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Sauvegarder les listes de contrôle par type ────────────────
-function savePestChecklistsConfig(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    PropertiesService.getScriptProperties()
-      .setProperty('PEST_CHECKLISTS_CONFIG', JSON.stringify(p.checklists||{}));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Enregistrer une inspection nuisibles ───────────────────────
-function savePestChecklist(p) {
-  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sess   = verifySession_(p.token);
-    var sh     = getNuisiblesSheet_();
-    var lr     = sh.getLastRow();
-    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
-    var photoUrl = '';
-    if (p.photoChecklist && String(p.photoChecklist).length > 10) {
-      var ext2   = (p.photo_mime||'image/jpeg').indexOf('pdf') !== -1 ? 'pdf' : 'jpg';
-      var fname2 = 'Nuisibles_' + nextId + '_' + new Date().getTime() + '.' + ext2;
-      photoUrl   = savePhotoToFolder_(p.photoChecklist, fname2, p.photo_mime||'image/jpeg');
-    }
-    sh.appendRow([
-      nextId,
-      p.dateInspection ? new Date(p.dateInspection) : new Date(),
-      sess.matricule,
-      String(p.superviseurNom||sess.matricule),
-      String(p.type||'Inspection Globale Nuisibles'),
-      String(p.idEquipement||''),
-      String(p.zone||''),
-      JSON.stringify(p.checklist||{}),
-      String(p.etatGlobal||'Conforme'),
-      String(p.observations||''),
-      p.prochaineInspection ? new Date(p.prochaineInspection) : '',
-      photoUrl,
-      new Date()
-    ]);
-    return { success:true, id:nextId };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Modifier une inspection nuisibles (admin uniquement) ──
-function updatePestChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getNuisiblesSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (p.dateInspection)         sh.getRange(rowNum, 2).setValue(new Date(p.dateInspection));
-    if (p.superviseurNom != null) sh.getRange(rowNum, 4).setValue(String(p.superviseurNom));
-    if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
-    if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
-    if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
-    if (p.checklistJson  != null) sh.getRange(rowNum, 8).setValue(String(p.checklistJson));
-    if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
-    sh.getRange(rowNum, 10).setValue(String(p.observations||''));
-    sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Dupliquer une inspection nuisibles (admin uniquement) ──
-function duplicatePestChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getNuisiblesSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    var cols = Math.max(sh.getLastColumn(), 13);
-    var src  = sh.getRange(rowNum, 1, 1, cols).getValues()[0];
-    var nextId = (parseInt(sh.getRange(sh.getLastRow(),1).getValue(),10)||0)+1;
-    sh.appendRow([
-      nextId,
-      new Date(),
-      src[2],
-      src[3],
-      src[4],
-      src[5],
-      src[6],
-      src[7],
-      src[8],
-      src[9],
-      '',
-      '',
-      new Date(),
-      ''
-    ]);
-    return { success:true, id:nextId };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Valider une inspection nuisibles (admin uniquement) ──
-function validatePestChecklist(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getNuisiblesSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:false, error:'Enregistrement introuvable' };
-    var ids = sh.getRange(2, 1, lr-1, 1).getValues();
-    var rowNum = -1;
-    for (var i=0; i<ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) { rowNum = i+2; break; }
-    }
-    if (rowNum < 0) return { success:false, error:'Enregistrement introuvable' };
-    if (sh.getLastColumn() < 14) sh.getRange(1, 14).setValue('Responsable Validateur');
-    sh.getRange(rowNum, 14).setValue(String(p.responsableNom||''));
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ── Lire toutes les inspections nuisibles ─────────────────────
-function getPestChecklists(token) {
-  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
-  try {
-    var sh = getNuisiblesSheet_();
-    var lr = sh.getLastRow();
-    if (lr < 2) return { success:true, data:[] };
-    var cols = Math.max(sh.getLastColumn(), 13);
-    var rows = sh.getRange(2, 1, lr-1, cols).getValues();
-    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
-      var checks = {};
-      try { checks = JSON.parse(r[7]||'{}'); } catch(e) { checks = {}; }
-      return {
-        id:                   r[0],
-        dateInspection:       fmtDate_(r[1]),
-        superviseurMatricule: String(r[2]),
-        superviseurNom:       String(r[3]),
-        type:                 String(r[4]),
-        idEquipement:         String(r[5]),
-        zone:                 String(r[6]),
-        checklist:            checks,
-        etatGlobal:           String(r[8]),
-        observations:         String(r[9]),
-        prochaineInspection:  fmtDate_(r[10]),
-        photoId:              extractFileId_(r[11]),
-        photoUrl:             String(r[11]),
-        dateCreation:         fmtDate_(r[12]),
-        responsableNom:       String(r[13]||'')
-      };
-    });
-    return { success:true, data:data.reverse() };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// LOGO DE L'ENTREPRISE (stocké dans Drive, URL dans PropertiesService)
-// ══════════════════════════════════════════════════════════════════
-function saveLogoConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    var bytes  = Utilities.base64Decode(p.logoBase64);
-    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-logo.png');
-    var file   = DriveApp.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    var fileId = file.getId();
-    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    props.setProperty('HSE_LOGO_FILE_ID', fileId);
-    props.setProperty('HSE_LOGO_URL', url);
-    return { success:true, logoUrl:url };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function deleteLogoConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_LOGO_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    props.deleteProperty('HSE_LOGO_FILE_ID');
-    props.deleteProperty('HSE_LOGO_URL');
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// CHARGEMENT PRIORITAIRE : logo + griffes (appelé au démarrage)
-// Accessible à tout utilisateur authentifié (superviseur ou admin)
-// ══════════════════════════════════════════════════════════════════
-function getLogoAndSigs(token) {
-  if (!verifySession_(token) && !isAdmin_(token) && !isSessionAdmin_(token)) {
-    return { success:false, error:'Accès refusé' };
-  }
-  try {
-    var props   = PropertiesService.getScriptProperties();
-    var logoUrl = props.getProperty('HSE_LOGO_URL') || '';
-    var sigMap  = _buildSigMap_();
-    return { success:true, logoUrl:logoUrl, sigMap:sigMap };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SIGNATURE / GRIFFE DU RESPONSABLE HSE
-// ══════════════════════════════════════════════════════════════════
-function saveSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    var bytes  = Utilities.base64Decode(p.sigBase64);
-    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-signature.png');
-    var file   = DriveApp.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    var fileId = file.getId();
-    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    props.setProperty('HSE_SIG_FILE_ID', fileId);
-    props.setProperty('HSE_SIG_URL', url);
-    return { success:true, signatureUrl:url };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function deleteSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SIG_FILE_ID');
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    props.deleteProperty('HSE_SIG_FILE_ID');
-    props.deleteProperty('HSE_SIG_URL');
-    return { success:true };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SIGNATURE / GRIFFE PAR UTILISATEUR (superviseur ou admin)
-// Clés : HSE_SIG_URL_<MAT>  et  HSE_SIG_FILE_ID_<MAT>
-// ══════════════════════════════════════════════════════════════════
-function saveUserSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
-  if (!mat) return { success:false, error:'Matricule manquant' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SIG_FILE_ID_'+mat);
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    var bytes  = Utilities.base64Decode(p.sigBase64);
-    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-sig-'+mat+'.png');
-    var file   = DriveApp.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    var fileId = file.getId();
-    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    props.setProperty('HSE_SIG_FILE_ID_'+mat, fileId);
-    props.setProperty('HSE_SIG_URL_'+mat, url);
-    return { success:true, sigUrl:url, matricule:mat };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-function deleteUserSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
-  if (!mat) return { success:false, error:'Matricule manquant' };
-  try {
-    var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SIG_FILE_ID_'+mat);
-    if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    props.deleteProperty('HSE_SIG_FILE_ID_'+mat);
-    props.deleteProperty('HSE_SIG_URL_'+mat);
-    return { success:true, matricule:mat };
-  } catch(e) { return { success:false, error:e.message }; }
-}
-
-// Helper interne : construit { mat: url, nom: url } depuis les propriétés + la feuille
-function _buildSigMap_() {
-  var props = PropertiesService.getScriptProperties();
-  var all   = props.getProperties();
-  var map   = {};
-  // Index par matricule
-  Object.keys(all).forEach(function(k) {
-    var m = k.match(/^HSE_SIG_URL_(.+)$/);
-    if (m && all[k]) map[m[1]] = all[k];
-  });
-  // Index aussi par nom depuis la feuille employés
-  try {
-    var sh = getEdbSheet_();
-    var lr = sh.getLastRow();
-    if (lr >= EDB_START) {
-      var rows = sh.getRange(EDB_START, 1, lr - EDB_START + 1, 2).getValues();
-      rows.forEach(function(r) {
-        var mat  = String(r[EDB.MAT]).trim();
-        var name = String(r[EDB.NAME]).trim();
-        if (mat && name && map[mat]) map[name] = map[mat];
+      types2.forEach(function(t){
+        var sec = c.checklist[t];
+        if (!sec||!sec.riaUnits&&!sec.extincteurs) return;
+        var arr = sec.extincteurs||[];
+        var tot = arr.length;
+        var conf = arr.filter(function(e){ return e.statut==='Conforme'; }).length;
+        if (tot) parts.push(icons2[t]+' '+t+': '+conf+'/'+tot);
       });
+      if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
+    } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+      var tot2 = c.checklist.length;
+      var conf2 = c.checklist.filter(function(e){ return e.statut==='Conforme'; }).length;
+      statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px">💧 RIA : '+conf2+'/'+tot2+' conformes</div>';
+    } else if (!isGlobalExt && !isGlobalRia) {
+      var chk = c.checklist||{};
+      var tot3 = Object.keys(chk).length;
+      var ok3  = Object.keys(chk).filter(function(k){ return chk[k]; }).length;
+      if (tot3) statsLine = '<div style="font-size:.78rem;color:var(--t2);margin-bottom:6px">Checklist : '+ok3+'/'+tot3+' points OK</div>';
     }
-  } catch(e) {}
-  return map;
+    return '<div class="hse-card" onclick="openIncendieDetail('+idx+')" oncontextmenu="openCardCtxMenu(event,'+idx+',\'incendie\')" style="cursor:pointer">'
+      + '<div class="hse-card-header">'
+      + '<div><div class="hse-card-title">'+typeIcon+(!isGlobalExt&&!isGlobalRia?' — '+esc(c.idEquipement||'—'):'')+'</div>'
+      + '<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+      + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      + '</div>'
+      + statsLine
+      + (c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      + (c.responsableNom ? '<div style="font-size:.78rem;color:#22c55e;margin-top:4px">✅ Validé par '+esc(c.responsableNom)+'</div>' : '')
+      + (c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Checklist signée jointe</div>' : '')
+      + '<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      + '<button class="btn btn-g" onclick="viewIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
+      + '<button class="btn btn-g" onclick="printIncendieRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      + (isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'incendie\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
+      + (isAdmin() ? '<button class="btn '+(c.responsableNom?'btn-p':'btn-g')+'" onclick="validateInspection('+idx+',\'incendie\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0" title="Valider l\'inspection">'+(c.responsableNom?'✅':'☑')+'</button>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
-// Retourne { mat: url } pour tous les utilisateurs ayant une griffe
-function getAllUserSignatures(adminKey) {
-  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
-  try {
-    return { success:true, sigMap:_buildSigMap_() };
-  } catch(e) { return { success:false, error:e.message }; }
+/* ══════════════════════════════════════════
+   CONFIG RIA
+══════════════════════════════════════════ */
+var _riaConfig = { count:20, items:[] };
+
+function openConfigRIA() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _riaConfig = r.riaConfig || { count:20, items:[] };
+      if (!_riaConfig.items) _riaConfig.items = [];
+      if (!_riaConfig.count) _riaConfig.count = 20;
+      _riaDocCode = r.riaDocCode || 'ENR-HSE 2';
+      _configuredZones = r.zones || [];
+      document.getElementById('riaCountInput').value = _riaConfig.count || 20;
+      var dcEl = document.getElementById('riaDocCodeInput');
+      if (dcEl) dcEl.value = _riaDocCode;
+      _renderRiaConfigTable();
+      openSheet('riaConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
 }
 
-// Fonctions legacy conservées pour compatibilité ascendante
-function saveSupervisorSignatureConfig(p) {
-  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
-  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
-  if (!mat) return { success:false, error:'Matricule requis' };
-  var r = saveUserSignatureConfig(p);
-  return r.success ? { success:true, supervisorSignatureUrl:r.sigUrl } : r;
+function _renderRiaConfigTable() {
+  var body = document.getElementById('riaConfigBody');
+  if (!body) return;
+  var count = parseInt(document.getElementById('riaCountInput').value)||20;
+  var rows = [];
+  for (var i=1; i<=count; i++) {
+    var item = null;
+    var _ri = _riaConfig.items||[];
+    for (var j=0; j<_ri.length; j++) { if (_ri[j].num===i) { item=_ri[j]; break; } }
+    if (!item) item = { num:i, zone:'', emplacement:'' };
+    rows.push(
+      '<div style="display:grid;grid-template-columns:52px 1fr 1fr;gap:4px;align-items:center">'
+      +'<div class="ext-cfg-label" style="color:var(--t3)">RIA-'+String(i).padStart(2,'0')+'</div>'
+      +'<select class="fi" data-rnum="'+i+'" data-rfield="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+      +_zoneOptions(item.zone||'')
+      +'</select>'
+      +'<input class="fi" type="text" data-rnum="'+i+'" data-rfield="emplacement" value="'+esc(item.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+      +'</div>'
+    );
+  }
+  body.innerHTML = rows.join('');
 }
 
-function deleteSupervisorSignatureConfig(p) {
-  return deleteUserSignatureConfig(p);
+function applyRiaCount() {
+  _renderRiaConfigTable();
 }
+
+function saveRiaConfigLocal() {
+  var body = document.getElementById('riaConfigBody');
+  if (!body) return;
+  var count = parseInt(document.getElementById('riaCountInput').value)||20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var zsel = body.querySelector('[data-rnum="'+i+'"][data-rfield="zone"]');
+    var emp  = body.querySelector('[data-rnum="'+i+'"][data-rfield="emplacement"]');
+    items.push({ num:i, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
+  }
+  _riaConfig = { count:count, items:items };
+  var dcEl = document.getElementById('riaDocCodeInput');
+  _riaDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 2';
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration RIA sauvegardée','ok'); closeSheet('riaConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRiaConfig({ adminKey:S.adminKey, riaConfig:_riaConfig, riaDocCode:_riaDocCode });
+}
+
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE RIA
+══════════════════════════════════════════ */
+var _globalRiaChecks  = {};
+var _globalRiaStatuts = {};
+var _globalRiaNotes   = {};
+var _globalRiaPhotoB64  = '';
+var _globalRiaPhotoMime = '';
+var _globalRiaSortMode  = 'zone';
+
+function openGlobalInspectionRIA() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _riaConfig  = r.riaConfig || { count:20, items:[] };
+      if (!_riaConfig.items) _riaConfig.items = [];
+      if (!_riaConfig.count) _riaConfig.count = 20;
+      _riaDocCode            = r.riaDocCode            || _riaDocCode;
+      _extDocRev             = r.extDocRev             || _extDocRev;
+      _extDocEdition         = r.extDocEdition         || _extDocEdition;
+      _extProchaineMonths    = parseInt(r.extProchaineMonths) || _extProchaineMonths;
+      _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
+      _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+      _initGlobalFormRIA();
+      openSheet('globalRiaOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getConfigData(S.adminKey);
+}
+
+function _initGlobalFormRIA() {
+  _globalRiaChecks = {}; _globalRiaStatuts = {}; _globalRiaNotes = {};
+  _globalRiaPhotoB64 = ''; _globalRiaPhotoMime = '';
+  var cl = CHECKLIST_RIA;
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    _globalRiaChecks[i] = {};
+    cl.forEach(function(it){ _globalRiaChecks[i][it.key] = true; });
+    _globalRiaStatuts[i] = 'Conforme';
+    _globalRiaNotes[i] = '';
+  }
+  _globalRiaSortMode = 'zone';
+  document.getElementById('globalRiaDate').value = todayStr();
+  document.getElementById('globalRiaProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
+  document.getElementById('globalRiaObs').value = '';
+  var prev = document.getElementById('globalRiaPhotoPreview');
+  if (prev) { prev.style.display='none'; prev.innerHTML=''; }
+  ['grsort_zone','grsort_num'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.className = 'gsort-tab'+(id==='grsort_zone'?' on':'');
+  });
+  _renderRiaSections();
+}
+
+function setRiaSort(mode) {
+  _syncRiaNotes();
+  _globalRiaSortMode = mode;
+  ['zone','num'].forEach(function(m){
+    var el = document.getElementById('grsort_'+m);
+    if (el) el.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderRiaSections();
+}
+
+function _syncRiaNotes() {
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    var el = document.getElementById('grianote_'+i);
+    if (el) _globalRiaNotes[i] = el.value;
+  }
+}
+
+function _renderRiaSections() {
+  var container = document.getElementById('globalRiaSectionsContainer');
+  if (!container) return;
+  var count = _riaConfig.count || 20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var cfg = null;
+    var _ri2 = _riaConfig.items||[];
+    for (var j=0; j<_ri2.length; j++) { if (_ri2[j].num===i) { cfg=_ri2[j]; break; } }
+    items.push(cfg || { num:i, zone:'', emplacement:'' });
+  }
+
+  if (_globalRiaSortMode === 'zone') {
+    var zones = {};
+    items.forEach(function(r){ var z=r.zone||'Sans zone'; if(!zones[z])zones[z]=[]; zones[z].push(r); });
+    container.innerHTML = Object.keys(zones).sort().map(function(zone) {
+      var exts = zones[zone].sort(function(a,b){ return a.num-b.num; });
+      return '<div class="global-type-section" style="margin-bottom:10px">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+exts.length+' RIA</span></div>'
+        +'<div class="global-ext-list">'+exts.map(_renderRiaAccordionItem).join('')+'</div>'
+        +'</div>';
+    }).join('');
+  } else {
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title"><span>🔢</span> Tous les RIA'
+      +' <span class="global-type-count">'+items.length+' unités</span></div>'
+      +'<div class="global-ext-list">'+items.sort(function(a,b){ return a.num-b.num; }).map(_renderRiaAccordionItem).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function _renderRiaAccordionItem(r) {
+  var cl = CHECKLIST_RIA;
+  var checks = _globalRiaChecks[r.num] || {};
+  var okCount = cl.filter(function(it){ return checks[it.key]; }).length;
+  var isOk = okCount === cl.length;
+
+  var checkItems = cl.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="griachk_'+r.num+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onRiaCheckChange('+r.num+',\''+it.key+'\',this.checked)"/>'
+      +'<label for="griachk_'+r.num+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  var zoneSpan = (_globalRiaSortMode!=='zone' && r.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(r.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+  var emplacePill = r.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(r.emplacement)+'</span>'
+    : '';
+  var detailMeta = (r.zone||r.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(r.zone?'<span>🏷 '+esc(r.zone)+'</span>':'')
+      +(r.emplacement?'<span>📌 '+esc(r.emplacement)+'</span>':'')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="griahdr_'+r.num+'" onclick="toggleRiaAccordion('+r.num+')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">RIA-'+String(r.num).padStart(2,'0')+'</span>'
+    +zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="griabadge_'+r.num+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+cl.length+'</span>'
+    +'<span id="griachev_'+r.num+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="griadet_'+r.num+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="grianote_'+r.num+'" placeholder="Note / observation…" '
+    +'value="'+esc(_globalRiaNotes[r.num]||'')+'" onchange="_globalRiaNotes['+r.num+']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function toggleRiaAccordion(num) {
+  var det  = document.getElementById('griadet_'+num);
+  var chev = document.getElementById('griachev_'+num);
+  var hdr  = document.getElementById('griahdr_'+num);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display  = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  if (hdr)  hdr.classList.toggle('open', !open);
+}
+
+function onRiaCheckChange(num, key, checked) {
+  if (!_globalRiaChecks[num]) _globalRiaChecks[num] = {};
+  _globalRiaChecks[num][key] = checked;
+  var cl = CHECKLIST_RIA;
+  var okCount = cl.filter(function(it){ return _globalRiaChecks[num][it.key]; }).length;
+  var isOk = okCount === cl.length;
+  _globalRiaStatuts[num] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('griabadge_'+num);
+  if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+okCount+'/'+cl.length; }
+}
+
+function setAllRiaStatut(statut) {
+  var isOk = statut === 'Conforme';
+  var count = _riaConfig.count || 20;
+  for (var i=1; i<=count; i++) {
+    if (!_globalRiaChecks[i]) _globalRiaChecks[i] = {};
+    CHECKLIST_RIA.forEach(function(it){
+      _globalRiaChecks[i][it.key] = isOk;
+      var el = document.getElementById('griachk_'+i+'_'+it.key);
+      if (el) el.checked = isOk;
+    });
+    _globalRiaStatuts[i] = statut;
+    var badge = document.getElementById('griabadge_'+i);
+    if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+(isOk?CHECKLIST_RIA.length:0)+'/'+CHECKLIST_RIA.length; }
+  }
+}
+
+function submitGlobalInspectionRIA() {
+  var date = document.getElementById('globalRiaDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  _syncRiaNotes();
+  var count = _riaConfig.count || 20;
+  var nonConf = 0;
+  var riaUnits = [];
+  for (var i=1; i<=count; i++) {
+    var cfg = null;
+    for (var j=0; j<_riaConfig.items.length; j++) { if (_riaConfig.items[j].num===i) { cfg=_riaConfig.items[j]; break; } }
+    cfg = cfg || { num:i, zone:'', emplacement:'' };
+    if (_globalRiaStatuts[i]==='Non conforme') nonConf++;
+    riaUnits.push({ num:i, zone:cfg.zone||'', emplacement:cfg.emplacement||'', checks:_globalRiaChecks[i]||{}, statut:_globalRiaStatuts[i]||'Conforme', note:_globalRiaNotes[i]||'' });
+  }
+  var etatGlobal = nonConf===0 ? 'Conforme' : nonConf < count/2 ? 'Partiel' : 'Non conforme';
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection globale RIA #'+r.id+' enregistrée','ok');
+        closeSheet('globalRiaOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: 'Inspection Globale RIA',
+      idEquipement: 'GLOBAL — '+count+' RIA',
+      zone: '',
+      checklist: riaUnits,
+      etatGlobal: etatGlobal,
+      observations: document.getElementById('globalRiaObs').value,
+      prochaineInspection: document.getElementById('globalRiaProchaine').value,
+      photoB64: _globalRiaPhotoB64,
+      photoMime: _globalRiaPhotoMime
+    });
+}
+
+function onRiaPhotoChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  var prev = document.getElementById('globalRiaPhotoPreview');
+  reader.onload = function(e) {
+    _globalRiaPhotoB64  = e.target.result.split(',')[1]||'';
+    _globalRiaPhotoMime = file.type||'image/jpeg';
+    if (prev) { prev.style.display='block'; prev.innerHTML=file.type.startsWith('image/')? '<img src="'+e.target.result+'" style="max-height:80px;border-radius:6px"/>' : '<div style="font-size:.8rem;color:var(--t2)">📄 '+esc(file.name)+'</div>'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+var _idetEditMode = false;
+
+function openIncendieDetail(idx) {
+  var c = _incendieRecords[idx];
+  if (!c) return;
+  _incendieCurrentDetailIdx = idx;
+  _idetEditMode = false;
+  var isGlobal = c.type === 'Inspection Globale';
+  document.getElementById('idetTitle').textContent =
+    (isGlobal ? '🌍 Inspection Globale' : (c.type==='Inspection Globale RIA'?'🌊 Inspection Globale RIA':'🔴 Inspection')) + ' — ' + (c.dateInspection||'');
+  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, false);
+  var editBtn = document.getElementById('idetEditBtn');
+  var saveBtn = document.getElementById('idetSaveBtn');
+  if (editBtn) editBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
+  openSheet('incendieDetailOv');
+}
+
+function toggleIdetEdit() {
+  _idetEditMode = !_idetEditMode;
+  var c = _incendieRecords[_incendieCurrentDetailIdx];
+  if (!c) return;
+  document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, _idetEditMode);
+  document.getElementById('idetEditBtn').textContent = _idetEditMode ? '👁 Vue' : '✏ Modifier';
+  document.getElementById('idetSaveBtn').style.display = _idetEditMode ? 'inline-flex' : 'none';
+}
+
+function saveIdetEdit() {
+  var c = _incendieRecords[_incendieCurrentDetailIdx];
+  if (!c) return;
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+
+  // Lire les champs header
+  var dateVal  = (document.getElementById('idetDate')    ||{}).value  || c.dateInspection      || '';
+  var prochVal = (document.getElementById('idetProch')   ||{}).value  || c.prochaineInspection || '';
+  var etatVal  = (document.getElementById('idetEtat')    ||{}).value  || c.etatGlobal          || '';
+  var obsVal   = (document.getElementById('idetObs')     ||{}).value  || c.observations        || '';
+  var supVal   = (document.getElementById('idetSup')     ||{}).value  || c.superviseurNom      || '';
+
+  // Reconstruire le JSON checklist depuis les checkboxes
+  var newChecklist = c.checklist;
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    newChecklist = {};
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.extincteurs) return;
+      var exts = sec.extincteurs.map(function(e) {
+        var cl = _checklistByType(type);
+        var newChecks = {};
+        cl.forEach(function(it) {
+          var cb = document.getElementById('chk_'+type.replace(/ /g,'_')+'_'+e.num+'_'+it.key);
+          newChecks[it.key] = cb ? cb.checked : (e.checks && e.checks[it.key]) || false;
+        });
+        var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+        var noteEl = document.getElementById('note_'+type.replace(/ /g,'_')+'_'+e.num);
+        return Object.assign({}, e, {
+          checks: newChecks,
+          statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+          note: noteEl ? noteEl.value : (e.note || '')
+        });
+      });
+      newChecklist[type] = Object.assign({}, sec, { extincteurs: exts });
+    });
+  } else if (isGlobalRia && Array.isArray(c.checklist)) {
+    newChecklist = c.checklist.map(function(r) {
+      var cl = CHECKLIST_RIA;
+      var newChecks = {};
+      cl.forEach(function(it) {
+        var cb = document.getElementById('chk_RIA_'+r.num+'_'+it.key);
+        newChecks[it.key] = cb ? cb.checked : (r.checks && r.checks[it.key]) || false;
+      });
+      var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+      var noteEl = document.getElementById('note_RIA_'+r.num);
+      return Object.assign({}, r, {
+        checks: newChecks,
+        statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+        note: noteEl ? noteEl.value : (r.note || '')
+      });
+    });
+  }
+
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      // Mettre à jour l'objet en mémoire
+      c.dateInspection      = dateVal;
+      c.prochaineInspection = prochVal;
+      c.etatGlobal          = etatVal;
+      c.observations        = obsVal;
+      c.superviseurNom      = supVal;
+      c.checklist           = newChecklist;
+      // Repasser en mode vue
+      _idetEditMode = false;
+      document.getElementById('idetBody').innerHTML = _buildDetailHTML(c, false);
+      document.getElementById('idetEditBtn').textContent = '✏ Modifier';
+      document.getElementById('idetSaveBtn').style.display = 'none';
+      document.getElementById('idetTitle').textContent =
+        (isGlobal ? '🌍 Inspection Globale' : (isGlobalRia?'🌊 Inspection Globale RIA':'🔴 Inspection'))
+        + ' — ' + dateVal;
+      _renderIncendieList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .updateChecklist({
+      adminKey: S.adminKey,
+      id: c.id,
+      superviseurNom:      supVal,
+      dateInspection:      dateVal,
+      etatGlobal:          etatVal,
+      prochaineInspection: prochVal,
+      observations:        obsVal,
+      checklistJson:       JSON.stringify(newChecklist)
+    });
+}
+
+function toggleIdetExt(detId) {
+  var el  = document.getElementById(detId);
+  var chev = document.getElementById('chev_'+detId);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function _buildDetailHTML(c, editMode) {
+  var TY_COLORS = { 'Poudre ABC':'#e67e22','CO2':'#3498db','Eau':'#27ae60' };
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var badgeCls  = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+  var html = '';
+
+  /* ── Header ── */
+  if (editMode) {
+    html += '<div style="display:grid;gap:8px;margin-bottom:12px;font-size:.82rem">'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">📅 Date</label>'
+      + '<input id="idetDate" class="fi" type="date" value="'+esc(c.dateInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🦺 Superviseur</label>'
+      + '<input id="idetSup" class="fi" type="text" value="'+esc(c.superviseurNom||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🔜 Prochaine</label>'
+      + '<input id="idetProch" class="fi" type="date" value="'+esc(c.prochaineInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      + '<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">État global</label>'
+      + '<select id="idetEtat" class="fi" style="height:32px;font-size:.82rem;flex:1">'
+      + '<option value="Conforme"'+(c.etatGlobal==='Conforme'?' selected':'')+'>Conforme</option>'
+      + '<option value="Non conforme"'+(c.etatGlobal==='Non conforme'?' selected':'')+'>Non conforme</option>'
+      + '<option value="Partiel"'+(c.etatGlobal==='Partiel'?' selected':'')+'>Partiel</option>'
+      + '</select></div>'
+      + '<div style="display:flex;gap:8px;align-items:flex-start"><label style="color:var(--t3);min-width:80px;padding-top:6px">📝 Obs.</label>'
+      + '<textarea id="idetObs" class="fi" rows="2" style="font-size:.82rem;flex:1;resize:vertical">'+esc(c.observations||'')+'</textarea></div>'
+      + '</div>';
+  } else {
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div style="font-size:.82rem;color:var(--t2);line-height:1.6">'
+      + '<div>📅 '+esc(c.dateInspection)+'</div>'
+      + '<div>🦺 '+esc(c.superviseurNom)+'</div>'
+      + '</div>'
+      + '<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      + '</div>';
+    if (c.prochaineInspection)
+      html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+    if (c.observations)
+      html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  }
+
+  if (c.photoId)
+    html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir checklist signée</a></div>';
+
+  html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
+
+  /* ── Global inspection: per-type accordion ── */
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.extincteurs || !sec.extincteurs.length) return;
+      var exts = sec.extincteurs;
+      var confCnt = exts.filter(function(e){ return e.statut==='Conforme'; }).length;
+      var cl = _checklistByType(type);
+
+      html += '<div class="global-type-section" style="margin-bottom:10px">'
+        + '<div class="global-type-title">'
+        + '<span style="color:'+TY_COLORS[type]+'">'+TY_ICONS[type]+'</span> '+esc(type)
+        + ' <span class="global-type-count">'+confCnt+'/'+exts.length+' conformes</span>'
+        + '</div>'
+        + '<div class="global-ext-list">';
+
+      exts.forEach(function(e) {
+        var isOk  = e.statut === 'Conforme';
+        var okCnt = cl.filter(function(it){ return e.checks && e.checks[it.key]; }).length;
+        var detId = 'idet_'+type.replace(/ /g,'_')+'_'+e.num;
+
+        html += '<div class="global-ext-accordion">'
+          + '<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+          + '<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">EXT-'+String(e.num).padStart(2,'0')+'</span>'
+          + (e.zone ? '<span style="font-size:.72rem;color:var(--t3)">'+esc(e.zone)+'</span>' : '')
+          + (e.emplacement ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(e.emplacement)+'</span>' : '')
+          + '<span style="flex:1"></span>'
+          + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+          + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+          + '</div>'
+          + '<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+
+        cl.forEach(function(it) {
+          var checked = e.checks && e.checks[it.key];
+          var cbId = 'chk_'+type.replace(/ /g,'_')+'_'+e.num+'_'+it.key;
+          html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+            + '<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
+            + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+            + '</div>';
+        });
+
+        if (editMode) {
+          html += '<textarea id="note_'+type.replace(/ /g,'_')+'_'+e.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(e.note||'')+'</textarea>';
+        } else if (e.note) {
+          html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(e.note)+'</div>';
+        }
+
+        html += '</div></div>';
+      });
+
+      html += '</div></div>';
+    });
+
+  /* ── Inspection Globale RIA ── */
+  } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+    var riaUnits = c.checklist;
+    var confCntR = riaUnits.filter(function(r){ return r.statut==='Conforme'; }).length;
+    html += '<div class="global-type-section" style="margin-bottom:10px">'
+      + '<div class="global-type-title"><span>💧</span> RIA'
+      + ' <span class="global-type-count">'+confCntR+'/'+riaUnits.length+' conformes</span></div>'
+      + '<div class="global-ext-list">';
+    riaUnits.forEach(function(r) {
+      var isOk  = r.statut === 'Conforme';
+      var cl    = CHECKLIST_RIA;
+      var okCnt = cl.filter(function(it){ return r.checks && r.checks[it.key]; }).length;
+      var detId = 'idet_ria_'+r.num;
+      html += '<div class="global-ext-accordion">'
+        + '<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+        + '<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:58px">RIA-'+String(r.num).padStart(2,'0')+'</span>'
+        + (r.zone ? '<span style="font-size:.72rem;color:var(--t3)">'+esc(r.zone)+'</span>' : '')
+        + (r.emplacement ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(r.emplacement)+'</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+        + '<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+        + '</div>'
+        + '<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+      cl.forEach(function(it) {
+        var checked = r.checks && r.checks[it.key];
+        var cbId = 'chk_RIA_'+r.num+'_'+it.key;
+        html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+          + '<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
+          + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+          + '</div>';
+      });
+      if (editMode) {
+        html += '<textarea id="note_RIA_'+r.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(r.note||'')+'</textarea>';
+      } else if (r.note) {
+        html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(r.note)+'</div>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+
+  /* ── Unit inspection: flat checklist ── */
+  } else {
+    if (!isGlobal && !isGlobalRia) {
+      var unitIcon = c.type==='RIA' ? '💧' : '🔴';
+      html += '<div style="margin-bottom:8px;font-size:.85rem;font-weight:600;color:var(--t1)">'+unitIcon+' '+esc(c.idEquipement||'—')+'</div>';
+      if (c.zone) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:10px">📍 '+esc(c.zone)+'</div>';
+    }
+    var checks = c.checklist || {};
+    var keys = Object.keys(checks);
+    if (keys.length) {
+      var allCL = CHECKLIST_POUDRE_ABC.concat(CHECKLIST_CO2).concat(CHECKLIST_EAU_EXT).concat(CHECKLIST_RIA);
+      var lmap = {};
+      allCL.forEach(function(it){ lmap[it.key]=it.label; });
+      html += '<div class="chk-group">';
+      keys.forEach(function(k) {
+        var checked = checks[k];
+        html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+          + '<input type="checkbox" id="chk_unit_'+k+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
+          + '<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+(lmap[k]||esc(k))+'</label>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  return html;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   IMPRESSION — Fiches de contrôle Incendie (ISO 9001)
+────────────────────────────────────────────────────────────────── */
+function _openPrintWin(html) {
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+function printBlankExtChecklist() {
+  if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs','err'); return; }
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var sections  = [];
+  ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+    var items = _extConfig.filter(function(c){ return c.type===type; }).sort(function(a,b){ return a.num-b.num; });
+    if (!items.length) return;
+    sections.push({ sectionTitle:TY_ICONS[type]+' '+type, prefix:'EXT', items:items, checklist:_checklistByType(type) });
+  });
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     _extDocCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
+    title:       'Inspection Globale Extincteurs',
+    subtitle:    'Sécurité Incendie — Extincteurs',
+    date:        _fmtDate(document.getElementById('globalIncDate')&&document.getElementById('globalIncDate').value||todayStr()),
+    superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+    prochaine:   _fmtDate(document.getElementById('globalIncProchaine')&&document.getElementById('globalIncProchaine').value||''),
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''), sections:sections
+  }));
+}
+
+function printBlankRiaChecklist() {
+  if (!_riaConfig.count) { toast('Configurez d\'abord les RIA','err'); return; }
+  var count = _riaConfig.count || 20;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var it = (_riaConfig.items||[]).filter(function(x){ return x.num===i; })[0] || {num:i,zone:'',emplacement:''};
+    items.push(it);
+  }
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     _riaDocCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
+    title:       'Inspection Globale RIA',
+    subtitle:    'Sécurité Incendie — Robinets Incendie Armés',
+    date:        _fmtDate(document.getElementById('globalRiaDate')&&document.getElementById('globalRiaDate').value||todayStr()),
+    superviseur: S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+    prochaine:   _fmtDate(document.getElementById('globalRiaProchaine')&&document.getElementById('globalRiaProchaine').value||''),
+    obs: '', mode:'blank', logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
+    sections: [{ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:items, checklist:CHECKLIST_RIA }]
+  }));
+}
+
+function printIncendieRecord(idx) {
+  var c = _incendieRecords[idx];
+  if (!c) return;
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+  var sections    = [];
+  var docCode     = _extDocCode;
+
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    docCode = _extDocCode;
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec||!sec.extincteurs||!sec.extincteurs.length) return;
+      sections.push({ sectionTitle:TY_ICONS[type]+' '+type, prefix:'EXT', items:sec.extincteurs, checklist:_checklistByType(type) });
+    });
+  } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+    docCode = _riaDocCode;
+    sections.push({ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:c.checklist, checklist:CHECKLIST_RIA });
+  } else {
+    var cl = _checklistByType(c.type==='RIA'?'RIA':'Poudre ABC');
+    var checks = c.checklist||{};
+    var fakeItem = { num:1, zone:c.zone||'', emplacement:'', checks:checks, statut:c.etatGlobal||'', note:c.observations||'' };
+    docCode = c.type==='RIA' ? _riaDocCode : _extDocCode;
+    sections.push({ sectionTitle:(c.type==='RIA'?'💧':'🔴')+' '+esc(c.idEquipement||c.type||''), prefix:(c.type==='RIA'?'RIA':'EXT'), items:[fakeItem], checklist:cl });
+  }
+
+  if (!sections.length) { toast('Aucune donnée à imprimer','err'); return; }
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     docCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
+    title:       c.type || 'Inspection Sécurité Incendie',
+    subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
+    date:        _fmtDate(c.dateInspection||''),
+    superviseur: c.superviseurNom||'',
+    responsable: c.responsableNom||'',
+    prochaine:   _fmtDate(c.prochaineInspection||''),
+    obs:         c.observations||'',
+    etatGlobal:  c.etatGlobal||'',
+    mode:        'record',
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
+    sections:    sections
+  }));
+}
+
+function viewIncendieRecord(idx) {
+  var c = _incendieRecords[idx];
+  if (!c) return;
+  var TY_ICONS  = { 'Poudre ABC':'🔴','CO2':'🔵','Eau':'💧' };
+  var isGlobal    = c.type === 'Inspection Globale';
+  var isGlobalRia = c.type === 'Inspection Globale RIA';
+  var sections    = [];
+  var docCode     = _extDocCode;
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    docCode = _extDocCode;
+    ['Poudre ABC','CO2','Eau'].forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec||!sec.extincteurs||!sec.extincteurs.length) return;
+      sections.push({ sectionTitle:TY_ICONS[type]+' '+type, prefix:'EXT', items:sec.extincteurs, checklist:_checklistByType(type) });
+    });
+  } else if (isGlobalRia && c.checklist && Array.isArray(c.checklist)) {
+    docCode = _riaDocCode;
+    sections.push({ sectionTitle:'💧 RIA — Robinets Incendie Armés', prefix:'RIA', items:c.checklist, checklist:CHECKLIST_RIA });
+  } else {
+    var cl = _checklistByType(c.type==='RIA'?'RIA':'Poudre ABC');
+    var checks = c.checklist||{};
+    var fakeItem = { num:1, zone:c.zone||'', emplacement:'', checks:checks, statut:c.etatGlobal||'', note:c.observations||'' };
+    docCode = c.type==='RIA' ? _riaDocCode : _extDocCode;
+    sections.push({ sectionTitle:(c.type==='RIA'?'💧':'🔴')+' '+esc(c.idEquipement||c.type||''), prefix:(c.type==='RIA'?'RIA':'EXT'), items:[fakeItem], checklist:cl });
+  }
+  if (!sections.length) { toast('Aucune donnée à afficher','err'); return; }
+  _openPrintWin(_buildHSEPrintHTML({
+    docCode:     docCode,
+    docRev:      _extDocRev,
+    docEdition:  _extDocEdition,
+    title:       c.type || 'Inspection Sécurité Incendie',
+    subtitle:    isGlobal ? 'Sécurité Incendie — Extincteurs' : (isGlobalRia ? 'Sécurité Incendie — Robinets Incendie Armés' : 'Sécurité Incendie'),
+    date:        _fmtDate(c.dateInspection||''),
+    superviseur: c.superviseurNom||'',
+    responsable: c.responsableNom||'',
+    prochaine:   _fmtDate(c.prochaineInspection||''),
+    obs:         c.observations||'',
+    etatGlobal:  c.etatGlobal||'',
+    mode:        'record',
+    autoPrint:   false,
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||''),
+    sections:    sections
+  }));
+}
+
+/* ══════════════════════════════════════════
+   MODIFICATION D'INSPECTION (admin)
+══════════════════════════════════════════ */
+var _editInspKind = '';
+var _editInspIdx  = -1;
+
+function _loadSuperviseursList(currentNom) {
+  var sel = document.getElementById('editInspSuperviseur');
+  sel.innerHTML = '<option value="">Chargement…</option>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      sel.innerHTML = '';
+      var list = (r && r.success && r.data) ? r.data : [];
+      // Si le nom actuel n'est pas dans la liste, l'ajouter en premier
+      var found = list.some(function(sv){ return sv.nom === currentNom; });
+      if (currentNom && !found) {
+        var opt = document.createElement('option');
+        opt.value = currentNom; opt.textContent = currentNom; opt.selected = true;
+        sel.appendChild(opt);
+      }
+      list.forEach(function(sv) {
+        var opt = document.createElement('option');
+        opt.value = sv.nom; opt.textContent = sv.nom;
+        if (sv.nom === currentNom) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (!sel.options.length) {
+        sel.innerHTML = '<option value="">—</option>';
+      }
+    })
+    .withFailureHandler(function() {
+      sel.innerHTML = currentNom
+        ? '<option value="'+currentNom+'">'+currentNom+'</option>'
+        : '<option value="">—</option>';
+    })
+    .getSuperviseursList({ token: S.token, adminKey: S.adminKey });
+}
+
+function openEditInspection(idx, kind) {
+  var c = kind === 'pest' ? _nuisiblesRecords[idx] : _incendieRecords[idx];
+  if (!c) return;
+  _editInspKind = kind;
+  _editInspIdx  = idx;
+  var typeLabel = kind === 'pest'
+    ? (PEST_LABELS[c.type] || c.type || 'Inspection')
+    : (c.type || 'Inspection');
+  document.getElementById('editInspTitle').textContent = '✏ Modifier — ' + typeLabel + ' #' + c.id;
+  document.getElementById('editInspDate').value       = c.dateInspection      || '';
+  document.getElementById('editInspProchaine').value  = c.prochaineInspection || '';
+  document.getElementById('editInspEtat').value       = c.etatGlobal          || 'Conforme';
+  document.getElementById('editInspObs').value        = c.observations         || '';
+  document.getElementById('editInspType').value       = c.type                || '';
+  document.getElementById('editInspEquipement').value = c.idEquipement         || '';
+  document.getElementById('editInspZone').value       = c.zone                || '';
+  _loadSuperviseursList(c.superviseurNom || '');
+  openSheet('editInspOv');
+}
+
+function saveEditInspection() {
+  var supNom   = document.getElementById('editInspSuperviseur').value.trim();
+  var dateVal  = document.getElementById('editInspDate').value;
+  var etat     = document.getElementById('editInspEtat').value;
+  var proch    = document.getElementById('editInspProchaine').value;
+  var obs      = document.getElementById('editInspObs').value.trim();
+  var typeVal  = document.getElementById('editInspType').value.trim();
+  var equip    = document.getElementById('editInspEquipement').value.trim();
+  var zone     = document.getElementById('editInspZone').value.trim();
+  if (!dateVal) { toast('Date d\'inspection requise','err'); return; }
+  var records  = _editInspKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c        = records[_editInspIdx];
+  if (!c) { toast('Erreur: enregistrement introuvable','err'); return; }
+  showLoader('Sauvegarde…');
+  var fn = _editInspKind === 'pest' ? 'updatePestChecklist' : 'updateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: ' + (r&&r.error||'?'), 'err'); return; }
+      c.superviseurNom      = supNom;
+      c.dateInspection      = dateVal;
+      c.etatGlobal          = etat;
+      c.prochaineInspection = proch;
+      c.observations        = obs;
+      c.type                = typeVal;
+      c.idEquipement        = equip;
+      c.zone                = zone;
+      closeSheet('editInspOv');
+      if (_editInspKind === 'pest') _renderNuisiblesList();
+      else _renderIncendieList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id, superviseurNom: supNom, dateInspection: dateVal, etatGlobal: etat, prochaineInspection: proch, observations: obs, type: typeVal, idEquipement: equip, zone: zone });
+}
+
+/* ── Menu contextuel cartes d'inspection (admin) ── */
+var _ctxKind = '';
+var _ctxIdx  = -1;
+
+function openCardCtxMenu(event, idx, kind) {
+  if (!isAdmin()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  _ctxKind = kind;
+  _ctxIdx  = idx;
+  var menu = document.getElementById('cardCtxMenu');
+  var x = event.clientX, y = event.clientY;
+  if (x + 210 > window.innerWidth)  x = window.innerWidth  - 215;
+  if (y + 70  > window.innerHeight) y = window.innerHeight - 75;
+  menu.style.left    = x + 'px';
+  menu.style.top     = y + 'px';
+  menu.style.display = 'block';
+}
+
+function _closeCtxMenu() {
+  var m = document.getElementById('cardCtxMenu');
+  if (m) m.style.display = 'none';
+}
+
+document.addEventListener('click',       _closeCtxMenu);
+document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#cardCtxMenu')) _closeCtxMenu(); });
+
+function duplicateInspection() {
+  _closeCtxMenu();
+  var records = _ctxKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c = records[_ctxIdx];
+  if (!c) return;
+  showLoader('Duplication…');
+  var fn = _ctxKind === 'pest' ? 'duplicatePestChecklist' : 'duplicateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      toast('✓ Inspection dupliquée — ID #'+r.id, 'ok');
+      if (_ctxKind === 'pest') renderNuisibles();
+      else renderIncendie();
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id });
+}
+
+function validateInspection(idx, kind) {
+  var records = kind === 'pest' ? _nuisiblesRecords : _incendieRecords;
+  var c = records[idx];
+  if (!c) return;
+  var adminNom = (S_AUTH && S_AUTH.name) || 'Admin';
+  var msg = 'Valider cette inspection au nom de :\n"' + adminNom + '" ?\n\nLe nom et la griffe apparaîtront dans la partie Responsable HSE du rapport.';
+  if (c.responsableNom) msg += '\n\n(déjà validé par : ' + c.responsableNom + ')';
+  if (!confirm(msg)) return;
+  showLoader('Validation…');
+  var fn = kind === 'pest' ? 'validatePestChecklist' : 'validateChecklist';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: ' + (r&&r.error||'?'), 'err'); return; }
+      c.responsableNom = adminNom;
+      if (kind === 'pest') _renderNuisiblesList();
+      else _renderIncendieList();
+      toast('✅ Inspection validée par ' + adminNom, 'ok');
+    })
+    .withFailureHandler(function(e) { hideSplash(); toast(e.message, 'err'); })
+    [fn]({ adminKey: S.adminKey, id: c.id, responsableNom: adminNom });
+}
+
+function renderIncendie() {
+  var body = document.getElementById('incendieBody');
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🧯</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Nouvelle inspection » pour commencer.</div></div>';
+        return;
+      }
+      _incendieRecords = r.data;
+      _renderIncendieList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getChecklists(S.adminKey);
+}
+
+function openIncendieForm() {
+  _incPhotoB64 = '';
+  _incPhotoMime = '';
+  document.getElementById('incDate').value = todayStr();
+  _equipSelected = [];
+  _equipCustom   = [];
+  _equipSearchQ  = '';
+  renderEquipTags();
+  var _emdd = document.getElementById('equipMultiDropdown');
+  if (_emdd) _emdd.style.display = 'none';
+  document.getElementById('incZone').value = '';
+  document.getElementById('incObs').value = '';
+  document.getElementById('incProchaine').value = plusMonthsStr(todayStr(), _extProchaineMonths);
+  document.getElementById('incEtat').value = 'Conforme';
+  document.getElementById('incType').value = 'Extincteur';
+  document.getElementById('incPhotoPreview').style.display = 'none';
+  document.getElementById('incPhotoArea').classList.remove('has-file');
+  document.getElementById('incPhotoInput').value = '';
+  updateIncChecklist();
+  openSheet('incendieFormOv');
+}
+
+function updateIncChecklist() {
+  var type = document.getElementById('incType').value;
+  var items = type==='RIA' ? CHECKLIST_RIA : CHECKLIST_EXTINCTEUR;
+  var container = document.getElementById('incChecklistContainer');
+  container.innerHTML = '<div class="chk-group"><div class="chk-group-title">Contrôles '+esc(type)+'</div>'
+    + items.map(function(it) {
+      return '<div class="chk-item">'
+        + '<input type="checkbox" id="chk_'+it.key+'" value="'+it.key+'" checked/>'
+        + '<label for="chk_'+it.key+'">'+esc(it.label)+'</label>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+}
+
+function onIncPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _incPhotoB64 = e.target.result;
+    _incPhotoMime = file.type;
+    var area = document.getElementById('incPhotoArea');
+    area.classList.add('has-file');
+    var prev = document.getElementById('incPhotoPreview');
+    prev.textContent = '✓ '+file.name+' ('+Math.round(file.size/1024)+' Ko)';
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function collectChecklist() {
+  var checks = {};
+  var type = document.getElementById('incType').value;
+  var items = type==='RIA' ? CHECKLIST_RIA : CHECKLIST_EXTINCTEUR;
+  items.forEach(function(it) {
+    var el = document.getElementById('chk_'+it.key);
+    if (el) checks[it.key] = el.checked;
+  });
+  return checks;
+}
+
+function submitChecklist() {
+  var date = document.getElementById('incDate').value;
+  var idEq = _equipSelected.join(', ');
+  var zone = document.getElementById('incZone').value.trim();
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  if (!idEq) { toast('Sélectionnez au moins un équipement','err'); return; }
+  var checks = collectChecklist();
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection #'+r.id+' enregistrée','ok');
+        closeSheet('incendieFormOv');
+        renderIncendie();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast('Erreur: '+e.message,'err'); })
+    .saveChecklist({
+      token: S.adminKey,
+      dateInspection: date,
+      superviseurNom: S_AUTH.name||S_AUTH.matricule,
+      type: document.getElementById('incType').value,
+      idEquipement: idEq,
+      zone: zone,
+      checklist: checks,
+      etatGlobal: document.getElementById('incEtat').value,
+      observations: document.getElementById('incObs').value,
+      prochaineInspection: document.getElementById('incProchaine').value,
+      photoChecklist: _incPhotoB64,
+      photo_mime: _incPhotoMime
+    });
+}
+
+/* ══════════════════════════════════════════
+   CONTRÔLE NUISIBLES — CHECKLISTS PAR DÉFAUT
+══════════════════════════════════════════ */
+
+var CHECKLIST_DEI = [
+  { key:'lampes_uv',    label:'Lampes UV fonctionnelles et propres' },
+  { key:'plateau',      label:'Plateau récupérateur vidé et nettoyé' },
+  { key:'grille',       label:'Grille de protection intacte' },
+  { key:'alimentation', label:'Câblage et alimentation électrique OK' },
+  { key:'emplacement',  label:'Emplacement adapté (éloigné des zones alimentaires)' },
+  { key:'etiquette',    label:'Étiquette de maintenance à jour (≤ 12 mois)' }
+];
+var CHECKLIST_BAP = [
+  { key:'integrite',    label:'Boîte intacte et verrouillée' },
+  { key:'appat',        label:'Appât présent et en bon état' },
+  { key:'activite',     label:'Traces d\'activité relevées / enregistrées' },
+  { key:'emplacement',  label:'Emplacement conforme au plan de dératisation' },
+  { key:'etiquette',    label:'Étiquette d\'identification et de date présente' }
+];
+var CHECKLIST_PM = [
+  { key:'etat',         label:'Mécanisme du piège opérationnel' },
+  { key:'appat',        label:'Appât présent et frais' },
+  { key:'capture',      label:'Résultat de capture enregistré' },
+  { key:'position',     label:'Position conforme (le long des murs / angles)' },
+  { key:'etiquette',    label:'Étiquette d\'identification présente' }
+];
+var CHECKLIST_PGG = [
+  { key:'adhesif',      label:'Surface collante suffisante (≥ 75 % de capacité restante)' },
+  { key:'capture',      label:'Résultat de capture enregistré' },
+  { key:'position',     label:'Positionnée contre les murs / zones à risque' },
+  { key:'date_pose',    label:'Date de pose visible et valide (≤ 4 semaines)' },
+  { key:'proprete',     label:'Aucune poussière / saleté réduisant l\'efficacité' }
+];
+
+var PEST_TYPES  = ['DEI','BAP','PM','PGG'];
+var PEST_ICONS  = { DEI:'⚡', BAP:'🐭', PM:'🪤', PGG:'📋' };
+var PEST_LABELS = { DEI:'Désinsectiseur Électrique', BAP:'Boîte d\'appât', PM:'Piège mécanique', PGG:'Plaque de glu' };
+var PEST_COLORS = { DEI:'#3498db', BAP:'#2ecc71', PM:'#e67e22', PGG:'#9b59b6' };
+
+var _pestConfig         = { DEI:{count:5,items:[]}, BAP:{count:5,items:[]}, PM:{count:5,items:[]}, PGG:{count:5,items:[]} };
+var _pestChecklistConfig = {};
+
+function _pestChecklistByType(type) {
+  var cfg = _pestChecklistConfig[type];
+  if (cfg && cfg.length) return cfg;
+  if (type==='DEI') return CHECKLIST_DEI;
+  if (type==='BAP') return CHECKLIST_BAP;
+  if (type==='PM')  return CHECKLIST_PM;
+  if (type==='PGG') return CHECKLIST_PGG;
+  return [];
+}
+
+/* ══════════════════════════════════════════
+   CONFIG NUISIBLES
+══════════════════════════════════════════ */
+
+function _renderPestZoneChips() {
+  var el = document.getElementById('pestZoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removePestConfigZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+
+function addPestConfigZone() {
+  var inp = document.getElementById('pestNewZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderPestZoneChips();
+  _refreshPestZoneSelects();
+}
+
+function removePestConfigZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderPestZoneChips();
+  _refreshPestZoneSelects();
+}
+
+function _refreshPestZoneSelects() {
+  PEST_TYPES.forEach(function(type) {
+    var body = document.getElementById('pestBody_'+type);
+    if (!body) return;
+    var cfg = _pestConfig[type] || { count:5, items:[] };
+    var count = cfg.count || 5;
+    for (var i=1; i<=count; i++) {
+      var sel = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="zone"]');
+      if (sel && sel.tagName==='SELECT') { var v=sel.value; sel.innerHTML=_zoneOptions(v); }
+    }
+  });
+}
+
+function openConfigPest() {
+  if (!isAdmin()) { toast('🔒 Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement de la configuration…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _pestConfig             = r.pestConfig || {};
+      _pestDocCode            = (_pestConfig.docCode)  || 'ENR-HSE 7';
+      _pestDocRev             = r.pestDocRev           || '01';
+      _pestDocEdition         = r.pestDocEdition       || '';
+      _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || 3;
+      _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
+      _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+      _configuredZones  = r.zones || [];
+      var _cl = r.checklists || {};
+      var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
+      _pestChecklistConfig = hasConfig ? _cl : {
+        DEI: CHECKLIST_DEI.slice(), BAP: CHECKLIST_BAP.slice(),
+        PM:  CHECKLIST_PM.slice(),  PGG: CHECKLIST_PGG.slice()
+      };
+      var dcEl = document.getElementById('pestDocCodeInput');
+      if (dcEl) dcEl.value = _pestDocCode;
+      var rvEl2 = document.getElementById('pestDocRevInput');
+      if (rvEl2) rvEl2.value = _pestDocRev;
+      var edEl2 = document.getElementById('pestDocEditionInput');
+      if (edEl2) edEl2.value = _pestDocEdition;
+      var pmEl2 = document.getElementById('pestProchaineMonthsInput');
+      if (pmEl2) pmEl2.value = _pestProchaineMonths;
+      _renderPestChecklistEditor();
+      _renderPestConfigTables();
+      _renderPestZoneChips();
+      _refreshPestZoneSelects();
+      openSheet('pestConfigOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getPestConfigData(S.adminKey);
+}
+
+function _renderPestConfigTables() {
+  PEST_TYPES.forEach(function(type) {
+    var countEl = document.getElementById('pestCount_'+type);
+    var body    = document.getElementById('pestBody_'+type);
+    if (!body) return;
+    var cfg   = _pestConfig[type] || { count:5, items:[] };
+    var count = cfg.count || 5;
+    if (countEl) countEl.value = count;
+    var items = cfg.items || [];
+    var rows  = [];
+    for (var i=1; i<=count; i++) {
+      var item = null;
+      for (var j=0; j<items.length; j++) { if (items[j].num===i) { item=items[j]; break; } }
+      if (!item) item = { num:i, zone:'', emplacement:'' };
+      rows.push(
+        '<div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;align-items:center">'
+        +'<div class="ext-cfg-label" style="color:var(--t3)">'+type+'-'+String(i).padStart(2,'0')+'</div>'
+        +'<select class="fi" data-ptype="'+type+'" data-pnum="'+i+'" data-pfield="zone" style="height:30px;font-size:.78rem;padding:2px 4px">'
+        +_zoneOptions(item.zone||'')
+        +'</select>'
+        +'<input class="fi" type="text" data-ptype="'+type+'" data-pnum="'+i+'" data-pfield="emplacement" value="'+esc(item.emplacement||'')+'" placeholder="Emplacement…" style="height:30px;font-size:.78rem;padding:2px 7px"/>'
+        +'</div>'
+      );
+    }
+    body.innerHTML = rows.join('');
+  });
+}
+
+function applyPestCount(type) {
+  var countEl = document.getElementById('pestCount_'+type);
+  if (!countEl) return;
+  var count = parseInt(countEl.value)||5;
+  if (!_pestConfig[type]) _pestConfig[type] = { count:5, items:[] };
+  _pestConfig[type].items = _collectPestItems(type);
+  _pestConfig[type].count = count;
+  _renderPestConfigTables();
+}
+
+function _collectPestItems(type) {
+  var body  = document.getElementById('pestBody_'+type);
+  if (!body) return [];
+  var cfg   = _pestConfig[type] || { count:5, items:[] };
+  var count = cfg.count || 5;
+  var items = [];
+  for (var i=1; i<=count; i++) {
+    var zsel = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="zone"]');
+    var emp  = body.querySelector('[data-ptype="'+type+'"][data-pnum="'+i+'"][data-pfield="emplacement"]');
+    items.push({ num:i, zone:(zsel?zsel.value:''), emplacement:(emp?emp.value.trim():'') });
+  }
+  return items;
+}
+
+function saveFullPestConfig() {
+  var dcEl = document.getElementById('pestDocCodeInput');
+  _pestDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 7';
+  var rvEl2 = document.getElementById('pestDocRevInput');
+  _pestDocRev = (rvEl2&&rvEl2.value.trim()) || '01';
+  var edEl2 = document.getElementById('pestDocEditionInput');
+  _pestDocEdition = (edEl2&&edEl2.value.trim()) || '';
+  var pmEl2 = document.getElementById('pestProchaineMonthsInput');
+  _pestProchaineMonths = parseInt(pmEl2&&pmEl2.value) || 3;
+  var cfg = { docCode: _pestDocCode };
+  PEST_TYPES.forEach(function(type) {
+    var countEl = document.getElementById('pestCount_'+type);
+    var count   = parseInt(countEl&&countEl.value)||5;
+    cfg[type]   = { count:count, items:_collectPestItems(type) };
+  });
+  _pestConfig = cfg;
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) { toast('✓ Configuration nuisibles sauvegardée','ok'); closeSheet('pestConfigOv'); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestConfig({ adminKey:S.adminKey, pestConfig:_pestConfig, docRev:_pestDocRev, docEdition:_pestDocEdition, prochaineMonths:_pestProchaineMonths });
+}
+
+/* ─── Éditeur de points de contrôle ─── */
+function _renderPestChecklistEditor() {
+  PEST_TYPES.forEach(function(type) {
+    var cont = document.getElementById('pestCl_'+type);
+    if (!cont) return;
+    var items = _pestChecklistConfig[type] || [];
+    cont.innerHTML = items.map(function(it) {
+      return '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">'
+        +'<input class="fi" type="text" value="'+esc(it.label)+'" data-pcltype="'+esc(type)+'" data-pclkey="'+esc(it.key)+'" '
+        +'style="height:30px;font-size:.78rem;flex:1" placeholder="Libellé du point…"/>'
+        +'<button type="button" onclick="removePestChecklistItem(\''+esc(type)+'\',\''+esc(it.key)+'\')" '
+        +'style="height:30px;width:30px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:6px;color:#e74c3c;cursor:pointer;font-size:.85rem;flex-shrink:0">✕</button>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function _syncPestChecklistFromDOM() {
+  PEST_TYPES.forEach(function(type) {
+    var cont = document.getElementById('pestCl_'+type);
+    if (!cont) return;
+    _pestChecklistConfig[type] = [];
+    cont.querySelectorAll('input[data-pclkey]').forEach(function(inp) {
+      var label = inp.value.trim();
+      var key   = inp.getAttribute('data-pclkey');
+      if (label) _pestChecklistConfig[type].push({ key:key, label:label });
+    });
+  });
+}
+
+function addPestChecklistItem(type) {
+  _syncPestChecklistFromDOM();
+  if (!_pestChecklistConfig[type]) _pestChecklistConfig[type] = [];
+  _pestChecklistConfig[type].push({ key:'custom_'+(Date.now()%1e7), label:'' });
+  _renderPestChecklistEditor();
+  var cont = document.getElementById('pestCl_'+type);
+  if (cont) { var ins = cont.querySelectorAll('input[data-pclkey]'); if (ins.length) ins[ins.length-1].focus(); }
+}
+
+function removePestChecklistItem(type, key) {
+  _syncPestChecklistFromDOM();
+  _pestChecklistConfig[type] = (_pestChecklistConfig[type]||[]).filter(function(it){ return it.key!==key; });
+  _renderPestChecklistEditor();
+}
+
+function resetPestChecklistToDefaults() {
+  _pestChecklistConfig = {
+    DEI: CHECKLIST_DEI.slice(), BAP: CHECKLIST_BAP.slice(),
+    PM:  CHECKLIST_PM.slice(),  PGG: CHECKLIST_PGG.slice()
+  };
+  _renderPestChecklistEditor();
+  toast('Points restaurés — cliquez 💾 pour sauvegarder','ok');
+}
+
+function savePestChecklistConfig() {
+  _syncPestChecklistFromDOM();
+  showLoader('Sauvegarde des points de contrôle…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) toast('✓ Points de contrôle sauvegardés','ok');
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestChecklistsConfig({ adminKey:S.adminKey, checklists:_pestChecklistConfig });
+}
+
+/* ══════════════════════════════════════════
+   INSPECTION GLOBALE NUISIBLES
+══════════════════════════════════════════ */
+var _pestInspChecks     = {};
+var _pestInspStatuts    = {};
+var _pestInspNotes      = {};
+var _pestInspPhotoB64   = '';
+var _pestInspPhotoMime  = '';
+var _pestInspSortMode   = 'type';
+var _pestInspTypeFilter    = null;  // null = tous les types
+var _pestDocCode           = 'ENR-HSE 7';
+var _pestCurrentDetailIdx  = -1;
+
+function _pkey(type, num) { return type+'_'+num; }
+
+function _getPestItemCfg(type, num) {
+  var cfg   = _pestConfig[type] || { items:[] };
+  var items = cfg.items || [];
+  for (var j=0; j<items.length; j++) { if (items[j].num===num) return items[j]; }
+  return { num:num, zone:'', emplacement:'' };
+}
+
+function openGlobalPestInspection(pestType) {
+  _pestInspTypeFilter = pestType || null;
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _pestConfig             = r.pestConfig || {};
+      _pestDocCode            = (_pestConfig.docCode)  || 'ENR-HSE 7';
+      _pestDocRev             = r.pestDocRev           || _pestDocRev;
+      _pestDocEdition         = r.pestDocEdition       || _pestDocEdition;
+      _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || _pestProchaineMonths;
+      _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
+      _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
+      var _cl = r.checklists || {};
+      var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
+      _pestChecklistConfig = hasConfig ? _cl : {};
+      var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+      var hasDevices  = activeTypes.some(function(t){ return (_pestConfig[t]&&(_pestConfig[t].count||0))>0; });
+      if (!hasDevices) {
+        var lbl = _pestInspTypeFilter ? PEST_LABELS[_pestInspTypeFilter] : 'nuisibles';
+        toast('Configurez d\'abord les dispositifs '+lbl+' (⚙ Configurer)','err');
+        return;
+      }
+      _initGlobalPestForm();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getPestConfigData(S.adminKey);
+}
+
+function _initGlobalPestForm() {
+  _pestInspChecks = {}; _pestInspStatuts = {}; _pestInspNotes = {};
+  _pestInspPhotoB64 = ''; _pestInspPhotoMime = '';
+  _pestInspSortMode = _pestInspTypeFilter ? 'num' : 'type';
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  activeTypes.forEach(function(type) {
+    var cfg   = _pestConfig[type] || { count:0 };
+    var count = cfg.count || 0;
+    var cl    = _pestChecklistByType(type);
+    for (var i=1; i<=count; i++) {
+      var k = _pkey(type, i);
+      _pestInspChecks[k]  = {};
+      cl.forEach(function(it){ _pestInspChecks[k][it.key] = true; });
+      _pestInspStatuts[k] = 'Conforme';
+      _pestInspNotes[k]   = '';
+    }
+  });
+  document.getElementById('globalPestDate').value      = todayStr();
+  document.getElementById('globalPestProchaine').value = plusMonthsStr(todayStr(), _pestProchaineMonths);
+  document.getElementById('globalPestObs').value       = '';
+  var prev = document.getElementById('globalPestPhotoPreview');
+  if (prev) { prev.style.display='none'; prev.innerHTML=''; }
+  // Titre dynamique
+  var titleEl = document.getElementById('globalPestOvTitle');
+  if (titleEl) {
+    titleEl.textContent = _pestInspTypeFilter
+      ? PEST_ICONS[_pestInspTypeFilter]+' Inspection '+PEST_LABELS[_pestInspTypeFilter]
+      : '🔍 Inspection Globale — Dispositifs Nuisibles';
+  }
+  // Tabs de tri : masquer "Type" quand un seul type
+  var sortTypeBtn = document.getElementById('pgsort_type');
+  if (sortTypeBtn) sortTypeBtn.style.display = _pestInspTypeFilter ? 'none' : '';
+  ['pgsort_type','pgsort_zone','pgsort_num'].forEach(function(id){
+    var el = document.getElementById(id);
+    var active = _pestInspTypeFilter ? (id==='pgsort_num') : (id==='pgsort_type');
+    if (el) el.className = 'gsort-tab'+(active?' on':'');
+  });
+  _renderPestInspSections();
+  openSheet('globalPestOv');
+}
+
+function setPestInspSort(mode) {
+  _syncPestInspNotes();
+  _pestInspSortMode = mode;
+  ['type','zone','num'].forEach(function(m){
+    var el = document.getElementById('pgsort_'+m);
+    if (el) el.className = 'gsort-tab'+(m===mode?' on':'');
+  });
+  _renderPestInspSections();
+}
+
+function _syncPestInspNotes() {
+  PEST_TYPES.forEach(function(type) {
+    var cfg = _pestConfig[type] || { count:0 };
+    for (var i=1; i<=(cfg.count||0); i++) {
+      var k  = _pkey(type, i);
+      var el = document.getElementById('pgnote_'+k);
+      if (el) _pestInspNotes[k] = el.value;
+    }
+  });
+}
+
+function _renderPestInspSections() {
+  var container   = document.getElementById('globalPestSectionsContainer');
+  if (!container) return;
+  var by          = _pestInspSortMode;
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+
+  if (by === 'type') {
+    container.innerHTML = activeTypes.map(function(type) {
+      var cfg   = _pestConfig[type] || { count:0 };
+      var count = cfg.count || 0;
+      if (!count) return '';
+      var items = [];
+      for (var i=1; i<=count; i++) items.push(_getPestItemCfg(type, i));
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span style="color:'+PEST_COLORS[type]+'">'+PEST_ICONS[type]+'</span> '+esc(PEST_LABELS[type])
+        +' <span class="global-type-count">'+count+' dispositif'+(count>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+items.map(function(it){ return _renderPestInspAccordion(type,it,false); }).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else if (by === 'zone') {
+    var zoneMap = {};
+    activeTypes.forEach(function(type) {
+      var cfg = _pestConfig[type] || { count:0 };
+      for (var i=1; i<=(cfg.count||0); i++) {
+        var it = _getPestItemCfg(type, i);
+        var z  = (it.zone||'').trim() || '— Zone non définie';
+        if (!zoneMap[z]) zoneMap[z] = [];
+        zoneMap[z].push({ type:type, item:it });
+      }
+    });
+    container.innerHTML = Object.keys(zoneMap).sort().map(function(zone) {
+      var devs = zoneMap[zone];
+      return '<div class="global-type-section">'
+        +'<div class="global-type-title"><span>📍</span> '+esc(zone)
+        +' <span class="global-type-count">'+devs.length+' dispositif'+(devs.length>1?'s':'')+'</span></div>'
+        +'<div class="global-ext-list">'+devs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,!!_pestInspTypeFilter); }).join('')+'</div>'
+        +'</div>';
+    }).join('');
+
+  } else {
+    var allDevs = [];
+    activeTypes.forEach(function(type) {
+      var cfg = _pestConfig[type] || { count:0 };
+      for (var i=1; i<=(cfg.count||0); i++) allDevs.push({ type:type, item:_getPestItemCfg(type,i) });
+    });
+    var sectionTitle = _pestInspTypeFilter
+      ? PEST_ICONS[_pestInspTypeFilter]+' '+esc(PEST_LABELS[_pestInspTypeFilter])
+      : '🔢 Tous les dispositifs';
+    container.innerHTML = '<div class="global-type-section">'
+      +'<div class="global-type-title" style="color:'+(_pestInspTypeFilter?PEST_COLORS[_pestInspTypeFilter]:'inherit')+'"><span>'+sectionTitle+'</span>'
+      +' <span class="global-type-count">'+allDevs.length+' unité'+(allDevs.length>1?'s':'')+'</span></div>'
+      +'<div class="global-ext-list">'+allDevs.map(function(d){ return _renderPestInspAccordion(d.type,d.item,!_pestInspTypeFilter); }).join('')+'</div>'
+      +'</div>';
+  }
+}
+
+function _renderPestInspAccordion(type, item, showType) {
+  var k       = _pkey(type, item.num);
+  var cl      = _pestChecklistByType(type);
+  var checks  = _pestInspChecks[k] || {};
+  var okCount = cl.filter(function(it){ return checks[it.key]; }).length;
+  var isOk    = okCount === cl.length;
+
+  var checkItems = cl.map(function(it) {
+    return '<div class="chk-item">'
+      +'<input type="checkbox" id="pgchk_'+k+'_'+it.key+'" '
+      +(checks[it.key]?'checked':'')+' '
+      +'onchange="onPestCheckChange(\''+k+'\',\''+type+'\',\''+it.key+'\',this.checked)"/>'
+      +'<label for="pgchk_'+k+'_'+it.key+'">'+esc(it.label)+'</label>'
+      +'</div>';
+  }).join('');
+
+  var typePill = showType
+    ? '<span style="font-size:.7rem;color:'+PEST_COLORS[type]+';background:'+PEST_COLORS[type]+'22;border-radius:10px;padding:1px 7px;margin-right:4px">'+PEST_ICONS[type]+' '+esc(type)+'</span>'
+    : '';
+  var zoneSpan = (_pestInspSortMode!=='zone' && item.zone)
+    ? '<span style="font-size:.72rem;color:var(--t3);flex:1">'+esc(item.zone)+'</span>'
+    : '<span style="flex:1"></span>';
+  var emplacePill = item.emplacement
+    ? '<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px;white-space:nowrap">📌 '+esc(item.emplacement)+'</span>'
+    : '';
+  var detailMeta = (item.zone||item.emplacement)
+    ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:.75rem;color:var(--t3)">'
+      +(item.zone ? '<span>🏷 '+esc(item.zone)+'</span>' : '')
+      +(item.emplacement ? '<span>📌 '+esc(item.emplacement)+'</span>' : '')
+      +'</div>'
+    : '';
+
+  return '<div class="global-ext-accordion">'
+    +'<div class="global-ext-header" id="pghdr_'+k+'" onclick="togglePestAccordion(\''+k+'\')">'
+    +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:68px">'+type+'-'+String(item.num).padStart(2,'0')+'</span>'
+    +typePill+zoneSpan+emplacePill
+    +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'" id="pgbadge_'+k+'">'
+    +(isOk?'✅':'❌')+' '+okCount+'/'+cl.length+'</span>'
+    +'<span id="pgchev_'+k+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+    +'</div>'
+    +'<div class="global-ext-detail" id="pgdet_'+k+'" style="display:none">'
+    +detailMeta
+    +'<div class="chk-group">'+checkItems+'</div>'
+    +'<input type="text" class="fi global-ext-note" id="pgnote_'+k+'" placeholder="Note / observation…" '
+    +'value="'+esc(_pestInspNotes[k]||'')+'" onchange="_pestInspNotes[\''+k+'\']=this.value"/>'
+    +'</div>'
+    +'</div>';
+}
+
+function togglePestAccordion(k) {
+  var det  = document.getElementById('pgdet_'+k);
+  var hdr  = document.getElementById('pghdr_'+k);
+  var chev = document.getElementById('pgchev_'+k);
+  if (!det) return;
+  var open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (hdr)  hdr.classList.toggle('open', !open);
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function onPestCheckChange(k, type, key, checked) {
+  if (!_pestInspChecks[k]) _pestInspChecks[k] = {};
+  _pestInspChecks[k][key] = checked;
+  var cl      = _pestChecklistByType(type);
+  var okCount = cl.filter(function(it){ return (_pestInspChecks[k]||{})[it.key]; }).length;
+  var isOk    = okCount === cl.length;
+  _pestInspStatuts[k] = isOk ? 'Conforme' : 'Non conforme';
+  var badge = document.getElementById('pgbadge_'+k);
+  if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+okCount+'/'+cl.length; }
+}
+
+function setAllPestStatut(statut) {
+  var isOk = statut === 'Conforme';
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  activeTypes.forEach(function(type) {
+    var cfg = _pestConfig[type] || { count:0 };
+    var cl  = _pestChecklistByType(type);
+    for (var i=1; i<=(cfg.count||0); i++) {
+      var k = _pkey(type, i);
+      if (!_pestInspChecks[k]) _pestInspChecks[k] = {};
+      cl.forEach(function(it){
+        _pestInspChecks[k][it.key] = isOk;
+        var el = document.getElementById('pgchk_'+k+'_'+it.key);
+        if (el) el.checked = isOk;
+      });
+      _pestInspStatuts[k] = statut;
+      var badge = document.getElementById('pgbadge_'+k);
+      if (badge) { badge.className='global-ext-badge '+(isOk?'ok':'nok'); badge.innerHTML=(isOk?'✅':'❌')+' '+(isOk?cl.length:0)+'/'+cl.length; }
+    }
+  });
+}
+
+function submitGlobalPestInspection() {
+  var date = document.getElementById('globalPestDate').value;
+  if (!date) { toast('Saisissez une date d\'inspection','err'); return; }
+  _syncPestInspNotes();
+  var activeTypes  = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  var result       = {};
+  var totalNonConf = 0;
+  var totalDevs    = 0;
+  activeTypes.forEach(function(type) {
+    var cfg   = _pestConfig[type] || { count:0, items:[] };
+    var count = cfg.count || 0;
+    if (!count) return;
+    var units = [];
+    for (var i=1; i<=count; i++) {
+      var k  = _pkey(type, i);
+      var it = _getPestItemCfg(type, i);
+      if (_pestInspStatuts[k]==='Non conforme') totalNonConf++;
+      totalDevs++;
+      units.push({ num:i, zone:it.zone||'', emplacement:it.emplacement||'',
+                   checks:_pestInspChecks[k]||{}, statut:_pestInspStatuts[k]||'Conforme', note:_pestInspNotes[k]||'' });
+    }
+    result[type] = { units:units };
+  });
+  var etatGlobal  = totalNonConf===0 ? 'Conforme' : totalNonConf < totalDevs/2 ? 'Partiel' : 'Non conforme';
+  var typeLabel   = _pestInspTypeFilter
+    ? ('Inspection '+PEST_LABELS[_pestInspTypeFilter])
+    : 'Inspection Globale Nuisibles';
+  var idLabel     = _pestInspTypeFilter
+    ? (PEST_ICONS[_pestInspTypeFilter]+' '+PEST_LABELS[_pestInspTypeFilter]+' — '+totalDevs+' dispositif'+(totalDevs>1?'s':''))
+    : ('GLOBAL — '+totalDevs+' dispositifs');
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ Inspection nuisibles #'+r.id+' enregistrée','ok');
+        closeSheet('globalPestOv');
+        renderNuisibles();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .savePestChecklist({
+      token:              S.adminKey,
+      dateInspection:     date,
+      superviseurNom:     S_AUTH.name||S_AUTH.matricule,
+      type:               typeLabel,
+      idEquipement:       idLabel,
+      zone:               '',
+      checklist:          result,
+      etatGlobal:         etatGlobal,
+      observations:       document.getElementById('globalPestObs').value,
+      prochaineInspection:document.getElementById('globalPestProchaine').value,
+      photoChecklist:     _pestInspPhotoB64,
+      photo_mime:         _pestInspPhotoMime
+    });
+}
+
+function onPestPhotoChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  var prev   = document.getElementById('globalPestPhotoPreview');
+  reader.onload = function(e) {
+    _pestInspPhotoB64  = e.target.result.split(',')[1]||'';
+    _pestInspPhotoMime = file.type||'image/jpeg';
+    if (prev) {
+      prev.style.display = 'block';
+      prev.innerHTML = file.type.startsWith('image/')
+        ? '<img src="'+e.target.result+'" style="max-height:80px;border-radius:6px"/>'
+        : '<div style="font-size:.8rem;color:var(--t2)">📄 '+esc(file.name)+'</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════
+   LISTE & DÉTAIL DES INSPECTIONS NUISIBLES
+══════════════════════════════════════════ */
+var _nuisiblesRecords = [];
+var _pestFilter       = 'all';
+
+function setPestFilter(f) {
+  _pestFilter = f;
+  var tabMap = { all:'all', DEI:'dei', BAP:'bap', PM:'pm', PGG:'pgg' };
+  Object.keys(tabMap).forEach(function(k){
+    var el = document.getElementById('pftab_'+tabMap[k]);
+    if (el) el.className = 'gsort-tab'+(k===f?' on':'');
+  });
+  _renderNuisiblesList();
+}
+
+function _renderNuisiblesList() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body || !_nuisiblesRecords.length) return;
+  var filtered = _nuisiblesRecords.filter(function(c) {
+    if (_pestFilter === 'all') return true;
+    return c.type === _pestFilter || c.type === 'Inspection Globale Nuisibles';
+  });
+  filtered.sort(function(a,b){ return (b.dateInspection||'').localeCompare(a.dateInspection||''); });
+  if (!filtered.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🔍</div><div>Aucun enregistrement dans cette catégorie.</div></div>';
+    return;
+  }
+  body.innerHTML = filtered.map(function(c) {
+    var idx      = _nuisiblesRecords.indexOf(c);
+    var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+    var isGlobal = c.type === 'Inspection Globale Nuisibles';
+    var typeIcon = isGlobal ? '🔍 Inspection Globale'
+      : (PEST_ICONS[c.type]||'🪲')+' '+(PEST_LABELS[c.type]||esc(c.type));
+    var statsLine = '';
+    if (isGlobal && c.checklist && typeof c.checklist==='object') {
+      var parts = [];
+      PEST_TYPES.forEach(function(t){
+        var sec = c.checklist[t];
+        if (!sec||!sec.units||!sec.units.length) return;
+        var tot  = sec.units.length;
+        var conf = sec.units.filter(function(u){ return u.statut==='Conforme'; }).length;
+        if (tot) parts.push(PEST_ICONS[t]+' '+t+': '+conf+'/'+tot);
+      });
+      if (parts.length) statsLine = '<div style="font-size:.75rem;color:var(--t2);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">'+parts.map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>';
+    }
+    return '<div class="hse-card" onclick="openPestDetail('+idx+')" oncontextmenu="openCardCtxMenu(event,'+idx+',\'pest\')" style="cursor:pointer">'
+      +'<div class="hse-card-header">'
+      +'<div><div class="hse-card-title">'+typeIcon+'</div>'
+      +'<div class="hse-card-meta"><span>📅 '+esc(c.dateInspection)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div></div>'
+      +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      +'</div>'
+      +statsLine
+      +(c.prochaineInspection ? '<div style="font-size:.78rem;color:var(--t3)">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>' : '')
+      +(c.responsableNom ? '<div style="font-size:.78rem;color:#22c55e;margin-top:4px">✅ Validé par '+esc(c.responsableNom)+'</div>' : '')
+      +(c.photoId ? '<div style="margin-top:6px;font-size:.78rem;color:#3b82f6">📎 Rapport signé joint</div>' : '')
+      +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
+      +'<button class="btn btn-g" onclick="viewPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
+      +'<button class="btn btn-g" onclick="printPestRecord('+idx+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +(isAdmin() ? '<button class="btn btn-g" onclick="openEditInspection('+idx+',\'pest\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0">✏</button>' : '')
+      +(isAdmin() ? '<button class="btn '+(c.responsableNom?'btn-p':'btn-g')+'" onclick="validateInspection('+idx+',\'pest\')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0" title="Valider l\'inspection">'+(c.responsableNom?'✅':'☑')+'</button>' : '')
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+var _pestEditMode = false;
+
+function openPestDetail(idx) {
+  var c = _nuisiblesRecords[idx];
+  if (!c) return;
+  _pestCurrentDetailIdx = idx;
+  _pestEditMode = false;
+  document.getElementById('pestDetailTitle').textContent = '🔍 Inspection Nuisibles — '+esc(c.dateInspection||'');
+  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, false);
+  var editBtn = document.getElementById('pestEditBtn');
+  var saveBtn = document.getElementById('pestSaveBtn');
+  if (editBtn) editBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
+  openSheet('pestDetailOv');
+}
+
+function togglePestEdit() {
+  _pestEditMode = !_pestEditMode;
+  var c = _nuisiblesRecords[_pestCurrentDetailIdx];
+  if (!c) return;
+  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, _pestEditMode);
+  document.getElementById('pestEditBtn').textContent = _pestEditMode ? '👁 Vue' : '✏ Modifier';
+  document.getElementById('pestSaveBtn').style.display = _pestEditMode ? 'inline-flex' : 'none';
+}
+
+function savePestEdit() {
+  var c = _nuisiblesRecords[_pestCurrentDetailIdx];
+  if (!c) return;
+  var isGlobal = c.type === 'Inspection Globale Nuisibles';
+
+  var dateVal  = (document.getElementById('pdetDate')  ||{}).value || c.dateInspection      || '';
+  var prochVal = (document.getElementById('pdetProch') ||{}).value || c.prochaineInspection || '';
+  var etatVal  = (document.getElementById('pdetEtat')  ||{}).value || c.etatGlobal          || '';
+  var obsVal   = (document.getElementById('pdetObs')   ||{}).value || c.observations        || '';
+  var supVal   = (document.getElementById('pdetSup')   ||{}).value || c.superviseurNom      || '';
+
+  var newChecklist = c.checklist;
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    newChecklist = {};
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.units) return;
+      var cl = _pestChecklistByType(type);
+      var units = sec.units.map(function(u) {
+        var newChecks = {};
+        cl.forEach(function(it) {
+          var cb = document.getElementById('pchk_'+type+'_'+u.num+'_'+it.key);
+          newChecks[it.key] = cb ? cb.checked : (u.checks && u.checks[it.key]) || false;
+        });
+        var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+        var noteEl = document.getElementById('pnote_'+type+'_'+u.num);
+        return Object.assign({}, u, {
+          checks: newChecks,
+          statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+          note: noteEl ? noteEl.value : (u.note || '')
+        });
+      });
+      newChecklist[type] = Object.assign({}, sec, { units: units });
+    });
+  }
+
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      c.dateInspection      = dateVal;
+      c.prochaineInspection = prochVal;
+      c.etatGlobal          = etatVal;
+      c.observations        = obsVal;
+      c.superviseurNom      = supVal;
+      c.checklist           = newChecklist;
+      _pestEditMode = false;
+      document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, false);
+      document.getElementById('pestEditBtn').textContent = '✏ Modifier';
+      document.getElementById('pestSaveBtn').style.display = 'none';
+      document.getElementById('pestDetailTitle').textContent = '🔍 Inspection Nuisibles — '+esc(dateVal);
+      _renderNuisiblesList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .updatePestChecklist({
+      adminKey: S.adminKey,
+      id: c.id,
+      superviseurNom:      supVal,
+      dateInspection:      dateVal,
+      etatGlobal:          etatVal,
+      prochaineInspection: prochVal,
+      observations:        obsVal,
+      checklistJson:       JSON.stringify(newChecklist)
+    });
+}
+
+function _buildPestDetailHTML(c, editMode) {
+  var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
+  var isGlobal = c.type === 'Inspection Globale Nuisibles';
+  var html = '';
+
+  if (editMode) {
+    html += '<div style="display:grid;gap:8px;margin-bottom:12px;font-size:.82rem">'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">📅 Date</label>'
+      +'<input id="pdetDate" class="fi" type="date" value="'+esc(c.dateInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🦺 Superviseur</label>'
+      +'<input id="pdetSup" class="fi" type="text" value="'+esc(c.superviseurNom||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🔜 Prochaine</label>'
+      +'<input id="pdetProch" class="fi" type="date" value="'+esc(c.prochaineInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">État global</label>'
+      +'<select id="pdetEtat" class="fi" style="height:32px;font-size:.82rem;flex:1">'
+      +'<option value="Conforme"'+(c.etatGlobal==='Conforme'?' selected':'')+'>Conforme</option>'
+      +'<option value="Non conforme"'+(c.etatGlobal==='Non conforme'?' selected':'')+'>Non conforme</option>'
+      +'<option value="Partiel"'+(c.etatGlobal==='Partiel'?' selected':'')+'>Partiel</option>'
+      +'</select></div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-start"><label style="color:var(--t3);min-width:80px;padding-top:6px">📝 Obs.</label>'
+      +'<textarea id="pdetObs" class="fi" rows="2" style="font-size:.82rem;flex:1;resize:vertical">'+esc(c.observations||'')+'</textarea></div>'
+      +'</div>';
+  } else {
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      +'<div style="font-size:.82rem;color:var(--t2);line-height:1.6"><div>📅 '+esc(c.dateInspection)+'</div><div>🦺 '+esc(c.superviseurNom)+'</div></div>'
+      +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      +'</div>';
+    if (c.prochaineInspection) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+    if (c.observations) html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  }
+
+  if (c.photoId) html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir rapport signé</a></div>';
+  html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
+
+  if (isGlobal && c.checklist && typeof c.checklist==='object') {
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec||!sec.units||!sec.units.length) return;
+      var units    = sec.units;
+      var confCnt  = units.filter(function(u){ return u.statut==='Conforme'; }).length;
+      var cl       = _pestChecklistByType(type);
+      html += '<div class="global-type-section" style="margin-bottom:10px">'
+        +'<div class="global-type-title"><span style="color:'+PEST_COLORS[type]+'">'+PEST_ICONS[type]+'</span> '+esc(PEST_LABELS[type])
+        +' <span class="global-type-count">'+confCnt+'/'+units.length+' conformes</span></div>'
+        +'<div class="global-ext-list">';
+      units.forEach(function(u) {
+        var isOk  = u.statut==='Conforme';
+        var okCnt = cl.filter(function(it){ return u.checks && u.checks[it.key]; }).length;
+        var detId = 'pdet_'+type+'_'+u.num;
+        html += '<div class="global-ext-accordion">'
+          +'<div class="global-ext-header" onclick="toggleIdetExt(\''+detId+'\')">'
+          +'<span style="font-size:.82rem;font-weight:700;color:var(--t1);min-width:68px">'+type+'-'+String(u.num).padStart(2,'0')+'</span>'
+          +(u.zone?'<span style="font-size:.72rem;color:var(--t3)">'+esc(u.zone)+'</span>':'')
+          +(u.emplacement?'<span style="font-size:.68rem;color:#8e9bb3;background:rgba(142,155,179,.13);border-radius:8px;padding:1px 6px;margin-left:4px">📌 '+esc(u.emplacement)+'</span>':'')
+          +'<span style="flex:1"></span>'
+          +'<span class="global-ext-badge '+(isOk?'ok':'nok')+'">'+(isOk?'✅':'❌')+' '+okCnt+'/'+cl.length+'</span>'
+          +'<span id="chev_'+detId+'" style="color:var(--t3);font-size:.75rem;margin-left:8px;transition:transform .2s">▼</span>'
+          +'</div>'
+          +'<div id="'+detId+'" style="display:'+(editMode?'block':'none')+';background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
+        cl.forEach(function(it) {
+          var checked = u.checks && u.checks[it.key];
+          var cbId = 'pchk_'+type+'_'+u.num+'_'+it.key;
+          html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
+            +'<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
+            +'<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
+            +'</div>';
+        });
+        if (editMode) {
+          html += '<textarea id="pnote_'+type+'_'+u.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(u.note||'')+'</textarea>';
+        } else if (u.note) {
+          html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(u.note)+'</div>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div></div>';
+    });
+  }
+  return html;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   IMPRESSION — Fiche de contrôle nuisibles (ISO 9001)
+────────────────────────────────────────────────────────────────── */
+function _fmtDate(s) {
+  if (!s) return '';
+  var p = s.split('-');
+  return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   GÉNÉRATEUR HTML COMMUN — ISO 9001 (Extincteurs + RIA + Nuisibles)
+   opts.sections = [{sectionTitle, prefix, items:[{num,zone,emplacement,checks,statut,note}], checklist:[{key,label}]}]
+────────────────────────────────────────────────────────────────── */
+function _buildHSEPrintHTML(opts) {
+  var docCode      = opts.docCode      || 'ENR-HSE';
+  var autoPrint             = opts.autoPrint            !== false;
+  var logoUrl               = opts.logoUrl              || '';
+  var signatureUrl          = opts.signatureUrl         || '';
+  var supervisorSignatureUrl = opts.supervisorSignatureUrl
+    || _userSigMap[opts.superviseur]
+    || _userSigMap[S_AUTH&&S_AUTH.matricule]
+    || '';
+  var now         = new Date();
+  var _autoDate   = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var editionDate = _autoDate;
+  var docRev      = opts.docRev      || '01';
+  var docEdition  = opts.docEdition  || _autoDate;
+
+  var typeTables = '';
+  (opts.sections||[]).forEach(function(sec) {
+    var items = sec.items || [];
+    var cl    = sec.checklist || [];
+    if (!items.length || !cl.length) return;
+    typeTables += '<div class="type-section"><div class="type-header">'
+      + esc(sec.sectionTitle||sec.prefix)
+      + '</div><table class="check-table"><thead><tr>'
+      + '<th style="width:54px">N°</th><th style="width:72px">Zone</th>'
+      + '<th style="width:110px">Emplacement</th><th>Points de contrôle</th>'
+      + '<th style="width:36px">✓/✗</th><th>Observations</th></tr></thead><tbody>';
+    items.forEach(function(item) {
+      cl.forEach(function(pt, pi) {
+        var isFirst    = pi === 0;
+        var isOk       = (opts.mode === 'blank') ? null : !!(item.checks && item.checks[pt.key]);
+        var devId      = esc(sec.prefix)+'-'+String(item.num).padStart(2,'0');
+        var firstCells = isFirst
+          ? '<td class="dev-num" rowspan="'+cl.length+'">'+devId+'</td>'
+            +'<td class="dev-zone" rowspan="'+cl.length+'">'+(item.zone||'')+'</td>'
+            +'<td class="dev-empl" rowspan="'+cl.length+'">'+(item.emplacement||'')+'</td>'
+          : '';
+        var checkCell  = opts.mode === 'blank'
+          ? '<td class="check-cell chk-box">☐</td>'
+          : '<td class="check-cell '+(isOk?'ok':'nok')+'">'+(isOk?'✓':'✗')+'</td>';
+        var obsCell    = isFirst
+          ? '<td class="obs-cell" rowspan="'+cl.length+'" style="border-left:1px solid #ccc">'+(item.note?esc(item.note):'')+'</td>'
+          : '';
+        typeTables += '<tr>'+firstCells+'<td class="pt-label">'+esc(pt.label)+'</td>'+checkCell+obsCell+'</tr>';
+      });
+    });
+    typeTables += '</tbody></table></div>';
+  });
+
+  var etatBadge = '';
+  if (opts.etatGlobal) {
+    var eC = opts.etatGlobal==='Conforme'?'#006600':opts.etatGlobal==='Non conforme'?'#cc0000':'#b8860b';
+    etatBadge = '<span style="margin-left:8px;font-weight:bold;color:'+eC+'">— '+esc(opts.etatGlobal)+'</span>';
+  }
+
+  var logoCell = logoUrl
+    ? '<img src="'+logoUrl+'" alt="Logo" style="max-width:80px;max-height:52px;object-fit:contain;display:block;margin:0 auto;"/>'
+    : '<div style="width:82px;height:52px;border:1px solid #ccc;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#bbb;flex-direction:column"><div style="font-size:16pt;line-height:1">🏢</div><div style="margin-top:2px">LOGO</div></div>';
+
+  var toolbarHTML = '';
+  if (!autoPrint) {
+    toolbarHTML = '<div id="hse-toolbar" style="position:fixed;top:0;left:0;right:0;height:46px;background:#1a1a2e;color:#fff;display:flex;align-items:center;padding:0 14px;gap:10px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.5)">'
+      +'<span style="font-size:13px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(opts.title)+' — '+esc(docCode)+'</span>'
+      +'<button onclick="window.print()" style="background:#f5c518;color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif">🖨 Imprimer</button>'
+      +'<button onclick="window.close()" style="background:#555;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:Arial,sans-serif">✕ Fermer</button>'
+      +'</div>';
+  }
+
+  var CSS = '*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:#fff}'
+    +(!autoPrint ? '#hse-toolbar{display:flex}body{padding-top:50px}@media print{#hse-toolbar{display:none!important}body{padding-top:0!important}}' : '')
+    +'.doc-header{width:100%;border-collapse:collapse;border:2px solid #000;margin-bottom:0}'
+    +'.doc-header td{border:1px solid #000;vertical-align:middle;padding:6px 8px}'
+    +'.col-logo{width:22%;text-align:center}.col-title{width:54%;text-align:center}'
+    +'.col-ref{width:24%;font-size:8pt;padding:4px 8px!important}'
+    +'.doc-title{font-size:11pt;font-weight:bold;text-transform:uppercase;line-height:1.3}'
+    +'.doc-subtitle{font-size:8.5pt;margin-top:3px}'
+    +'.ref-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
+    +'.ref-row:last-child{border-bottom:none}.ref-label{font-weight:bold}'
+    +'.info-table{width:100%;border-collapse:collapse;border:1px solid #000;border-top:none;margin-bottom:10px}'
+    +'.info-table td{border-right:1px solid #ccc;padding:5px 8px;vertical-align:middle}'
+    +'.info-table td:last-child{border-right:none}'
+    +'.info-label{font-weight:bold;font-size:7pt;text-transform:uppercase;color:#555;display:block;margin-bottom:1px}'
+    +'.info-value{font-size:8.5pt;border-bottom:1px dotted #aaa;display:inline-block;min-width:90px;padding:0 2px}'
+    +'.type-section{margin-bottom:10px}'
+    +'.type-header{background:#1a1a1a;color:#fff;font-weight:bold;font-size:9pt;padding:4px 10px;text-transform:uppercase;letter-spacing:.4px}'
+    +'.check-table{width:100%;border-collapse:collapse;font-size:8pt}'
+    +'.check-table th{background:#e0e0e0;border:1px solid #000;padding:3px 6px;font-weight:bold;font-size:7pt;text-transform:uppercase;text-align:left}'
+    +'.check-table td{border:1px solid #ccc;padding:3px 6px;vertical-align:middle}'
+    +'.dev-num{font-weight:bold;text-align:center;background:#f0f0f0;border-color:#999!important;font-size:8pt}'
+    +'.dev-zone,.dev-empl{font-size:7.5pt;color:#333}.pt-label{font-size:8pt}'
+    +'.check-cell{text-align:center;font-weight:bold;font-size:11pt}'
+    +'.check-cell.ok{color:#006600}.check-cell.nok{color:#cc0000}.check-cell.chk-box{font-size:13pt;color:#555}'
+    +'.obs-cell{font-size:7pt;font-style:italic;color:#444}'
+    +'.obs-section{border:1px solid #000;padding:7px 10px;margin-bottom:10px}'
+    +'.obs-title{font-weight:bold;font-size:8pt;text-transform:uppercase;margin-bottom:4px}'
+    +'.obs-text{font-size:8pt;min-height:32px;line-height:1.7;white-space:pre-wrap}'
+    +'.obs-lines{margin-top:4px}.obs-line{border-bottom:1px dotted #aaa;height:18px;margin-bottom:2px}'
+    +'.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-bottom:8px}'
+    +'.sig-table td{width:50%;border-right:1px solid #ccc;padding:7px 10px;vertical-align:top;font-size:8pt}'
+    +'.sig-table td:last-child{border-right:none}'
+    +'.sig-title{font-weight:bold;font-size:7.5pt;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:5px}'
+    +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px}'
+    +'.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
+    +'.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
+    +'.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
+    +'@page{size:A4 portrait;margin:12mm 14mm}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.type-header{background:#1a1a1a!important;color:#fff!important;page-break-after:avoid}'
+    +'.check-table tr{page-break-inside:avoid}'
+    +'.check-table th{background:#e0e0e0!important}.dev-num{background:#f0f0f0!important}'
+    +'.obs-section,.sig-table{page-break-inside:avoid}'
+    +'}';
+
+  var autoScript = autoPrint ? '<script>window.onload=function(){window.print();}<\/script>' : '';
+
+  return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
+    +'<title>'+esc(opts.title)+' — '+esc(docCode)+'</title><style>'+CSS+'</style></head><body>'
+    +toolbarHTML
+    +'<table class="doc-header"><tr>'
+    +'<td class="col-logo">'+logoCell+'</td>'
+    +'<td class="col-title"><div class="doc-title">Fiche de contrôle</div>'
+    +'<div class="doc-subtitle">'+esc(opts.subtitle||'')+'</div>'
+    +'<div class="doc-subtitle" style="font-size:8pt;margin-top:3px;font-weight:600">'+esc(opts.title)+etatBadge+'</div></td>'
+    +'<td class="col-ref">'
+    +'<div class="ref-row"><span class="ref-label">Réf&nbsp;:</span><span style="font-weight:700;font-size:8.5pt">'+esc(docCode)+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>'+esc(docRev)+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Page&nbsp;:</span><span>1/1</span></div>'
+    +'<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+esc(docEdition)+'</span></div>'
+    +'</td></tr></table>'
+    +'<table class="info-table"><tr>'
+    +'<td style="width:28%"><span class="info-label">Date d\'inspection</span><span class="info-value">'+esc(opts.date||'')+'</span></td>'
+    +'<td style="width:44%"><span class="info-label">Inspecteur / Superviseur HSE</span><span class="info-value">'+esc(opts.superviseur||'')+'</span></td>'
+    +'<td><span class="info-label">Prochaine inspection</span><span class="info-value">'+esc(opts.prochaine||'')+'</span></td>'
+    +'</tr></table>'
+    +typeTables
+    +'<div class="obs-section"><div class="obs-title">Observations générales / Actions correctives</div>'
+    +(opts.obs?'<div class="obs-text">'+esc(opts.obs)+'</div>':'<div class="obs-lines"><div class="obs-line"></div><div class="obs-line"></div><div class="obs-line"></div></div>')
+    +'</div>'
+    +'<table class="sig-table"><tr>'
+    +'<td style="width:50%"><div class="sig-title">Responsable HSE</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.responsable)+'</span>':'')+'</div>'
+    +'<div class="sig-field-label">Signature :</div>'
+    +(opts.responsable && signatureUrl
+      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+signatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-12px;width:240px;max-height:88px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+      : '<div class="sig-line-lg"></div>')
+    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.responsable?'<span style="font-size:8pt">'+esc(opts.date||'')+'</span>':'')+'</div></td>'
+    +'<td style="width:50%"><div class="sig-title">Superviseur HSE</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div><div class="sig-line">'+(opts.superviseur?'<span style="font-size:8pt">'+esc(opts.superviseur)+'</span>':'')+'</div>'
+    +'<div class="sig-field-label">Signature :</div>'
+    +(supervisorSignatureUrl
+      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+supervisorSignatureUrl+'" alt="Signature" style="position:absolute;top:-14px;left:-4px;width:240px;max-height:88px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
+      : '<div class="sig-line-lg"></div>')
+    +'<div class="sig-field-label">Date :</div><div class="sig-line">'+(opts.date?'<span style="font-size:8pt">'+esc(opts.date)+'</span>':'')+'</div></td>'
+    +'</tr></table>'
+    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Éd. '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
+    +autoScript
+    +'</body></html>';
+}
+
+function _buildPestPrintHTML(opts) {
+  var sections = [];
+  (opts.types||[]).forEach(function(type) {
+    var td = opts.typeData[type];
+    if (!td || !td.items || !td.items.length || !(td.checklist||[]).length) return;
+    sections.push({ sectionTitle:(PEST_ICONS[type]||'')+' '+type+' — '+(PEST_LABELS[type]||type), prefix:type, items:td.items, checklist:td.checklist });
+  });
+  return _buildHSEPrintHTML({
+    docCode:    opts.docCode,
+    docRev:     opts.docRev,
+    docEdition: opts.docEdition,
+    title:      opts.title,
+    subtitle:   'Dispositifs de lutte contre les nuisibles',
+    date:       opts.date,
+    superviseur:opts.superviseur,
+    responsable:opts.responsable,
+    prochaine:  opts.prochaine,
+    obs:        opts.obs,
+    etatGlobal: opts.etatGlobal,
+    mode:       opts.mode,
+    autoPrint:              opts.autoPrint,
+    logoUrl:                opts.logoUrl,
+    signatureUrl:           opts.signatureUrl,
+    supervisorSignatureUrl: opts.supervisorSignatureUrl,
+    sections:               sections
+  });
+}
+
+function printBlankPestChecklist() {
+  var activeTypes = _pestInspTypeFilter ? [_pestInspTypeFilter] : PEST_TYPES;
+  var typeData = {};
+  activeTypes.forEach(function(type) {
+    var cfg   = _pestConfig[type] || { count:0, items:[] };
+    var count = cfg.count || 0;
+    if (!count) return;
+    var items = [];
+    for (var i=1; i<=count; i++) {
+      var it = _getPestItemCfg(type, i);
+      items.push({ num:i, zone:it.zone||'', emplacement:it.emplacement||'', checks:{}, statut:'', note:'' });
+    }
+    typeData[type] = { items:items, checklist:_pestChecklistByType(type) };
+  });
+  var hasAny = activeTypes.some(function(t){ return typeData[t]; });
+  if (!hasAny) { toast('Aucun dispositif configuré','err'); return; }
+  var titleEl = document.getElementById('globalPestOvTitle');
+  var title   = titleEl ? titleEl.textContent.replace(/^[^\w]*/,'') : 'Inspection Dispositifs Nuisibles';
+  var date    = document.getElementById('globalPestDate')&&document.getElementById('globalPestDate').value;
+  var proch   = document.getElementById('globalPestProchaine')&&document.getElementById('globalPestProchaine').value;
+  var html = _buildPestPrintHTML({
+    title:      title,
+    date:       _fmtDate(date||todayStr()),
+    superviseur:S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+    prochaine:  _fmtDate(proch||''),
+    obs:        '',
+    types:      activeTypes,
+    typeData:   typeData,
+    docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
+    mode:       'blank',
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
+  });
+  var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+function printPestRecord(idx) {
+  var c = _nuisiblesRecords[idx];
+  if (!c) return;
+  var activeTypes = [];
+  var typeData    = {};
+  if (c.checklist && typeof c.checklist === 'object') {
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.units || !sec.units.length) return;
+      activeTypes.push(type);
+      typeData[type] = { items:sec.units, checklist:_pestChecklistByType(type) };
+    });
+  }
+  if (!activeTypes.length) { toast('Aucune donnée à imprimer','err'); return; }
+  var html = _buildPestPrintHTML({
+    title:      c.type || 'Inspection Dispositifs Nuisibles',
+    date:       _fmtDate(c.dateInspection||''),
+    superviseur:c.superviseurNom||'',
+    responsable:c.responsableNom||'',
+    prochaine:  _fmtDate(c.prochaineInspection||''),
+    obs:        c.observations||'',
+    types:      activeTypes,
+    typeData:   typeData,
+    docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
+    mode:       'record',
+    etatGlobal: c.etatGlobal||'',
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
+  });
+  var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+function viewPestRecord(idx) {
+  var c = _nuisiblesRecords[idx];
+  if (!c) return;
+  var activeTypes = [];
+  var typeData    = {};
+  if (c.checklist && typeof c.checklist === 'object') {
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.units || !sec.units.length) return;
+      activeTypes.push(type);
+      typeData[type] = { items:sec.units, checklist:_pestChecklistByType(type) };
+    });
+  }
+  if (!activeTypes.length) { toast('Aucune donnée à afficher','err'); return; }
+  var html = _buildPestPrintHTML({
+    title:      c.type || 'Inspection Dispositifs Nuisibles',
+    date:       _fmtDate(c.dateInspection||''),
+    superviseur:c.superviseurNom||'',
+    responsable:c.responsableNom||'',
+    prochaine:  _fmtDate(c.prochaineInspection||''),
+    obs:        c.observations||'',
+    types:      activeTypes,
+    typeData:   typeData,
+    docCode:    _pestDocCode,
+    docRev:     _pestDocRev,
+    docEdition: _pestDocEdition,
+    mode:       'record',
+    etatGlobal: c.etatGlobal||'',
+    autoPrint:  false,
+    logoUrl:(_hseLogoDataUrl||_hseLogoUrl),signatureUrl:(_hseSignatureDataUrl||_hseSignatureUrl),supervisorSignatureUrl:(_userSigMap[S_AUTH&&S_AUTH.matricule]||'')
+  });
+  var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour afficher','err');
+}
+
+function renderNuisibles() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body) return;
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      if (!r.data.length) {
+        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🪲</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Insp. Globale » pour commencer.</div></div>';
+        return;
+      }
+      _nuisiblesRecords = r.data;
+      _renderNuisiblesList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getPestChecklists(S.adminKey);
+}
+
+/* ══════════════════════════════════════════
+   ADMIN — GESTION DES THÈMES
+══════════════════════════════════════════ */
+
+function openThemesAdmin() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      var themes = (r&&r.success&&r.data)||[];
+      var list = document.getElementById('themesList');
+      list.innerHTML = '';
+      if (themes.length) {
+        themes.forEach(function(t){ addThemeRow(t); });
+      } else {
+        addThemeRow('Sécurité incendie');
+        addThemeRow('Risques chimiques');
+        addThemeRow('Port des EPI');
+        addThemeRow('Gestes et postures');
+      }
+      openSheet('themesAdminOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getSensibilisationThemes(S.adminKey);
+}
+
+function addThemeRow(val) {
+  var list = document.getElementById('themesList');
+  var row = document.createElement('div');
+  row.className = 'themes-row';
+  row.innerHTML = '<input class="fi theme-input" value="'+(val?esc(val):'')+'"/>'
+    + '<button onclick="this.parentNode.remove()" style="background:var(--ink3);border:1px solid var(--line2);color:#ef4444;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.88rem">✕</button>';
+  list.appendChild(row);
+  if (!val) row.querySelector('input').focus();
+}
+
+function saveThemes() {
+  var themes = [];
+  document.querySelectorAll('#themesList .theme-input').forEach(function(inp){
+    var v = inp.value.trim();
+    if (v) themes.push(v);
+  });
+  if (!themes.length) { toast('Ajoutez au moins un thème','err'); return; }
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✓ '+(r.data.length)+' thèmes enregistrés','ok');
+        closeSheet('themesAdminOv');
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveSensibilisationThemes({ adminKey:S.adminKey, themes:themes });
+}
+
+/* ══════════════════════════════════════════
+   MULTI-SELECT ÉQUIPEMENT
+══════════════════════════════════════════ */
+
+var _equipAll = (function(){
+  var a = [];
+  for (var i=1; i<=100; i++) a.push(String(i));
+  return a;
+})();
+var _equipCustom  = [];
+var _equipSelected = [];
+var _equipSearchQ  = '';
+
+function renderEquipTags() {
+  var area = document.getElementById('equipTagsArea');
+  if (!area) return;
+  if (!_equipSelected.length) {
+    area.innerHTML = '<span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>';
+    return;
+  }
+  area.innerHTML = _equipSelected.map(function(v) {
+    return '<span class="equip-tag" onmousedown="event.preventDefault();removeEquipTag(\''+v+'\')" title="Retirer '+v+'">'
+      + esc(v) + ' <span style="opacity:.6;font-size:.75em">✕</span></span>';
+  }).join('');
+}
+
+function removeEquipTag(val) {
+  _equipSelected = _equipSelected.filter(function(v){ return v !== val; });
+  renderEquipTags();
+  _renderEquipMultiList();
+}
+
+function _renderEquipMultiList() {
+  var allNums = _equipAll.concat(_equipCustom);
+  var q = _equipSearchQ;
+  var filtered = q ? allNums.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase())!==-1; }) : allNums;
+  var list = document.getElementById('equipMultiList');
+  if (!list) return;
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(v) {
+    var isChecked = _equipSelected.indexOf(v) !== -1;
+    var isCustom  = _equipCustom.indexOf(v) !== -1;
+    return '<div class="equip-multi-item'+(isChecked?' checked-item':'')+'" onmousedown="event.preventDefault();toggleEquipSelect(\''+v+'\')">'
+      + '<input type="checkbox" '+(isChecked?'checked':'')+' style="pointer-events:none;accent-color:var(--y)"/>'
+      + (isCustom ? '<span style="color:var(--y);font-size:.75rem;font-weight:700">★ </span>' : '')
+      + '<span>'+esc(v)+'</span>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleEquipSelect(val) {
+  var idx = _equipSelected.indexOf(val);
+  if (idx === -1) _equipSelected.push(val);
+  else _equipSelected.splice(idx, 1);
+  renderEquipTags();
+  _renderEquipMultiList();
+}
+
+function toggleEquipDropdown() {
+  var dd = document.getElementById('equipMultiDropdown');
+  if (!dd) return;
+  if (dd.style.display === 'block') {
+    dd.style.display = 'none';
+  } else {
+    dd.style.display = 'block';
+    var s = document.getElementById('equipMultiSearch');
+    if (s) { s.value = ''; }
+    _equipSearchQ = '';
+    _renderEquipMultiList();
+    if (s) s.focus();
+  }
+}
+
+function filterEquipMulti(q) {
+  _equipSearchQ = (q||'').trim();
+  _renderEquipMultiList();
+}
+
+function addEquipCustom() {
+  var input = document.getElementById('equipCustomInput');
+  var val = (input.value||'').trim();
+  if (!val) return;
+  if (_equipAll.indexOf(val) === -1 && _equipCustom.indexOf(val) === -1) {
+    _equipCustom.push(val);
+  }
+  if (_equipSelected.indexOf(val) === -1) _equipSelected.push(val);
+  input.value = '';
+  renderEquipTags();
+  _equipSearchQ = '';
+  var s = document.getElementById('equipMultiSearch');
+  if (s) s.value = '';
+  _renderEquipMultiList();
+}
+
+document.addEventListener('click', function(e) {
+  var wrapper = document.getElementById('equipMultiWrapper');
+  var dd = document.getElementById('equipMultiDropdown');
+  if (dd && wrapper && !wrapper.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+/* ── Helper: ouvrir une image Drive depuis son fileId ── */
+function openIfsId(fileId) {
+  if (!fileId) return;
+  var ifs = document.getElementById('ifs');
+  var img = document.getElementById('ifsImg');
+  img.src = '';
+  ifs.classList.add('on');
+  google.script.run
+    .withSuccessHandler(function(r){ if(r&&r.success) img.src=r.data; })
+    .withFailureHandler(function(){})
+    .getImageBase64(fileId);
+}
+</script>
+
+<!-- ═══ Menu contextuel cartes ═══ -->
+<div id="cardCtxMenu" style="display:none;position:fixed;z-index:9999;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:5px;min-width:196px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <button onclick="duplicateInspection()" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--t1);padding:9px 14px;font-size:.84rem;cursor:pointer;border-radius:7px" onmouseover="this.style.background='var(--ink4)'" onmouseout="this.style.background='none'">
+    <span style="font-size:1rem">📋</span> Dupliquer l'inspection
+  </button>
+</div>
+
+</body>
+</html>
