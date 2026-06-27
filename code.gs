@@ -1787,9 +1787,29 @@ function getPestConfigData(adminKey) {
     var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
     var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
     var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
-    var inspPrestaId  = props.getProperty('PEST_INSP_PRESTA_ID') || '';
+    var inspPrestaId  = props.getProperty('PEST_INSP_PRESTA_ID')  || '';
+    var enr13PrestaId = props.getProperty('ENR13_PRESTA_ID')       || '';
+    var enr15PrestaId = props.getProperty('ENR15_PRESTA_ID')       || '';
     var enr13Products = JSON.parse(props.getProperty('ENR13_PRODUCTS_CONFIG') || '[]');
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_(), inspPrestaId:inspPrestaId, prestataires:_getPrestataires_(), enr13Products:enr13Products };
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_(), inspPrestaId:inspPrestaId, prestataires:_getPrestataires_(), enr13Products:enr13Products, enr13PrestaId:enr13PrestaId, enr15PrestaId:enr15PrestaId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder la griffe prestataire ENR-13 ───────────────────
+function saveEnr13PrestaId(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    PropertiesService.getScriptProperties().setProperty('ENR13_PRESTA_ID', String(p.prestaId||'').trim());
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Sauvegarder la griffe prestataire ENR-15 ───────────────────
+function saveEnr15PrestaId(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    PropertiesService.getScriptProperties().setProperty('ENR15_PRESTA_ID', String(p.prestaId||'').trim());
+    return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
 

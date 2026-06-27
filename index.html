@@ -1560,6 +1560,52 @@ img{max-width:100%;display:block;}
         </div>
         <button class="btn btn-p" onclick="saveRapportNuisiblesConfigFromUI()" style="height:34px;font-size:.82rem;padding:0 14px;background:#9b59b6">💾 Sauvegarder config rapport</button>
       </div>
+      <!-- Griffe prestataire ENR-13 -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(39,174,96,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#27ae60;margin-bottom:10px">📋 Griffe prestataire — ENR-13 Exécution</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(39,174,96,.2);margin-bottom:8px">
+          <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="enr13PrestaGriffeYN" id="enr13PrestaGriffeOui" value="oui" onchange="toggleEnr13PrestaGriffe()" style="accent-color:#27ae60"/> Oui
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="enr13PrestaGriffeYN" id="enr13PrestaGriffeNon" value="non" onchange="toggleEnr13PrestaGriffe()" checked style="accent-color:#27ae60"/> Non
+          </label>
+        </div>
+        <div id="enr13PrestaGriffeZone" style="display:none;padding:10px;background:rgba(39,174,96,.08);border-radius:8px;border:1px solid rgba(39,174,96,.25);margin-bottom:8px">
+          <label class="fl" style="font-size:.75rem;margin-bottom:4px">Sélectionner le prestataire</label>
+          <select class="fi" id="enr13PrestaGriffeSelect" style="height:34px;font-size:.85rem" onchange="previewPrestaGriffeEnr('enr13PrestaGriffePreview','enr13PrestaGriffeImg',this.value,'enr13')">
+            <option value="">— Choisir un prestataire —</option>
+          </select>
+          <div id="enr13PrestaGriffePreview" style="margin-top:8px;display:none">
+            <img id="enr13PrestaGriffeImg" src="" style="max-height:55px;max-width:180px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
+          </div>
+        </div>
+        <button class="btn" onclick="saveEnr13PrestaConfig()" style="height:34px;font-size:.82rem;padding:0 14px;background:#27ae60;color:#fff">💾 Sauvegarder griffe ENR-13</button>
+      </div>
+      <!-- Griffe prestataire ENR-15 -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(52,152,219,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#3498db;margin-bottom:10px">✅ Griffe prestataire — ENR-15 Vérification</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(52,152,219,.2);margin-bottom:8px">
+          <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="enr15PrestaGriffeYN" id="enr15PrestaGriffeOui" value="oui" onchange="toggleEnr15PrestaGriffe()" style="accent-color:#3498db"/> Oui
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+            <input type="radio" name="enr15PrestaGriffeYN" id="enr15PrestaGriffeNon" value="non" onchange="toggleEnr15PrestaGriffe()" checked style="accent-color:#3498db"/> Non
+          </label>
+        </div>
+        <div id="enr15PrestaGriffeZone" style="display:none;padding:10px;background:rgba(52,152,219,.08);border-radius:8px;border:1px solid rgba(52,152,219,.25);margin-bottom:8px">
+          <label class="fl" style="font-size:.75rem;margin-bottom:4px">Sélectionner le prestataire</label>
+          <select class="fi" id="enr15PrestaGriffeSelect" style="height:34px;font-size:.85rem" onchange="previewPrestaGriffeEnr('enr15PrestaGriffePreview','enr15PrestaGriffeImg',this.value,'enr15')">
+            <option value="">— Choisir un prestataire —</option>
+          </select>
+          <div id="enr15PrestaGriffePreview" style="margin-top:8px;display:none">
+            <img id="enr15PrestaGriffeImg" src="" style="max-height:55px;max-width:180px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
+          </div>
+        </div>
+        <button class="btn" onclick="saveEnr15PrestaConfig()" style="height:34px;font-size:.82rem;padding:0 14px;background:#3498db;color:#fff">💾 Sauvegarder griffe ENR-15</button>
+      </div>
       <!-- Paramètres d'impression -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Nuisibles)</div>
@@ -6719,6 +6765,26 @@ function openConfigPest() {
         .getRapportNuisiblesConfig(S.adminKey);
       _enr13Products = r.enr13Products || [];
       _renderEnr13ProductsList();
+      // Prestataires ENR-13
+      if (r.enr13PrestaId && r.prestataires) {
+        var e13 = r.prestataires.find(function(x){ return x.id===r.enr13PrestaId; }) || null;
+        _enr13PrestataireSigUrl = (e13&&e13.sigUrl) || '';
+        _enr13PrestataireSigNom = (e13&&e13.nom)    || '';
+        var e13Sel = document.getElementById('enr13PrestaGriffeSelect');
+        if (e13Sel) { e13Sel.value = r.enr13PrestaId; previewPrestaGriffeEnr('enr13PrestaGriffePreview','enr13PrestaGriffeImg',r.enr13PrestaId,'enr13'); }
+        var e13Oui = document.getElementById('enr13PrestaGriffeOui');
+        if (e13Oui) { e13Oui.checked = true; toggleEnr13PrestaGriffe(); }
+      }
+      // Prestataires ENR-15
+      if (r.enr15PrestaId && r.prestataires) {
+        var e15 = r.prestataires.find(function(x){ return x.id===r.enr15PrestaId; }) || null;
+        _enr15PrestataireSigUrl = (e15&&e15.sigUrl) || '';
+        _enr15PrestataireSigNom = (e15&&e15.nom)    || '';
+        var e15Sel = document.getElementById('enr15PrestaGriffeSelect');
+        if (e15Sel) { e15Sel.value = r.enr15PrestaId; previewPrestaGriffeEnr('enr15PrestaGriffePreview','enr15PrestaGriffeImg',r.enr15PrestaId,'enr15'); }
+        var e15Oui = document.getElementById('enr15PrestaGriffeOui');
+        if (e15Oui) { e15Oui.checked = true; toggleEnr15PrestaGriffe(); }
+      }
       _renderPestChecklistEditor();
       _renderPestConfigTables();
       _renderPestZoneChips();
@@ -8016,7 +8082,7 @@ function deletePrestataire_(id, nom) {
 
 // Remplir les selects de prestataires dans les configs ENR
 function _reloadPrestatairesSelects() {
-  ['rnPrestaGriffeSelect','inspPrestaGriffeSelect'].forEach(function(sid) {
+  ['rnPrestaGriffeSelect','inspPrestaGriffeSelect','enr13PrestaGriffeSelect','enr15PrestaGriffeSelect'].forEach(function(sid) {
     var sel = document.getElementById(sid); if (!sel) return;
     var cur = sel.value;
     sel.innerHTML = '<option value="">— Choisir un prestataire —</option>';
@@ -8054,6 +8120,49 @@ function toggleInspPrestaGriffe() {
   var oui  = document.getElementById('inspPrestaGriffeOui');
   var zone = document.getElementById('inspPrestaGriffeZone');
   if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
+}
+
+function toggleEnr13PrestaGriffe() {
+  var oui  = document.getElementById('enr13PrestaGriffeOui');
+  var zone = document.getElementById('enr13PrestaGriffeZone');
+  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
+}
+
+function toggleEnr15PrestaGriffe() {
+  var oui  = document.getElementById('enr15PrestaGriffeOui');
+  var zone = document.getElementById('enr15PrestaGriffeZone');
+  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
+}
+
+function previewPrestaGriffeEnr(previewId, imgId, id, enrKey) {
+  var p = _prestatairesData.find(function(x){ return x.id===id; });
+  var prev = document.getElementById(previewId);
+  var img  = document.getElementById(imgId);
+  if (!prev || !img) return;
+  if (p && p.sigUrl) { img.src = p.sigUrl; prev.style.display = 'block'; }
+  else               { prev.style.display = 'none'; }
+  if (enrKey === 'enr13') { _enr13PrestataireSigUrl = (p&&p.sigUrl)||''; _enr13PrestataireSigNom = (p&&p.nom)||''; }
+  if (enrKey === 'enr15') { _enr15PrestataireSigUrl = (p&&p.sigUrl)||''; _enr15PrestataireSigNom = (p&&p.nom)||''; }
+}
+
+function saveEnr13PrestaConfig() {
+  var oui = document.getElementById('enr13PrestaGriffeOui');
+  var id  = (oui&&oui.checked) ? ((document.getElementById('enr13PrestaGriffeSelect')||{}).value||'') : '';
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Griffe ENR-13 sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveEnr13PrestaId({ adminKey:S.adminKey, prestaId:id });
+}
+
+function saveEnr15PrestaConfig() {
+  var oui = document.getElementById('enr15PrestaGriffeOui');
+  var id  = (oui&&oui.checked) ? ((document.getElementById('enr15PrestaGriffeSelect')||{}).value||'') : '';
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Griffe ENR-15 sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveEnr15PrestaId({ adminKey:S.adminKey, prestaId:id });
 }
 
 // Compatibilité : ancienne référence supprimée
@@ -8660,30 +8769,40 @@ document.addEventListener('click', function(e) {
   }
 });
 
+var _enr13PrestataireSigUrl = '';
+var _enr13PrestataireSigNom = '';
+var _enr15PrestataireSigUrl = '';
+var _enr15PrestataireSigNom = '';
+
 /* ══════════════════════════════════════════
    HELPERS GRIFFES ENR-13 / ENR-15
 ══════════════════════════════════════════ */
 function _buildGriffeTable13(visaText, today) {
-  var sigUrl = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var nom    = visaText || (S_AUTH&&S_AUTH.nom) || '';
-  var sigCell = sigUrl
+  var hseSigUrl  = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
+  var nom        = visaText || (S_AUTH&&S_AUTH.nom) || '';
+  var hseSigCell = hseSigUrl
     ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
-      +'<img src="'+sigUrl+'" alt="Griffe" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+      +'<img src="'+hseSigUrl+'" alt="Griffe HSE" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+    : '<div class="sig-line-lg"></div>';
+  var showPresta = !!_enr13PrestataireSigUrl;
+  var prestaSigCell = showPresta
+    ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
+      +'<img src="'+_enr13PrestataireSigUrl+'" alt="Griffe prestataire" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
     : '<div class="sig-line-lg"></div>';
   return '<table class="sig-table"><tr>'
     +'<td><div class="sig-title">Responsable HSE / Visa</div>'
     +'<div class="sig-lbl">Nom et prénom :</div>'
     +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(nom)+'</span></div>'
     +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +sigCell
+    +hseSigCell
     +'<div class="sig-lbl">Date :</div>'
     +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
     +'</td>'
     +'<td><div class="sig-title">Prestataire / Intervenant</div>'
     +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"></div>'
+    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(_enr13PrestataireSigNom||'')+'</span></div>'
     +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +'<div class="sig-line-lg"></div>'
+    +prestaSigCell
     +'<div class="sig-lbl">Date :</div>'
     +'<div class="sig-line"></div>'
     +'</td>'
@@ -8691,26 +8810,31 @@ function _buildGriffeTable13(visaText, today) {
 }
 
 function _buildGriffeTable15(visaText, today) {
-  var sigUrl = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var nom    = visaText || (S_AUTH&&S_AUTH.nom) || '';
-  var sigCell = sigUrl
+  var hseSigUrl  = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
+  var nom        = visaText || (S_AUTH&&S_AUTH.nom) || '';
+  var hseSigCell = hseSigUrl
     ? '<div style="position:relative;height:56px;overflow:visible;margin-bottom:-12px">'
-      +'<img src="'+sigUrl+'" alt="Griffe" style="position:absolute;top:-10px;left:-6px;width:185px;max-height:70px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+      +'<img src="'+hseSigUrl+'" alt="Griffe HSE" style="position:absolute;top:-10px;left:-6px;width:185px;max-height:70px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+    : '<div class="sig-line-lg"></div>';
+  var showPresta = !!_enr15PrestataireSigUrl;
+  var prestaSigCell = showPresta
+    ? '<div style="position:relative;height:56px;overflow:visible;margin-bottom:-12px">'
+      +'<img src="'+_enr15PrestataireSigUrl+'" alt="Griffe prestataire" style="position:absolute;top:-10px;left:-6px;width:185px;max-height:70px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
     : '<div class="sig-line-lg"></div>';
   return '<table class="sig-table"><tr>'
     +'<td><div class="sig-title">Responsable HSE / Visa</div>'
     +'<div class="sig-lbl">Nom et prénom :</div>'
     +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(nom)+'</span></div>'
     +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +sigCell
+    +hseSigCell
     +'<div class="sig-lbl">Date :</div>'
     +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
     +'</td>'
     +'<td><div class="sig-title">Prestataire / Intervenant</div>'
     +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"></div>'
+    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(_enr15PrestataireSigNom||'')+'</span></div>'
     +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +'<div class="sig-line-lg"></div>'
+    +prestaSigCell
     +'<div class="sig-lbl">Date :</div>'
     +'<div class="sig-line"></div>'
     +'</td>'
