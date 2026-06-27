@@ -155,15 +155,18 @@ function adminGetUsers(adminKey) {
     var lr = sh.getLastRow();
     if (lr < EDB_START) return { success:true, data:[] };
     var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var props = PropertiesService.getScriptProperties();
     var data = rows.filter(function(r){ return String(r[EDB.MAT]).trim(); }).map(function(r,i){
+      var mat = String(r[EDB.MAT]).trim();
       return {
         rowIndex: EDB_START+i,
-        matricule: String(r[EDB.MAT]).trim(),
+        matricule: mat,
         name: String(r[EDB.NAME]).trim(),
         dept: String(r[EDB.DEPT]).trim(),
         hasPassword: !!String(r[EDB.PWD]).trim(),
         role: String(r[EDB.ROLE]||'user').trim(),
-        actif: String(r[EDB.ACTIF]).toLowerCase() === 'true'
+        actif: String(r[EDB.ACTIF]).toLowerCase() === 'true',
+        sigUrl: props.getProperty('HSE_SIG_URL_'+mat) || ''
       };
     });
     return { success:true, data:data };
@@ -1546,6 +1549,7 @@ function updateChecklist(p) {
     if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
     if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
     if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.checklistJson  != null) sh.getRange(rowNum, 8).setValue(String(p.checklistJson));
     if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
@@ -1659,7 +1663,7 @@ function getExtConfig(token) {
     var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1714,7 +1718,7 @@ function getConfigData(adminKey) {
     var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1783,7 +1787,7 @@ function getPestConfigData(adminKey) {
     var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
     var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
     var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths };
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1861,6 +1865,7 @@ function updatePestChecklist(p) {
     if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
     if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
     if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.checklistJson  != null) sh.getRange(rowNum, 8).setValue(String(p.checklistJson));
     if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');
@@ -1991,6 +1996,22 @@ function deleteLogoConfig(p) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// CHARGEMENT PRIORITAIRE : logo + griffes (appelé au démarrage)
+// Accessible à tout utilisateur authentifié (superviseur ou admin)
+// ══════════════════════════════════════════════════════════════════
+function getLogoAndSigs(token) {
+  if (!verifySession_(token) && !isAdmin_(token) && !isSessionAdmin_(token)) {
+    return { success:false, error:'Accès refusé' };
+  }
+  try {
+    var props   = PropertiesService.getScriptProperties();
+    var logoUrl = props.getProperty('HSE_LOGO_URL') || '';
+    var sigMap  = _buildSigMap_();
+    return { success:true, logoUrl:logoUrl, sigMap:sigMap };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // SIGNATURE / GRIFFE DU RESPONSABLE HSE
 // ══════════════════════════════════════════════════════════════════
 function saveSignatureConfig(p) {
@@ -2024,34 +2045,86 @@ function deleteSignatureConfig(p) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// SIGNATURE / GRIFFE DU SUPERVISEUR HSE
+// SIGNATURE / GRIFFE PAR UTILISATEUR (superviseur ou admin)
+// Clés : HSE_SIG_URL_<MAT>  et  HSE_SIG_FILE_ID_<MAT>
 // ══════════════════════════════════════════════════════════════════
-function saveSupervisorSignatureConfig(p) {
+function saveUserSignatureConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
+  if (!mat) return { success:false, error:'Matricule manquant' };
   try {
     var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID_'+mat);
     if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
     var bytes  = Utilities.base64Decode(p.sigBase64);
-    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-supervisor-signature.png');
+    var blob   = Utilities.newBlob(bytes, p.mime || 'image/png', 'hse-sig-'+mat+'.png');
     var file   = DriveApp.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     var fileId = file.getId();
     var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    props.setProperty('HSE_SUP_SIG_FILE_ID', fileId);
-    props.setProperty('HSE_SUP_SIG_URL', url);
-    return { success:true, supervisorSignatureUrl:url };
+    props.setProperty('HSE_SIG_FILE_ID_'+mat, fileId);
+    props.setProperty('HSE_SIG_URL_'+mat, url);
+    return { success:true, sigUrl:url, matricule:mat };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
-function deleteSupervisorSignatureConfig(p) {
+function deleteUserSignatureConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
+  if (!mat) return { success:false, error:'Matricule manquant' };
   try {
     var props  = PropertiesService.getScriptProperties();
-    var oldId  = props.getProperty('HSE_SUP_SIG_FILE_ID');
+    var oldId  = props.getProperty('HSE_SIG_FILE_ID_'+mat);
     if (oldId) { try { DriveApp.getFileById(oldId).setTrashed(true); } catch(e){} }
-    props.deleteProperty('HSE_SUP_SIG_FILE_ID');
-    props.deleteProperty('HSE_SUP_SIG_URL');
-    return { success:true };
+    props.deleteProperty('HSE_SIG_FILE_ID_'+mat);
+    props.deleteProperty('HSE_SIG_URL_'+mat);
+    return { success:true, matricule:mat };
   } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Helper interne : construit { mat: url, nom: url } depuis les propriétés + la feuille
+function _buildSigMap_() {
+  var props = PropertiesService.getScriptProperties();
+  var all   = props.getProperties();
+  var map   = {};
+  // Index par matricule
+  Object.keys(all).forEach(function(k) {
+    var m = k.match(/^HSE_SIG_URL_(.+)$/);
+    if (m && all[k]) map[m[1]] = all[k];
+  });
+  // Index aussi par nom depuis la feuille employés
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr >= EDB_START) {
+      var rows = sh.getRange(EDB_START, 1, lr - EDB_START + 1, 2).getValues();
+      rows.forEach(function(r) {
+        var mat  = String(r[EDB.MAT]).trim();
+        var name = String(r[EDB.NAME]).trim();
+        if (mat && name && map[mat]) map[name] = map[mat];
+      });
+    }
+  } catch(e) {}
+  return map;
+}
+
+// Retourne { mat: url } pour tous les utilisateurs ayant une griffe
+function getAllUserSignatures(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    return { success:true, sigMap:_buildSigMap_() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Fonctions legacy conservées pour compatibilité ascendante
+function saveSupervisorSignatureConfig(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  var mat = String(p.matricule||'').trim().replace(/[^A-Za-z0-9_\-]/g,'');
+  if (!mat) return { success:false, error:'Matricule requis' };
+  var r = saveUserSignatureConfig(p);
+  return r.success ? { success:true, supervisorSignatureUrl:r.sigUrl } : r;
+}
+
+function deleteSupervisorSignatureConfig(p) {
+  return deleteUserSignatureConfig(p);
 }
