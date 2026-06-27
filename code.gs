@@ -1994,6 +1994,22 @@ function deleteLogoConfig(p) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// CHARGEMENT PRIORITAIRE : logo + griffes (appelé au démarrage)
+// Accessible à tout utilisateur authentifié (superviseur ou admin)
+// ══════════════════════════════════════════════════════════════════
+function getLogoAndSigs(token) {
+  if (!verifySession_(token) && !isAdmin_(token) && !isSessionAdmin_(token)) {
+    return { success:false, error:'Accès refusé' };
+  }
+  try {
+    var props   = PropertiesService.getScriptProperties();
+    var logoUrl = props.getProperty('HSE_LOGO_URL') || '';
+    var sigMap  = _buildSigMap_();
+    return { success:true, logoUrl:logoUrl, sigMap:sigMap };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // SIGNATURE / GRIFFE DU RESPONSABLE HSE
 // ══════════════════════════════════════════════════════════════════
 function saveSignatureConfig(p) {

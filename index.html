@@ -2382,6 +2382,16 @@ function bootApp() {
   // Splash animate
   splashMsg('Chargement des données…');
   setTimeout(function(){ document.getElementById('spFill').style.width='70%'; },80);
+
+  // Charger logo + griffes en priorité (sans attendre loadAll)
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r || !r.success) return;
+      if (r.logoUrl) { _hseLogoUrl = r.logoUrl; }
+      if (r.sigMap)  { Object.assign(_userSigMap, r.sigMap); }
+    })
+    .getLogoAndSigs(S_AUTH.token || S.adminKey);
+
   loadAll();
 }
 
