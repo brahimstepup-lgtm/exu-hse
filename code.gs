@@ -1865,6 +1865,7 @@ function updatePestChecklist(p) {
     if (p.type           != null) sh.getRange(rowNum, 5).setValue(String(p.type));
     if (p.idEquipement   != null) sh.getRange(rowNum, 6).setValue(String(p.idEquipement));
     if (p.zone           != null) sh.getRange(rowNum, 7).setValue(String(p.zone));
+    if (p.checklistJson  != null) sh.getRange(rowNum, 8).setValue(String(p.checklistJson));
     if (p.etatGlobal)             sh.getRange(rowNum, 9).setValue(String(p.etatGlobal));
     sh.getRange(rowNum, 10).setValue(String(p.observations||''));
     sh.getRange(rowNum, 11).setValue(p.prochaineInspection ? new Date(p.prochaineInspection) : '');

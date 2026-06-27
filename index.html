@@ -1686,9 +1686,11 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('pestDetailOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto" id="pestDetailBody"></div>
-    <div class="sh-foot">
+    <div class="sh-foot" id="pestDetailFoot">
       <button class="btn btn-g" onclick="closeSheet('pestDetailOv')">Fermer</button>
-      <button class="btn btn-g" onclick="printPestRecord(_pestCurrentDetailIdx)" style="gap:4px">🖨 Imprimer le rapport</button>
+      <button class="btn btn-g" onclick="printPestRecord(_pestCurrentDetailIdx)" style="gap:4px">🖨 Imprimer</button>
+      <button class="btn btn-p" id="pestEditBtn" style="display:none" onclick="togglePestEdit()">✏ Modifier</button>
+      <button class="btn btn-p" id="pestSaveBtn" style="display:none;background:#22c55e" onclick="savePestEdit()">💾 Sauvegarder</button>
     </div>
   </div>
 </div>
@@ -6713,26 +6715,133 @@ function _renderNuisiblesList() {
   }).join('');
 }
 
+var _pestEditMode = false;
+
 function openPestDetail(idx) {
   var c = _nuisiblesRecords[idx];
   if (!c) return;
   _pestCurrentDetailIdx = idx;
+  _pestEditMode = false;
   document.getElementById('pestDetailTitle').textContent = '🔍 Inspection Nuisibles — '+esc(c.dateInspection||'');
-  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c);
+  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, false);
+  var editBtn = document.getElementById('pestEditBtn');
+  var saveBtn = document.getElementById('pestSaveBtn');
+  if (editBtn) editBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
   openSheet('pestDetailOv');
 }
 
-function _buildPestDetailHTML(c) {
+function togglePestEdit() {
+  _pestEditMode = !_pestEditMode;
+  var c = _nuisiblesRecords[_pestCurrentDetailIdx];
+  if (!c) return;
+  document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, _pestEditMode);
+  document.getElementById('pestEditBtn').textContent = _pestEditMode ? '👁 Vue' : '✏ Modifier';
+  document.getElementById('pestSaveBtn').style.display = _pestEditMode ? 'inline-flex' : 'none';
+}
+
+function savePestEdit() {
+  var c = _nuisiblesRecords[_pestCurrentDetailIdx];
+  if (!c) return;
+  var isGlobal = c.type === 'Inspection Globale Nuisibles';
+
+  var dateVal  = (document.getElementById('pdetDate')  ||{}).value || c.dateInspection      || '';
+  var prochVal = (document.getElementById('pdetProch') ||{}).value || c.prochaineInspection || '';
+  var etatVal  = (document.getElementById('pdetEtat')  ||{}).value || c.etatGlobal          || '';
+  var obsVal   = (document.getElementById('pdetObs')   ||{}).value || c.observations        || '';
+  var supVal   = (document.getElementById('pdetSup')   ||{}).value || c.superviseurNom      || '';
+
+  var newChecklist = c.checklist;
+  if (isGlobal && c.checklist && typeof c.checklist === 'object') {
+    newChecklist = {};
+    PEST_TYPES.forEach(function(type) {
+      var sec = c.checklist[type];
+      if (!sec || !sec.units) return;
+      var cl = _pestChecklistByType(type);
+      var units = sec.units.map(function(u) {
+        var newChecks = {};
+        cl.forEach(function(it) {
+          var cb = document.getElementById('pchk_'+type+'_'+u.num+'_'+it.key);
+          newChecks[it.key] = cb ? cb.checked : (u.checks && u.checks[it.key]) || false;
+        });
+        var okCnt = cl.filter(function(it){ return newChecks[it.key]; }).length;
+        var noteEl = document.getElementById('pnote_'+type+'_'+u.num);
+        return Object.assign({}, u, {
+          checks: newChecks,
+          statut: (okCnt === cl.length) ? 'Conforme' : (okCnt === 0 ? 'Non conforme' : 'Partiel'),
+          note: noteEl ? noteEl.value : (u.note || '')
+        });
+      });
+      newChecklist[type] = Object.assign({}, sec, { units: units });
+    });
+  }
+
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'), 'err'); return; }
+      c.dateInspection      = dateVal;
+      c.prochaineInspection = prochVal;
+      c.etatGlobal          = etatVal;
+      c.observations        = obsVal;
+      c.superviseurNom      = supVal;
+      c.checklist           = newChecklist;
+      _pestEditMode = false;
+      document.getElementById('pestDetailBody').innerHTML = _buildPestDetailHTML(c, false);
+      document.getElementById('pestEditBtn').textContent = '✏ Modifier';
+      document.getElementById('pestSaveBtn').style.display = 'none';
+      document.getElementById('pestDetailTitle').textContent = '🔍 Inspection Nuisibles — '+esc(dateVal);
+      _renderNuisiblesList();
+      toast('✓ Inspection mise à jour', 'ok');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .updatePestChecklist({
+      adminKey: S.adminKey,
+      id: c.id,
+      superviseurNom:      supVal,
+      dateInspection:      dateVal,
+      etatGlobal:          etatVal,
+      prochaineInspection: prochVal,
+      observations:        obsVal,
+      checklistJson:       JSON.stringify(newChecklist)
+    });
+}
+
+function _buildPestDetailHTML(c, editMode) {
   var badgeCls = c.etatGlobal==='Conforme' ? 'badge-ok' : c.etatGlobal==='Non conforme' ? 'badge-nok' : 'badge-partial';
   var isGlobal = c.type === 'Inspection Globale Nuisibles';
-  var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-    +'<div style="font-size:.82rem;color:var(--t2);line-height:1.6"><div>📅 '+esc(c.dateInspection)+'</div><div>🦺 '+esc(c.superviseurNom)+'</div></div>'
-    +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
-    +'</div>';
-  if (c.prochaineInspection) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
-  if (c.observations) html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  var html = '';
+
+  if (editMode) {
+    html += '<div style="display:grid;gap:8px;margin-bottom:12px;font-size:.82rem">'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">📅 Date</label>'
+      +'<input id="pdetDate" class="fi" type="date" value="'+esc(c.dateInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🦺 Superviseur</label>'
+      +'<input id="pdetSup" class="fi" type="text" value="'+esc(c.superviseurNom||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">🔜 Prochaine</label>'
+      +'<input id="pdetProch" class="fi" type="date" value="'+esc(c.prochaineInspection||'')+'" style="height:32px;font-size:.82rem;flex:1"/></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><label style="color:var(--t3);min-width:80px">État global</label>'
+      +'<select id="pdetEtat" class="fi" style="height:32px;font-size:.82rem;flex:1">'
+      +'<option value="Conforme"'+(c.etatGlobal==='Conforme'?' selected':'')+'>Conforme</option>'
+      +'<option value="Non conforme"'+(c.etatGlobal==='Non conforme'?' selected':'')+'>Non conforme</option>'
+      +'<option value="Partiel"'+(c.etatGlobal==='Partiel'?' selected':'')+'>Partiel</option>'
+      +'</select></div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-start"><label style="color:var(--t3);min-width:80px;padding-top:6px">📝 Obs.</label>'
+      +'<textarea id="pdetObs" class="fi" rows="2" style="font-size:.82rem;flex:1;resize:vertical">'+esc(c.observations||'')+'</textarea></div>'
+      +'</div>';
+  } else {
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      +'<div style="font-size:.82rem;color:var(--t2);line-height:1.6"><div>📅 '+esc(c.dateInspection)+'</div><div>🦺 '+esc(c.superviseurNom)+'</div></div>'
+      +'<span class="hse-card-badge '+badgeCls+'">'+esc(c.etatGlobal)+'</span>'
+      +'</div>';
+    if (c.prochaineInspection) html += '<div style="font-size:.78rem;color:var(--t3);margin-bottom:8px">🔜 Prochaine inspection : '+esc(c.prochaineInspection)+'</div>';
+    if (c.observations) html += '<div style="font-size:.82rem;color:var(--t2);background:var(--ink3);border-radius:8px;padding:8px 12px;margin-bottom:10px">📝 '+esc(c.observations)+'</div>';
+  }
+
   if (c.photoId) html += '<div style="margin-bottom:10px"><a onclick="openIfsId(\''+esc(c.photoId)+'\')" style="font-size:.78rem;color:#3b82f6;cursor:pointer;text-decoration:underline">📎 Voir rapport signé</a></div>';
   html += '<hr style="border:none;border-top:1px solid var(--line2);margin:10px 0"/>';
+
   if (isGlobal && c.checklist && typeof c.checklist==='object') {
     PEST_TYPES.forEach(function(type) {
       var sec = c.checklist[type];
@@ -6760,12 +6869,17 @@ function _buildPestDetailHTML(c) {
           +'<div id="'+detId+'" style="display:none;background:var(--ink2);padding:10px 14px;border-top:1px solid var(--line2)">';
         cl.forEach(function(it) {
           var checked = u.checks && u.checks[it.key];
+          var cbId = 'pchk_'+type+'_'+u.num+'_'+it.key;
           html += '<div class="chk-item" style="opacity:'+(checked?'1':'.6')+'">'
-            +'<input type="checkbox" '+(checked?'checked':'')+' disabled style="pointer-events:none"/>'
+            +'<input type="checkbox" id="'+cbId+'" '+(checked?'checked':'')+(editMode?'':' disabled style="pointer-events:none"')+'/>'
             +'<label style="color:'+(checked?'var(--t1)':'#e74c3c')+'">'+esc(it.label)+'</label>'
             +'</div>';
         });
-        if (u.note) html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(u.note)+'</div>';
+        if (editMode) {
+          html += '<textarea id="pnote_'+type+'_'+u.num+'" placeholder="Note…" rows="1" style="width:100%;margin-top:6px;font-size:.76rem;background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--t1);resize:vertical">'+esc(u.note||'')+'</textarea>';
+        } else if (u.note) {
+          html += '<div style="margin-top:6px;font-size:.78rem;color:var(--t3);font-style:italic;padding:4px 2px">📝 '+esc(u.note)+'</div>';
+        }
         html += '</div></div>';
       });
       html += '</div></div>';
