@@ -1039,6 +1039,8 @@ img{max-width:100%;display:block;}
           <button id="configPestBtn" class="btn btn-g" onclick="openConfigPest()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
           <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Globale</button>
           <button class="btn" onclick="openRapportNuisibles()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(125,60,152,.18);border:1px solid rgba(125,60,152,.45);color:#9b59b6;border-radius:var(--rs)">📄 Rapport présence</button>
+          <button class="btn" onclick="openEnr13Exec()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(39,174,96,.18);border:1px solid rgba(39,174,96,.45);color:#27ae60;border-radius:var(--rs)">📋 ENR-13 Exécution</button>
+          <button class="btn" onclick="openEnr15Verif()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(52,152,219,.18);border:1px solid rgba(52,152,219,.45);color:#3498db;border-radius:var(--rs)">✅ ENR-15 Vérification</button>
         </div>
       </div>
       <!-- Boutons d'inspection par type -->
@@ -1917,6 +1919,239 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('cloturaNuisiblesOv')">Annuler</button>
       <button class="btn" onclick="submitCloture()" style="background:#27ae60;color:#fff">✅ Clôturer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: ENR-HSE-13 — Exécution de la Lutte contre les Nuisibles ═══ -->
+<div class="ov" id="enr13ExecOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 ENR-HSE-13 — Exécution Lutte Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('enr13ExecOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Date</label>
+          <input class="fi" type="date" id="enr13_date" style="height:38px"/>
+        </div>
+        <div>
+          <label class="fl">Site</label>
+          <input class="fi" id="enr13_site" placeholder="ex : SOBCO 3" style="height:38px"/>
+        </div>
+      </div>
+      <div style="overflow-x:auto;margin-bottom:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem;min-width:500px">
+          <thead>
+            <tr>
+              <th style="border:1px solid var(--line2);padding:6px 8px;text-align:left;background:var(--ink2);width:30%"></th>
+              <th style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Insectes rampants</th>
+              <th style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Insectes volants</th>
+              <th style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Rongeurs</th>
+              <th style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Observations</th>
+            </tr>
+          </thead>
+          <tbody id="enr13TableBody">
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;font-weight:600;color:var(--t1)">Produit utilisé</td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_r" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_v" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_g" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_produit_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;font-weight:600;color:var(--t1)">N° de lot</td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_lot_r" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_lot_v" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_lot_g" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_lot_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;font-weight:600;color:var(--t1)">Dilution (insecticides)</td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_dilution_r" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_dilution_v" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_dilution_g" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_dilution_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;font-weight:600;color:var(--t1)">Mode de traitement<br><span style="font-size:.7rem;font-weight:400;color:var(--t3)">(pulvérisation, mise en place des appâts, etc.)</span></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_mode_r" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_mode_v" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_mode_g" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_mode_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td colspan="5" style="border:1px solid var(--line2);padding:5px 8px;font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.5px;background:rgba(39,174,96,.1);color:#27ae60">Zones traitées</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Zone stockage MP</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zmp_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zmp_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zmp_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_zmp_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau 1</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn1_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn1_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn1_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_zn1_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau 0</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn0_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn0_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zn0_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_zn0_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau -1</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_znm1_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_znm1_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_znm1_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_znm1_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Extérieur</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zext_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zext_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zext_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_zext_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Bloc vestiaire</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zvest_r" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zvest_v" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input type="checkbox" id="enr13_zvest_g" style="width:16px;height:16px;accent-color:#27ae60"/></td>
+              <td style="border:1px solid var(--line2);padding:3px"><input class="fi" id="enr13_zvest_o" style="height:28px;font-size:.78rem;border:none;background:transparent"/></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fg" style="margin-top:4px">
+        <label class="fl">Visa de L'HSE</label>
+        <input class="fi" id="enr13_visa" placeholder="Nom et prénom du responsable HSE" style="height:38px"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('enr13ExecOv')">Annuler</button>
+      <button class="btn" onclick="printEnr13Exec()" style="background:#27ae60;color:#fff;gap:4px">🖨 Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: ENR-HSE-15 — Vérification de la Lutte contre les Nuisibles ═══ -->
+<div class="ov" id="enr15VerifOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">✅ ENR-HSE-15 — Vérification Lutte Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('enr15VerifOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+      <div style="margin-bottom:12px;max-width:200px">
+        <label class="fl">Date</label>
+        <input class="fi" type="date" id="enr15_date" style="height:38px"/>
+      </div>
+      <div style="overflow-x:auto;margin-bottom:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:.76rem;min-width:600px">
+          <thead>
+            <tr>
+              <th rowspan="2" style="border:1px solid var(--line2);padding:6px 8px;text-align:left;background:var(--ink2);width:22%"></th>
+              <th colspan="3" style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Insectes rampants</th>
+              <th colspan="4" style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Insectes volants</th>
+              <th rowspan="2" style="border:1px solid var(--line2);padding:6px 8px;text-align:center;background:var(--ink2)">Cadavres<br>de rongeurs</th>
+            </tr>
+            <tr>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Cafard</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Fourmi</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Acarien</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Abeilles</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Mouches</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Moustique</th>
+              <th style="border:1px solid var(--line2);padding:5px 4px;text-align:center;background:var(--ink2);font-size:.72rem">Papillon<br>mites</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Zone stockage MP</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_mp_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau 1</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n1_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau 0</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_n0_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Niveau -1</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_nm1_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Extérieur</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_ext_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line2);padding:5px 7px;color:var(--t2)">Administration</td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_caf" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_fou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_aca" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_abe" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_mou" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_mos" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_pap" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+              <td style="border:1px solid var(--line2);padding:3px;text-align:center"><input class="fi" id="enr15_adm_ron" style="height:26px;font-size:.76rem;border:none;background:transparent;text-align:center;width:100%"/></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fg" style="margin-top:4px">
+        <label class="fl">Visa de L'HSE</label>
+        <input class="fi" id="enr15_visa" placeholder="Nom et prénom du responsable HSE" style="height:38px"/>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('enr15VerifOv')">Annuler</button>
+      <button class="btn" onclick="printEnr15Verif()" style="background:#3498db;color:#fff;gap:4px">🖨 Imprimer</button>
     </div>
   </div>
 </div>
@@ -8406,6 +8641,215 @@ document.addEventListener('click', function(e) {
     dd.style.display = 'none';
   }
 });
+
+/* ══════════════════════════════════════════
+   ENR-HSE-13 — Exécution de la Lutte contre les Nuisibles
+══════════════════════════════════════════ */
+function openEnr13Exec() {
+  var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
+  var el = document.getElementById('enr13_date');
+  if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
+  openSheet('enr13ExecOv');
+}
+
+function _gv13(id) { var el=document.getElementById(id); return el?(el.type==='checkbox'?el.checked:el.value.trim()):''; }
+
+function printEnr13Exec() {
+  var date   = _gv13('enr13_date');
+  var site   = _gv13('enr13_site');
+  var visa   = _gv13('enr13_visa');
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date(); var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var fmtDate = date ? (function(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];})(date) : '';
+
+  function row13(label, ids, isZone) {
+    var cols = ['r','v','g','o'];
+    var html = '<tr><td class="rl">'+(isZone?'<span style="padding-left:10px">':'')+(label)+(isZone?'</span>':'')+'</td>';
+    ids.forEach(function(id,i){
+      var val = _gv13(id);
+      if (i < 3 && isZone) {
+        html += '<td class="tc">'+(val?'✓':'')+'</td>';
+      } else {
+        html += '<td class="tc">'+esc(val||'')+'</td>';
+      }
+    });
+    return html+'</tr>';
+  }
+
+  var zones = [
+    {lbl:'Zone stockage MP', pfx:'enr13_zmp'},
+    {lbl:'Niveau 1',         pfx:'enr13_zn1'},
+    {lbl:'Niveau 0',         pfx:'enr13_zn0'},
+    {lbl:'Niveau -1',        pfx:'enr13_znm1'},
+    {lbl:'Extérieur',        pfx:'enr13_zext'},
+    {lbl:'Bloc vestiaire',   pfx:'enr13_zvest'}
+  ];
+
+  var zoneRows = zones.map(function(z){
+    return row13(z.lbl, [z.pfx+'_r',z.pfx+'_v',z.pfx+'_g',z.pfx+'_o'], true);
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-13</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:14mm 12mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
+    +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
+    +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
+    +'.logo-box img{max-width:98px;max-height:55px;object-fit:contain}'
+    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
+    +'.doc-title{font-size:10.5pt;font-weight:900;text-align:center;text-transform:uppercase;line-height:1.3}'
+    +'.doc-sub{font-size:8.5pt;font-weight:700;text-align:center;margin-top:3px;text-transform:uppercase}'
+    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
+    +'.doc-meta .mk{font-weight:700;white-space:nowrap}.doc-meta .mv{white-space:nowrap}'
+    +'.meta-line{display:flex;gap:16px;margin-bottom:10px;font-size:9pt}'
+    +'.meta-line span{font-weight:700}'
+    +'table.main{width:100%;border-collapse:collapse;font-size:8.5pt}'
+    +'table.main th,table.main td{border:1px solid #555;padding:5px 6px}'
+    +'table.main th{background:#e8e8e8;font-weight:700;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.rl{font-weight:600;text-align:left;width:30%}'
+    +'.tc{text-align:center}'
+    +'.zone-hdr{background:#d0f0d8;font-weight:700;text-align:left;font-size:8pt;text-transform:uppercase;letter-spacing:.4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.sig-area{margin-top:18px;border:1px solid #999;padding:10px 14px;min-height:48px}'
+    +'.sig-lbl{font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}'
+    +'.sig-line{border-bottom:1px dotted #999;height:28px}'
+    +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
+    +'</style></head><body>'
+    +'<div class="hdr">'
+    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
+    +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Exécution de la Lutte contre les Nuisibles</div></div>'
+    +'<div class="doc-meta"><span class="mk">N° Réf.</span><span class="mv" style="font-weight:700">ENR-HSE-13</span>'
+    +'<span class="mk">Date</span><span class="mv">21/11/2021</span>'
+    +'<span class="mk">Version</span><span class="mv">01</span></div>'
+    +'</div>'
+    +'<div class="meta-line"><div>Date : <span>'+esc(fmtDate||'___________')+'</span></div><div>Site : <span>'+esc(site||'___________')+'</span></div></div>'
+    +'<table class="main">'
+    +'<thead><tr>'
+    +'<th style="width:30%"></th>'
+    +'<th>Insectes rampants</th>'
+    +'<th>Insectes volants</th>'
+    +'<th>Rongeurs</th>'
+    +'<th>Observations</th>'
+    +'</tr></thead>'
+    +'<tbody>'
+    + row13('Produit utilisé',          ['enr13_produit_r','enr13_produit_v','enr13_produit_g','enr13_produit_o'], false)
+    + row13('N° de lot',                ['enr13_lot_r','enr13_lot_v','enr13_lot_g','enr13_lot_o'], false)
+    + row13('Dilution (insecticides)',   ['enr13_dilution_r','enr13_dilution_v','enr13_dilution_g','enr13_dilution_o'], false)
+    + row13('Mode de traitement<br><span style="font-size:7.5pt;font-weight:400">(pulvérisation, mise en place des appâts, etc.)</span>', ['enr13_mode_r','enr13_mode_v','enr13_mode_g','enr13_mode_o'], false)
+    +'<tr><td class="zone-hdr" colspan="5" style="border:1px solid #555;padding:4px 8px">Zones traitées</td></tr>'
+    + zoneRows
+    +'</tbody></table>'
+    +'<div class="sig-area"><div class="sig-lbl">Visa de L\'HSE :</div>'
+    +(visa?'<div style="font-size:9.5pt;font-weight:600;padding-top:4px">'+esc(visa)+'</div>':'<div class="sig-line"></div>')
+    +'</div>'
+    +'<div class="footer">ENR-HSE-13 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+
+  var w = window.open('','_blank','width=900,height=680,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+/* ══════════════════════════════════════════
+   ENR-HSE-15 — Vérification de la Lutte contre les Nuisibles
+══════════════════════════════════════════ */
+function openEnr15Verif() {
+  var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
+  var el = document.getElementById('enr15_date');
+  if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
+  openSheet('enr15VerifOv');
+}
+
+function _gv15(id) { var el=document.getElementById(id); return el?el.value.trim():''; }
+
+function printEnr15Verif() {
+  var date  = _gv15('enr15_date');
+  var visa  = _gv15('enr15_visa');
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date(); var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var fmtDate = date ? (function(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];})(date) : '';
+
+  var zones15 = [
+    {lbl:'Zone stockage MP', pfx:'enr15_mp'},
+    {lbl:'Niveau 1',         pfx:'enr15_n1'},
+    {lbl:'Niveau 0',         pfx:'enr15_n0'},
+    {lbl:'Niveau -1',        pfx:'enr15_nm1'},
+    {lbl:'Extérieur',        pfx:'enr15_ext'},
+    {lbl:'Administration',   pfx:'enr15_adm'}
+  ];
+  var cols15 = ['caf','fou','aca','abe','mou','mos','pap','ron'];
+
+  var zoneRows15 = zones15.map(function(z){
+    var cells = cols15.map(function(c){ return '<td class="tc">'+esc(_gv15(z.pfx+'_'+c)||'')+'</td>'; }).join('');
+    return '<tr><td class="rl">'+esc(z.lbl)+'</td>'+cells+'</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-15</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 landscape;margin:12mm 10mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#111;background:#fff}'
+    +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
+    +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
+    +'.logo-box img{max-width:98px;max-height:55px;object-fit:contain}'
+    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
+    +'.doc-title{font-size:10pt;font-weight:900;text-align:center;text-transform:uppercase;line-height:1.3}'
+    +'.doc-sub{font-size:8.5pt;font-weight:700;text-align:center;margin-top:3px;text-transform:uppercase}'
+    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
+    +'.doc-meta .mk{font-weight:700;white-space:nowrap}.doc-meta .mv{white-space:nowrap}'
+    +'.meta-line{margin-bottom:10px;font-size:9pt}'
+    +'.meta-line span{font-weight:700}'
+    +'table.main{width:100%;border-collapse:collapse;font-size:8pt}'
+    +'table.main th,table.main td{border:1px solid #555;padding:4px 5px;text-align:center}'
+    +'.rl{font-weight:600;text-align:left!important;width:18%}'
+    +'.tc{text-align:center}'
+    +'.sig-area{margin-top:16px;border:1px solid #999;padding:10px 14px;min-height:44px}'
+    +'.sig-lbl{font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}'
+    +'.sig-line{border-bottom:1px dotted #999;height:26px}'
+    +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
+    +'</style></head><body>'
+    +'<div class="hdr">'
+    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
+    +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Vérification de la Lutte contre les Nuisibles</div></div>'
+    +'<div class="doc-meta"><span class="mk">Réf.</span><span class="mv" style="font-weight:700">ENR-HSE-15</span>'
+    +'<span class="mk">Date</span><span class="mv">21/11/2021</span>'
+    +'<span class="mk">V</span><span class="mv">01</span></div>'
+    +'</div>'
+    +'<div class="meta-line">Date : <span>'+esc(fmtDate||'___________')+'</span></div>'
+    +'<table class="main">'
+    +'<thead>'
+    +'<tr>'
+    +'<th rowspan="2" style="width:18%"></th>'
+    +'<th colspan="3">Insectes rampants</th>'
+    +'<th colspan="4">Insectes volants</th>'
+    +'<th rowspan="2">Cadavres<br>de rongeurs</th>'
+    +'</tr>'
+    +'<tr>'
+    +'<th style="font-size:7.5pt">Cafard</th>'
+    +'<th style="font-size:7.5pt">Fourmi</th>'
+    +'<th style="font-size:7.5pt">Acarien</th>'
+    +'<th style="font-size:7.5pt">Abeilles</th>'
+    +'<th style="font-size:7.5pt">Mouches</th>'
+    +'<th style="font-size:7.5pt">Moustique</th>'
+    +'<th style="font-size:7.5pt">Papillon<br>mites</th>'
+    +'</tr>'
+    +'<tr><th colspan="9" style="text-align:left;padding-left:8px;font-size:8pt">Espèces</th></tr>'
+    +'</thead>'
+    +'<tbody>'
+    + zoneRows15
+    +'</tbody></table>'
+    +'<div class="sig-area"><div class="sig-lbl">Visa de L\'HSE :</div>'
+    +(visa?'<div style="font-size:9.5pt;font-weight:600;padding-top:4px">'+esc(visa)+'</div>':'<div class="sig-line"></div>')
+    +'</div>'
+    +'<div class="footer">ENR-HSE-15 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+
+  var w = window.open('','_blank','width=1100,height=680,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
 
 /* ── Helper: ouvrir une image Drive depuis son fileId ── */
 function openIfsId(fileId) {
