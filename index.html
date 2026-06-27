@@ -1037,17 +1037,24 @@ img{max-width:100%;display:block;}
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button id="configPestBtn" class="btn btn-g" onclick="openConfigPest()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
           <button class="btn btn-p" onclick="openGlobalPestInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🔍 Globale</button>
+          <button class="btn" onclick="openRapportNuisibles()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(125,60,152,.18);border:1px solid rgba(125,60,152,.45);color:#9b59b6;border-radius:var(--rs)">📄 Rapport présence</button>
         </div>
       </div>
       <!-- Boutons d'inspection par type -->
-      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <div id="nuisInspTypeRow" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
         <span style="font-size:.74rem;color:var(--t3);align-self:center;white-space:nowrap">Inspecter :</span>
         <button class="btn" onclick="openGlobalPestInspection('DEI')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:var(--rs)">⚡ DEI</button>
         <button class="btn" onclick="openGlobalPestInspection('BAP')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:var(--rs)">🐭 Boîtes d'appât</button>
         <button class="btn" onclick="openGlobalPestInspection('PM')"  style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(230,126,34,.15);border:1px solid rgba(230,126,34,.4);color:#e67e22;border-radius:var(--rs)">🪤 Pièges méc.</button>
         <button class="btn" onclick="openGlobalPestInspection('PGG')" style="padding:6px 11px;font-size:.78rem;min-height:32px;background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.4);color:#9b59b6;border-radius:var(--rs)">📋 Plaques glu</button>
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <!-- Onglets : Inspections vs Rapports présence -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px">
+        <button class="gsort-tab on" id="nuisTab_inspections" onclick="switchNuisiblesTab('inspections')">🔍 Inspections</button>
+        <button class="gsort-tab" id="nuisTab_rapports" onclick="switchNuisiblesTab('rapports')" style="color:#9b59b6">🚨 Rapports présence</button>
+      </div>
+      <!-- Filtres inspections (masqués quand onglet rapports) -->
+      <div id="nuisInspFilters" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
         <button class="gsort-tab on" id="pftab_all" onclick="setPestFilter('all')">Tous</button>
         <button class="gsort-tab" id="pftab_dei" onclick="setPestFilter('DEI')">⚡ DEI</button>
         <button class="gsort-tab" id="pftab_bap" onclick="setPestFilter('BAP')">🐭 B. d'appât</button>
@@ -1483,13 +1490,32 @@ img{max-width:100%;display:block;}
       <button class="sh-x" onclick="closeSheet('pestConfigOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
-      <!-- Code document -->
+      <!-- Code document inspection -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
-        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code du document (impression)</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">📄 Code document — Inspection Nuisibles</div>
         <div style="display:flex;gap:8px;align-items:center">
           <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
-          <span style="font-size:.75rem;color:var(--t3)">Apparaît en haut à droite de la fiche imprimée</span>
+          <span style="font-size:.75rem;color:var(--t3)">Fiche d'inspection (ENR-HSE 7)</span>
         </div>
+      </div>
+      <!-- Code document rapport présence -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(125,60,152,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#9b59b6;margin-bottom:8px">🚨 Code document — Rapport Présence Nuisibles</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
+            <input class="fi" id="rnDocCodeInput" value="ENR-HSE 8" placeholder="ENR-HSE 8" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="rnDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
+            <input class="fi" id="rnDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+        </div>
+        <button class="btn btn-p" onclick="saveRapportNuisiblesConfigFromUI()" style="margin-top:10px;height:34px;font-size:.82rem;padding:0 14px;background:#9b59b6">💾 Sauvegarder config rapport</button>
       </div>
       <!-- Paramètres d'impression -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
@@ -1691,6 +1717,177 @@ img{max-width:100%;display:block;}
       <button class="btn btn-g" onclick="printPestRecord(_pestCurrentDetailIdx)" style="gap:4px">🖨 Imprimer</button>
       <button class="btn btn-p" id="pestEditBtn" style="display:none" onclick="togglePestEdit()">✏ Modifier</button>
       <button class="btn btn-p" id="pestSaveBtn" style="display:none;background:#22c55e" onclick="savePestEdit()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Rapport Présence Nuisibles ═══ -->
+<div class="ov" id="rapportNuisiblesOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🚨 Rapport — Présence de Nuisibles</div>
+      <button class="sh-x" onclick="closeSheet('rapportNuisiblesOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+      <!-- Ligne date + zone -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Date de constatation</label>
+          <input class="fi" type="date" id="rn_date" style="height:38px"/>
+        </div>
+        <div>
+          <label class="fl">Zone</label>
+          <select class="fi" id="rn_zone" style="height:38px">
+            <option value="">— Sélectionner —</option>
+          </select>
+        </div>
+      </div>
+      <!-- Emplacement -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Emplacement précis</label>
+        <input class="fi" id="rn_emplacement" placeholder="Ex : coin nord-est, derrière les étagères, armoire électrique…" style="height:38px"/>
+      </div>
+      <!-- Type de nuisible -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Type de nuisible détecté</label>
+        <select class="fi" id="rn_type" style="height:38px">
+          <option value="">— Sélectionner —</option>
+          <option value="Rongeurs (rats / souris)">🐀 Rongeurs (rats / souris)</option>
+          <option value="Insectes volants">🦟 Insectes volants</option>
+          <option value="Insectes rampants">🪳 Insectes rampants</option>
+          <option value="Oiseaux">🐦 Oiseaux</option>
+          <option value="Autres arthropodes">🕷 Autres arthropodes</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <!-- Description -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Description / Observations</label>
+        <textarea class="fi" id="rn_desc" rows="3" placeholder="Localisation précise, quantité estimée, traces observées…" style="resize:vertical"></textarea>
+      </div>
+      <!-- Actions immédiates -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Actions immédiates prises</label>
+        <textarea class="fi" id="rn_actions" rows="2" placeholder="Ex : pose de pièges, isolation de la zone, alerte prestataire…" style="resize:vertical"></textarea>
+      </div>
+      <!-- ── Prestataire ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid rgba(125,60,152,.35)">
+        <div style="font-size:.8rem;font-weight:700;color:#9b59b6;margin-bottom:10px">🏢 Prestataire</div>
+        <!-- Prestataire informé ? -->
+        <div style="margin-bottom:10px">
+          <label class="fl">Le prestataire est-il informé ?</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
+              <input type="radio" name="rn_presta_informe" id="rn_presta_oui" value="Oui" onchange="rnTogglePresta()" style="accent-color:#9b59b6"/> Oui
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
+              <input type="radio" name="rn_presta_informe" id="rn_presta_non" value="Non" onchange="rnTogglePresta()" checked style="accent-color:#9b59b6"/> Non
+            </label>
+          </div>
+        </div>
+        <!-- Détails prestataire (masqués si Non) -->
+        <div id="rn_presta_details" style="display:none">
+          <div style="margin-bottom:10px">
+            <label class="fl">Nom du prestataire</label>
+            <input class="fi" id="rn_presta_nom" placeholder="Ex : SOBIEX, RENTOKIL…" style="height:36px"/>
+          </div>
+          <div>
+            <label class="fl">Mode de contact utilisé</label>
+            <div style="display:flex;gap:8px;margin-top:4px;margin-bottom:8px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
+                <input type="radio" name="rn_contact_mode" id="rn_contact_tel" value="Numéro" onchange="rnToggleContactMode()" checked style="accent-color:#9b59b6"/> Numéro de téléphone
+              </label>
+              <label style="display:flex;align-items:center;gap=6px;cursor:pointer;font-size:.88rem;color:var(--t1)">
+                <input type="radio" name="rn_contact_mode" id="rn_contact_email" value="Email" onchange="rnToggleContactMode()" style="accent-color:#9b59b6"/> Email
+              </label>
+            </div>
+            <input class="fi" id="rn_contact_val" placeholder="Numéro de téléphone…" style="height:36px"/>
+          </div>
+        </div>
+      </div>
+      <!-- Photo nuisible (optionnelle) -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Photo du nuisible constaté <span style="color:#888;font-weight:400;text-transform:none">(optionnel)</span></label>
+        <input type="file" id="rn_photo_input" accept="image/*" capture="environment"
+          onchange="rnHandlePhoto(this)"
+          style="display:none"/>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" onclick="document.getElementById('rn_photo_input').click()"
+            style="background:#7d3c98;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">
+            📷 Choisir une photo
+          </button>
+          <span id="rn_photo_name" style="font-size:12px;color:#aaa">Aucune photo sélectionnée</span>
+        </div>
+        <div id="rn_photo_preview" style="margin-top:8px;display:none">
+          <img id="rn_photo_img" src="" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+          <button type="button" onclick="rnClearPhoto()"
+            style="display:block;margin-top:4px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px">✕ Supprimer la photo</button>
+        </div>
+      </div>
+      <!-- Statut -->
+      <div style="margin-bottom:4px">
+        <label class="fl">Statut</label>
+        <select class="fi" id="rn_statut" style="height:38px">
+          <option value="En cours">🔴 En cours</option>
+          <option value="Traité">🟠 Traité</option>
+        </select>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('rapportNuisiblesOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitRapportNuisibles()" style="background:#9b59b6">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Détail Rapport Nuisibles ═══ -->
+<div class="ov" id="rapportNuisiblesDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title" id="rapportNuisiblesDetailTitle">Rapport de présence</div>
+      <button class="sh-x" onclick="closeSheet('rapportNuisiblesDetailOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto" id="rapportNuisiblesDetailBody"></div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('rapportNuisiblesDetailOv')">Fermer</button>
+      <button class="btn btn-g" onclick="printRapportNuisibles(_rnCurrentIdx)" style="gap:4px">🖨 Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Clôture Rapport Nuisibles (ENR-13) ═══ -->
+<div class="ov" id="cloturaNuisiblesOv">
+  <div class="sheet" style="max-height:80vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📁 Clôture du rapport — ENR-13</div>
+      <button class="sh-x" onclick="closeSheet('cloturaNuisiblesOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+      <p style="font-size:13px;color:#ccc;margin-bottom:16px">
+        Pour clôturer ce rapport, veuillez joindre le document de clôture <strong>ENR-13</strong>
+        (rapport de traitement, bon d'intervention prestataire, etc.).
+      </p>
+      <div style="margin-bottom:12px">
+        <label class="fl">Document ENR-13 <span style="color:#e74c3c">*</span></label>
+        <input type="file" id="cloture_doc_input" accept="image/*,.pdf"
+          onchange="clotureHandleDoc(this)"
+          style="display:none"/>
+        <button type="button" onclick="document.getElementById('cloture_doc_input').click()"
+          style="background:#27ae60;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-size:14px;width:100%">
+          📎 Sélectionner le document ENR-13
+        </button>
+        <div id="cloture_doc_name" style="margin-top:8px;font-size:12px;color:#aaa">Aucun fichier sélectionné</div>
+        <div id="cloture_doc_preview" style="margin-top:8px;display:none">
+          <img id="cloture_doc_img" src="" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('cloturaNuisiblesOv')">Annuler</button>
+      <button class="btn" onclick="submitCloture()" style="background:#27ae60;color:#fff">✅ Clôturer le rapport</button>
     </div>
   </div>
 </div>
@@ -6154,6 +6351,20 @@ function openConfigPest() {
       if (edEl2) edEl2.value = _pestDocEdition;
       var pmEl2 = document.getElementById('pestProchaineMonthsInput');
       if (pmEl2) pmEl2.value = _pestProchaineMonths;
+      // Charger aussi la config du rapport présence
+      google.script.run
+        .withSuccessHandler(function(rn) {
+          if (rn&&rn.success) {
+            _rnDocCode    = rn.docCode    || 'ENR-HSE 8';
+            _rnDocRev     = rn.docRev     || '01';
+            _rnDocEdition = rn.docEdition || '';
+            var rnc = document.getElementById('rnDocCodeInput');    if (rnc) rnc.value = _rnDocCode;
+            var rnr = document.getElementById('rnDocRevInput');     if (rnr) rnr.value = _rnDocRev;
+            var rne = document.getElementById('rnDocEditionInput'); if (rne) rne.value = _rnDocEdition;
+          }
+        })
+        .withFailureHandler(function(){})
+        .getRapportNuisiblesConfig(S.adminKey);
       _renderPestChecklistEditor();
       _renderPestConfigTables();
       _renderPestZoneChips();
@@ -6308,6 +6519,18 @@ function savePestChecklistConfig() {
     })
     .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
     .savePestChecklistsConfig({ adminKey:S.adminKey, checklists:_pestChecklistConfig });
+}
+
+function saveRapportNuisiblesConfigFromUI() {
+  var code = (document.getElementById('rnDocCodeInput')&&document.getElementById('rnDocCodeInput').value.trim()) || 'ENR-HSE 8';
+  var rev  = (document.getElementById('rnDocRevInput')&&document.getElementById('rnDocRevInput').value.trim())  || '01';
+  var ed   = (document.getElementById('rnDocEditionInput')&&document.getElementById('rnDocEditionInput').value.trim()) || '';
+  _rnDocCode = code; _rnDocRev = rev; _rnDocEdition = ed;
+  showLoader('Sauvegarde…');
+  google.script.run
+    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Config rapport nuisibles sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRapportNuisiblesConfig({ adminKey:S.adminKey, docCode:code, docRev:rev, docEdition:ed });
 }
 
 /* ══════════════════════════════════════════
@@ -7196,6 +7419,446 @@ function viewPestRecord(idx) {
   var w = window.open('', '_blank', 'width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
   else toast('Autorisez les popups pour afficher','err');
+}
+
+/* ══════════════════════════════════════════
+   RAPPORT EN CAS DE PRÉSENCE DE NUISIBLES
+   Code document : ENR-HSE 8 (configurable)
+══════════════════════════════════════════ */
+var _rapportNuisiblesRecords = [];
+var _rnCurrentIdx            = -1;
+var _rnDocCode               = 'ENR-HSE 8';
+var _rnDocRev                = '01';
+var _rnDocEdition            = '';
+var _rnPhotoB64              = '';
+var _rnPhotoMime             = '';
+var _clotureIdx              = -1;
+var _clotureDocB64           = '';
+var _clotureDocMime          = '';
+
+function rnHandlePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _rnPhotoB64  = e.target.result;
+    _rnPhotoMime = file.type || 'image/jpeg';
+    document.getElementById('rn_photo_name').textContent = file.name;
+    document.getElementById('rn_photo_img').src = e.target.result;
+    document.getElementById('rn_photo_preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function rnClearPhoto() {
+  _rnPhotoB64 = ''; _rnPhotoMime = '';
+  document.getElementById('rn_photo_input').value = '';
+  document.getElementById('rn_photo_name').textContent = 'Aucune photo sélectionnée';
+  document.getElementById('rn_photo_preview').style.display = 'none';
+  document.getElementById('rn_photo_img').src = '';
+}
+
+function openCloture(idx) {
+  _clotureIdx    = idx;
+  _clotureDocB64 = ''; _clotureDocMime = '';
+  document.getElementById('cloture_doc_input').value  = '';
+  document.getElementById('cloture_doc_name').textContent = 'Aucun fichier sélectionné';
+  document.getElementById('cloture_doc_preview').style.display = 'none';
+  document.getElementById('cloture_doc_img').src = '';
+  openSheet('cloturaNuisiblesOv');
+}
+
+function clotureHandleDoc(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _clotureDocB64  = e.target.result;
+    _clotureDocMime = file.type || 'application/pdf';
+    document.getElementById('cloture_doc_name').textContent = file.name;
+    if (file.type && file.type.startsWith('image/')) {
+      document.getElementById('cloture_doc_img').src = e.target.result;
+      document.getElementById('cloture_doc_preview').style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitCloture() {
+  if (_clotureIdx < 0) return;
+  var c = _rapportNuisiblesRecords[_clotureIdx];
+  if (!c) return;
+  if (!_clotureDocB64) { toast('Veuillez sélectionner le document ENR-13','err'); return; }
+  showLoader('Clôture en cours…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Rapport #'+c.id+' clôturé','ok');
+        closeSheet('cloturaNuisiblesOv');
+        renderRapportNuisibles();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .cloturerRapportNuisibles({ token:S.adminKey, id:c.id, docCloture:_clotureDocB64, docMime:_clotureDocMime });
+}
+
+function rnTogglePresta() {
+  var oui = document.getElementById('rn_presta_oui');
+  var det = document.getElementById('rn_presta_details');
+  if (det) det.style.display = (oui&&oui.checked) ? '' : 'none';
+}
+
+function rnToggleContactMode() {
+  var telEl = document.getElementById('rn_contact_tel');
+  var inp   = document.getElementById('rn_contact_val');
+  if (inp) inp.placeholder = (telEl&&telEl.checked) ? 'Numéro de téléphone…' : 'Adresse email…';
+}
+
+function _rnFillZones() {
+  var sel = document.getElementById('rn_zone');
+  if (!sel) return;
+  var saved = sel.value;
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  (_configuredZones||[]).forEach(function(z) {
+    var o = document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o);
+  });
+  if (saved) sel.value = saved;
+}
+
+function openRapportNuisibles() {
+  showLoader('Chargement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _rnDocCode    = r.docCode    || 'ENR-HSE 8';
+      _rnDocRev     = r.docRev     || '01';
+      _rnDocEdition = r.docEdition || '';
+      if (r.logoUrl) _hseLogoUrl = r.logoUrl;
+      if (r.sigMap)  Object.assign(_userSigMap, r.sigMap);
+      // Réinitialiser champs
+      document.getElementById('rn_date').value       = todayStr();
+      document.getElementById('rn_emplacement').value = '';
+      document.getElementById('rn_type').value        = '';
+      document.getElementById('rn_desc').value        = '';
+      document.getElementById('rn_actions').value     = '';
+      document.getElementById('rn_statut').value      = 'En cours';
+      rnClearPhoto();
+      // Prestataire
+      var nonRad = document.getElementById('rn_presta_non');
+      if (nonRad) { nonRad.checked = true; }
+      document.getElementById('rn_presta_details').style.display = 'none';
+      document.getElementById('rn_presta_nom').value   = '';
+      document.getElementById('rn_contact_val').value  = '';
+      var telRad = document.getElementById('rn_contact_tel');
+      if (telRad) telRad.checked = true;
+      rnToggleContactMode();
+      // Zones
+      if (_configuredZones && _configuredZones.length) {
+        _rnFillZones();
+      } else {
+        // Charger les zones si pas encore en mémoire
+        google.script.run
+          .withSuccessHandler(function(rc) {
+            if (rc&&rc.success) { _configuredZones = rc.zones||[]; _rnFillZones(); }
+          })
+          .withFailureHandler(function(){})
+          .getPestConfigData(S.adminKey);
+      }
+      openSheet('rapportNuisiblesOv');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .getRapportNuisiblesConfig(S.adminKey);
+}
+
+function submitRapportNuisibles() {
+  var date       = document.getElementById('rn_date').value.trim();
+  var zone       = document.getElementById('rn_zone').value.trim();
+  var emplacement= document.getElementById('rn_emplacement').value.trim();
+  var type       = document.getElementById('rn_type').value.trim();
+  var desc       = document.getElementById('rn_desc').value.trim();
+  var actions    = document.getElementById('rn_actions').value.trim();
+  var statut     = document.getElementById('rn_statut').value.trim();
+  var ouiRad     = document.getElementById('rn_presta_oui');
+  var prestaInfo = ouiRad&&ouiRad.checked ? 'Oui' : 'Non';
+  var prestaNom  = document.getElementById('rn_presta_nom').value.trim();
+  var contactModeEl = document.getElementById('rn_contact_tel');
+  var contactMode= contactModeEl&&contactModeEl.checked ? 'Numéro' : 'Email';
+  var contactVal = document.getElementById('rn_contact_val').value.trim();
+  if (!date||!zone||!type) { toast('Date, zone et type de nuisible sont requis','err'); return; }
+  showLoader('Enregistrement…');
+  var payload = {
+    token:              S.adminKey,
+    date:               date,
+    zone:               zone,
+    emplacement:        emplacement,
+    typeNuisible:       type,
+    description:        desc,
+    actionsImmediates:  actions,
+    statut:             statut,
+    prestaireInforme:   prestaInfo,
+    prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
+    contactMode:        prestaInfo==='Oui' ? contactMode : '',
+    contactVal:         prestaInfo==='Oui' ? contactVal : '',
+    superviseurNom:     S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
+  };
+  if (_rnPhotoB64) { payload.photoNuisible = _rnPhotoB64; payload.mime = _rnPhotoMime || 'image/jpeg'; }
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Rapport enregistré (#'+r.id+')','ok');
+        closeSheet('rapportNuisiblesOv');
+        renderRapportNuisibles();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRapportNuisibles(payload);
+}
+
+function renderRapportNuisibles() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body) return;
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      _rapportNuisiblesRecords = r.data;
+      _renderRapportNuisiblesList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
+    .getRapportNuisibles(S.adminKey);
+}
+
+var RN_STATUT_COLORS = { 'En cours':'#e74c3c', 'Traité':'#e67e22', 'Résolu':'#27ae60' };
+var RN_STATUT_ICONS  = { 'En cours':'🔴', 'Traité':'🟠', 'Résolu':'✅' };
+
+function _renderRapportNuisiblesList() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body) return;
+  var data = _rapportNuisiblesRecords;
+  if (!data||!data.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🚨</div><div>Aucun rapport de présence enregistré.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Rapport présence » pour signaler une présence.</div></div>';
+    return;
+  }
+  body.innerHTML = data.map(function(c,i) {
+    var statColor = RN_STATUT_COLORS[c.statut]||'#888';
+    var statIcon  = RN_STATUT_ICONS[c.statut]||'•';
+    return '<div class="hse-card" onclick="openRapportNuisiblesDetail('+i+')" style="cursor:pointer">'
+      +'<div class="hse-card-header">'
+      +'<div>'
+      +'<div class="hse-card-title">🚨 '+esc(c.typeNuisible||'Nuisibles')+'</div>'
+      +'<div class="hse-card-meta"><span>📅 '+esc(c.date)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div>'
+      +'</div>'
+      +'<span style="background:'+statColor+';color:#fff;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap">'+statIcon+' '+esc(c.statut)+'</span>'
+      +'</div>'
+      +(c.description?'<div style="font-size:.8rem;color:var(--t2);margin-top:6px;line-height:1.4">'+esc(c.description.substring(0,120))+(c.description.length>120?'…':'')+'</div>':'')
+      +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">'
+      +'<button class="btn btn-g" onclick="openRapportNuisiblesDetail('+i+')" style="flex:1;font-size:.78rem;height:32px">👁 Détail</button>'
+      +'<button class="btn btn-g" onclick="printRapportNuisibles('+i+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      +(c.statut!=='Résolu'?'<button class="btn" onclick="openCloture('+i+')" style="flex:1;font-size:.78rem;height:32px;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#27ae60;border-radius:var(--rs)">📁 Clôturer</button>':'')
+      +(isAdmin()?'<button class="btn" onclick="deleteRapportNuisiblesRecord('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:var(--rs)">🗑</button>':'')
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function openRapportNuisiblesDetail(idx) {
+  var c = _rapportNuisiblesRecords[idx];
+  if (!c) return;
+  _rnCurrentIdx = idx;
+  document.getElementById('rapportNuisiblesDetailTitle').textContent = '🚨 Rapport #'+c.id+' — '+c.typeNuisible;
+  var statColor = RN_STATUT_COLORS[c.statut]||'#888';
+  var statIcon  = RN_STATUT_ICONS[c.statut]||'•';
+  var row = function(label, value) {
+    if (!value) return '';
+    return '<div style="margin-bottom:10px"><div style="font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">'+label+'</div>'
+      +'<div style="font-size:.88rem;color:var(--t1);white-space:pre-wrap">'+esc(value)+'</div></div>';
+  };
+  var prestaBlock = '';
+  if (c.prestaireInforme) {
+    var pContact = (c.prestaireInforme==='Oui'&&c.contactMode&&c.contactVal)
+      ? (c.contactMode+' : '+c.contactVal) : '';
+    prestaBlock = '<div style="background:rgba(125,60,152,.12);border-radius:8px;padding:10px;margin:10px 0;border:1px solid rgba(125,60,152,.3)">'
+      +'<div style="font-size:.75rem;font-weight:700;color:#9b59b6;text-transform:uppercase;margin-bottom:6px">🏢 Prestataire</div>'
+      +row('Prestataire informé', c.prestaireInforme)
+      +row('Nom du prestataire', c.prestaireNom)
+      +row('Contact', pContact)
+      +'</div>';
+  }
+  var html = '<div style="padding:4px 0">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+    +'<span style="background:'+statColor+';color:#fff;padding:4px 14px;border-radius:999px;font-size:.78rem;font-weight:700">'+statIcon+' '+esc(c.statut)+'</span>'
+    +'</div>'
+    +row('Date de constatation', c.date)
+    +row('Zone', c.zone)
+    +row('Emplacement précis', c.emplacement)
+    +row('Type de nuisible', c.typeNuisible)
+    +row('Description / Observations', c.description)
+    +row('Actions immédiates', c.actionsImmediates)
+    +(c.photoNuisible?'<div style="margin-bottom:10px"><div style="font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📷 Photo du nuisible</div><img src="'+c.photoNuisible+'" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #444"/></div>':'')
+    +prestaBlock
+    +(c.docCloture?'<div style="margin-bottom:10px;padding:10px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);border-radius:8px"><div style="font-size:.75rem;font-weight:700;color:#27ae60;text-transform:uppercase;margin-bottom:6px">📁 Document de clôture (ENR-13)</div><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60;font-size:.88rem">📎 Voir / Télécharger le document ENR-13</a></div>':'')
+    +row('Superviseur', c.superviseurNom)
+    +row('Date de création', c.dateCreation)
+    +'</div>';
+  document.getElementById('rapportNuisiblesDetailBody').innerHTML = html;
+  openSheet('rapportNuisiblesDetailOv');
+}
+
+function deleteRapportNuisiblesRecord(idx) {
+  var c = _rapportNuisiblesRecords[idx];
+  if (!c) return;
+  if (!confirm('Supprimer le rapport #'+c.id+' ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) { toast('Rapport supprimé','ok'); renderRapportNuisibles(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteRapportNuisibles({ adminKey:S.adminKey, id:c.id });
+}
+
+function printRapportNuisibles(idx) {
+  var c = _rapportNuisiblesRecords[idx];
+  if (!c) return;
+  var statColor = RN_STATUT_COLORS[c.statut]||'#888';
+  var logoUrl   = _hseLogoDataUrl || _hseLogoUrl || '';
+  // Griffe Superviseur/Déclarant : chercher par matricule courant puis par nom
+  var supSigUrl = _userSigMap[S_AUTH&&S_AUTH.matricule]
+                || _userSigMap[c.superviseurNom]
+                || _hseSignatureDataUrl || _hseSignatureUrl || '';
+  var now    = new Date();
+  var edDate = _rnDocEdition || (now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear());
+  var today  = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  var prestaSection = '';
+  if (c.prestaireInforme) {
+    var contactLine = (c.prestaireInforme==='Oui'&&c.contactMode&&c.contactVal)
+      ? '<div class="field"><div class="fl">Mode de contact / Coordonnées</div><div class="fv">'+esc(c.contactMode)+' : '+esc(c.contactVal)+'</div></div>' : '';
+    prestaSection = '<div class="section-title">🏢 Prestataire</div>'
+      +'<div class="row2">'
+      +'<div class="field"><div class="fl">Prestataire informé ?</div>'
+      +'<div class="fv" style="font-weight:700;color:'+(c.prestaireInforme==='Oui'?'#006600':'#cc0000')+'">'+esc(c.prestaireInforme)+'</div></div>'
+      +(c.prestaireNom?'<div class="field"><div class="fl">Nom du prestataire</div><div class="fv">'+esc(c.prestaireNom)+'</div></div>':'<div></div>')
+      +'</div>'
+      +contactLine;
+  }
+
+  // Tableau de signatures
+  var sigTableHTML =
+    '<table class="sig-table"><tr>'
+    +'<td style="width:100%"><div class="sig-title">Superviseur HSE / Déclarant</div>'
+    +'<div class="sig-field-label">Nom et prénom :</div>'
+    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.superviseurNom||'')+'</span></div>'
+    +'<div class="sig-field-label">Signature / Griffe :</div>'
+    +(supSigUrl
+      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+supSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-10px;width:240px;max-height:88px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
+      : '<div class="sig-line-lg"></div>')
+    +'<div class="sig-field-label">Date :</div>'
+    +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
+    +'</td>'
+    +'</tr></table>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport Nuisibles #'+c.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:16mm 14mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#111;background:#fff}'
+    +'.header{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:8px}'
+    +'.logo-box{width:120px;min-width:120px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
+    +'.logo-box img{max-width:108px;max-height:58px;object-fit:contain}'
+    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
+    +'.doc-title{font-size:11.5pt;font-weight:900;text-align:center;color:#7d3c98;line-height:1.3;text-transform:uppercase}'
+    +'.doc-sub{font-size:8pt;color:#555;margin-top:2px;text-align:center}'
+    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
+    +'.doc-meta .mk{font-weight:700;white-space:nowrap} .doc-meta .mv{white-space:nowrap}'
+    +'.badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:9pt;font-weight:700;color:#fff}'
+    +'.section-title{background:#7d3c98;color:#fff;font-weight:700;font-size:9pt;padding:4px 10px;margin:10px 0 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.field{margin-bottom:7px}'
+    +'.fl{font-size:7pt;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:1px}'
+    +'.fv{font-size:9pt;color:#111;white-space:pre-wrap;padding:3px 7px;border:1px solid #ccc;min-height:20px;background:#fafafa}'
+    +'.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
+    +'.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}'
+    // Table de signatures
+    +'.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:14px}'
+    +'.sig-table td{width:50%;border-right:1px solid #bbb;padding:7px 10px;vertical-align:top;font-size:8pt}'
+    +'.sig-table td:last-child{border-right:none}'
+    +'.sig-title{font-weight:bold;font-size:7.5pt;text-transform:uppercase;color:#7d3c98;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:6px}'
+    +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px;margin-top:4px}'
+    +'.sig-line{border-bottom:1px dotted #999;height:16px;margin-bottom:4px;padding-left:2px}'
+    +'.sig-line-lg{border-bottom:1px dotted #999;height:54px;margin-bottom:4px}'
+    +'.footer{text-align:center;font-size:7pt;color:#999;border-top:1px solid #ddd;padding-top:5px;margin-top:8px}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.section-title{background:#7d3c98!important;color:#fff!important}'
+    +'button{display:none}}'
+    +'</style></head><body>'
+    // En-tête
+    +'<div class="header">'
+    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;font-style:italic;text-align:center">LOGO</div>')
+    +'<div class="title-box">'
+    +'<div class="doc-title">Rapport de Présence de Nuisibles</div>'
+    +'<div class="doc-sub">Hygiène · Sécurité · Environnement</div>'
+    +'</div>'
+    +'<div class="doc-meta">'
+    +'<span class="mk">Réf. :</span><span class="mv" style="font-weight:700">'+esc(_rnDocCode)+'</span>'
+    +'<span class="mk">Rév. :</span><span class="mv">'+esc(_rnDocRev)+'</span>'
+    +'<span class="mk">Éd. :</span><span class="mv">'+esc(edDate)+'</span>'
+    +'<span class="mk">N° :</span><span class="mv" style="font-weight:700">#'+c.id+'</span>'
+    +'</div>'
+    +'</div>'
+    // Statut
+    +'<div style="margin-bottom:8px"><span class="badge" style="background:'+statColor+'">'+esc(RN_STATUT_ICONS[c.statut]||'')+'  '+esc(c.statut)+'</span></div>'
+    // Identification
+    +'<div class="section-title">📋 Identification</div>'
+    +'<div class="row3">'
+    +'<div class="field"><span class="fl">Date de constatation</span><div class="fv">'+esc(c.date)+'</div></div>'
+    +'<div class="field"><span class="fl">Zone</span><div class="fv">'+esc(c.zone)+'</div></div>'
+    +'<div class="field"><span class="fl">Emplacement précis</span><div class="fv">'+esc(c.emplacement||'—')+'</div></div>'
+    +'</div>'
+    +'<div class="field"><span class="fl">Type de nuisible</span><div class="fv">'+esc(c.typeNuisible)+'</div></div>'
+    // Observations
+    +'<div class="section-title">🔍 Observations</div>'
+    +'<div class="field"><span class="fl">Description / Observations</span><div class="fv" style="min-height:36px">'+esc(c.description||'—')+'</div></div>'
+    // Actions
+    +'<div class="section-title">⚡ Actions</div>'
+    +'<div class="field"><span class="fl">Actions immédiates prises</span><div class="fv" style="min-height:28px">'+esc(c.actionsImmediates||'—')+'</div></div>'
+    // Photo nuisible
+    +(c.photoNuisible?'<div class="section-title">📷 Photo du nuisible</div><div style="margin-bottom:10px"><img src="'+c.photoNuisible+'" alt="Photo nuisible" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc;border-radius:6px"/></div>':'')
+    // Doc clôture
+    +(c.docCloture?'<div class="section-title">📁 Document de clôture (ENR-13)</div><div style="margin-bottom:10px;padding:8px;border:1px solid #27ae60;border-radius:6px;font-size:9pt"><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60">📎 Voir le document ENR-13</a></div>':'')
+    // Prestataire
+    +prestaSection
+    // Tableau de signatures en bas
+    + sigTableHTML
+    +'<div class="footer">'+esc(_rnDocCode)+' — Rév. '+esc(_rnDocRev)+' — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+var _nuisiblesCurrentTab = 'inspections';
+
+function switchNuisiblesTab(tab) {
+  _nuisiblesCurrentTab = tab;
+  ['inspections','rapports'].forEach(function(t) {
+    var btn = document.getElementById('nuisTab_'+t);
+    if (btn) btn.className = 'gsort-tab'+(t===tab?' on':'');
+  });
+  var filters = document.getElementById('nuisInspFilters');
+  var inspBtns = document.querySelector('#view-nuisibles .insp-type-row');
+  if (filters) filters.style.display = tab==='inspections' ? '' : 'none';
+  // Boutons type inspection
+  var typeBtnsRow = document.getElementById('nuisInspTypeRow');
+  if (typeBtnsRow) typeBtnsRow.style.display = tab==='inspections' ? '' : 'none';
+  if (tab === 'inspections') renderNuisibles();
+  else renderRapportNuisibles();
 }
 
 function renderNuisibles() {
