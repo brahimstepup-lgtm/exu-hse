@@ -2211,7 +2211,7 @@ function openUsersPanel() {
       .withSuccessHandler(function(r) {
         if (r && r.success) {
           _hseSignatureUrl      = r.signatureUrl           || '';
-          _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
+          _hseSuperSignatureUrl = r.supervisorSignatureUrl || ''; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
         }
       })
       .getExtConfig(S.adminKey);
@@ -4584,7 +4584,7 @@ function onSuperSignatureUpload(input) {
       .withSuccessHandler(function(r) {
         hideSplash();
         if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-        _hseSuperSignatureUrl = r.supervisorSignatureUrl || '';
+        _hseSuperSignatureUrl = r.supervisorSignatureUrl || ''; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
         toast('✓ Signature superviseur mise à jour','ok');
         if (_usersData.length) renderUsersList(_usersData);
       })
@@ -4622,7 +4622,7 @@ function openGlobalInspection() {
       _extProchaineMonths    = parseInt(r.extProchaineMonths)  || _extProchaineMonths;
       _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
       _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
-      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
       if (!_extConfig.length) { toast('Configurez d\'abord les extincteurs (⚙ Config)','err'); return; }
       _initGlobalForm();
     })
@@ -5075,7 +5075,7 @@ function openGlobalInspectionRIA() {
       _extProchaineMonths    = parseInt(r.extProchaineMonths) || _extProchaineMonths;
       _hseLogoUrl            = r.logoUrl               || _hseLogoUrl;
       _hseSignatureUrl       = r.signatureUrl          || _hseSignatureUrl;
-      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl;
+      _hseSuperSignatureUrl  = r.supervisorSignatureUrl|| _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
       _initGlobalFormRIA();
       openSheet('globalRiaOv');
     })
@@ -5986,7 +5986,7 @@ function openConfigPest() {
       _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || 3;
       _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
       _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
-      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
       _configuredZones  = r.zones || [];
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
@@ -6194,7 +6194,7 @@ function openGlobalPestInspection(pestType) {
       _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || _pestProchaineMonths;
       _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
       _hseSignatureUrl        = r.signatureUrl         || _hseSignatureUrl;
-      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl;
+      _hseSuperSignatureUrl   = r.supervisorSignatureUrl || _hseSuperSignatureUrl; if (r.sigMap) Object.assign(_userSigMap, r.sigMap);
       var _cl = r.checklists || {};
       var hasConfig = PEST_TYPES.some(function(t){ return _cl[t] && _cl[t].length; });
       _pestChecklistConfig = hasConfig ? _cl : {};

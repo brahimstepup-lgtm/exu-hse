@@ -1662,7 +1662,7 @@ function getExtConfig(token) {
     var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
+    return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1717,7 +1717,7 @@ function getConfigData(adminKey) {
     var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
-    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths };
+    return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -1786,7 +1786,7 @@ function getPestConfigData(adminKey) {
     var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
     var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
     var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
-    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths };
+    return { success:true, pestConfig:pestConfig, zones:zones, checklists:checklists, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, pestDocRev:pestDocRev, pestDocEdition:pestDocEdition, pestProchaineMonths:pestProchaineMonths, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
@@ -2064,18 +2064,23 @@ function deleteUserSignatureConfig(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// Helper interne : construit { mat: url } depuis les propriétés du script
+function _buildSigMap_() {
+  var props = PropertiesService.getScriptProperties();
+  var all   = props.getProperties();
+  var map   = {};
+  Object.keys(all).forEach(function(k) {
+    var m = k.match(/^HSE_SIG_URL_(.+)$/);
+    if (m && all[k]) map[m[1]] = all[k];
+  });
+  return map;
+}
+
 // Retourne { mat: url } pour tous les utilisateurs ayant une griffe
 function getAllUserSignatures(adminKey) {
   if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
   try {
-    var props = PropertiesService.getScriptProperties();
-    var all   = props.getProperties();
-    var map   = {};
-    Object.keys(all).forEach(function(k) {
-      var m = k.match(/^HSE_SIG_URL_(.+)$/);
-      if (m && all[k]) map[m[1]] = all[k];
-    });
-    return { success:true, sigMap:map };
+    return { success:true, sigMap:_buildSigMap_() };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
