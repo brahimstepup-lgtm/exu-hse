@@ -978,6 +978,7 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
         <button class="btn btn-b" onclick="openPrestatairesPanel()" style="background:rgba(125,60,152,.25);border:1px solid rgba(125,60,152,.5);color:#c39bd3">🏢 Prestataires & griffes</button>
+        <button class="btn btn-b" onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.5);color:#f1c40f">📄 Registre ENR</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -2539,6 +2540,70 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ OVERLAY: Registre ENR ═══ -->
+<div class="ov" id="enrRegistryOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📄 Registre des ENR</div>
+      <button class="sh-x" onclick="closeSheet('enrRegistryOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+
+      <!-- Formulaire ajout / édition -->
+      <div id="enrFormWrap" style="background:var(--ink2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid rgba(241,196,15,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#f1c40f;margin-bottom:10px" id="enrFormTitle">➕ Ajouter un ENR</div>
+        <input type="hidden" id="enrFormId"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Code ENR <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="enrFormCode" placeholder="ex. ENR-HSE 1" style="height:34px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Module / Domaine</label>
+            <select class="fi" id="enrFormModule" style="height:34px;font-size:.85rem">
+              <option value="">-- Sélectionner --</option>
+              <option value="Tags HSE">Tags HSE</option>
+              <option value="Incendie">Incendie (Extincteurs / RIA)</option>
+              <option value="Nuisibles">Contrôle Nuisibles</option>
+              <option value="Sensibilisation">Sensibilisation</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label class="fl" style="font-size:.75rem;margin-bottom:3px">Titre / Intitulé <span style="color:#e74c3c">*</span></label>
+          <input class="fi" id="enrFormTitre" placeholder="ex. Fiche d'inspection des extincteurs" style="height:34px;font-size:.85rem"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="enrFormRev" placeholder="ex. 01" style="height:34px;font-size:.85rem"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.75rem;margin-bottom:3px">Édition</label>
+            <input class="fi" id="enrFormEdition" placeholder="ex. 2025" style="height:34px;font-size:.85rem"/>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="fl" style="font-size:.75rem;margin-bottom:3px">Description (optionnel)</label>
+          <textarea class="fi" id="enrFormDesc" rows="2" placeholder="Brève description du document…" style="font-size:.82rem;resize:none"></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="submitEnrEntry()" style="flex:1;height:36px;font-size:.85rem;background:#f1c40f;color:#1a1a2e;font-weight:700;border:none">💾 Enregistrer</button>
+          <button class="btn" onclick="resetEnrForm()" style="height:36px;font-size:.82rem;background:var(--ink3);color:var(--t2);border:1px solid var(--line)">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Liste des ENR existants -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">ENR configurés</div>
+      <div id="enrRegistryList">
+        <div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Chargement…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ OVERLAY: Gestion des Prestataires & Griffes ═══ -->
 <div class="ov" id="prestatairesOv">
   <div class="sheet" style="max-height:92vh">
@@ -3398,7 +3463,38 @@ function renderAdmin(){
     '<div class="hm-wrap"><div class="cc-ttl">🌡️ Heatmap — Zone × Gravité</div>'+hmH+
     '<div style="font-size:.62rem;color:var(--t3);margin-top:5px;">Plus la couleur est intense, plus la densité de risques est élevée</div></div>'+
     (slow?'<div class="cc" style="margin-bottom:9px"><div class="cc-ttl">🐢 Top 5 — Délai de Traitement</div>'+slow+'</div>':'')+
-    (openT?'<div class="cc"><div class="cc-ttl">🔴 Top 5 — Tags Ouverts Depuis Longtemps</div>'+openT+'</div>':'');
+    (openT?'<div class="cc" style="margin-bottom:12px"><div class="cc-ttl">🔴 Top 5 — Tags Ouverts Depuis Longtemps</div>'+openT+'</div>':'')+
+    '<div class="cc" id="adminEnrWidget"><div class="cc-ttl" style="display:flex;align-items:center;justify-content:space-between">'+
+    '<span>📄 Registre ENR</span>'+
+    '<button onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.45);color:#f1c40f;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:.76rem;font-weight:700">+ Gérer</button>'+
+    '</div><div id="adminEnrWidgetBody" style="margin-top:8px"><div style="color:var(--t3);font-size:.8rem;font-style:italic">Chargement…</div></div></div>';
+  _loadEnrForDashboard();
+}
+
+function _loadEnrForDashboard() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      var body = document.getElementById('adminEnrWidgetBody');
+      if (!body) return;
+      if (!r||!r.success||!r.data||!r.data.length) {
+        body.innerHTML = '<div style="color:var(--t3);font-size:.8rem;font-style:italic">Aucun ENR configuré — <span onclick="openEnrRegistryPanel()" style="color:#f1c40f;cursor:pointer;text-decoration:underline">Ajouter maintenant</span></div>';
+        return;
+      }
+      _enrData = r.data;
+      var moduleColors = { 'Tags HSE':'#e74c3c','Incendie':'#e67e22','Nuisibles':'#9b59b6','Sensibilisation':'#3498db','Autre':'#7f8c8d' };
+      body.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">'+
+        r.data.map(function(e){
+          var col = moduleColors[e.module]||'#7f8c8d';
+          return '<div style="background:var(--ink3);border-radius:8px;padding:10px;border:1px solid var(--line);border-left:3px solid '+col+'">'
+            +'<div style="font-weight:800;font-size:.82rem;color:#f1c40f;letter-spacing:.5px">'+esc(e.code)+'</div>'
+            +'<div style="font-size:.8rem;color:var(--t1);margin:3px 0;font-weight:600">'+esc(e.titre)+'</div>'
+            +(e.module?'<div style="font-size:.7rem;color:'+col+';font-weight:600">'+esc(e.module)+'</div>':'')
+            +(e.rev||e.edition?'<div style="font-size:.68rem;color:var(--t3);margin-top:3px">'+(e.rev?'Rév. '+esc(e.rev)+' ':''+(e.edition?'Éd. '+esc(e.edition):''))+'</div>':'')
+            +'</div>';
+        }).join('')+'</div>';
+    })
+    .withFailureHandler(function(){})
+    .getEnrRegistry(S.adminKey);
 }
 
 /* ══════════════════════════════════════════
@@ -7974,6 +8070,120 @@ function submitCloture() {
 var _prestatairesData   = [];   // [{id, nom, sigUrl}]
 var _prestaFormSigB64   = '';
 var _prestaFormSigMime  = '';
+
+/* ══════════════════════════════════════════
+   ADMIN — REGISTRE ENR
+══════════════════════════════════════════ */
+
+var _enrData = [];
+
+function openEnrRegistryPanel() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  resetEnrForm();
+  openSheet('enrRegistryOv');
+  _loadEnrRegistry();
+}
+
+function _loadEnrRegistry() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _enrData = r.data || []; _renderEnrRegistry(); }
+      else toast((r&&r.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .getEnrRegistry(S.adminKey);
+}
+
+function _renderEnrRegistry() {
+  var body = document.getElementById('enrRegistryList');
+  if (!body) return;
+  if (!_enrData.length) {
+    body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Aucun ENR configuré — utilisez le formulaire ci-dessus pour en ajouter.</div>';
+    return;
+  }
+  var moduleColors = {
+    'Tags HSE':'#e74c3c', 'Incendie':'#e67e22', 'Nuisibles':'#9b59b6',
+    'Sensibilisation':'#3498db', 'Autre':'#7f8c8d'
+  };
+  body.innerHTML = _enrData.map(function(e, i) {
+    var col = moduleColors[e.module] || '#7f8c8d';
+    return '<div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--line);display:flex;align-items:flex-start;gap:12px">'
+      +'<div style="background:rgba(241,196,15,.15);border:1px solid rgba(241,196,15,.4);border-radius:8px;padding:6px 10px;font-weight:800;font-size:.9rem;color:#f1c40f;white-space:nowrap;flex-shrink:0">'+esc(e.code)+'</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1);margin-bottom:3px">'+esc(e.titre)+'</div>'
+      +(e.module?'<span style="display:inline-block;background:'+col+'22;border:1px solid '+col+'66;color:'+col+';border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:600;margin-bottom:4px">'+esc(e.module)+'</span>':'')
+      +(e.description?'<div style="font-size:.78rem;color:var(--t3);margin-top:2px">'+esc(e.description)+'</div>':'')
+      +'<div style="font-size:.73rem;color:var(--t3);margin-top:4px">'
+      +(e.rev?'Rév. '+esc(e.rev)+' ':'')+(e.edition?'| Éd. '+esc(e.edition):'')
+      +(e.dateCreation?' | Ajouté le '+esc(e.dateCreation):'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0">'
+      +'<button onclick="editEnrEntry('+i+')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">✏</button>'
+      +'<button onclick="deleteEnrEntry('+i+')" style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">🗑</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function submitEnrEntry() {
+  var code   = (document.getElementById('enrFormCode')||{}).value.trim();
+  var titre  = (document.getElementById('enrFormTitre')||{}).value.trim();
+  if (!code || !titre) { toast('Code et titre sont obligatoires','err'); return; }
+  var id     = (document.getElementById('enrFormId')||{}).value.trim();
+  var module = (document.getElementById('enrFormModule')||{}).value;
+  var rev    = (document.getElementById('enrFormRev')||{}).value.trim();
+  var edition= (document.getElementById('enrFormEdition')||{}).value.trim();
+  var desc   = (document.getElementById('enrFormDesc')||{}).value.trim();
+  var now    = new Date().toLocaleDateString('fr-FR');
+
+  if (id) {
+    var idx = _enrData.findIndex(function(e){ return e.id===id; });
+    if (idx >= 0) { _enrData[idx] = { id:id, code:code, titre:titre, module:module, rev:rev, edition:edition, description:desc, dateCreation:_enrData[idx].dateCreation||now }; }
+  } else {
+    _enrData.push({ id: 'ENR_'+Date.now(), code:code, titre:titre, module:module, rev:rev, edition:edition, description:desc, dateCreation:now });
+  }
+  _saveEnrRegistry(function(){ resetEnrForm(); _renderEnrRegistry(); });
+}
+
+function editEnrEntry(i) {
+  var e = _enrData[i]; if (!e) return;
+  document.getElementById('enrFormId').value      = e.id||'';
+  document.getElementById('enrFormCode').value    = e.code||'';
+  document.getElementById('enrFormTitre').value   = e.titre||'';
+  document.getElementById('enrFormModule').value  = e.module||'';
+  document.getElementById('enrFormRev').value     = e.rev||'';
+  document.getElementById('enrFormEdition').value = e.edition||'';
+  document.getElementById('enrFormDesc').value    = e.description||'';
+  document.getElementById('enrFormTitle').textContent = '✏ Modifier l\'ENR';
+  document.getElementById('enrFormWrap').scrollIntoView({ behavior:'smooth' });
+}
+
+function deleteEnrEntry(i) {
+  var e = _enrData[i]; if (!e) return;
+  if (!confirm('Supprimer l\'ENR «'+e.code+' — '+e.titre+'» ?')) return;
+  _enrData.splice(i, 1);
+  _saveEnrRegistry(function(){ _renderEnrRegistry(); });
+}
+
+function _saveEnrRegistry(cb) {
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) { toast('✓ Registre ENR sauvegardé','ok'); if (cb) cb(); }
+      else toast((r&&r.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveEnrRegistry({ adminKey:S.adminKey, data:_enrData });
+}
+
+function resetEnrForm() {
+  ['enrFormId','enrFormCode','enrFormTitre','enrFormRev','enrFormEdition','enrFormDesc'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value='';
+  });
+  var mod = document.getElementById('enrFormModule'); if (mod) mod.value='';
+  var t = document.getElementById('enrFormTitle'); if (t) t.textContent='➕ Ajouter un ENR';
+}
 
 function openPrestatairesPanel() {
   if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }

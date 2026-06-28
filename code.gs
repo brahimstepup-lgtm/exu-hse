@@ -2395,6 +2395,25 @@ function deletePrestataire(p) {
 function savePrestataireSigRapport(p) { return savePrestataire(p); }
 function deletePrestataireSigRapport(p) { return deletePrestataire(p); }
 
+// ── Registre ENR : lire ────────────────────────────────────────
+function getEnrRegistry(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('ENR_REGISTRY') || '[]';
+    return { success:true, data: JSON.parse(raw) };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Registre ENR : sauvegarder (liste complète) ────────────────
+function saveEnrRegistry(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès réservé à l\'administrateur' };
+  try {
+    var list = p.data || [];
+    PropertiesService.getScriptProperties().setProperty('ENR_REGISTRY', JSON.stringify(list));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 function saveRapportNuisiblesConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
