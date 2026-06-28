@@ -2414,6 +2414,38 @@ function saveEnrRegistry(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Registre ENR : upload photo ou document vers Drive ─────────
+function saveEnrFile(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var clean = String(p.base64).replace(/^data:[^;]+;base64,/, '');
+    var bytes = Utilities.base64Decode(clean);
+    var mime  = p.mime || 'application/octet-stream';
+    var ext   = mime.split('/')[1] || 'bin';
+    var fname = 'ENR_' + (p.enrCode || 'doc').replace(/[^a-zA-Z0-9_-]/g,'_')
+              + '_' + (p.fileType || 'file') + '_' + new Date().getTime() + '.' + ext;
+    var blob = Utilities.newBlob(bytes, mime, fname);
+    var file = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId  = file.getId();
+    var isImage = mime.startsWith('image/');
+    var url = isImage
+      ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w600'
+      : 'https://drive.google.com/file/d/' + fileId + '/view';
+    if (p.oldFileId) { try { DriveApp.getFileById(p.oldFileId).setTrashed(true); } catch(ex){} }
+    return { success:true, fileId:fileId, url:url, isImage:isImage, fname:fname };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Registre ENR : supprimer un fichier Drive ──────────────────
+function deleteEnrFile(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    if (p.fileId) { try { DriveApp.getFileById(p.fileId).setTrashed(true); } catch(ex){} }
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 function saveRapportNuisiblesConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
