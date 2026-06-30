@@ -196,6 +196,27 @@ function getSuperviseursList(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// Annuaire matricule -> nom/dept pour autocomplétion (accessible à tout utilisateur connecté)
+function getEmployeesDirectory(p) {
+  var token = (typeof p === 'string') ? p : (p && p.token);
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey) && !verifySession_(token))
+    return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEdbSheet_();
+    var lr = sh.getLastRow();
+    if (lr < EDB_START) return { success:true, data:[] };
+    var rows = sh.getRange(EDB_START, 1, lr-EDB_START+1, 6).getValues();
+    var data = rows.filter(function(r){ return String(r[EDB.MAT]).trim(); }).map(function(r){
+      return {
+        matricule: String(r[EDB.MAT]).trim(),
+        name:      String(r[EDB.NAME]).trim(),
+        dept:      String(r[EDB.DEPT]).trim()
+      };
+    });
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // Admin: set password for an employee
 function adminSetPassword(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };

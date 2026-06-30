@@ -2135,7 +2135,7 @@ img{max-width:100%;display:block;}
           </div>
           <div>
             <label class="fl">Matricule</label>
-            <input class="fi" id="ra_victime_mat" placeholder="Ex : EMP-001" style="height:38px"/>
+            <input class="fi" id="ra_victime_mat" list="accEmpDatalist" oninput="_accLookupEmployee('ra')" placeholder="Rechercher un matricule…" style="height:38px"/>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -2244,6 +2244,8 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<datalist id="accEmpDatalist"></datalist>
+
 <!-- ═══ OVERLAY: ENRHSE62 — Fiche Déclaration Accident du Travail ═══ -->
 <div class="ov" id="ficheDeclarationOv">
   <div class="sheet" style="max-height:92vh">
@@ -2291,7 +2293,7 @@ img{max-width:100%;display:block;}
           </div>
           <div>
             <label class="fl">Matricule</label>
-            <input class="fi" id="fd_matricule" placeholder="Ex : EMP-001" style="height:38px"/>
+            <input class="fi" id="fd_matricule" list="accEmpDatalist" oninput="_accLookupEmployee('fd')" placeholder="Rechercher un matricule…" style="height:38px"/>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -10312,6 +10314,43 @@ var _ficheDeclarations= [];
 var _accidentTab      = 'rapport';
 var _raPhotoB64       = '';
 var _raPhotoMime      = '';
+var _employeesDirectory = [];
+
+/* ── Annuaire employés (matricules) — Employees_DB ── */
+function _loadEmployeesDirectory() {
+  if (_employeesDirectory.length) { _fillEmployeeDatalist(); return; }
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.success) { _employeesDirectory = r.data || []; _fillEmployeeDatalist(); }
+    })
+    .withFailureHandler(function(){})
+    .getEmployeesDirectory(S.adminKey);
+}
+
+function _fillEmployeeDatalist() {
+  var dl = document.getElementById('accEmpDatalist');
+  if (!dl) return;
+  dl.innerHTML = _employeesDirectory.map(function(e) {
+    return '<option value="'+esc(e.matricule)+'">'+esc(e.matricule)+' — '+esc(e.name)+'</option>';
+  }).join('');
+}
+
+function _accLookupEmployee(prefix) {
+  var mat = (document.getElementById(prefix+'_victime_mat') || document.getElementById(prefix+'_matricule') || {}).value;
+  mat = (mat||'').trim();
+  var emp = _employeesDirectory.find(function(e){ return e.matricule === mat; });
+  if (!emp) return;
+  if (prefix === 'ra') {
+    var nomEl = document.getElementById('ra_victime_nom');
+    var posteEl = document.getElementById('ra_victime_poste');
+    if (nomEl && !nomEl.value.trim()) nomEl.value = emp.name;
+  } else {
+    var nomEl2 = document.getElementById('fd_nom');
+    var deptEl = document.getElementById('fd_dept');
+    if (nomEl2 && !nomEl2.value.trim()) nomEl2.value = emp.name;
+    if (deptEl && !deptEl.value.trim()) deptEl.value = emp.dept;
+  }
+}
 
 /* ── Onglets ── */
 function switchAccidentTab(tab) {
@@ -10378,7 +10417,8 @@ function _renderRapportAccidentList(body) {
     body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucun rapport enregistré — cliquez sur «📋 ENRHSE008 — Rapport» pour créer le premier.</div>';
     return;
   }
-  body.innerHTML = banner + data.slice().reverse().map(function(r) {
+  body.innerHTML = banner + data.slice().reverse().map(function(r, ri) {
+    var idx   = data.length-1-ri;
     var col   = _RA_STATUT_COLOR[r.statut] || '#e74c3c';
     var ico   = _RA_STATUT_ICON[r.statut]  || '🔴';
     return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
@@ -10397,6 +10437,7 @@ function _renderRapportAccidentList(body) {
           +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
           +(r.circonstances?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.circonstances).substring(0,120)+(r.circonstances.length>120?'…':'')+'</div>':'')
         +'</div>'
+        +'<button onclick="printRapportAccident('+idx+')" title="Imprimer / Aperçu ENRHSE008" style="flex-shrink:0;background:rgba(231,76,60,.14);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.78rem;font-weight:700">🖨️</button>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -10423,7 +10464,8 @@ function _renderFicheDeclarationList(body) {
     body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucune déclaration enregistrée — cliquez sur «📝 ENRHSE62 — Déclaration» pour créer la première.</div>';
     return;
   }
-  body.innerHTML = banner + data.slice().reverse().map(function(r) {
+  body.innerHTML = banner + data.slice().reverse().map(function(r, ri) {
+    var idx = data.length-1-ri;
     var col = _FD_STATUT_COLOR[r.statut] || '#e67e22';
     var ico = _FD_STATUT_ICON[r.statut]  || '📝';
     return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
@@ -10442,6 +10484,7 @@ function _renderFicheDeclarationList(body) {
           +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
           +(r.description?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.description).substring(0,120)+(r.description.length>120?'…':'')+'</div>':'')
         +'</div>'
+        +'<button onclick="printFicheDeclaration('+idx+')" title="Imprimer / Aperçu ENRHSE62" style="flex-shrink:0;background:rgba(230,126,34,.14);border:1px solid rgba(230,126,34,.4);color:#e67e22;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.78rem;font-weight:700">🖨️</button>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -10460,6 +10503,7 @@ function openRapportAccident() {
   var pv=document.getElementById('ra_photo_preview'); if(pv) pv.style.display='none';
   var pn=document.getElementById('ra_photo_name'); if(pn) pn.textContent='Aucune photo sélectionnée';
   _fillAccidentZones('ra_zone');
+  _loadEmployeesDirectory();
   openSheet('rapportAccidentOv');
 }
 
@@ -10470,6 +10514,7 @@ function openFicheDeclaration() {
     .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
   document.getElementById('fd_date').value = todayStr();
   _fillAccidentZones('fd_zone');
+  _loadEmployeesDirectory();
   openSheet('ficheDeclarationOv');
 }
 
@@ -10643,6 +10688,152 @@ function _loadAccidentConfig() {
     })
     .withFailureHandler(function(){})
     .getSetting({ adminKey: S.adminKey, key: 'accidentConfig' });
+}
+
+/* ── Impression ENRHSE008 — Rapport d'enquête sur un accident ── */
+function printRapportAccident(idx) {
+  var r = _rapportAccidents[idx];
+  if (!r) return;
+  var c = _accidentConfig;
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date();
+  var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var edDate = c.enr008Edition || today;
+  var oui = function(cond){ return cond ? '<b>☑ Oui / نعم</b>' : '☐ Oui / نعم'; };
+  var non = function(cond){ return cond ? '<b>☑ Non / لا</b>' : '☐ Non / لا'; };
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport Accident #'+r.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:14mm 12mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'td,th{border:1px solid #333;padding:5px 7px;vertical-align:top}'
+    +'.header td{border:1.5px solid #222}'
+    +'.logo-box{width:110px;text-align:center;vertical-align:middle}'
+    +'.logo-box img{max-width:100px;max-height:55px;object-fit:contain}'
+    +'.title-box{text-align:center;font-weight:900;font-size:11pt;color:#7d3c98}'
+    +'.title-sub{font-size:8.5pt;color:#444;direction:rtl}'
+    +'.meta-box{font-size:8pt;width:130px}'
+    +'.meta-box div{display:flex;justify-content:space-between;border-bottom:1px dotted #999;padding:1px 0}'
+    +'.sec-title{background:#7d3c98;color:#fff;font-weight:700;font-size:9.5pt;padding:4px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.lbl{font-size:8pt;font-weight:700;color:#333;background:#f3f0f7}'
+    +'.val{font-size:9pt;min-height:18px}'
+    +'.bil{direction:rtl;font-size:8pt;color:#555;display:block}'
+    +'.type-row td{text-align:center;font-weight:700;padding:6px}'
+    +'.footer{text-align:center;font-size:7pt;color:#999;border-top:1px solid #ddd;padding-top:5px;margin-top:8px}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<table class="header"><tr>'
+    +'<td class="logo-box" rowspan="3">'+(logoUrl?'<img src="'+logoUrl+'"/>':'<span style="font-size:7pt;color:#aaa">LOGO</span>')+'</td>'
+    +'<td colspan="2" rowspan="3"><div class="title-box">Rapport d\'enquête sur un accident</div><div class="title-sub">تقرير تحقيق حول حادث</div></td>'
+    +'<td class="meta-box"><div><b>Réf:</b><span>'+esc(c.enr008Code||'ENRHSE008')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Rév:</b><span>'+esc(c.enr008Rev||'V.1')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Éd:</b><span>'+esc(edDate)+'</span></div></td></tr>'
+    +'</table>'
+    +'<table class="type-row"><tr><td>'+(r.nature&&r.nature.indexOf('Trajet')!==-1?'☐':'☑')+' Travail / عمل</td><td>'+(r.nature&&r.nature.indexOf('Trajet')!==-1?'☑':'☐')+' Trajet / مسار</td></tr></table>'
+    +'<table><tr><td class="sec-title" colspan="2">Rapport de la victime — تقرير الضحية</td></tr></table>'
+    +'<table><tr><td class="sec-title" colspan="2">INFORMATIONS GÉNÉRALES / المعلومات العامة</td></tr>'
+    +'<tr><td class="lbl" style="width:50%">Nom et prénom<span class="bil">اللقب و الاسم</span><div class="val">'+esc(r.victimeNom||'—')+' <span style="color:#888;font-size:8pt">(Mat. '+esc(r.victimeMat||'—')+')</span></div></td>'
+    +'<td class="lbl">Date de naissance<span class="bil">تاريخ الميلاد</span><div class="val">—</div></td></tr>'
+    +'<tr><td class="lbl">Département / service<span class="bil">القسم / المصلحة</span><div class="val">'+esc(r.zone||'—')+'</div></td>'
+    +'<td class="lbl">Fonction<span class="bil">الوظيفة</span><div class="val">'+esc(r.poste||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Date de l\'accident<span class="bil">تاريخ الحادث</span><div class="val">'+esc(r.date||'—')+'</div></td>'
+    +'<td class="lbl">Heure de l\'accident<span class="bil">وقت الحادث</span><div class="val">'+esc(r.heure||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Lieu de l\'accident — مكان وقوع الحادث</td></tr>'
+    +'<tr><td class="lbl">Lieu précis / المكان<div class="val">'+esc(r.lieu||'—')+'</div></td>'
+    +'<td class="lbl">Zone / المنطقة<div class="val">'+esc(r.zone||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Détails / تفاصيل<div class="val" style="min-height:30px">'+esc(r.circonstances||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Nature de la lésion<span class="bil">طبيعة الإصابة</span><div class="val">'+esc(r.lesion||'—')+'</div></td>'
+    +'<td class="lbl">Siège de la lésion<span class="bil">موقع الإصابة</span><div class="val">'+esc(r.siege||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Ancienneté de la victime / الأقدمية<div class="val">'+esc(r.anciennete||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Décrire brièvement l\'accident — وصف الحادث بإيجاز</td></tr>'
+    +'<tr><td class="val" colspan="2" style="min-height:40px">'+esc(r.circonstances||'—')+'</td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Témoins — الشهود</td></tr>'
+    +'<tr><td class="lbl" colspan="2">Nom et prénom<span class="bil">اللقب و الاسم</span><div class="val">'+esc(r.temoins||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Actions et causes</td></tr>'
+    +'<tr><td class="lbl">Actions immédiates<div class="val">'+esc(r.actions||'—')+'</div></td>'
+    +'<td class="lbl">Causes identifiées<div class="val">'+esc(r.causes||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Mesures correctives préconisées<div class="val">'+esc(r.correctives||'—')+'</div></td></tr>'
+    +'</table>'
+    +(r.photoUrl?'<div class="sec-title" style="margin-top:8px">📷 Photo</div><div style="margin:6px 0"><img src="'+r.photoUrl+'" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc"/></div>':'')
+    +'<table style="margin-top:10px"><tr><td style="text-align:center;font-weight:700">Statut: '+esc(r.statut||'—')+'</td>'
+    +'<td style="text-align:center">Déclarant: '+esc(r.declarant||'—')+'</td>'
+    +'<td style="text-align:center">Signature / التوقيع :</td></tr></table>'
+    +'<div class="footer">'+esc(c.enr008Code||'ENRHSE008')+' — Rév. '+esc(c.enr008Rev||'V.1')+' — Document qualité interne — Généré le '+today+' — HSE Tags</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+/* ── Impression ENRHSE62 — Fiche Déclaration Accident du Travail (bilingue) ── */
+function printFicheDeclaration(idx) {
+  var r = _ficheDeclarations[idx];
+  if (!r) return;
+  var c = _accidentConfig;
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date();
+  var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var edDate = c.enr62Edition || today;
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fiche Déclaration #'+r.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:14mm 12mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:8px}'
+    +'td,th{border:1px solid #333;padding:5px 7px;vertical-align:top}'
+    +'.header td{border:1.5px solid #222}'
+    +'.logo-box{width:110px;text-align:center;vertical-align:middle}'
+    +'.logo-box img{max-width:100px;max-height:55px;object-fit:contain}'
+    +'.title-box{text-align:center;font-weight:900;font-size:11pt;color:#e67e22}'
+    +'.title-sub{font-size:9pt;color:#444;direction:rtl;text-align:center}'
+    +'.meta-box{font-size:8pt;width:130px}'
+    +'.meta-box div{display:flex;justify-content:space-between;border-bottom:1px dotted #999;padding:1px 0}'
+    +'.sec-title{background:#e67e22;color:#fff;font-weight:700;font-size:9.5pt;padding:4px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.lbl{font-size:8pt;font-weight:700;color:#333;background:#fdf0e3}'
+    +'.val{font-size:9pt;min-height:18px}'
+    +'.bil{direction:rtl;font-size:8pt;color:#555;display:block}'
+    +'.footer{text-align:center;font-size:7pt;color:#999;border-top:1px solid #ddd;padding-top:5px;margin-top:8px}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<table class="header"><tr>'
+    +'<td class="logo-box" rowspan="3">'+(logoUrl?'<img src="'+logoUrl+'"/>':'<span style="font-size:7pt;color:#aaa">LOGO</span>')+'</td>'
+    +'<td colspan="2" rowspan="3"><div class="title-box">Fiche de Déclaration d\'Accident du Travail</div><div class="title-sub">استمارة تصريح بحادث عمل</div></td>'
+    +'<td class="meta-box"><div><b>Réf:</b><span>'+esc(c.enr62Code||'ENRHSE62')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Rév:</b><span>'+esc(c.enr62Rev||'V.1')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Éd:</b><span>'+esc(edDate)+'</span></div></td></tr>'
+    +'</table>'
+    +'<table><tr><td class="sec-title" colspan="4">I. INFORMATIONS GÉNÉRALES / المعلومات العامة</td></tr>'
+    +'<tr><td class="lbl">Nom / الاسم<div class="val">'+esc(r.nom||'—')+'</div></td>'
+    +'<td class="lbl">Fonction / الوظيفة<div class="val">'+esc(r.poste||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Matricule / الرقم الوظيفي<div class="val">'+esc(r.matricule||'—')+'</div></td>'
+    +'<td class="lbl">Service / Département<div class="val">'+esc(r.dept||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Date et heure de l\'accident<span class="bil">تاريخ ووقت الحادث</span><div class="val">'+esc(r.date||'—')+' '+esc(r.heure||'')+'</div></td>'
+    +'<td class="lbl">Lieu précis de l\'accident<span class="bil">مكان وقوع الحادث</span><div class="val">'+esc(r.lieu||'—')+' ('+esc(r.zone||'—')+')</div></td></tr>'
+    +'</table>'
+    +'<table><tr><td class="sec-title" colspan="2">II. DESCRIPTION DE L\'ACCIDENT / وصف الحادث</td></tr>'
+    +'<tr><td colspan="2" class="val" style="min-height:50px">'+esc(r.description||'—')+'</td></tr>'
+    +'</table>'
+    +'<table><tr><td class="sec-title" colspan="2">IV. CONSÉQUENCES / نتائج الحادث</td></tr>'
+    +'<tr><td class="lbl" style="width:50%">Partie du corps atteinte<span class="bil">أماكن الإصابة</span><div class="val">'+esc(r.partieCorps||'—')+'</div></td>'
+    +'<td class="lbl">Type de blessure<span class="bil">طبيعة الإصابة</span><div class="val">'+esc(r.blessure||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Soins prodigués / الإسعافات<div class="val">'+esc(r.soins||'—')+'</div></td></tr>'
+    +'</table>'
+    +'<table><tr><td class="sec-title" colspan="2">Observations / ملاحظات</td></tr>'
+    +'<tr><td colspan="2" class="val" style="min-height:30px">'+esc(r.observations||'—')+'</td></tr>'
+    +'</table>'
+    +'<table><tr><td class="sec-title" colspan="2">VII. VISA HSE — توقيع مسؤول السلامة</td></tr>'
+    +'<tr><td class="lbl" style="width:50%">Déclaré par<div class="val">'+esc(r.declarant||'—')+' — '+esc(r.declarantFn||'')+'</div></td>'
+    +'<td class="lbl">Statut<div class="val">'+esc(r.statut||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Date et signature / التاريخ والتوقيع<div class="val" style="min-height:34px"></div></td></tr>'
+    +'</table>'
+    +'<div class="footer">'+esc(c.enr62Code||'ENRHSE62')+' — Rév. '+esc(c.enr62Rev||'V.1')+' — Document qualité interne (bilingue FR/AR) — Généré le '+today+' — HSE Tags</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
 }
 
 /* ── Helper: ouvrir une image Drive depuis son fileId ── */
