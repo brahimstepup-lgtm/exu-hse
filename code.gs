@@ -1277,6 +1277,13 @@ function fmtDate_(v) {
     return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   } catch(e) { return String(v).replace(/\s+0:00:?0?$/, '').trim(); }
 }
+function fmtHeure_(v) {
+  if (!v) return '';
+  if (v instanceof Date) {
+    try { return Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm'); } catch(e) {}
+  }
+  return String(v).trim();
+}
 function txt_(v) { return (v==null||v===undefined)?'':String(v).trim(); }
 function noFormula_(v) { var s=txt_(v); return (s.startsWith('=')||s.startsWith('\\='))?'':s; }
 function parseGravite_(v) {
@@ -2568,7 +2575,7 @@ function getRapportAccident(token) {
       return {
         id:            r[0],
         date:          fmtDate_(r[1]),
-        heure:         String(r[2]||''),
+        heure:         fmtHeure_(r[2]),
         zone:          String(r[3]||''),
         lieu:          String(r[4]||''),
         nature:        String(r[5]||''),
@@ -2604,7 +2611,8 @@ function getFicheDeclarationSheet_() {
     sh.appendRow([
       'ID','Date','Heure','Zone','Lieu','Nom Employé','Matricule','Poste','Département',
       'Description','Partie du Corps','Type Blessure','Soins','Déclarant','Fonction Déclarant',
-      'Observations','Statut','Date Création'
+      'Observations','Statut','Date Création',
+      'Type Accident','Nature Accident','Témoins','Actions Immédiates'
     ]);
     sh.getRange(1,1,1,18).setFontWeight('bold').setBackground('#d35400').setFontColor('#ffffff');
     sh.setColumnWidth(10, 260);
@@ -2636,7 +2644,11 @@ function saveFicheDeclaration(p) {
       String(p.declarantFn||''),
       String(p.observations||''),
       String(p.statut||'Déclarée'),
-      new Date()
+      new Date(),
+      String(p.typeAccident||'Travail'),
+      String(p.nature||''),
+      String(p.temoins||''),
+      String(p.actionsImm||'')
     ]);
     return { success:true, id:nextId };
   } catch(e) { return { success:false, error:e.message }; }
@@ -2648,12 +2660,13 @@ function getFicheDeclaration(token) {
     var sh = getFicheDeclarationSheet_();
     var lr = sh.getLastRow();
     if (lr < 2) return { success:true, data:[] };
-    var rows = sh.getRange(2,1,lr-1,18).getValues();
+    var rows = sh.getRange(2,1,lr-1,22).getValues();
     var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var lc = r.length;
       return {
         id:           r[0],
         date:         fmtDate_(r[1]),
-        heure:        String(r[2]||''),
+        heure:        fmtHeure_(r[2]),
         zone:         String(r[3]||''),
         lieu:         String(r[4]||''),
         nom:          String(r[5]||''),
@@ -2668,7 +2681,11 @@ function getFicheDeclaration(token) {
         declarantFn:  String(r[14]||''),
         observations: String(r[15]||''),
         statut:       String(r[16]||'Déclarée'),
-        dateCreation: fmtDate_(r[17])
+        dateCreation: fmtDate_(r[17]),
+        typeAccident: lc>18 ? String(r[18]||'Travail') : 'Travail',
+        nature:       lc>19 ? String(r[19]||'') : '',
+        temoins:      lc>20 ? String(r[20]||'') : '',
+        actionsImm:   lc>21 ? String(r[21]||'') : ''
       };
     });
     return { success:true, data:data };
