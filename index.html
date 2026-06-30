@@ -1075,7 +1075,14 @@ img{max-width:100%;display:block;}
         <h1 class="ph-title">🚨 Accident de Travail</h1>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button id="configAccidentBtn" class="btn btn-g" onclick="openConfigAccident()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
+          <button class="btn" onclick="openRapportAccident()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(231,76,60,.18);border:1px solid rgba(231,76,60,.45);color:#e74c3c;border-radius:var(--rs)">📋 ENRHSE008 — Rapport</button>
+          <button class="btn" onclick="openFicheDeclaration()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(230,126,34,.18);border:1px solid rgba(230,126,34,.45);color:#e67e22;border-radius:var(--rs)">📝 ENRHSE62 — Déclaration</button>
         </div>
+      </div>
+      <!-- Onglets -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px">
+        <button class="gsort-tab on" id="accTab_rapport" onclick="switchAccidentTab('rapport')">📋 Rapports d'Accident</button>
+        <button class="gsort-tab" id="accTab_declaration" onclick="switchAccidentTab('declaration')" style="color:#e67e22">📝 Déclarations</button>
       </div>
       <div id="accidentBody"></div>
     </div>
@@ -2036,6 +2043,327 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Annuler</button>
       <button class="btn" onclick="saveAccidentConfig()" style="background:#e74c3c;color:#fff">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: ENRHSE008 — Rapport d'Accident ═══ -->
+<div class="ov" id="rapportAccidentOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 ENRHSE008 — Rapport d'Accident</div>
+      <button class="sh-x" onclick="closeSheet('rapportAccidentOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+
+      <!-- Identification -->
+      <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">🔖 Identification de l'Accident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Date de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="date" id="ra_date" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Heure <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="time" id="ra_heure" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Zone / Département <span style="color:#e74c3c">*</span></label>
+            <select class="fi" id="ra_zone" style="height:38px">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Lieu précis</label>
+            <input class="fi" id="ra_lieu" placeholder="Ex : Atelier, zone de stockage…" style="height:38px"/>
+          </div>
+        </div>
+        <div>
+          <label class="fl">Nature de l'accident</label>
+          <select class="fi" id="ra_nature" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Chute de plain-pied">🚶 Chute de plain-pied</option>
+            <option value="Chute de hauteur">⬇ Chute de hauteur</option>
+            <option value="Heurt / Collision">💥 Heurt / Collision</option>
+            <option value="Coupure / Lacération">🔪 Coupure / Lacération</option>
+            <option value="Brûlure">🔥 Brûlure</option>
+            <option value="Intoxication / Inhalation">☣ Intoxication / Inhalation</option>
+            <option value="Écrasement">⚙ Écrasement</option>
+            <option value="Électrocution">⚡ Électrocution</option>
+            <option value="Effort excessif / TMS">💪 Effort excessif / TMS</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Victime -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">👤 Victime</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Nom & Prénom <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="ra_victime_nom" placeholder="Nom complet" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Matricule</label>
+            <input class="fi" id="ra_victime_mat" placeholder="Ex : EMP-001" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Poste / Fonction</label>
+            <input class="fi" id="ra_victime_poste" placeholder="Ex : Opérateur, Technicien…" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Ancienneté</label>
+            <input class="fi" id="ra_victime_anc" placeholder="Ex : 2 ans, 6 mois…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Circonstances -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Description des circonstances <span style="color:#e74c3c">*</span></label>
+        <textarea class="fi" id="ra_circonstances" rows="3" placeholder="Décrire précisément ce qui s'est passé avant, pendant et après l'accident…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Blessures -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Siège de la lésion</label>
+          <select class="fi" id="ra_siege" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Tête / Crâne">Tête / Crâne</option>
+            <option value="Yeux">Yeux</option>
+            <option value="Cou">Cou</option>
+            <option value="Épaule / Bras">Épaule / Bras</option>
+            <option value="Main / Doigts">Main / Doigts</option>
+            <option value="Torse / Dos">Torse / Dos</option>
+            <option value="Jambe / Genou">Jambe / Genou</option>
+            <option value="Pied / Cheville">Pied / Cheville</option>
+            <option value="Multiple">Multiple</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Nature de la lésion</label>
+          <select class="fi" id="ra_lesion" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Plaie / Coupure">Plaie / Coupure</option>
+            <option value="Contusion / Hématome">Contusion / Hématome</option>
+            <option value="Fracture">Fracture</option>
+            <option value="Entorse / Foulure">Entorse / Foulure</option>
+            <option value="Brûlure">Brûlure</option>
+            <option value="Intoxication">Intoxication</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Témoins -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Témoin(s)</label>
+        <input class="fi" id="ra_temoins" placeholder="Nom(s) des témoins présents lors de l'accident" style="height:38px"/>
+      </div>
+
+      <!-- Actions immédiates -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Actions immédiates prises</label>
+        <textarea class="fi" id="ra_actions" rows="2" placeholder="Ex : soins de premiers secours, évacuation, alerte médecin…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Causes -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Causes identifiées</label>
+        <textarea class="fi" id="ra_causes" rows="2" placeholder="Causes directes et indirectes de l'accident…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Actions correctives -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Mesures correctives préconisées</label>
+        <textarea class="fi" id="ra_correctives" rows="2" placeholder="Actions à mettre en place pour éviter la récurrence…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Photo -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Photo (optionnel)</label>
+        <input type="file" id="ra_photo_input" accept="image/*" capture="environment" onchange="raHandlePhoto(this)" style="display:none"/>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" onclick="document.getElementById('ra_photo_input').click()" style="background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">📷 Ajouter une photo</button>
+          <span id="ra_photo_name" style="font-size:12px;color:#aaa">Aucune photo sélectionnée</span>
+        </div>
+        <div id="ra_photo_preview" style="margin-top:8px;display:none">
+          <img id="ra_photo_img" src="" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+          <button type="button" onclick="raClearPhoto()" style="display:block;margin-top:4px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px">✕ Supprimer</button>
+        </div>
+      </div>
+
+      <!-- Statut -->
+      <div style="margin-bottom:4px">
+        <label class="fl">Statut du rapport</label>
+        <select class="fi" id="ra_statut" style="height:38px">
+          <option value="En cours d'investigation">🔴 En cours d'investigation</option>
+          <option value="Mesures en cours">🟠 Mesures en cours</option>
+          <option value="Clôturé">✅ Clôturé</option>
+        </select>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('rapportAccidentOv')">Annuler</button>
+      <button class="btn" onclick="submitRapportAccident()" style="background:#e74c3c;color:#fff;font-weight:700">💾 Enregistrer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: ENRHSE62 — Fiche Déclaration Accident du Travail ═══ -->
+<div class="ov" id="ficheDeclarationOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📝 ENRHSE62 — Déclaration Accident du Travail</div>
+      <button class="sh-x" onclick="closeSheet('ficheDeclarationOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+
+      <!-- Informations accident -->
+      <div style="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.3);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:.82rem;font-weight:700;color:#e67e22;margin-bottom:10px">📅 Informations sur l'Accident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Date de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="date" id="fd_date" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Heure</label>
+            <input class="fi" type="time" id="fd_heure" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Zone / Département <span style="color:#e74c3c">*</span></label>
+            <select class="fi" id="fd_zone" style="height:38px">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Lieu précis</label>
+            <input class="fi" id="fd_lieu" placeholder="Ex : Ligne de production 3…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations employé -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">👤 Informations de l'Employé</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Nom & Prénom <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="fd_nom" placeholder="Nom complet" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Matricule</label>
+            <input class="fi" id="fd_matricule" placeholder="Ex : EMP-001" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Poste / Fonction</label>
+            <input class="fi" id="fd_poste" placeholder="Ex : Opérateur de production" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Département</label>
+            <input class="fi" id="fd_dept" placeholder="Ex : Production, Maintenance…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Description de l'accident <span style="color:#e74c3c">*</span></label>
+        <textarea class="fi" id="fd_description" rows="3" placeholder="Décrire les circonstances de l'accident de manière précise…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Blessures -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Partie du corps atteinte</label>
+          <select class="fi" id="fd_partie_corps" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Tête / Crâne">Tête / Crâne</option>
+            <option value="Yeux">Yeux</option>
+            <option value="Cou">Cou</option>
+            <option value="Épaule / Bras">Épaule / Bras</option>
+            <option value="Main / Doigts">Main / Doigts</option>
+            <option value="Torse / Dos">Torse / Dos</option>
+            <option value="Jambe / Genou">Jambe / Genou</option>
+            <option value="Pied / Cheville">Pied / Cheville</option>
+            <option value="Multiple">Multiple</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Type de blessure</label>
+          <select class="fi" id="fd_blessure" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Plaie / Coupure">Plaie / Coupure</option>
+            <option value="Contusion">Contusion</option>
+            <option value="Fracture">Fracture</option>
+            <option value="Entorse">Entorse</option>
+            <option value="Brûlure">Brûlure</option>
+            <option value="Intoxication">Intoxication</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Soins -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Soins prodigués</label>
+        <select class="fi" id="fd_soins" style="height:38px">
+          <option value="">— Sélectionner —</option>
+          <option value="Premiers secours sur site">Premiers secours sur site</option>
+          <option value="Médecin du travail">Médecin du travail</option>
+          <option value="Hospitalisation">Hospitalisation</option>
+          <option value="Arrêt de travail">Arrêt de travail</option>
+          <option value="Sans arrêt">Sans arrêt</option>
+        </select>
+      </div>
+
+      <!-- Déclaré par -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Déclaré par</label>
+          <input class="fi" id="fd_declarant" placeholder="Nom du déclarant" style="height:38px"/>
+        </div>
+        <div>
+          <label class="fl">Fonction du déclarant</label>
+          <input class="fi" id="fd_declarant_fn" placeholder="Ex : Responsable HSE, Chef d'équipe…" style="height:38px"/>
+        </div>
+      </div>
+
+      <!-- Observations -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Observations / Remarques</label>
+        <textarea class="fi" id="fd_observations" rows="2" placeholder="Toute information complémentaire utile…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Statut -->
+      <div style="margin-bottom:4px">
+        <label class="fl">Statut de la déclaration</label>
+        <select class="fi" id="fd_statut" style="height:38px">
+          <option value="Déclarée">📝 Déclarée</option>
+          <option value="En traitement">🔄 En traitement</option>
+          <option value="Clôturée">✅ Clôturée</option>
+        </select>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('ficheDeclarationOv')">Annuler</button>
+      <button class="btn" onclick="submitFicheDeclaration()" style="background:#e67e22;color:#fff;font-weight:700">💾 Enregistrer la déclaration</button>
     </div>
   </div>
 </div>
@@ -9953,62 +10281,285 @@ function printEnr15Verif() {
    ACCIDENT DE TRAVAIL
 ══════════════════════════════════════════ */
 
-var _accidentConfig = { enr008Url:'', enr008Rev:'V.1', enr62Url:'', enr62Rev:'V.1' };
+var _accidentConfig   = { enr008Url:'', enr008Rev:'V.1', enr62Url:'', enr62Rev:'V.1' };
+var _rapportAccidents = [];
+var _ficheDeclarations= [];
+var _accidentTab      = 'rapport';
+var _raPhotoB64       = '';
+var _raPhotoMime      = '';
 
+/* ── Onglets ── */
+function switchAccidentTab(tab) {
+  _accidentTab = tab;
+  document.getElementById('accTab_rapport').classList.toggle('on', tab==='rapport');
+  document.getElementById('accTab_declaration').classList.toggle('on', tab==='declaration');
+  renderAccident();
+}
+
+/* ── Rendu principal ── */
 function renderAccident() {
   var body = document.getElementById('accidentBody');
   if (!body) return;
-  var c = _accidentConfig;
+  if (_accidentTab === 'rapport') {
+    _renderRapportAccidentList(body);
+  } else {
+    _renderFicheDeclarationList(body);
+  }
+  // charger les données si pas encore chargées
+  if (_accidentTab === 'rapport' && !_rapportAccidents.length) _loadRapportAccidents();
+  if (_accidentTab === 'declaration' && !_ficheDeclarations.length) _loadFicheDeclarations();
+}
 
-  var cardHtml = function(code, title, subtitle, url, rev, color) {
-    var hasUrl = url && url.trim();
-    return '<div style="background:var(--ink2);border-radius:12px;border:1px solid var(--line);border-left:4px solid '+color+';margin-bottom:14px;overflow:hidden">'
-      // Header
-      +'<div style="padding:12px 14px;display:flex;align-items:flex-start;gap:12px">'
-        +'<div style="background:'+color+'22;border:1px solid '+color+'55;border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0">'
-          +'<div style="font-weight:900;font-size:.82rem;color:'+color+';letter-spacing:.5px;white-space:nowrap">'+esc(code)+'</div>'
-          +'<div style="font-size:.58rem;color:'+color+';opacity:.75">ENR</div>'
+function _loadRapportAccidents() {
+  var body = document.getElementById('accidentBody');
+  if (body && _accidentTab==='rapport') body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _rapportAccidents = r.data||[]; if (_accidentTab==='rapport') _renderRapportAccidentList(document.getElementById('accidentBody')); }
+    })
+    .withFailureHandler(function(){})
+    .getRapportAccident(S.adminKey);
+}
+
+function _loadFicheDeclarations() {
+  var body = document.getElementById('accidentBody');
+  if (body && _accidentTab==='declaration') body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _ficheDeclarations = r.data||[]; if (_accidentTab==='declaration') _renderFicheDeclarationList(document.getElementById('accidentBody')); }
+    })
+    .withFailureHandler(function(){})
+    .getFicheDeclaration(S.adminKey);
+}
+
+/* ── Liste Rapports d'Accident ── */
+var _RA_STATUT_COLOR = {'En cours d\'investigation':'#e74c3c','Mesures en cours':'#e67e22','Clôturé':'#27ae60'};
+var _RA_STATUT_ICON  = {'En cours d\'investigation':'🔴','Mesures en cours':'🟠','Clôturé':'✅'};
+
+function _renderRapportAccidentList(body) {
+  if (!body) return;
+  var c = _accidentConfig;
+  var banner = '<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:1.4rem">📋</span>'
+    +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE008 — Rapport d\'Accident</div>'
+      +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Document de rapport complet suite à un accident de travail · Rév. '+(c.enr008Rev||'V.1')+'</div>'
+    +'</div>'
+    +(c.enr008Url?'<a href="'+esc(c.enr008Url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:5px 11px;font-size:.76rem;text-decoration:none;font-weight:700;flex-shrink:0">📥 Modèle</a>':'')
+  +'</div>';
+
+  var data = _rapportAccidents;
+  if (!data.length) {
+    body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucun rapport enregistré — cliquez sur «📋 ENRHSE008 — Rapport» pour créer le premier.</div>';
+    return;
+  }
+  body.innerHTML = banner + data.slice().reverse().map(function(r) {
+    var col   = _RA_STATUT_COLOR[r.statut] || '#e74c3c';
+    var ico   = _RA_STATUT_ICON[r.statut]  || '🔴';
+    return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="background:'+col+'22;border:1px solid '+col+'55;border-radius:8px;padding:4px 9px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.8rem;color:'+col+'">#'+esc(String(r.id))+'</div>'
+          +'<div style="font-size:.58rem;color:'+col+';opacity:.75">ENR008</div>'
         +'</div>'
         +'<div style="flex:1;min-width:0">'
-          +'<div style="font-weight:700;font-size:.9rem;color:var(--t1);line-height:1.3;margin-bottom:4px">'+esc(title)+'</div>'
-          +(subtitle?'<div style="font-size:.74rem;color:var(--t3);margin-bottom:4px">'+esc(subtitle)+'</div>':'')
-          +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">'
-            +'<span style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:.66rem;font-weight:700">🚨 Accident de Travail</span>'
-            +'<span style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;border-radius:4px;padding:2px 7px;font-size:.66rem;font-weight:600">🟢 Actif</span>'
-            +(rev?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:2px 7px;font-size:.66rem">🔄 '+esc(rev)+'</span>':'')
+          +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);margin-bottom:3px">'+esc(r.victimeNom||'—')+'</div>'
+          +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'
+            +'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+ico+' '+esc(r.statut||'—')+'</span>'
+            +(r.nature?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:1px 6px;font-size:.66rem">'+esc(r.nature)+'</span>':'')
+            +(r.zone?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t3);border-radius:4px;padding:1px 6px;font-size:.66rem">📍 '+esc(r.zone)+'</span>':'')
           +'</div>'
+          +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
+          +(r.circonstances?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.circonstances).substring(0,120)+(r.circonstances.length>120?'…':'')+'</div>':'')
         +'</div>'
       +'</div>'
-      // Footer actions
-      +'<div style="border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
-        +(hasUrl
-          ?'<a href="'+esc(url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:6px 12px;font-size:.78rem;text-decoration:none;font-weight:700">📥 Télécharger / Ouvrir</a>'
-          +'<a href="'+esc(url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:7px;padding:6px 12px;font-size:.78rem;text-decoration:none;font-weight:700">👁 Aperçu</a>'
-          :'<span style="font-size:.76rem;color:var(--t3);font-style:italic">⚠ Lien non configuré — accès admin requis pour ajouter l\'URL</span>')
+    +'</div>';
+  }).join('');
+}
+
+/* ── Liste Fiches Déclaration ── */
+var _FD_STATUT_COLOR = {'Déclarée':'#e67e22','En traitement':'#3498db','Clôturée':'#27ae60'};
+var _FD_STATUT_ICON  = {'Déclarée':'📝','En traitement':'🔄','Clôturée':'✅'};
+
+function _renderFicheDeclarationList(body) {
+  if (!body) return;
+  var c = _accidentConfig;
+  var banner = '<div style="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:1.4rem">📝</span>'
+    +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE62 — Fiche Déclaration Accident du Travail (Bilingue)</div>'
+      +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Déclaration officielle FR/AR · Rév. '+(c.enr62Rev||'V.1')+'</div>'
+    +'</div>'
+    +(c.enr62Url?'<a href="'+esc(c.enr62Url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:5px 11px;font-size:.76rem;text-decoration:none;font-weight:700;flex-shrink:0">📥 Modèle</a>':'')
+  +'</div>';
+
+  var data = _ficheDeclarations;
+  if (!data.length) {
+    body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucune déclaration enregistrée — cliquez sur «📝 ENRHSE62 — Déclaration» pour créer la première.</div>';
+    return;
+  }
+  body.innerHTML = banner + data.slice().reverse().map(function(r) {
+    var col = _FD_STATUT_COLOR[r.statut] || '#e67e22';
+    var ico = _FD_STATUT_ICON[r.statut]  || '📝';
+    return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="background:'+col+'22;border:1px solid '+col+'55;border-radius:8px;padding:4px 9px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.8rem;color:'+col+'">#'+esc(String(r.id))+'</div>'
+          +'<div style="font-size:.58rem;color:'+col+';opacity:.75">ENR62</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);margin-bottom:3px">'+esc(r.nom||'—')+(r.matricule?' · '+esc(r.matricule):'')+'</div>'
+          +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'
+            +'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+ico+' '+esc(r.statut||'—')+'</span>'
+            +(r.blessure?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:1px 6px;font-size:.66rem">'+esc(r.blessure)+'</span>':'')
+            +(r.zone?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t3);border-radius:4px;padding:1px 6px;font-size:.66rem">📍 '+esc(r.zone)+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
+          +(r.description?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.description).substring(0,120)+(r.description.length>120?'…':'')+'</div>':'')
+        +'</div>'
       +'</div>'
     +'</div>';
-  };
+  }).join('');
+}
 
-  body.innerHTML =
-    '<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px">'
-      +'<span style="font-size:1.4rem">🚨</span>'
-      +'<div>'
-        +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">Documents officiels — Accidents de Travail</div>'
-        +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Formulaires réglementaires à compléter en cas d\'accident de travail</div>'
-      +'</div>'
-    +'</div>'
-    + cardHtml(
-        'ENRHSE008',
-        'Rapport d\'Accident',
-        'Document de rapport complet suite à un accident de travail',
-        c.enr008Url, c.enr008Rev, '#e74c3c'
-      )
-    + cardHtml(
-        'ENRHSE62',
-        'Fiche Déclaration Accident du Travail — Bilingue',
-        'Fiche de déclaration officielle, version bilingue (FR/AR)',
-        c.enr62Url, c.enr62Rev, '#e67e22'
-      );
+/* ── Ouvrir formulaires ── */
+function openRapportAccident() {
+  // reset
+  ['ra_date','ra_heure','ra_lieu','ra_victime_nom','ra_victime_mat','ra_victime_poste','ra_victime_anc',
+   'ra_circonstances','ra_temoins','ra_actions','ra_causes','ra_correctives']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['ra_zone','ra_nature','ra_siege','ra_lesion','ra_statut']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('ra_date').value = todayStr();
+  _raPhotoB64=''; _raPhotoMime='';
+  var pv=document.getElementById('ra_photo_preview'); if(pv) pv.style.display='none';
+  var pn=document.getElementById('ra_photo_name'); if(pn) pn.textContent='Aucune photo sélectionnée';
+  _fillAccidentZones('ra_zone');
+  openSheet('rapportAccidentOv');
+}
+
+function openFicheDeclaration() {
+  ['fd_date','fd_heure','fd_lieu','fd_nom','fd_matricule','fd_poste','fd_dept','fd_description','fd_declarant','fd_declarant_fn','fd_observations']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['fd_zone','fd_partie_corps','fd_blessure','fd_soins','fd_statut']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('fd_date').value = todayStr();
+  _fillAccidentZones('fd_zone');
+  openSheet('ficheDeclarationOv');
+}
+
+function _fillAccidentZones(selId) {
+  var sel = document.getElementById(selId);
+  if (!sel) return;
+  var zones = (_configuredZones&&_configuredZones.length) ? _configuredZones
+    : (S.zones&&S.zones.length) ? S.zones : [];
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  zones.forEach(function(z){ var o=document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o); });
+}
+
+/* ── Photo Rapport Accident ── */
+function raHandlePhoto(input) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 3*1024*1024) { toast('Photo trop lourde (max 3 Mo)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _raPhotoB64  = e.target.result.split(',')[1];
+    _raPhotoMime = file.type || 'image/jpeg';
+    var img = document.getElementById('ra_photo_img');
+    var pv  = document.getElementById('ra_photo_preview');
+    var pn  = document.getElementById('ra_photo_name');
+    img.src = e.target.result; pv.style.display='block'; pn.textContent=file.name;
+  };
+  reader.readAsDataURL(file);
+}
+function raClearPhoto() {
+  _raPhotoB64=''; _raPhotoMime='';
+  document.getElementById('ra_photo_input').value='';
+  document.getElementById('ra_photo_preview').style.display='none';
+  document.getElementById('ra_photo_name').textContent='Aucune photo sélectionnée';
+}
+
+/* ── Soumettre Rapport d'Accident ── */
+function submitRapportAccident() {
+  var date   = document.getElementById('ra_date').value.trim();
+  var zone   = document.getElementById('ra_zone').value.trim();
+  var vicNom = document.getElementById('ra_victime_nom').value.trim();
+  if (!date||!zone||!vicNom) { toast('Date, zone et nom de la victime sont requis','err'); return; }
+  showLoader('Enregistrement…');
+  var payload = {
+    token:          S.adminKey,
+    date:           date,
+    heure:          document.getElementById('ra_heure').value.trim(),
+    zone:           zone,
+    lieu:           document.getElementById('ra_lieu').value.trim(),
+    nature:         document.getElementById('ra_nature').value.trim(),
+    victimeNom:     vicNom,
+    victimeMat:     document.getElementById('ra_victime_mat').value.trim(),
+    victimePoste:   document.getElementById('ra_victime_poste').value.trim(),
+    victimeAnc:     document.getElementById('ra_victime_anc').value.trim(),
+    circonstances:  document.getElementById('ra_circonstances').value.trim(),
+    temoins:        document.getElementById('ra_temoins').value.trim(),
+    actions:        document.getElementById('ra_actions').value.trim(),
+    causes:         document.getElementById('ra_causes').value.trim(),
+    correctives:    document.getElementById('ra_correctives').value.trim(),
+    siege:          document.getElementById('ra_siege').value.trim(),
+    lesion:         document.getElementById('ra_lesion').value.trim(),
+    statut:         document.getElementById('ra_statut').value.trim(),
+    declarantNom:   S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
+  };
+  if (_raPhotoB64) { payload.photo = _raPhotoB64; payload.mime = _raPhotoMime||'image/jpeg'; }
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Rapport d\'accident enregistré (#'+r.id+')','ok');
+        closeSheet('rapportAccidentOv');
+        _rapportAccidents = [];
+        _loadRapportAccidents();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRapportAccident(payload);
+}
+
+/* ── Soumettre Fiche Déclaration ── */
+function submitFicheDeclaration() {
+  var date = document.getElementById('fd_date').value.trim();
+  var zone = document.getElementById('fd_zone').value.trim();
+  var nom  = document.getElementById('fd_nom').value.trim();
+  if (!date||!zone||!nom) { toast('Date, zone et nom de l\'employé sont requis','err'); return; }
+  showLoader('Enregistrement…');
+  var payload = {
+    token:         S.adminKey,
+    date:          date,
+    heure:         document.getElementById('fd_heure').value.trim(),
+    zone:          zone,
+    lieu:          document.getElementById('fd_lieu').value.trim(),
+    nom:           nom,
+    matricule:     document.getElementById('fd_matricule').value.trim(),
+    poste:         document.getElementById('fd_poste').value.trim(),
+    dept:          document.getElementById('fd_dept').value.trim(),
+    description:   document.getElementById('fd_description').value.trim(),
+    partieCorps:   document.getElementById('fd_partie_corps').value.trim(),
+    blessure:      document.getElementById('fd_blessure').value.trim(),
+    soins:         document.getElementById('fd_soins').value.trim(),
+    declarant:     document.getElementById('fd_declarant').value.trim(),
+    declarantFn:   document.getElementById('fd_declarant_fn').value.trim(),
+    observations:  document.getElementById('fd_observations').value.trim(),
+    statut:        document.getElementById('fd_statut').value.trim()
+  };
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Déclaration enregistrée (#'+r.id+')','ok');
+        closeSheet('ficheDeclarationOv');
+        _ficheDeclarations = [];
+        _loadFicheDeclarations();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveFicheDeclaration(payload);
 }
 
 function openConfigAccident() {

@@ -2476,3 +2476,180 @@ function getSetting(p) {
     return { success:true, value: val || '' };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ================================================================
+//  ACCIDENT DE TRAVAIL — ENRHSE008 Rapport d'Accident
+// ================================================================
+function getRapportAccidentSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Rapport_Accident');
+  if (!sh) {
+    sh = ss.insertSheet('Rapport_Accident');
+    sh.appendRow([
+      'ID','Date','Heure','Zone','Lieu','Nature',
+      'Victime Nom','Victime Matricule','Victime Poste','Ancienneté',
+      'Circonstances','Témoins','Actions Immédiates','Causes','Mesures Correctives',
+      'Siège Lésion','Nature Lésion','Statut','Déclarant','Date Création','Photo'
+    ]);
+    sh.getRange(1,1,1,21).setFontWeight('bold').setBackground('#c0392b').setFontColor('#ffffff');
+    sh.setColumnWidth(11, 260); sh.setColumnWidth(14, 200); sh.setColumnWidth(15, 200);
+  }
+  return sh;
+}
+
+function saveRapportAccident(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh   = getRapportAccidentSheet_();
+    var lr   = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    var ir   = sh.getLastRow() + 1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.heure||''),
+      String(p.zone||''),
+      String(p.lieu||''),
+      String(p.nature||''),
+      String(p.victimeNom||''),
+      String(p.victimeMat||''),
+      String(p.victimePoste||''),
+      String(p.victimeAnc||''),
+      String(p.circonstances||''),
+      String(p.temoins||''),
+      String(p.actions||''),
+      String(p.causes||''),
+      String(p.correctives||''),
+      String(p.siege||''),
+      String(p.lesion||''),
+      String(p.statut||'En cours d\'investigation'),
+      String(p.declarantNom||''),
+      new Date(),
+      ''
+    ]);
+    if (p.photo && p.photo.length > 10) {
+      var fn  = nextId + '.AccidentPhoto.' + nowHHMMSS_() + '.jpg';
+      var url = savePhotoToFolder_(p.photo, fn, p.mime||'image/jpeg');
+      if (url) sh.getRange(ir, 21).setValue(url);
+    }
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getRapportAccident(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getRapportAccidentSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2,1,lr-1,21).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      return {
+        id:            r[0],
+        date:          fmtDate_(r[1]),
+        heure:         String(r[2]||''),
+        zone:          String(r[3]||''),
+        lieu:          String(r[4]||''),
+        nature:        String(r[5]||''),
+        victimeNom:    String(r[6]||''),
+        victimeMat:    String(r[7]||''),
+        poste:         String(r[8]||''),
+        anciennete:    String(r[9]||''),
+        circonstances: String(r[10]||''),
+        temoins:       String(r[11]||''),
+        actions:       String(r[12]||''),
+        causes:        String(r[13]||''),
+        correctives:   String(r[14]||''),
+        siege:         String(r[15]||''),
+        lesion:        String(r[16]||''),
+        statut:        String(r[17]||'En cours d\'investigation'),
+        declarant:     String(r[18]||''),
+        dateCreation:  fmtDate_(r[19]),
+        photoUrl:      String(r[20]||'')
+      };
+    });
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ================================================================
+//  ACCIDENT DE TRAVAIL — ENRHSE62 Fiche Déclaration
+// ================================================================
+function getFicheDeclarationSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Fiche_Declaration_AT');
+  if (!sh) {
+    sh = ss.insertSheet('Fiche_Declaration_AT');
+    sh.appendRow([
+      'ID','Date','Heure','Zone','Lieu','Nom Employé','Matricule','Poste','Département',
+      'Description','Partie du Corps','Type Blessure','Soins','Déclarant','Fonction Déclarant',
+      'Observations','Statut','Date Création'
+    ]);
+    sh.getRange(1,1,1,18).setFontWeight('bold').setBackground('#d35400').setFontColor('#ffffff');
+    sh.setColumnWidth(10, 260);
+  }
+  return sh;
+}
+
+function saveFicheDeclaration(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh     = getFicheDeclarationSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.heure||''),
+      String(p.zone||''),
+      String(p.lieu||''),
+      String(p.nom||''),
+      String(p.matricule||''),
+      String(p.poste||''),
+      String(p.dept||''),
+      String(p.description||''),
+      String(p.partieCorps||''),
+      String(p.blessure||''),
+      String(p.soins||''),
+      String(p.declarant||''),
+      String(p.declarantFn||''),
+      String(p.observations||''),
+      String(p.statut||'Déclarée'),
+      new Date()
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getFicheDeclaration(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getFicheDeclarationSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2,1,lr-1,18).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      return {
+        id:           r[0],
+        date:         fmtDate_(r[1]),
+        heure:        String(r[2]||''),
+        zone:         String(r[3]||''),
+        lieu:         String(r[4]||''),
+        nom:          String(r[5]||''),
+        matricule:    String(r[6]||''),
+        poste:        String(r[7]||''),
+        dept:         String(r[8]||''),
+        description:  String(r[9]||''),
+        partieCorps:  String(r[10]||''),
+        blessure:     String(r[11]||''),
+        soins:        String(r[12]||''),
+        declarant:    String(r[13]||''),
+        declarantFn:  String(r[14]||''),
+        observations: String(r[15]||''),
+        statut:       String(r[16]||'Déclarée'),
+        dateCreation: fmtDate_(r[17])
+      };
+    });
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
