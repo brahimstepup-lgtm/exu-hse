@@ -978,6 +978,7 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openUsersPanel()">🔑 Gestion des accès</button>
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
         <button class="btn btn-b" onclick="openPrestatairesPanel()" style="background:rgba(125,60,152,.25);border:1px solid rgba(125,60,152,.5);color:#c39bd3">🏢 Prestataires & griffes</button>
+        <button class="btn btn-b" onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.5);color:#f1c40f">📄 Registre ENR</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -2539,6 +2540,322 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ═══ OVERLAY: Registre ENR ═══ -->
+<div class="ov" id="enrRegistryOv">
+  <div class="sheet" style="max-height:96vh;max-width:680px;margin:0 auto">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📄 Registre des ENR</div>
+      <button class="sh-x" onclick="closeSheet('enrRegistryOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+
+      <!-- ── FORMULAIRE ── -->
+      <div id="enrFormWrap" style="background:var(--ink2);border-radius:12px;margin-bottom:20px;border:1px solid rgba(241,196,15,.4);overflow:hidden">
+
+        <!-- En-tête formulaire -->
+        <div style="background:rgba(241,196,15,.12);border-bottom:1px solid rgba(241,196,15,.3);padding:12px 16px;display:flex;align-items:center;gap:10px">
+          <div id="enrFormBadge" style="width:10px;height:10px;border-radius:50%;background:#f1c40f;flex-shrink:0"></div>
+          <div id="enrFormTitle" style="font-size:.88rem;font-weight:800;color:#f1c40f;flex:1">➕ Nouvel enregistrement ENR</div>
+          <input type="hidden" id="enrFormId"/>
+        </div>
+
+        <div style="padding:14px 16px">
+
+          <!-- ══ SECTION 1 : IDENTIFICATION ══ -->
+          <div class="enr-section-hd">🔖 Identification</div>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Code ENR <span style="color:#e74c3c">*</span></label>
+              <input class="fi" id="enrFormCode" placeholder="ENR-HSE 1" style="height:34px;font-size:.86rem;font-weight:800;letter-spacing:.8px;color:#f1c40f"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Titre / Intitulé <span style="color:#e74c3c">*</span></label>
+              <input class="fi" id="enrFormTitre" placeholder="ex. Fiche d'inspection périodique des extincteurs" style="height:34px;font-size:.85rem"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Statut</label>
+              <select class="fi" id="enrFormStatut" style="height:34px;font-size:.82rem">
+                <option value="Actif">🟢 Actif</option>
+                <option value="En révision">🟡 En révision</option>
+                <option value="Archivé">🔘 Archivé</option>
+                <option value="Suspendu">🔴 Suspendu</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Priorité</label>
+              <select class="fi" id="enrFormPriorite" style="height:34px;font-size:.82rem">
+                <option value="Normale">🔵 Normale</option>
+                <option value="Haute">🔴 Haute</option>
+                <option value="Basse">⚪ Basse</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Type de document</label>
+              <select class="fi" id="enrFormType" style="height:34px;font-size:.82rem">
+                <option value="">-- Type --</option>
+                <option value="Fiche inspection">📋 Fiche inspection</option>
+                <option value="Rapport">📊 Rapport</option>
+                <option value="Registre">📒 Registre</option>
+                <option value="Formulaire">📝 Formulaire</option>
+                <option value="Procédure">📌 Procédure</option>
+                <option value="Compte-rendu">📄 Compte-rendu</option>
+                <option value="Suivi">📈 Suivi / Tableau de bord</option>
+                <option value="Autre">🔹 Autre</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Module / Domaine</label>
+              <select class="fi" id="enrFormModule" style="height:34px;font-size:.82rem">
+                <option value="">-- Domaine --</option>
+                <option value="Tags HSE">🏷 Tags HSE</option>
+                <option value="Incendie">🧯 Incendie (Ext. / RIA)</option>
+                <option value="Nuisibles">🪲 Contrôle Nuisibles</option>
+                <option value="Sensibilisation">📋 Sensibilisation</option>
+                <option value="EPI">🦺 Équipements de protection</option>
+                <option value="Risques chimiques">⚗️ Risques chimiques</option>
+                <option value="Accidents / Incidents">🚨 Accidents / Incidents</option>
+                <option value="Autre">🔹 Autre</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Tags / Mots-clés <span style="color:var(--t3);font-weight:400">(séparés par virgule)</span></label>
+              <input class="fi" id="enrFormTags" placeholder="ex. incendie, inspection, mensuel" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+          <!-- Couleur -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <label class="fl" style="font-size:.72rem;white-space:nowrap;margin:0">Couleur</label>
+            <div id="enrColorPicker" style="display:flex;gap:7px;flex-wrap:wrap">
+              <div class="enr-color-opt" data-color="#f1c40f" style="background:#f1c40f" title="Or"></div>
+              <div class="enr-color-opt" data-color="#e74c3c" style="background:#e74c3c" title="Rouge"></div>
+              <div class="enr-color-opt" data-color="#e67e22" style="background:#e67e22" title="Orange"></div>
+              <div class="enr-color-opt" data-color="#2ecc71" style="background:#2ecc71" title="Vert"></div>
+              <div class="enr-color-opt" data-color="#3498db" style="background:#3498db" title="Bleu"></div>
+              <div class="enr-color-opt" data-color="#9b59b6" style="background:#9b59b6" title="Violet"></div>
+              <div class="enr-color-opt" data-color="#1abc9c" style="background:#1abc9c" title="Turquoise"></div>
+              <div class="enr-color-opt" data-color="#e91e63" style="background:#e91e63" title="Rose"></div>
+              <div class="enr-color-opt" data-color="#607d8b" style="background:#607d8b" title="Gris"></div>
+            </div>
+            <input type="hidden" id="enrFormColor" value="#f1c40f"/>
+          </div>
+
+          <!-- ══ SECTION 2 : MÉDIA — PHOTO & DOCUMENT ══ -->
+          <div class="enr-section-hd">📎 Photo &amp; Document</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+
+            <!-- Zone photo -->
+            <div>
+              <label class="fl" style="font-size:.72rem;margin-bottom:6px">📷 Photo / Miniature</label>
+              <input type="file" id="enrPhotoInput" accept="image/*" onchange="enrHandlePhoto(this)" style="display:none"/>
+              <div id="enrPhotoZone" onclick="document.getElementById('enrPhotoInput').click()"
+                style="border:2px dashed rgba(241,196,15,.4);border-radius:8px;min-height:90px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .2s;position:relative;overflow:hidden;background:rgba(241,196,15,.04)"
+                onmouseover="this.style.borderColor='rgba(241,196,15,.8)'" onmouseout="this.style.borderColor='rgba(241,196,15,.4)'">
+                <img id="enrPhotoPreviewImg" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:6px"/>
+                <div id="enrPhotoZonePlaceholder" style="text-align:center;pointer-events:none;z-index:1">
+                  <div style="font-size:1.4rem">🖼</div>
+                  <div style="font-size:.7rem;color:var(--t3)">Cliquer pour ajouter</div>
+                  <div style="font-size:.65rem;color:var(--t3)">JPG, PNG, WEBP</div>
+                </div>
+                <div id="enrPhotoOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 8px;z-index:2;display:flex;align-items:center;justify-content:space-between">
+                  <span id="enrPhotoStatus" style="font-size:.65rem;color:#fff"></span>
+                  <button onclick="event.stopPropagation();deleteEnrPhoto()" style="background:rgba(231,76,60,.7);border:none;color:#fff;border-radius:4px;padding:2px 6px;font-size:.65rem;cursor:pointer">✕ Suppr.</button>
+                </div>
+              </div>
+              <input type="hidden" id="enrFormPhotoUrl" value=""/>
+              <input type="hidden" id="enrFormPhotoId" value=""/>
+            </div>
+
+            <!-- Zone document -->
+            <div>
+              <label class="fl" style="font-size:.72rem;margin-bottom:6px">📄 Fichier document (PDF / DOC…)</label>
+              <input type="file" id="enrDocInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" onchange="enrHandleDoc(this)" style="display:none"/>
+              <div id="enrDocZone" onclick="document.getElementById('enrDocInput').click()"
+                style="border:2px dashed rgba(52,152,219,.4);border-radius:8px;min-height:90px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .2s;background:rgba(52,152,219,.04)"
+                onmouseover="this.style.borderColor='rgba(52,152,219,.8)'" onmouseout="this.style.borderColor='rgba(52,152,219,.4)'">
+                <div id="enrDocZonePlaceholder" style="text-align:center">
+                  <div style="font-size:1.4rem">📁</div>
+                  <div style="font-size:.7rem;color:var(--t3)">Cliquer pour ajouter</div>
+                  <div style="font-size:.65rem;color:var(--t3)">PDF, DOC, XLS, PPT…</div>
+                </div>
+                <div id="enrDocInfo" style="display:none;padding:8px;width:100%;box-sizing:border-box">
+                  <div style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.3);border-radius:6px;padding:8px;text-align:center">
+                    <div id="enrDocIcon" style="font-size:1.5rem">📄</div>
+                    <div id="enrDocName" style="font-size:.72rem;color:var(--t1);font-weight:600;word-break:break-all;margin:3px 0"></div>
+                    <div id="enrDocSize" style="font-size:.65rem;color:var(--t3)"></div>
+                    <button onclick="event.stopPropagation();deleteEnrDoc()" style="margin-top:5px;background:rgba(231,76,60,.7);border:none;color:#fff;border-radius:4px;padding:2px 8px;font-size:.65rem;cursor:pointer">✕ Retirer</button>
+                  </div>
+                </div>
+              </div>
+              <div id="enrDocUploadStatus" style="font-size:.7rem;color:var(--t3);margin-top:3px;text-align:center"></div>
+              <input type="hidden" id="enrFormDocUrl" value=""/>
+              <input type="hidden" id="enrFormDocId" value=""/>
+              <input type="hidden" id="enrFormDocNom" value=""/>
+            </div>
+          </div>
+
+          <!-- ══ SECTION 3 : VERSIONING & DATES ══ -->
+          <div class="enr-section-hd">🔄 Versioning &amp; Planification</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Révision</label>
+              <input class="fi" id="enrFormRev" placeholder="ex. 01" style="height:34px;font-size:.85rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Édition / Année</label>
+              <input class="fi" id="enrFormEdition" placeholder="ex. 2025" style="height:34px;font-size:.85rem"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Date de création</label>
+              <input class="fi" id="enrFormDateCreation" type="date" style="height:34px;font-size:.82rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Dernière révision</label>
+              <input class="fi" id="enrFormDateRev" type="date" style="height:34px;font-size:.82rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Prochaine révision</label>
+              <input class="fi" id="enrFormDateProchaine" type="date" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label class="fl" style="font-size:.72rem">Fréquence de mise à jour</label>
+            <select class="fi" id="enrFormFrequence" style="height:34px;font-size:.82rem">
+              <option value="">-- Fréquence --</option>
+              <option value="Mensuelle">📅 Mensuelle</option>
+              <option value="Trimestrielle">📅 Trimestrielle</option>
+              <option value="Semestrielle">📅 Semestrielle</option>
+              <option value="Annuelle">📅 Annuelle</option>
+              <option value="Sur événement">⚡ Sur événement</option>
+              <option value="Autre">🔹 Autre</option>
+            </select>
+          </div>
+          <!-- Historique des révisions -->
+          <div style="margin-bottom:12px">
+            <label class="fl" style="font-size:.72rem">Historique des révisions</label>
+            <textarea class="fi" id="enrFormHistorique" rows="3" placeholder="Rév. 01 — 2024-01-15 — Création initiale&#10;Rév. 02 — 2025-03-10 — Mise à jour suite audit…" style="font-size:.78rem;resize:vertical;min-height:60px;font-family:monospace"></textarea>
+          </div>
+
+          <!-- ══ SECTION 4 : RESPONSABILITÉS ══ -->
+          <div class="enr-section-hd">👤 Responsabilités</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Responsable du document</label>
+              <input class="fi" id="enrFormResponsable" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Rédacteur</label>
+              <input class="fi" id="enrFormRedacteur" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Approbateur</label>
+              <input class="fi" id="enrFormApprobateur" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Diffusion</label>
+              <input class="fi" id="enrFormDiffusion" placeholder="ex. HSE, Direction, Maintenance" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+
+          <!-- ══ SECTION 5 : GESTION DOCUMENTAIRE ══ -->
+          <div class="enr-section-hd">🗄 Gestion documentaire</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Durée de conservation</label>
+              <select class="fi" id="enrFormDuree" style="height:34px;font-size:.82rem">
+                <option value="">-- Durée --</option>
+                <option value="1 an">1 an</option>
+                <option value="3 ans">3 ans</option>
+                <option value="5 ans">5 ans</option>
+                <option value="10 ans">10 ans</option>
+                <option value="Permanente">Permanente</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Support</label>
+              <select class="fi" id="enrFormSupport" style="height:34px;font-size:.82rem">
+                <option value="">-- Support --</option>
+                <option value="Papier">🖨 Papier</option>
+                <option value="Numérique">💻 Numérique</option>
+                <option value="Les deux">📂 Papier + Numérique</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">Exemplaires</label>
+              <input class="fi" id="enrFormExemplaires" type="number" min="1" placeholder="ex. 2" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label class="fl" style="font-size:.72rem">Lieu de classement / archivage</label>
+              <input class="fi" id="enrFormLieu" placeholder="ex. Armoire HSE — Bureau 12" style="height:34px;font-size:.82rem"/>
+            </div>
+            <div>
+              <label class="fl" style="font-size:.72rem">ENR liés / dépendances</label>
+              <input class="fi" id="enrFormLies" placeholder="ex. ENR-HSE 2, ENR-HSE 7" style="height:34px;font-size:.82rem"/>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label class="fl" style="font-size:.72rem">Référence réglementaire / normative</label>
+            <input class="fi" id="enrFormRef" placeholder="ex. Art. R4215-1 Code du travail / ISO 45001 § 9.1" style="height:34px;font-size:.82rem"/>
+          </div>
+
+          <!-- ══ SECTION 6 : COMPLÉMENTS ══ -->
+          <div class="enr-section-hd">📝 Compléments</div>
+          <div style="margin-bottom:8px">
+            <label class="fl" style="font-size:.72rem">Objet / Description</label>
+            <textarea class="fi" id="enrFormDesc" rows="3" placeholder="Décrivez l'objet du document, son périmètre d'application, les données enregistrées…" style="font-size:.82rem;resize:vertical;min-height:64px"></textarea>
+          </div>
+          <div style="margin-bottom:8px">
+            <label class="fl" style="font-size:.72rem">Lien Drive / URL externe</label>
+            <input class="fi" id="enrFormLien" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
+          </div>
+          <div style="margin-bottom:16px">
+            <label class="fl" style="font-size:.72rem">Observations / Remarques internes</label>
+            <textarea class="fi" id="enrFormObs" rows="2" placeholder="Toute remarque utile à la gestion de ce document…" style="font-size:.82rem;resize:none"></textarea>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="submitEnrEntry()" style="flex:1;height:42px;font-size:.9rem;background:#f1c40f;color:#1a1a2e;font-weight:800;border:none;border-radius:8px">💾 Enregistrer l'ENR</button>
+            <button class="btn" onclick="resetEnrForm()" style="height:42px;padding:0 18px;font-size:.82rem;background:var(--ink3);color:var(--t2);border:1px solid var(--line);border-radius:8px">✕ Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LISTE ENR ── -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px">ENR configurés</div>
+        <div id="enrCount" style="font-size:.72rem;color:var(--t3)"></div>
+      </div>
+      <!-- Filtre rapide -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="enrFilterRow"></div>
+      <div id="enrRegistryList">
+        <div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Chargement…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.enr-section-hd{font-size:.7rem;font-weight:800;color:rgba(241,196,15,.85);text-transform:uppercase;letter-spacing:.8px;padding:5px 0;margin:6px 0 8px;border-bottom:1px solid rgba(241,196,15,.18);display:flex;align-items:center;gap:5px}
+.enr-color-opt{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
+.enr-color-opt:hover{transform:scale(1.18)}
+.enr-color-opt.selected{border-color:#fff;transform:scale(1.22);box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+.enr-filter-btn{background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:20px;padding:4px 12px;font-size:.72rem;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.enr-filter-btn.on{background:rgba(241,196,15,.2);border-color:rgba(241,196,15,.5);color:#f1c40f;font-weight:700}
+.enr-tag-chip{display:inline-block;background:rgba(241,196,15,.12);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:10px;padding:1px 7px;font-size:.65rem;font-weight:600;margin:1px}
+.enr-doc-icon-pdf{color:#e74c3c}.enr-doc-icon-doc{color:#3498db}.enr-doc-icon-xls{color:#2ecc71}.enr-doc-icon-ppt{color:#e67e22}
+</style>
+
 <!-- ═══ OVERLAY: Gestion des Prestataires & Griffes ═══ -->
 <div class="ov" id="prestatairesOv">
   <div class="sheet" style="max-height:92vh">
@@ -3398,7 +3715,78 @@ function renderAdmin(){
     '<div class="hm-wrap"><div class="cc-ttl">🌡️ Heatmap — Zone × Gravité</div>'+hmH+
     '<div style="font-size:.62rem;color:var(--t3);margin-top:5px;">Plus la couleur est intense, plus la densité de risques est élevée</div></div>'+
     (slow?'<div class="cc" style="margin-bottom:9px"><div class="cc-ttl">🐢 Top 5 — Délai de Traitement</div>'+slow+'</div>':'')+
-    (openT?'<div class="cc"><div class="cc-ttl">🔴 Top 5 — Tags Ouverts Depuis Longtemps</div>'+openT+'</div>':'');
+    (openT?'<div class="cc" style="margin-bottom:12px"><div class="cc-ttl">🔴 Top 5 — Tags Ouverts Depuis Longtemps</div>'+openT+'</div>':'')+
+    '<div class="cc" id="adminEnrWidget"><div class="cc-ttl" style="display:flex;align-items:center;justify-content:space-between">'+
+    '<span>📄 Registre ENR</span>'+
+    '<button onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.45);color:#f1c40f;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:.76rem;font-weight:700">+ Gérer</button>'+
+    '</div><div id="adminEnrWidgetBody" style="margin-top:8px"><div style="color:var(--t3);font-size:.8rem;font-style:italic">Chargement…</div></div></div>';
+  _loadEnrForDashboard();
+}
+
+function _loadEnrForDashboard() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      var body = document.getElementById('adminEnrWidgetBody');
+      if (!body) return;
+      if (!r||!r.success||!r.data||!r.data.length) {
+        body.innerHTML = '<div style="color:var(--t3);font-size:.8rem;font-style:italic">Aucun ENR configuré — <span onclick="openEnrRegistryPanel()" style="color:#f1c40f;cursor:pointer;text-decoration:underline">Ajouter maintenant</span></div>';
+        return;
+      }
+      _enrData = r.data;
+      var stDot = { 'Actif':'#2ecc71','En révision':'#f1c40f','Archivé':'#7f8c8d','Suspendu':'#e74c3c' };
+      var today = new Date(); today.setHours(0,0,0,0);
+      // Stats rapides
+      var actifs   = r.data.filter(function(e){ return !e.statut||e.statut==='Actif'; }).length;
+      var revision = r.data.filter(function(e){ return e.statut==='En révision'; }).length;
+      var alertes  = r.data.filter(function(e){
+        if (!e.dateProchaine) return false;
+        return (new Date(e.dateProchaine)-today)/(1000*60*60*24) <= 30;
+      }).length;
+      body.innerHTML =
+        '<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">'
+        +'<div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
+          +'<div style="font-weight:800;font-size:1.2rem;color:#2ecc71">'+actifs+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t3)">Actifs</div></div>'
+        +'<div style="background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
+          +'<div style="font-weight:800;font-size:1.2rem;color:#f1c40f">'+revision+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t3)">En révision</div></div>'
+        +(alertes?'<div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
+          +'<div style="font-weight:800;font-size:1.2rem;color:#e74c3c">'+alertes+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t3)">Révisions urgentes</div></div>':'')
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">'+
+        r.data.map(function(e){
+          var col  = e.color || '#f1c40f';
+          var dot  = stDot[e.statut] || '#2ecc71';
+          var warn = '';
+          if (e.dateProchaine) {
+            var diff = Math.round((new Date(e.dateProchaine)-today)/(1000*60*60*24));
+            if (diff<0)       warn='<div style="font-size:.63rem;color:#e74c3c;font-weight:700;margin-top:3px">⚠ Révision en retard</div>';
+            else if(diff<=30) warn='<div style="font-size:.63rem;color:#f1c40f;font-weight:700;margin-top:3px">⏰ Dans '+diff+'j</div>';
+          }
+          return '<div style="background:var(--ink3);border-radius:9px;border:1px solid var(--line);border-left:3px solid '+col+';overflow:hidden;cursor:pointer" onclick="openEnrRegistryPanel()">'
+            // Photo si présente
+            +(e.photoUrl?'<div style="width:100%;height:90px;overflow:hidden">'
+              +'<img src="'+esc(e.photoUrl)+'" style="width:100%;height:90px;object-fit:cover;display:block"/>'
+              +'</div>':'')
+            +'<div style="padding:9px 11px">'
+              +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">'
+                +'<span style="width:6px;height:6px;border-radius:50%;background:'+dot+';flex-shrink:0"></span>'
+                +'<span style="font-weight:900;font-size:.8rem;color:'+col+';letter-spacing:.5px">'+esc(e.code)+'</span>'
+                +(e.priorite&&e.priorite!=='Normale'?'<span style="margin-left:auto;font-size:.6rem;color:'+({'Haute':'#e74c3c','Basse':'#7f8c8d'}[e.priorite]||'#3498db')+'">●</span>':'')
+              +'</div>'
+              +'<div style="font-size:.77rem;color:var(--t1);font-weight:600;line-height:1.3;margin-bottom:3px">'+esc(e.titre)+'</div>'
+              +(e.module?'<div style="font-size:.66rem;color:'+col+';opacity:.8;margin-bottom:2px">'+esc(e.module)+'</div>':'')
+              +(e.responsable?'<div style="font-size:.65rem;color:var(--t3)">👤 '+esc(e.responsable)+'</div>':'')
+              +((e.rev||e.edition)?'<div style="font-size:.63rem;color:var(--t3)">'+(e.rev?'Rév.'+esc(e.rev)+' ':'')+  (e.edition?'Éd.'+esc(e.edition):'')+'</div>':'')
+              +(e.docUrl?'<div style="font-size:.63rem;color:#3498db;margin-top:3px">📎 '+esc(e.docNom||'Document')+'</div>':'')
+              +warn
+            +'</div>'
+            +'</div>';
+        }).join('')+'</div>';
+    })
+    .withFailureHandler(function(){})
+    .getEnrRegistry(S.adminKey);
 }
 
 /* ══════════════════════════════════════════
@@ -7974,6 +8362,373 @@ function submitCloture() {
 var _prestatairesData   = [];   // [{id, nom, sigUrl}]
 var _prestaFormSigB64   = '';
 var _prestaFormSigMime  = '';
+
+/* ══════════════════════════════════════════
+   ADMIN — REGISTRE ENR
+══════════════════════════════════════════ */
+
+var _enrData = [];
+var _enrFilterModule = '';
+var _enrPhotoB64 = ''; var _enrPhotoMime = '';
+var _enrDocB64  = ''; var _enrDocMime   = ''; var _enrDocFileName = '';
+
+function openEnrRegistryPanel() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  resetEnrForm();
+  _initEnrColorPicker();
+  openSheet('enrRegistryOv');
+  _loadEnrRegistry();
+}
+
+function _initEnrColorPicker() {
+  document.querySelectorAll('.enr-color-opt').forEach(function(el) {
+    el.onclick = function() {
+      document.querySelectorAll('.enr-color-opt').forEach(function(x){ x.classList.remove('selected'); });
+      el.classList.add('selected');
+      document.getElementById('enrFormColor').value = el.dataset.color;
+    };
+  });
+  var first = document.querySelector('.enr-color-opt');
+  if (first) { first.classList.add('selected'); document.getElementById('enrFormColor').value = first.dataset.color; }
+}
+
+function _loadEnrRegistry() {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _enrData = r.data || []; _renderEnrFilterRow(); _renderEnrRegistry(); }
+      else toast((r&&r.error)||'Erreur chargement ENR','err');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .getEnrRegistry(S.adminKey);
+}
+
+function _renderEnrFilterRow() {
+  var modules = [];
+  _enrData.forEach(function(e){ if (e.module && modules.indexOf(e.module)<0) modules.push(e.module); });
+  var row = document.getElementById('enrFilterRow');
+  if (!row) return;
+  row.innerHTML = '<button class="enr-filter-btn'+((!_enrFilterModule)?'  on':'')+'" onclick="setEnrFilter(\'\')">Tous ('+_enrData.length+')</button>'
+    + modules.map(function(m){
+        var cnt = _enrData.filter(function(e){ return e.module===m; }).length;
+        return '<button class="enr-filter-btn'+(_enrFilterModule===m?' on':'')+'" onclick="setEnrFilter(\''+m+'\')">'+esc(m)+' ('+cnt+')</button>';
+      }).join('');
+  var cnt = document.getElementById('enrCount');
+  if (cnt) cnt.textContent = _enrData.length + ' enregistrement' + (_enrData.length>1?'s':'');
+}
+
+function setEnrFilter(m) {
+  _enrFilterModule = m;
+  _renderEnrFilterRow();
+  _renderEnrRegistry();
+}
+
+var _ENR_STATUT_STYLE = {
+  'Actif':       { dot:'#2ecc71', bg:'rgba(46,204,113,.15)', border:'rgba(46,204,113,.4)', label:'🟢 Actif' },
+  'En révision': { dot:'#f1c40f', bg:'rgba(241,196,15,.15)', border:'rgba(241,196,15,.4)', label:'🟡 En révision' },
+  'Archivé':     { dot:'#7f8c8d', bg:'rgba(127,140,141,.15)', border:'rgba(127,140,141,.4)', label:'🔘 Archivé' },
+  'Suspendu':    { dot:'#e74c3c', bg:'rgba(231,76,60,.15)', border:'rgba(231,76,60,.4)', label:'🔴 Suspendu' }
+};
+
+function _renderEnrRegistry() {
+  var body = document.getElementById('enrRegistryList');
+  if (!body) return;
+  var list = _enrFilterModule ? _enrData.filter(function(e){ return e.module===_enrFilterModule; }) : _enrData;
+  if (!list.length) {
+    body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">'
+      + (_enrFilterModule ? 'Aucun ENR dans ce domaine.' : 'Aucun ENR configuré — utilisez le formulaire ci-dessus pour en ajouter.')
+      +'</div>';
+    return;
+  }
+  body.innerHTML = list.map(function(e) {
+    var realIdx = _enrData.indexOf(e);
+    var col  = e.color || '#f1c40f';
+    var st   = _ENR_STATUT_STYLE[e.statut] || _ENR_STATUT_STYLE['Actif'];
+    var today = new Date(); today.setHours(0,0,0,0);
+    var prochaineAlert = '';
+    if (e.dateProchaine) {
+      var dp = new Date(e.dateProchaine);
+      var diff = Math.round((dp-today)/(1000*60*60*24));
+      if (diff < 0)       prochaineAlert = '<span style="color:#e74c3c;font-size:.7rem;font-weight:700">⚠ Révision en retard de '+Math.abs(diff)+'j</span>';
+      else if (diff <= 30) prochaineAlert = '<span style="color:#f1c40f;font-size:.7rem;font-weight:700">⏰ Révision dans '+diff+'j</span>';
+    }
+    var priCol = { 'Haute':'#e74c3c','Normale':'#3498db','Basse':'#7f8c8d' }[e.priorite||'Normale']||'#3498db';
+    var tagChips = (e.tags||'').split(',').filter(function(t){ return t.trim(); })
+      .map(function(t){ return '<span class="enr-tag-chip">'+esc(t.trim())+'</span>'; }).join('');
+    return '<div style="background:var(--ink2);border-radius:10px;margin-bottom:12px;border:1px solid var(--line);border-left:4px solid '+col+';overflow:hidden">'
+      // ── Header ──
+      +'<div style="display:flex;align-items:stretch;gap:0">'
+        // Miniature photo si présente
+        +(e.photoUrl?'<div style="width:80px;flex-shrink:0;cursor:pointer" onclick="window.open(\''+esc(e.photoUrl)+'\',\'_blank\')">'
+          +'<img src="'+esc(e.photoUrl)+'" style="width:80px;height:100%;min-height:70px;object-fit:cover;display:block"/></div>':'')
+        +'<div style="flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:5px">'
+          +'<div style="display:flex;align-items:flex-start;gap:8px">'
+            +'<div style="flex-shrink:0;background:'+col+'22;border:1px solid '+col+'55;border-radius:7px;padding:4px 9px;text-align:center">'
+              +'<div style="font-weight:900;font-size:.85rem;color:'+col+';letter-spacing:.5px;white-space:nowrap">'+esc(e.code)+'</div>'
+              +(e.typeDoc?'<div style="font-size:.58rem;color:'+col+';opacity:.7">'+esc(e.typeDoc)+'</div>':'')
+            +'</div>'
+            +'<div style="flex:1;min-width:0">'
+              +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);line-height:1.3;margin-bottom:3px">'+esc(e.titre)+'</div>'
+              +'<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'
+                +(e.module?'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+esc(e.module)+'</span>':'')
+                +'<span style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:600;color:var(--t1)">'+st.label+'</span>'
+                +(e.priorite&&e.priorite!=='Normale'?'<span style="background:'+priCol+'22;border:1px solid '+priCol+'55;color:'+priCol+';border-radius:4px;padding:1px 6px;font-size:.63rem;font-weight:700">'+esc(e.priorite)+'</span>':'')
+                +prochaineAlert
+              +'</div>'
+              +(tagChips?'<div style="margin-top:3px">'+tagChips+'</div>':'')
+            +'</div>'
+            +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
+              +'<button onclick="editEnrEntry('+realIdx+')" title="Modifier" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:.76rem">✏</button>'
+              +'<button onclick="deleteEnrEntry('+realIdx+')" title="Supprimer" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:.76rem">🗑</button>'
+            +'</div>'
+          +'</div>'
+          // Fichiers attachés
+          +((e.docUrl||e.lien)?
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">'
+            +(e.docUrl?'<a href="'+esc(e.docUrl)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.3);color:#3498db;border-radius:6px;padding:3px 9px;font-size:.7rem;text-decoration:none;font-weight:600">📎 '+(esc(e.docNom||'Document'))+'</a>':'')
+            +(e.lien?'<a href="'+esc(e.lien)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:6px;padding:3px 9px;font-size:.7rem;text-decoration:none;font-weight:600">🔗 Lien externe</a>':'')
+            +'</div>'
+          :'')
+        +'</div>'
+      +'</div>'
+      // ── Grille détails ──
+      +'<div style="border-top:1px solid var(--line);padding:8px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px 12px">'
+        +_enrDetailCell('🔄','Version', (e.rev?'Rév. '+e.rev:'')+(e.edition?' Éd. '+e.edition:'')||'—')
+        +_enrDetailCell('📅','Fréquence', e.frequence||'—')
+        +_enrDetailCell('⏱','Prochaine rév.', e.dateProchaine?new Date(e.dateProchaine).toLocaleDateString('fr-FR'):'—')
+        +_enrDetailCell('👤','Responsable', e.responsable||'—')
+        +_enrDetailCell('✍','Rédacteur', e.redacteur||'—')
+        +_enrDetailCell('✅','Approbateur', e.approbateur||'—')
+        +_enrDetailCell('📢','Diffusion', e.diffusion||'—')
+        +_enrDetailCell('🗄','Conservation', e.duree||'—')
+        +_enrDetailCell('💾','Support', e.support||'—')
+        +_enrDetailCell('📂','Classement', e.lieu||'—')
+        +_enrDetailCell('📋','Exemplaires', e.exemplaires||'—')
+        +(e.enrLies?_enrDetailCell('🔗','ENR liés', e.enrLies):'')
+        +(e.refRegl?_enrDetailCell('⚖','Référence régl.', e.refRegl):'')
+      +'</div>'
+      // ── Complément texte ──
+      +((e.description||e.observations||e.historique)?
+        '<div style="border-top:1px solid var(--line);padding:8px 14px">'
+        +(e.description?'<div style="font-size:.78rem;color:var(--t2);margin-bottom:4px">'+esc(e.description)+'</div>':'')
+        +(e.observations?'<div style="font-size:.74rem;color:var(--t3);font-style:italic;margin-bottom:4px">💬 '+esc(e.observations)+'</div>':'')
+        +(e.historique?'<details style="margin-top:4px"><summary style="font-size:.7rem;color:var(--t3);cursor:pointer">📜 Historique des révisions</summary>'
+          +'<pre style="font-size:.68rem;color:var(--t2);background:var(--ink3);border-radius:5px;padding:8px;margin:4px 0 0;overflow-x:auto;white-space:pre-wrap">'+esc(e.historique)+'</pre></details>':'')
+        +'</div>'
+      :'')
+      +'</div>';
+  }).join('');
+}
+
+function _enrDetailCell(ico, lbl, val) {
+  if (!val || val==='—') return '<div style="font-size:.7rem"><span style="color:var(--t3)">'+ico+' '+lbl+'</span><br/><span style="color:var(--t3);font-style:italic">—</span></div>';
+  return '<div style="font-size:.7rem"><span style="color:var(--t3)">'+ico+' '+lbl+'</span><br/><span style="color:var(--t1);font-weight:600">'+esc(val)+'</span></div>';
+}
+
+// ── Utilitaire lecture champ ──────────────────────────────────
+function _fv(id) { var el=document.getElementById(id); return el?(el.value||'').trim():''; }
+
+// ── Upload photo ENR ─────────────────────────────────────────
+function enrHandlePhoto(input) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 3*1024*1024) { toast('Photo trop lourde (max 3 Mo)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    _enrPhotoB64  = ev.target.result.split(',')[1];
+    _enrPhotoMime = file.type || 'image/jpeg';
+    var img = document.getElementById('enrPhotoPreviewImg');
+    img.src = ev.target.result; img.style.display = 'block';
+    document.getElementById('enrPhotoZonePlaceholder').style.display = 'none';
+    document.getElementById('enrPhotoOverlay').style.display = 'flex';
+    document.getElementById('enrPhotoStatus').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteEnrPhoto() {
+  var fileId = _fv('enrFormPhotoId');
+  if (fileId) { google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:fileId }); }
+  _enrPhotoB64=''; _enrPhotoMime='';
+  document.getElementById('enrFormPhotoUrl').value = '';
+  document.getElementById('enrFormPhotoId').value  = '';
+  var img = document.getElementById('enrPhotoPreviewImg'); img.src=''; img.style.display='none';
+  document.getElementById('enrPhotoZonePlaceholder').style.display='flex';
+  document.getElementById('enrPhotoOverlay').style.display='none';
+  document.getElementById('enrPhotoInput').value='';
+}
+
+// ── Upload document ENR ───────────────────────────────────────
+var _ENR_DOC_ICONS = { pdf:'\U0001f4d5', doc:'\U0001f4d8', docx:'\U0001f4d8', xls:'\U0001f4d7', xlsx:'\U0001f4d7', ppt:'\U0001f4d9', pptx:'\U0001f4d9', txt:'\U0001f4c3', csv:'\U0001f4ca' };
+function enrHandleDoc(input) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 10*1024*1024) { toast('Fichier trop grand (max 10 Mo)','err'); return; }
+  var ext = (file.name.split('.').pop()||'').toLowerCase();
+  _enrDocB64 = ''; _enrDocMime = file.type || 'application/octet-stream'; _enrDocFileName = file.name;
+  document.getElementById('enrDocZonePlaceholder').style.display='none';
+  document.getElementById('enrDocInfo').style.display='block';
+  document.getElementById('enrDocIcon').textContent = _ENR_DOC_ICONS[ext]||'\U0001f4c4';
+  document.getElementById('enrDocName').textContent = file.name;
+  document.getElementById('enrDocSize').textContent = (file.size/1024).toFixed(1)+' Ko';
+  document.getElementById('enrDocUploadStatus').textContent = '⏳ Prêt à téléverser lors de l\'enregistrement';
+  var reader = new FileReader();
+  reader.onload = function(ev){ _enrDocB64 = ev.target.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+function deleteEnrDoc() {
+  var fileId = _fv('enrFormDocId');
+  if (fileId) { google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:fileId }); }
+  _enrDocB64=''; _enrDocMime=''; _enrDocFileName='';
+  ['enrFormDocUrl','enrFormDocId','enrFormDocNom'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('enrDocZonePlaceholder').style.display='flex';
+  document.getElementById('enrDocInfo').style.display='none';
+  document.getElementById('enrDocUploadStatus').textContent='';
+  document.getElementById('enrDocInput').value='';
+}
+
+// ── Soumettre ENR ────────────────────────────────────────────
+function submitEnrEntry() {
+  var code  = _fv('enrFormCode');
+  var titre = _fv('enrFormTitre');
+  if (!code || !titre) { toast('Code ENR et titre sont obligatoires','err'); return; }
+  var id  = _fv('enrFormId');
+  var now = new Date().toLocaleDateString('fr-FR');
+  var existing = id ? (_enrData.find(function(e){ return e.id===id; })||{}) : {};
+  var entry = {
+    id:id||('ENR_'+Date.now()), code:code, titre:titre,
+    statut:_fv('enrFormStatut')||'Actif', priorite:_fv('enrFormPriorite')||'Normale',
+    typeDoc:_fv('enrFormType'), module:_fv('enrFormModule'), tags:_fv('enrFormTags'),
+    color:_fv('enrFormColor')||'#f1c40f',
+    rev:_fv('enrFormRev'), edition:_fv('enrFormEdition'),
+    dateCreation:_fv('enrFormDateCreation')||(existing.dateCreation||now),
+    dateRev:_fv('enrFormDateRev'), dateProchaine:_fv('enrFormDateProchaine'),
+    frequence:_fv('enrFormFrequence'), historique:_fv('enrFormHistorique'),
+    responsable:_fv('enrFormResponsable'), redacteur:_fv('enrFormRedacteur'),
+    approbateur:_fv('enrFormApprobateur'), diffusion:_fv('enrFormDiffusion'),
+    duree:_fv('enrFormDuree'), support:_fv('enrFormSupport'),
+    lieu:_fv('enrFormLieu'), exemplaires:_fv('enrFormExemplaires'),
+    enrLies:_fv('enrFormLies'), refRegl:_fv('enrFormRef'),
+    description:_fv('enrFormDesc'), lien:_fv('enrFormLien'), observations:_fv('enrFormObs'),
+    photoUrl:_fv('enrFormPhotoUrl')||existing.photoUrl||'',
+    photoId:_fv('enrFormPhotoId')||existing.photoId||'',
+    docUrl:_fv('enrFormDocUrl')||existing.docUrl||'',
+    docId:_fv('enrFormDocId')||existing.docId||'',
+    docNom:_fv('enrFormDocNom')||existing.docNom||''
+  };
+  if (_enrPhotoB64) {
+    showLoader('Téléversement photo…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (r&&r.success) { entry.photoUrl=r.url; entry.photoId=r.fileId; document.getElementById('enrFormPhotoUrl').value=r.url; document.getElementById('enrFormPhotoId').value=r.fileId; }
+        _enrUploadDocThenSave(entry,id);
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast('Erreur photo: '+e.message,'err'); _enrUploadDocThenSave(entry,id); })
+      .saveEnrFile({ adminKey:S.adminKey, base64:_enrPhotoB64, mime:_enrPhotoMime, enrCode:code, fileType:'photo', oldFileId:existing.photoId||'' });
+  } else { _enrUploadDocThenSave(entry,id); }
+}
+
+function _enrUploadDocThenSave(entry,id) {
+  if (_enrDocB64) {
+    showLoader('Téléversement document…');
+    google.script.run
+      .withSuccessHandler(function(r) {
+        hideSplash();
+        if (r&&r.success) { entry.docUrl=r.url; entry.docId=r.fileId; entry.docNom=_enrDocFileName; document.getElementById('enrFormDocUrl').value=r.url; document.getElementById('enrFormDocId').value=r.fileId; document.getElementById('enrFormDocNom').value=_enrDocFileName; document.getElementById('enrDocUploadStatus').textContent='✅ Document téléversé'; }
+        _enrFinalSave(entry,id);
+      })
+      .withFailureHandler(function(e){ hideSplash(); toast('Erreur document: '+e.message,'err'); _enrFinalSave(entry,id); })
+      .saveEnrFile({ adminKey:S.adminKey, base64:_enrDocB64, mime:_enrDocMime, enrCode:entry.code, fileType:'document', oldFileId:entry.docId||'' });
+  } else { _enrFinalSave(entry,id); }
+}
+
+function _enrFinalSave(entry,id) {
+  if (id) { var idx=_enrData.findIndex(function(e){ return e.id===id; }); if(idx>=0) _enrData[idx]=entry; else _enrData.push(entry); }
+  else { _enrData.push(entry); }
+  _saveEnrRegistry(function(){ resetEnrForm(); _renderEnrFilterRow(); _renderEnrRegistry(); });
+}
+
+function editEnrEntry(i) {
+  var e = _enrData[i]; if (!e) return;
+  var tv = { enrFormId:e.id, enrFormCode:e.code, enrFormTitre:e.titre,
+    enrFormRev:e.rev||'', enrFormEdition:e.edition||'',
+    enrFormDateCreation:e.dateCreation||'', enrFormDateRev:e.dateRev||'', enrFormDateProchaine:e.dateProchaine||'',
+    enrFormTags:e.tags||'', enrFormHistorique:e.historique||'',
+    enrFormResponsable:e.responsable||'', enrFormRedacteur:e.redacteur||'',
+    enrFormApprobateur:e.approbateur||'', enrFormDiffusion:e.diffusion||'',
+    enrFormLieu:e.lieu||'', enrFormExemplaires:e.exemplaires||'',
+    enrFormLies:e.enrLies||'', enrFormRef:e.refRegl||'',
+    enrFormDesc:e.description||'', enrFormLien:e.lien||'', enrFormObs:e.observations||'',
+    enrFormColor:e.color||'#f1c40f',
+    enrFormPhotoUrl:e.photoUrl||'', enrFormPhotoId:e.photoId||'',
+    enrFormDocUrl:e.docUrl||'', enrFormDocId:e.docId||'', enrFormDocNom:e.docNom||'' };
+  Object.keys(tv).forEach(function(id){ var el=document.getElementById(id); if(el) el.value=tv[id]; });
+  var sv = { enrFormStatut:e.statut, enrFormPriorite:e.priorite, enrFormType:e.typeDoc,
+             enrFormModule:e.module, enrFormFrequence:e.frequence, enrFormDuree:e.duree, enrFormSupport:e.support };
+  Object.keys(sv).forEach(function(id){ var el=document.getElementById(id); if(el) el.value=sv[id]||''; });
+  document.querySelectorAll('.enr-color-opt').forEach(function(el){ el.classList.toggle('selected', el.dataset.color===(e.color||'#f1c40f')); });
+  _enrPhotoB64=''; _enrPhotoMime='';
+  if (e.photoUrl) {
+    var img=document.getElementById('enrPhotoPreviewImg'); img.src=e.photoUrl; img.style.display='block';
+    document.getElementById('enrPhotoZonePlaceholder').style.display='none';
+    document.getElementById('enrPhotoOverlay').style.display='flex';
+    document.getElementById('enrPhotoStatus').textContent='Photo existante';
+  }
+  _enrDocB64=''; _enrDocMime=''; _enrDocFileName=e.docNom||'';
+  if (e.docUrl && e.docNom) {
+    var ext=(e.docNom.split('.').pop()||'').toLowerCase();
+    document.getElementById('enrDocZonePlaceholder').style.display='none';
+    document.getElementById('enrDocInfo').style.display='block';
+    document.getElementById('enrDocIcon').textContent=_ENR_DOC_ICONS[ext]||'\U0001f4c4';
+    document.getElementById('enrDocName').textContent=e.docNom;
+    document.getElementById('enrDocSize').textContent='';
+    document.getElementById('enrDocUploadStatus').textContent='✅ Document existant';
+  }
+  document.getElementById('enrFormTitle').textContent='✏ Modifier — '+e.code;
+  document.getElementById('enrFormWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function deleteEnrEntry(i) {
+  var e = _enrData[i]; if (!e) return;
+  if (!confirm('Supprimer définitivement l\'ENR «'+e.code+' — '+e.titre+'» ?')) return;
+  if (e.photoId) google.script.run.withSuccessHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:e.photoId });
+  if (e.docId)   google.script.run.withSuccessHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:e.docId });
+  _enrData.splice(i,1);
+  _saveEnrRegistry(function(){ _renderEnrFilterRow(); _renderEnrRegistry(); });
+}
+
+function _saveEnrRegistry(cb) {
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success){ toast('✓ Registre ENR sauvegardé','ok'); if(cb) cb(); } else toast((r&&r.error)||'Erreur','err'); })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveEnrRegistry({ adminKey:S.adminKey, data:_enrData });
+}
+
+function resetEnrForm() {
+  var ids=['enrFormId','enrFormCode','enrFormTitre','enrFormRev','enrFormEdition','enrFormTags',
+           'enrFormDateCreation','enrFormDateRev','enrFormDateProchaine','enrFormHistorique',
+           'enrFormResponsable','enrFormRedacteur','enrFormApprobateur','enrFormDiffusion',
+           'enrFormLieu','enrFormExemplaires','enrFormLies','enrFormRef',
+           'enrFormDesc','enrFormLien','enrFormObs',
+           'enrFormPhotoUrl','enrFormPhotoId','enrFormDocUrl','enrFormDocId','enrFormDocNom'];
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['enrFormStatut','enrFormPriorite','enrFormType','enrFormModule','enrFormFrequence','enrFormDuree','enrFormSupport']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.querySelectorAll('.enr-color-opt').forEach(function(el,i){ el.classList.toggle('selected',i===0); });
+  var first=document.querySelector('.enr-color-opt'); var ce=document.getElementById('enrFormColor'); if(ce) ce.value=first?first.dataset.color:'#f1c40f';
+  _enrPhotoB64=''; _enrPhotoMime='';
+  var img=document.getElementById('enrPhotoPreviewImg'); if(img){ img.src=''; img.style.display='none'; }
+  var ph=document.getElementById('enrPhotoZonePlaceholder'); if(ph) ph.style.display='flex';
+  var pov=document.getElementById('enrPhotoOverlay'); if(pov) pov.style.display='none';
+  var pi=document.getElementById('enrPhotoInput'); if(pi) pi.value='';
+  _enrDocB64=''; _enrDocMime=''; _enrDocFileName='';
+  var dp=document.getElementById('enrDocZonePlaceholder'); if(dp) dp.style.display='flex';
+  var di=document.getElementById('enrDocInfo'); if(di) di.style.display='none';
+  var ds=document.getElementById('enrDocUploadStatus'); if(ds) ds.textContent='';
+  var din=document.getElementById('enrDocInput'); if(din) din.value='';
+  var t=document.getElementById('enrFormTitle'); if(t) t.textContent='➕ Nouvel enregistrement ENR';
+}
+
 
 function openPrestatairesPanel() {
   if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
