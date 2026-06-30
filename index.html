@@ -2033,10 +2033,6 @@ img{max-width:100%;display:block;}
             <input class="fi" id="accEnr008Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
           </div>
         </div>
-        <div style="margin-bottom:8px">
-          <label class="fl" style="font-size:.76rem;margin-bottom:3px">Lien Google Drive <span style="color:var(--t3);font-weight:400">(aperçu / téléchargement)</span></label>
-          <input class="fi" id="accEnr008Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
-        </div>
         <button class="btn" onclick="saveAccidentConfigEnr('008')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e74c3c;color:#fff">💾 Sauvegarder ENRHSE008</button>
       </div>
 
@@ -2056,10 +2052,6 @@ img{max-width:100%;display:block;}
             <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
             <input class="fi" id="accEnr62Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
           </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="fl" style="font-size:.76rem;margin-bottom:3px">Lien Google Drive <span style="color:var(--t3);font-weight:400">(aperçu / téléchargement)</span></label>
-          <input class="fi" id="accEnr62Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
         </div>
         <button class="btn" onclick="saveAccidentConfigEnr('62')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e67e22;color:#fff">💾 Sauvegarder ENRHSE62</button>
       </div>
@@ -10308,7 +10300,7 @@ function printEnr15Verif() {
    ACCIDENT DE TRAVAIL
 ══════════════════════════════════════════ */
 
-var _accidentConfig   = { enr008Url:'', enr008Rev:'V.1', enr62Url:'', enr62Rev:'V.1' };
+var _accidentConfig   = { enr008Rev:'V.1', enr62Rev:'V.1' };
 var _rapportAccidents = [];
 var _ficheDeclarations= [];
 var _accidentTab      = 'rapport';
@@ -10409,7 +10401,6 @@ function _renderRapportAccidentList(body) {
       +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE008 — Rapport d\'Accident</div>'
       +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Document de rapport complet suite à un accident de travail · Rév. '+(c.enr008Rev||'V.1')+'</div>'
     +'</div>'
-    +(c.enr008Url?'<a href="'+esc(c.enr008Url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:5px 11px;font-size:.76rem;text-decoration:none;font-weight:700;flex-shrink:0">📥 Modèle</a>':'')
   +'</div>';
 
   var data = _rapportAccidents;
@@ -10456,7 +10447,6 @@ function _renderFicheDeclarationList(body) {
       +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE62 — Fiche Déclaration Accident du Travail (Bilingue)</div>'
       +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Déclaration officielle FR/AR · Rév. '+(c.enr62Rev||'V.1')+'</div>'
     +'</div>'
-    +(c.enr62Url?'<a href="'+esc(c.enr62Url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:5px 11px;font-size:.76rem;text-decoration:none;font-weight:700;flex-shrink:0">📥 Modèle</a>':'')
   +'</div>';
 
   var data = _ficheDeclarations;
@@ -10639,11 +10629,9 @@ function openConfigAccident() {
   fv('accEnr008Code',    c.enr008Code    || 'ENRHSE008');
   fv('accEnr008Rev',     c.enr008Rev     || 'V.1');
   fv('accEnr008Edition', c.enr008Edition || '');
-  fv('accEnr008Url',     c.enr008Url     || '');
   fv('accEnr62Code',     c.enr62Code     || 'ENRHSE62');
   fv('accEnr62Rev',      c.enr62Rev      || 'V.1');
   fv('accEnr62Edition',  c.enr62Edition  || '');
-  fv('accEnr62Url',      c.enr62Url      || '');
   openSheet('accidentConfigOv');
 }
 
@@ -10652,11 +10640,9 @@ function _readAccidentConfigFields() {
   _accidentConfig.enr008Code    = gv('accEnr008Code')    || 'ENRHSE008';
   _accidentConfig.enr008Rev     = gv('accEnr008Rev')     || 'V.1';
   _accidentConfig.enr008Edition = gv('accEnr008Edition');
-  _accidentConfig.enr008Url     = gv('accEnr008Url');
   _accidentConfig.enr62Code     = gv('accEnr62Code')     || 'ENRHSE62';
   _accidentConfig.enr62Rev      = gv('accEnr62Rev')      || 'V.1';
   _accidentConfig.enr62Edition  = gv('accEnr62Edition');
-  _accidentConfig.enr62Url      = gv('accEnr62Url');
 }
 
 function saveAccidentConfigEnr(which) {
