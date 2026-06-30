@@ -2056,6 +2056,19 @@ img{max-width:100%;display:block;}
         <button class="btn" onclick="saveAccidentConfigEnr('62')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e67e22;color:#fff">💾 Sauvegarder ENRHSE62</button>
       </div>
 
+      <!-- ── Gestion des zones ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(52,152,219,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#3498db;margin-bottom:10px">📍 Zones / Départements</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="fi" id="accNewZoneInput" placeholder="Nouvelle zone…" style="flex:1;height:34px;font-size:.85rem" onkeydown="if(event.key==='Enter'){addAccidentZone();event.preventDefault();}"/>
+          <button class="btn" onclick="addAccidentZone()" style="height:34px;padding:0 12px;font-size:.82rem;background:#3498db;color:#fff">+ Ajouter</button>
+        </div>
+        <div id="accZoneChipsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px">
+          <span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>
+        </div>
+        <button class="btn" onclick="saveZonesConfig()" style="height:32px;font-size:.8rem;padding:0 12px;background:#3498db;color:#fff">💾 Sauvegarder les zones</button>
+      </div>
+
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Fermer</button>
@@ -2101,7 +2114,7 @@ img{max-width:100%;display:block;}
         </div>
         <div>
           <label class="fl">Nature de l'accident</label>
-          <select class="fi" id="ra_nature" style="height:38px">
+          <select class="fi" id="ra_nature" style="height:38px" onchange="toggleRaNatureAutre()">
             <option value="">— Sélectionner —</option>
             <option value="Chute de plain-pied">🚶 Chute de plain-pied</option>
             <option value="Chute de hauteur">⬇ Chute de hauteur</option>
@@ -2114,6 +2127,10 @@ img{max-width:100%;display:block;}
             <option value="Effort excessif / TMS">💪 Effort excessif / TMS</option>
             <option value="Autre">Autre</option>
           </select>
+          <div id="ra_nature_autre_wrap" style="display:none;margin-top:8px">
+            <label class="fl" style="font-size:.78rem;color:#e74c3c">Précisez la nature de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="ra_nature_autre" placeholder="Décrivez la nature de l'accident…" style="height:38px"/>
+          </div>
         </div>
       </div>
 
@@ -2205,12 +2222,13 @@ img{max-width:100%;display:block;}
         <textarea class="fi" id="ra_correctives" rows="2" placeholder="Actions à mettre en place pour éviter la récurrence…" style="resize:vertical"></textarea>
       </div>
 
-      <!-- Photo -->
-      <div style="margin-bottom:12px">
-        <label class="fl">Photo (optionnel)</label>
+      <!-- Photo certificat médical -->
+      <div style="margin-bottom:12px;background:rgba(231,76,60,.05);border:1px solid rgba(231,76,60,.2);border-radius:10px;padding:12px">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:8px">📄 Certificat médical initial</div>
+        <label class="fl" style="font-size:.78rem;margin-bottom:6px">Photo du certificat médical initial (optionnel)</label>
         <input type="file" id="ra_photo_input" accept="image/*" capture="environment" onchange="raHandlePhoto(this)" style="display:none"/>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button type="button" onclick="document.getElementById('ra_photo_input').click()" style="background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">📷 Ajouter une photo</button>
+          <button type="button" onclick="document.getElementById('ra_photo_input').click()" style="background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">📷 Ajouter la photo du certificat</button>
           <span id="ra_photo_name" style="font-size:12px;color:#aaa">Aucune photo sélectionnée</span>
         </div>
         <div id="ra_photo_preview" style="margin-top:8px;display:none">
@@ -10489,6 +10507,8 @@ function openRapportAccident() {
   ['ra_zone','ra_nature','ra_siege','ra_lesion','ra_statut']
     .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
   document.getElementById('ra_date').value = todayStr();
+  var raNatureAutreInp=document.getElementById('ra_nature_autre'); if(raNatureAutreInp) raNatureAutreInp.value='';
+  var raNatureAutreWrap=document.getElementById('ra_nature_autre_wrap'); if(raNatureAutreWrap) raNatureAutreWrap.style.display='none';
   _raPhotoB64=''; _raPhotoMime='';
   var pv=document.getElementById('ra_photo_preview'); if(pv) pv.style.display='none';
   var pn=document.getElementById('ra_photo_name'); if(pn) pn.textContent='Aucune photo sélectionnée';
@@ -10515,6 +10535,41 @@ function _fillAccidentZones(selId) {
     : (S.zones&&S.zones.length) ? S.zones : [];
   sel.innerHTML = '<option value="">— Sélectionner —</option>';
   zones.forEach(function(z){ var o=document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o); });
+}
+
+/* ── Gestion zones Accident ── */
+function _renderAccidentZoneChips() {
+  var el = document.getElementById('accZoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removeAccidentZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+function addAccidentZone() {
+  var inp = document.getElementById('accNewZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderAccidentZoneChips();
+  _renderZoneChips();
+}
+function removeAccidentZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderAccidentZoneChips();
+  _renderZoneChips();
+}
+
+/* ── Toggle "Autre" pour nature de l'accident ── */
+function toggleRaNatureAutre() {
+  var sel = document.getElementById('ra_nature');
+  var wrap = document.getElementById('ra_nature_autre_wrap');
+  if (!sel||!wrap) return;
+  wrap.style.display = sel.value==='Autre' ? '' : 'none';
+  if (sel.value!=='Autre') { var inp=document.getElementById('ra_nature_autre'); if(inp) inp.value=''; }
 }
 
 /* ── Photo Rapport Accident ── */
@@ -10552,7 +10607,7 @@ function submitRapportAccident() {
     heure:          document.getElementById('ra_heure').value.trim(),
     zone:           zone,
     lieu:           document.getElementById('ra_lieu').value.trim(),
-    nature:         document.getElementById('ra_nature').value.trim(),
+    nature:         (function(){ var n=document.getElementById('ra_nature').value.trim(); if(n==='Autre'){var a=(document.getElementById('ra_nature_autre')||{}).value||''; return a.trim()?'Autre: '+a.trim():'Autre';} return n; })(),
     victimeNom:     vicNom,
     victimeMat:     document.getElementById('ra_victime_mat').value.trim(),
     victimePoste:   document.getElementById('ra_victime_poste').value.trim(),
@@ -10632,6 +10687,7 @@ function openConfigAccident() {
   fv('accEnr62Code',     c.enr62Code     || 'ENRHSE62');
   fv('accEnr62Rev',      c.enr62Rev      || 'V.1');
   fv('accEnr62Edition',  c.enr62Edition  || '');
+  _renderAccidentZoneChips();
   openSheet('accidentConfigOv');
 }
 
