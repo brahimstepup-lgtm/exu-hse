@@ -2201,7 +2201,13 @@ img{max-width:100%;display:block;}
       <!-- Témoins -->
       <div style="margin-bottom:12px">
         <label class="fl">Témoin(s)</label>
-        <input class="fi" id="ra_temoins" placeholder="Nom(s) des témoins présents lors de l'accident" style="height:38px"/>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input class="fi" id="ra_temoins_search" list="accWitnessDatalist" placeholder="Rechercher par nom ou matricule…" style="flex:1;height:38px" onkeydown="if(event.key==='Enter'){addRaTemoins();event.preventDefault();}"/>
+          <button type="button" onclick="addRaTemoins()" style="height:38px;padding:0 12px;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;flex-shrink:0">+ Ajouter</button>
+        </div>
+        <datalist id="accWitnessDatalist"></datalist>
+        <div id="ra_temoins_chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:20px"></div>
+        <input type="hidden" id="ra_temoins"/>
       </div>
 
       <!-- Actions immédiates -->
@@ -10343,6 +10349,7 @@ function _fillEmployeeDatalist() {
   dl.innerHTML = _employeesDirectory.map(function(e) {
     return '<option value="'+esc(e.matricule)+'">'+esc(e.matricule)+' — '+esc(e.name)+'</option>';
   }).join('');
+  _fillWitnessDatalist();
 }
 
 function _accLookupEmployee(prefix) {
@@ -10509,6 +10516,8 @@ function openRapportAccident() {
   document.getElementById('ra_date').value = todayStr();
   var raNatureAutreInp=document.getElementById('ra_nature_autre'); if(raNatureAutreInp) raNatureAutreInp.value='';
   var raNatureAutreWrap=document.getElementById('ra_nature_autre_wrap'); if(raNatureAutreWrap) raNatureAutreWrap.style.display='none';
+  _raTemoinsArr=[]; _renderRaTemoinsChips();
+  var tSrch=document.getElementById('ra_temoins_search'); if(tSrch) tSrch.value='';
   _raPhotoB64=''; _raPhotoMime='';
   var pv=document.getElementById('ra_photo_preview'); if(pv) pv.style.display='none';
   var pn=document.getElementById('ra_photo_name'); if(pn) pn.textContent='Aucune photo sélectionnée';
@@ -10561,6 +10570,39 @@ function removeAccidentZone(idx) {
   _configuredZones.splice(idx,1);
   _renderAccidentZoneChips();
   _renderZoneChips();
+}
+
+/* ── Témoins multi-sélection ── */
+var _raTemoinsArr = [];
+function _fillWitnessDatalist() {
+  var dl = document.getElementById('accWitnessDatalist');
+  if (!dl) return;
+  dl.innerHTML = _employeesDirectory.map(function(e) {
+    return '<option value="'+esc(e.name)+'">'+esc(e.matricule)+'</option>'
+      +'<option value="'+esc(e.matricule)+'">'+esc(e.name)+'</option>';
+  }).join('');
+}
+function addRaTemoins() {
+  var inp = document.getElementById('ra_temoins_search');
+  var val = (inp&&inp.value||'').trim();
+  if (!val) return;
+  var emp = _employeesDirectory.find(function(e){ return e.name===val||e.matricule===val; });
+  var label = emp ? (emp.name+' ('+emp.matricule+')') : val;
+  if (_raTemoinsArr.indexOf(label)===-1) _raTemoinsArr.push(label);
+  inp.value='';
+  _renderRaTemoinsChips();
+}
+function removeRaTemoins(idx) {
+  _raTemoinsArr.splice(idx,1);
+  _renderRaTemoinsChips();
+}
+function _renderRaTemoinsChips() {
+  var el = document.getElementById('ra_temoins_chips');
+  if (el) el.innerHTML = _raTemoinsArr.map(function(t,i){
+    return '<span class="zone-chip">'+esc(t)+'<span class="zrm" onclick="removeRaTemoins('+i+')" title="Supprimer"> ✕</span></span>';
+  }).join('');
+  var h = document.getElementById('ra_temoins');
+  if (h) h.value = _raTemoinsArr.join(', ');
 }
 
 /* ── Toggle "Autre" pour nature de l'accident ── */
@@ -10798,9 +10840,17 @@ function printRapportAccident(idx) {
     +'<tr><td class="lbl" colspan="2">Mesures correctives préconisées<div class="val">'+esc(r.correctives||'—')+'</div></td></tr>'
     +'</table>'
     +(r.photoUrl?'<div class="sec-title" style="margin-top:8px">📷 Photo</div><div style="margin:6px 0"><img src="'+r.photoUrl+'" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc"/></div>':'')
-    +'<table style="margin-top:10px"><tr><td style="text-align:center;font-weight:700">Statut: '+esc(r.statut||'—')+'</td>'
-    +'<td style="text-align:center">Déclarant: '+esc(r.declarant||'—')+'</td>'
-    +'<td style="text-align:center">Signature / التوقيع :</td></tr></table>'
+    +(function(){
+        var declSigUrl = _userSigMap[r.declarant] || _userSigMap[S_AUTH&&S_AUTH.matricule] || '';
+        var sigCell = declSigUrl
+          ? '<img src="'+declSigUrl+'" style="max-height:52px;max-width:130px;object-fit:contain"/>'
+          : '&nbsp;';
+        return '<table style="margin-top:10px"><tr>'
+          +'<td style="text-align:center;font-weight:700;width:33%">Statut: '+esc(r.statut||'—')+'</td>'
+          +'<td style="text-align:center;width:34%">Déclarant: '+esc(r.declarant||'—')+'</td>'
+          +'<td style="text-align:center;width:33%;min-height:60px">Signature / التوقيع :<br>'+sigCell+'</td>'
+          +'</tr></table>';
+      })()
     +'<div class="footer">'+esc(c.enr008Code||'ENRHSE008')+' — Rév. '+esc(c.enr008Rev||'V.1')+' — Document qualité interne — Généré le '+today+' — HSE Tags</div>'
     +'<script>window.onload=function(){window.print();}<\/script>'
     +'</body></html>';
@@ -10868,7 +10918,11 @@ function printFicheDeclaration(idx) {
     +'<table><tr><td class="sec-title" colspan="2">VII. VISA HSE — توقيع مسؤول السلامة</td></tr>'
     +'<tr><td class="lbl" style="width:50%">Déclaré par<div class="val">'+esc(r.declarant||'—')+' — '+esc(r.declarantFn||'')+'</div></td>'
     +'<td class="lbl">Statut<div class="val">'+esc(r.statut||'—')+'</div></td></tr>'
-    +'<tr><td class="lbl" colspan="2">Date et signature / التاريخ والتوقيع<div class="val" style="min-height:34px"></div></td></tr>'
+    +(function(){
+        var declSigUrl = _userSigMap[r.declarant] || _userSigMap[S_AUTH&&S_AUTH.matricule] || '';
+        var sigHtml = declSigUrl ? '<img src="'+declSigUrl+'" style="max-height:52px;max-width:130px;object-fit:contain"/>' : '';
+        return '<tr><td class="lbl" colspan="2">Signature / التوقيع<div class="val" style="min-height:52px">'+sigHtml+'</div></td></tr>';
+      })()
     +'</table>'
     +'<div class="footer">'+esc(c.enr62Code||'ENRHSE62')+' — Rév. '+esc(c.enr62Rev||'V.1')+' — Document qualité interne (bilingue FR/AR) — Généré le '+today+' — HSE Tags</div>'
     +'<script>window.onload=function(){window.print();}<\/script>'
