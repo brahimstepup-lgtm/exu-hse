@@ -2011,38 +2011,63 @@ img{max-width:100%;display:block;}
   <div class="sheet">
     <div class="sh-handle"></div>
     <div class="sh-head">
-      <div class="sh-title">⚙ Configuration — Accident de Travail</div>
+      <div class="sh-title">⚙ Configuration Accident de Travail</div>
       <button class="sh-x" onclick="closeSheet('accidentConfigOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto">
-      <!-- ENR-HSE 008 -->
+
+      <!-- ── ENRHSE008 ── -->
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(231,76,60,.35)">
-        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📋 ENRHSE008 — Rapport d'Accident</div>
-        <div class="fg">
-          <label class="fl" style="font-size:.76rem">Lien Google Drive (URL d'aperçu ou de téléchargement)</label>
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📋 Code document — ENRHSE008 Rapport d'Accident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
+            <input class="fi" id="accEnr008Code" value="ENRHSE008" placeholder="ENRHSE008" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="accEnr008Rev" value="V.1" placeholder="V.1" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
+            <input class="fi" id="accEnr008Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label class="fl" style="font-size:.76rem;margin-bottom:3px">Lien Google Drive <span style="color:var(--t3);font-weight:400">(aperçu / téléchargement)</span></label>
           <input class="fi" id="accEnr008Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
         </div>
-        <div class="fg" style="margin-top:8px">
-          <label class="fl" style="font-size:.76rem">Révision</label>
-          <input class="fi" id="accEnr008Rev" placeholder="ex. V.1" style="height:34px;font-size:.82rem;width:120px"/>
-        </div>
+        <button class="btn" onclick="saveAccidentConfigEnr('008')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e74c3c;color:#fff">💾 Sauvegarder ENRHSE008</button>
       </div>
-      <!-- ENR-HSE 62 -->
-      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(231,76,60,.35)">
-        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📝 ENRHSE62 — Fiche Déclaration Accident (Bilingue)</div>
-        <div class="fg">
-          <label class="fl" style="font-size:.76rem">Lien Google Drive (URL d'aperçu ou de téléchargement)</label>
+
+      <!-- ── ENRHSE62 ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(230,126,34,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#e67e22;margin-bottom:10px">📝 Code document — ENRHSE62 Fiche Déclaration (Bilingue)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
+            <input class="fi" id="accEnr62Code" value="ENRHSE62" placeholder="ENRHSE62" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="accEnr62Rev" value="V.1" placeholder="V.1" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
+            <input class="fi" id="accEnr62Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label class="fl" style="font-size:.76rem;margin-bottom:3px">Lien Google Drive <span style="color:var(--t3);font-weight:400">(aperçu / téléchargement)</span></label>
           <input class="fi" id="accEnr62Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
         </div>
-        <div class="fg" style="margin-top:8px">
-          <label class="fl" style="font-size:.76rem">Révision</label>
-          <input class="fi" id="accEnr62Rev" placeholder="ex. V.1" style="height:34px;font-size:.82rem;width:120px"/>
-        </div>
+        <button class="btn" onclick="saveAccidentConfigEnr('62')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e67e22;color:#fff">💾 Sauvegarder ENRHSE62</button>
       </div>
+
     </div>
     <div class="sh-foot">
-      <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Annuler</button>
-      <button class="btn" onclick="saveAccidentConfig()" style="background:#e74c3c;color:#fff">💾 Sauvegarder</button>
+      <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Fermer</button>
+      <button class="btn" onclick="saveAccidentConfig()" style="background:#e74c3c;color:#fff;font-weight:700">💾 Tout sauvegarder</button>
     </div>
   </div>
 </div>
@@ -10564,18 +10589,44 @@ function submitFicheDeclaration() {
 
 function openConfigAccident() {
   if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
-  document.getElementById('accEnr008Url').value = _accidentConfig.enr008Url || '';
-  document.getElementById('accEnr008Rev').value = _accidentConfig.enr008Rev || 'V.1';
-  document.getElementById('accEnr62Url').value  = _accidentConfig.enr62Url  || '';
-  document.getElementById('accEnr62Rev').value  = _accidentConfig.enr62Rev  || 'V.1';
+  var c = _accidentConfig;
+  var fv = function(id, val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+  fv('accEnr008Code',    c.enr008Code    || 'ENRHSE008');
+  fv('accEnr008Rev',     c.enr008Rev     || 'V.1');
+  fv('accEnr008Edition', c.enr008Edition || '');
+  fv('accEnr008Url',     c.enr008Url     || '');
+  fv('accEnr62Code',     c.enr62Code     || 'ENRHSE62');
+  fv('accEnr62Rev',      c.enr62Rev      || 'V.1');
+  fv('accEnr62Edition',  c.enr62Edition  || '');
+  fv('accEnr62Url',      c.enr62Url      || '');
   openSheet('accidentConfigOv');
 }
 
+function _readAccidentConfigFields() {
+  var gv = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  _accidentConfig.enr008Code    = gv('accEnr008Code')    || 'ENRHSE008';
+  _accidentConfig.enr008Rev     = gv('accEnr008Rev')     || 'V.1';
+  _accidentConfig.enr008Edition = gv('accEnr008Edition');
+  _accidentConfig.enr008Url     = gv('accEnr008Url');
+  _accidentConfig.enr62Code     = gv('accEnr62Code')     || 'ENRHSE62';
+  _accidentConfig.enr62Rev      = gv('accEnr62Rev')      || 'V.1';
+  _accidentConfig.enr62Edition  = gv('accEnr62Edition');
+  _accidentConfig.enr62Url      = gv('accEnr62Url');
+}
+
+function saveAccidentConfigEnr(which) {
+  _readAccidentConfigFields();
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success) toast('✓ Config ENRHSE'+which+' sauvegardée','ok');
+      else toast((r&&r.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(){ toast('Erreur sauvegarde','err'); })
+    .saveSetting({ adminKey: S.adminKey, key: 'accidentConfig', value: JSON.stringify(_accidentConfig) });
+}
+
 function saveAccidentConfig() {
-  _accidentConfig.enr008Url = (document.getElementById('accEnr008Url').value || '').trim();
-  _accidentConfig.enr008Rev = (document.getElementById('accEnr008Rev').value || 'V.1').trim();
-  _accidentConfig.enr62Url  = (document.getElementById('accEnr62Url').value  || '').trim();
-  _accidentConfig.enr62Rev  = (document.getElementById('accEnr62Rev').value  || 'V.1').trim();
+  _readAccidentConfigFields();
   google.script.run
     .withSuccessHandler(function(r){ toast('✓ Config Accident sauvegardée','ok'); closeSheet('accidentConfigOv'); renderAccident(); })
     .withFailureHandler(function(){ toast('Erreur sauvegarde','err'); })
