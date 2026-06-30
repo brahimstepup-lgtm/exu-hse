@@ -2457,3 +2457,22 @@ function saveRapportNuisiblesConfig(p) {
     return { success:true };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ── Paramètres génériques clé/valeur (ex : accidentConfig) ─────
+function saveSetting(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    if (!p.key) return { success:false, error:'Clé manquante' };
+    PropertiesService.getScriptProperties().setProperty('SETTING_'+p.key, String(p.value||''));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getSetting(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    if (!p.key) return { success:false, error:'Clé manquante' };
+    var val = PropertiesService.getScriptProperties().getProperty('SETTING_'+p.key);
+    return { success:true, value: val || '' };
+  } catch(e) { return { success:false, error:e.message }; }
+}

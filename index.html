@@ -858,6 +858,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+  <button class="snav" data-v="accident" id="sbAccident" style="display:none"><span class="snav-i">🚨</span>Accident de Travail</button>
 </nav>
 
 <!-- APP -->
@@ -1067,6 +1068,17 @@ img{max-width:100%;display:block;}
       </div>
       <div id="nuisiblesBody"></div>
     </div>
+
+    <!-- ACCIDENT DE TRAVAIL -->
+    <div class="view" id="view-accident">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🚨 Accident de Travail</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configAccidentBtn" class="btn btn-g" onclick="openConfigAccident()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
+        </div>
+      </div>
+      <div id="accidentBody"></div>
+    </div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1077,6 +1089,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="accident" id="nbAccident" style="display:none"><span class="nb-icon">🚨</span><span>Accident</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -1982,6 +1995,47 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('cloturaNuisiblesOv')">Annuler</button>
       <button class="btn" onclick="submitCloture()" style="background:#27ae60;color:#fff">✅ Clôturer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Accident de Travail ═══ -->
+<div class="ov" id="accidentConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration — Accident de Travail</div>
+      <button class="sh-x" onclick="closeSheet('accidentConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+      <!-- ENR-HSE 008 -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(231,76,60,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📋 ENRHSE008 — Rapport d'Accident</div>
+        <div class="fg">
+          <label class="fl" style="font-size:.76rem">Lien Google Drive (URL d'aperçu ou de téléchargement)</label>
+          <input class="fi" id="accEnr008Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
+        </div>
+        <div class="fg" style="margin-top:8px">
+          <label class="fl" style="font-size:.76rem">Révision</label>
+          <input class="fi" id="accEnr008Rev" placeholder="ex. V.1" style="height:34px;font-size:.82rem;width:120px"/>
+        </div>
+      </div>
+      <!-- ENR-HSE 62 -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(231,76,60,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📝 ENRHSE62 — Fiche Déclaration Accident (Bilingue)</div>
+        <div class="fg">
+          <label class="fl" style="font-size:.76rem">Lien Google Drive (URL d'aperçu ou de téléchargement)</label>
+          <input class="fi" id="accEnr62Url" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
+        </div>
+        <div class="fg" style="margin-top:8px">
+          <label class="fl" style="font-size:.76rem">Révision</label>
+          <input class="fi" id="accEnr62Rev" placeholder="ex. V.1" style="height:34px;font-size:.82rem;width:120px"/>
+        </div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Annuler</button>
+      <button class="btn" onclick="saveAccidentConfig()" style="background:#e74c3c;color:#fff">💾 Sauvegarder</button>
     </div>
   </div>
 </div>
@@ -3268,6 +3322,9 @@ function bootApp() {
   splashMsg('Chargement des données…');
   setTimeout(function(){ document.getElementById('spFill').style.width='70%'; },80);
 
+  // Charger config accident de travail
+  _loadAccidentConfig();
+
   // Charger logo + griffes en priorité (sans attendre loadAll)
   google.script.run
     .withSuccessHandler(function(r) {
@@ -3396,7 +3453,7 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
-var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true, accident:true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
@@ -3453,6 +3510,7 @@ function applyRole(){
   var ceb=document.getElementById('configExtBtn');  if(ceb)  ceb.style.display  = admin?'':'none';
   var crb=document.getElementById('configRiaBtn');  if(crb)  crb.style.display  = admin?'':'none';
   var cpb=document.getElementById('configPestBtn'); if(cpb)  cpb.style.display  = admin?'':'none';
+  var cab=document.getElementById('configAccidentBtn'); if(cab) cab.style.display = admin?'':'none';
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
   // Navigation admin : masquer pour non-admins
@@ -3461,7 +3519,7 @@ function applyRole(){
   });
   // Navigation superviseur
   var showSuper = admin || super_;
-  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','sbAccident','nbSensi','nbIncendie','nbNuisibles','nbAccident'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
   // Redirige si vue interdite
@@ -3563,7 +3621,8 @@ function goV(v, btn){
               admin:'view-admin',
               sensibilisation:'view-sensibilisation',
               incendie:'view-incendie',
-              nuisibles:'view-nuisibles'};
+              nuisibles:'view-nuisibles',
+              accident:'view-accident'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -3580,6 +3639,7 @@ function renderCurrent(){
   else if(S.view==='sensibilisation') renderSensibilisation();
   else if(S.view==='incendie')   renderIncendie();
   else if(S.view==='nuisibles') renderNuisibles();
+  else if(S.view==='accident')  renderAccident();
   else renderTagsView();
 }
 
@@ -9887,6 +9947,100 @@ function printEnr15Verif() {
   var w = window.open('','_blank','width=1100,height=680,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
   else toast('Autorisez les popups pour imprimer','err');
+}
+
+/* ══════════════════════════════════════════
+   ACCIDENT DE TRAVAIL
+══════════════════════════════════════════ */
+
+var _accidentConfig = { enr008Url:'', enr008Rev:'V.1', enr62Url:'', enr62Rev:'V.1' };
+
+function renderAccident() {
+  var body = document.getElementById('accidentBody');
+  if (!body) return;
+  var c = _accidentConfig;
+
+  var cardHtml = function(code, title, subtitle, url, rev, color) {
+    var hasUrl = url && url.trim();
+    return '<div style="background:var(--ink2);border-radius:12px;border:1px solid var(--line);border-left:4px solid '+color+';margin-bottom:14px;overflow:hidden">'
+      // Header
+      +'<div style="padding:12px 14px;display:flex;align-items:flex-start;gap:12px">'
+        +'<div style="background:'+color+'22;border:1px solid '+color+'55;border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.82rem;color:'+color+';letter-spacing:.5px;white-space:nowrap">'+esc(code)+'</div>'
+          +'<div style="font-size:.58rem;color:'+color+';opacity:.75">ENR</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-weight:700;font-size:.9rem;color:var(--t1);line-height:1.3;margin-bottom:4px">'+esc(title)+'</div>'
+          +(subtitle?'<div style="font-size:.74rem;color:var(--t3);margin-bottom:4px">'+esc(subtitle)+'</div>':'')
+          +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">'
+            +'<span style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:.66rem;font-weight:700">🚨 Accident de Travail</span>'
+            +'<span style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;border-radius:4px;padding:2px 7px;font-size:.66rem;font-weight:600">🟢 Actif</span>'
+            +(rev?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:2px 7px;font-size:.66rem">🔄 '+esc(rev)+'</span>':'')
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      // Footer actions
+      +'<div style="border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+        +(hasUrl
+          ?'<a href="'+esc(url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(52,152,219,.14);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;padding:6px 12px;font-size:.78rem;text-decoration:none;font-weight:700">📥 Télécharger / Ouvrir</a>'
+          +'<a href="'+esc(url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:7px;padding:6px 12px;font-size:.78rem;text-decoration:none;font-weight:700">👁 Aperçu</a>'
+          :'<span style="font-size:.76rem;color:var(--t3);font-style:italic">⚠ Lien non configuré — accès admin requis pour ajouter l\'URL</span>')
+      +'</div>'
+    +'</div>';
+  };
+
+  body.innerHTML =
+    '<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:1.4rem">🚨</span>'
+      +'<div>'
+        +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">Documents officiels — Accidents de Travail</div>'
+        +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Formulaires réglementaires à compléter en cas d\'accident de travail</div>'
+      +'</div>'
+    +'</div>'
+    + cardHtml(
+        'ENRHSE008',
+        'Rapport d\'Accident',
+        'Document de rapport complet suite à un accident de travail',
+        c.enr008Url, c.enr008Rev, '#e74c3c'
+      )
+    + cardHtml(
+        'ENRHSE62',
+        'Fiche Déclaration Accident du Travail — Bilingue',
+        'Fiche de déclaration officielle, version bilingue (FR/AR)',
+        c.enr62Url, c.enr62Rev, '#e67e22'
+      );
+}
+
+function openConfigAccident() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  document.getElementById('accEnr008Url').value = _accidentConfig.enr008Url || '';
+  document.getElementById('accEnr008Rev').value = _accidentConfig.enr008Rev || 'V.1';
+  document.getElementById('accEnr62Url').value  = _accidentConfig.enr62Url  || '';
+  document.getElementById('accEnr62Rev').value  = _accidentConfig.enr62Rev  || 'V.1';
+  openSheet('accidentConfigOv');
+}
+
+function saveAccidentConfig() {
+  _accidentConfig.enr008Url = (document.getElementById('accEnr008Url').value || '').trim();
+  _accidentConfig.enr008Rev = (document.getElementById('accEnr008Rev').value || 'V.1').trim();
+  _accidentConfig.enr62Url  = (document.getElementById('accEnr62Url').value  || '').trim();
+  _accidentConfig.enr62Rev  = (document.getElementById('accEnr62Rev').value  || 'V.1').trim();
+  google.script.run
+    .withSuccessHandler(function(r){ toast('✓ Config Accident sauvegardée','ok'); closeSheet('accidentConfigOv'); renderAccident(); })
+    .withFailureHandler(function(){ toast('Erreur sauvegarde','err'); })
+    .saveSetting({ adminKey: S.adminKey, key: 'accidentConfig', value: JSON.stringify(_accidentConfig) });
+}
+
+function _loadAccidentConfig() {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r && r.success && r.value) {
+        try { _accidentConfig = JSON.parse(r.value); } catch(e){}
+      }
+      if (S.view === 'accident') renderAccident();
+    })
+    .withFailureHandler(function(){})
+    .getSetting({ adminKey: S.adminKey, key: 'accidentConfig' });
 }
 
 /* ── Helper: ouvrir une image Drive depuis son fileId ── */
