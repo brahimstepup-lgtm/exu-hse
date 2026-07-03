@@ -2599,6 +2599,40 @@ function deleteEnrRecord(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Sections personnalisées ────────────────────────────────────────
+function getCustomSections(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('CUSTOM_SECTIONS') || '[]';
+    return { success:true, sections: JSON.parse(raw) };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveCustomSection(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var list = _parseJSON_(props.getProperty('CUSTOM_SECTIONS'), []);
+    var id = p.id || ('cs_' + new Date().getTime());
+    var idx = -1;
+    for (var i=0;i<list.length;i++) { if (list[i].id===id) { idx=i; break; } }
+    var sec = { id:id, nom:String(p.nom||'').trim(), icone:String(p.icone||'📁'), couleur:String(p.couleur||'#3498db'), description:String(p.description||'') };
+    if (idx>=0) list[idx]=sec; else list.push(sec);
+    props.setProperty('CUSTOM_SECTIONS', JSON.stringify(list));
+    return { success:true, id:id };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteCustomSection(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var list = _parseJSON_(props.getProperty('CUSTOM_SECTIONS'), []).filter(function(s){ return s.id!==p.id; });
+    props.setProperty('CUSTOM_SECTIONS', JSON.stringify(list));
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 function saveRapportNuisiblesConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {

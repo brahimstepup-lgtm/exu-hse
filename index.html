@@ -858,6 +858,8 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+  <div id="sbSecCustom" style="display:none"><div class="sb-sec">Sections personnalisées</div></div>
+  <div id="sbCustomSections"></div>
 </nav>
 
 <!-- APP -->
@@ -979,6 +981,7 @@ img{max-width:100%;display:block;}
         <button class="btn btn-b" onclick="openThemesAdmin()">📋 Thèmes sensibilisation</button>
         <button class="btn btn-b" onclick="openPrestatairesPanel()" style="background:rgba(125,60,152,.25);border:1px solid rgba(125,60,152,.5);color:#c39bd3">🏢 Prestataires & griffes</button>
         <button class="btn btn-b" onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.5);color:#f1c40f">📄 Registre ENR</button>
+        <button class="btn btn-b" onclick="openCustomSectionsPanel()" style="background:rgba(52,152,219,.18);border:1px solid rgba(52,152,219,.5);color:#3498db">🗂 Sections</button>
       </div>
       <div id="adminBody"></div>
     </div>
@@ -1072,6 +1075,8 @@ img{max-width:100%;display:block;}
       </div>
       <div id="nuisiblesBody"></div>
     </div>
+    <!-- ── Sections personnalisées (injectées dynamiquement) ── -->
+    <div id="customViewsContainer"></div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1082,6 +1087,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
+    <div id="nbCustomSections" style="display:contents"></div>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -3215,8 +3221,13 @@ function bootApp() {
   applyRole();
   loadRespList();
   goV(isAdmin()?'home': isSupervisor()?'sensibilisation' :'all', null);
-  // Inject ENR builder buttons into section headers
-  if (isAdmin() || isSupervisor()) setTimeout(_loadDynEnrBtns, 2000);
+  // Load custom sections + ENR builder buttons
+  if (isAdmin() || isSupervisor()) {
+    setTimeout(function(){
+      _loadCustomSections(); // also calls _loadDynEnrBtns internally
+      _loadDynEnrBtns();     // for built-in sections
+    }, 1800);
+  }
 
   // Offline detection
   window.addEventListener('online',  function(){ setOffline(false); });
@@ -3527,6 +3538,8 @@ function goV(v, btn){
               sensibilisation:'view-sensibilisation',
               incendie:'view-incendie',
               nuisibles:'view-nuisibles'};
+  // Ajouter les sections personnalisées dynamiquement
+  _customSections.forEach(function(sec){ vmap['custom_'+sec.id]='view-custom_'+sec.id; });
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -3543,6 +3556,7 @@ function renderCurrent(){
   else if(S.view==='sensibilisation') renderSensibilisation();
   else if(S.view==='incendie')   renderIncendie();
   else if(S.view==='nuisibles') renderNuisibles();
+  else if(S.view&&S.view.startsWith('custom_')) { /* custom section — ENR buttons handle content */ }
   else renderTagsView();
 }
 
@@ -8315,6 +8329,226 @@ var _prestaFormSigMime  = '';
 
 
 // ══════════════════════════════════════════════════════════════════
+//  SECTIONS PERSONNALISÉES
+// ══════════════════════════════════════════════════════════════════
+var _customSections = [];
+var _CS_COLORS = ['#3498db','#2ecc71','#e74c3c','#e67e22','#9b59b6','#1abc9c','#e91e63','#f1c40f','#607d8b','#16a085','#d35400','#c0392b'];
+var _CS_EMOJIS = ['📁','⚡','🔥','🏭','🧰','🦺','⚗️','🚧','🔧','🛡','📊','🏗','🔌','🧯','🌡','🔬','📐','🛢','⚙️','🪝'];
+
+function _loadCustomSections() {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r||!r.success) return;
+      _customSections = r.sections||[];
+      _applyCustomSections();
+    })
+    .withFailureHandler(function(){})
+    .getCustomSections(S.adminKey);
+}
+
+function _applyCustomSections() {
+  var sbEl     = document.getElementById('sbCustomSections');
+  var sbSec    = document.getElementById('sbSecCustom');
+  var nbEl     = document.getElementById('nbCustomSections');
+  var viewsEl  = document.getElementById('customViewsContainer');
+  if (sbEl)    sbEl.innerHTML = '';
+  if (nbEl)    nbEl.innerHTML = '';
+  if (viewsEl) viewsEl.innerHTML = '';
+  if (sbSec)   sbSec.style.display = _customSections.length ? '' : 'none';
+
+  _customSections.forEach(function(sec) {
+    var vid = 'custom_' + sec.id;
+    var col = sec.couleur || '#3498db';
+
+    // ── Sidebar button ──
+    if (sbEl) {
+      var sbBtn = document.createElement('button');
+      sbBtn.className = 'snav';
+      sbBtn.setAttribute('data-v', vid);
+      sbBtn.innerHTML = '<span class="snav-i">'+sec.icone+'</span>'+esc(sec.nom);
+      sbBtn.addEventListener('click', function(){ goV(vid, sbBtn); });
+      sbEl.appendChild(sbBtn);
+    }
+
+    // ── Bottom nav button ──
+    if (nbEl) {
+      var nbBtn = document.createElement('button');
+      nbBtn.className = 'nb';
+      nbBtn.setAttribute('data-v', vid);
+      var shortName = sec.nom.length > 7 ? sec.nom.slice(0,6)+'…' : sec.nom;
+      nbBtn.innerHTML = '<span class="nb-icon">'+sec.icone+'</span><span>'+esc(shortName)+'</span><span class="nb-dot"></span>';
+      nbBtn.addEventListener('click', function(){ goV(vid, nbBtn); });
+      nbEl.appendChild(nbBtn);
+    }
+
+    // ── View div ──
+    if (viewsEl) {
+      var viewDiv = document.createElement('div');
+      viewDiv.className = 'view';
+      viewDiv.id = 'view-' + vid;
+      viewDiv.innerHTML =
+        '<div class="ph view-hdr">'
+          +'<h1 class="ph-title">'+sec.icone+' '+esc(sec.nom)+'</h1>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+            +'<div id="enrDynBtns_'+vid+'" style="display:contents"></div>'
+            +(isAdmin() ? '<button onclick="openEnrRegistryPanel()" style="background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:var(--rs);padding:5px 10px;font-size:.75rem;cursor:pointer">📄 Gérer les ENR</button>' : '')
+          +'</div>'
+        +'</div>'
+        +(sec.description ? '<p style="font-size:.82rem;color:var(--t2);margin-bottom:14px;padding:0 2px">'+esc(sec.description)+'</p>' : '')
+        +'<div id="customSecBody_'+sec.id+'" style="color:var(--t3);font-size:.85rem;text-align:center;padding:50px 20px;border:2px dashed var(--line);border-radius:12px;font-style:italic">'
+          +''+sec.icone+' Associez des ENR à cette section depuis le Registre ENR<br>'
+          +'<small style="font-size:.72rem">Créez un modèle ENR, puis sélectionnez <b>'+esc(sec.nom)+'</b> dans les modules associés</small>'
+        +'</div>';
+      viewsEl.appendChild(viewDiv);
+    }
+
+    // Register for access control + ENR mapping
+    SUPERVISOR_VIEWS[vid] = true;
+    _ENR_MODULE_VIEW_MAP[sec.nom] = vid;
+  });
+
+  // Refresh ENR buttons in new custom sections
+  _loadDynEnrBtns();
+}
+
+// ── Panel gestion sections ────────────────────────────────────────
+function openCustomSectionsPanel() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  openSheet('customSectionsOv');
+  csInitColorPicker();
+  csReset();
+  csRenderList(_customSections);
+}
+
+function csInitColorPicker() {
+  var el = document.getElementById('csColorPicker');
+  if (!el) return;
+  el.innerHTML = _CS_COLORS.map(function(c){
+    return '<div onclick="csPickColor(\''+c+'\')" title="'+c+'" style="width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0"></div>';
+  }).join('');
+  csPickColor('#3498db');
+}
+
+function csPickColor(c) {
+  document.getElementById('csColor').value = c;
+  document.querySelectorAll('#csColorPicker div').forEach(function(el){
+    var isActive = el.style.background === c || el.title === c;
+    el.style.borderColor = isActive ? '#fff' : 'transparent';
+    el.style.transform   = isActive ? 'scale(1.25)' : 'scale(1)';
+  });
+}
+
+function csFocusEmoji(inp) {
+  // Show a quick emoji picker row below
+  var existing = document.getElementById('csEmojiPicker');
+  if (existing) { existing.remove(); return; }
+  var picker = document.createElement('div');
+  picker.id = 'csEmojiPicker';
+  picker.style.cssText = 'position:absolute;z-index:100;background:var(--ink3);border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+  _CS_EMOJIS.forEach(function(em){
+    var btn = document.createElement('button');
+    btn.textContent = em;
+    btn.style.cssText = 'background:none;border:none;font-size:1.3rem;cursor:pointer;border-radius:5px;padding:2px 4px;line-height:1';
+    btn.onmouseover = function(){ this.style.background='var(--ink4)'; };
+    btn.onmouseout  = function(){ this.style.background='none'; };
+    btn.onclick = function(e){ e.stopPropagation(); inp.value=em; picker.remove(); };
+    picker.appendChild(btn);
+  });
+  inp.parentNode.style.position='relative';
+  inp.parentNode.appendChild(picker);
+  setTimeout(function(){ document.addEventListener('click', function rm(){ picker.remove(); document.removeEventListener('click',rm); }, {once:true}); }, 10);
+}
+
+function csReset() {
+  document.getElementById('csEditId').value = '';
+  document.getElementById('csNom').value = '';
+  document.getElementById('csIcone').value = '📁';
+  document.getElementById('csDesc').value = '';
+  document.getElementById('csFormIcon').textContent = '➕';
+  document.getElementById('csFormLabel').textContent = 'Nouvelle section';
+  document.getElementById('csSaveBtnLbl').textContent = 'Créer la section';
+  csPickColor('#3498db');
+}
+
+function csRenderList(list) {
+  var el = document.getElementById('csSectionsList');
+  if (!el) return;
+  list = list||[];
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--t3);font-size:.82rem;text-align:center;padding:24px;font-style:italic;border:2px dashed var(--line);border-radius:10px">Aucune section personnalisée — utilisez le formulaire ci-dessus pour en créer une</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(sec,i){
+    var col = sec.couleur||'#3498db';
+    var enrCount = _enrBTpls.filter(function(t){ return (t.modules||[]).indexOf(sec.nom)>=0; }).length;
+    return '<div style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line);border-left:4px solid '+col+';border-radius:9px;padding:11px 14px;margin-bottom:8px">'
+      +'<span style="font-size:1.6rem;flex-shrink:0">'+sec.icone+'</span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:.88rem;font-weight:700;color:var(--t1)">'+esc(sec.nom)+'</div>'
+        +(sec.description?'<div style="font-size:.72rem;color:var(--t3);margin-top:1px">'+esc(sec.description)+'</div>':'')
+        +'<div style="font-size:.68rem;color:'+col+';margin-top:3px">'+enrCount+' ENR associé'+(enrCount!==1?'s':'')+'</div>'
+      +'</div>'
+      +'<button onclick="csEdit('+i+')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:5px 12px;font-size:.75rem;cursor:pointer;flex-shrink:0">✏️ Modifier</button>'
+      +'<button onclick="csDelete(\''+sec.id+'\',\''+esc(sec.nom)+'\')" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:6px;padding:5px 10px;font-size:.75rem;cursor:pointer;flex-shrink:0">🗑</button>'
+    +'</div>';
+  }).join('');
+}
+
+function csEdit(i) {
+  var sec = _customSections[i];
+  document.getElementById('csEditId').value = sec.id;
+  document.getElementById('csNom').value = sec.nom;
+  document.getElementById('csIcone').value = sec.icone;
+  document.getElementById('csDesc').value = sec.description||'';
+  document.getElementById('csFormIcon').textContent = '✏️';
+  document.getElementById('csFormLabel').textContent = 'Modifier la section';
+  document.getElementById('csSaveBtnLbl').textContent = 'Enregistrer les modifications';
+  csPickColor(sec.couleur||'#3498db');
+  document.getElementById('csNom').focus();
+}
+
+function csSaveSection() {
+  var nom = (document.getElementById('csNom')||{}).value.trim();
+  if (!nom) { toast('Le nom est requis','err'); return; }
+  var payload = {
+    adminKey:     S.adminKey,
+    id:           document.getElementById('csEditId').value || undefined,
+    nom:          nom,
+    icone:        (document.getElementById('csIcone')||{}).value.trim() || '📁',
+    couleur:      (document.getElementById('csColor')||{}).value || '#3498db',
+    description:  (document.getElementById('csDesc')||{}).value.trim()
+  };
+  toast('Enregistrement…','info');
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r||!r.success){ toast((r&&r.error)||'Erreur','err'); return; }
+      payload.id = r.id;
+      var idx = _customSections.findIndex(function(s){ return s.id===payload.id; });
+      if (idx>=0) _customSections[idx]=payload; else _customSections.push(payload);
+      csReset();
+      csRenderList(_customSections);
+      _applyCustomSections();
+      toast((idx>=0?'Section modifiée':'Section créée')+' ✓','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .saveCustomSection(payload);
+}
+
+function csDelete(id, nom) {
+  if (!confirm('Supprimer la section "'+nom+'" ?\n\nLes ENR associés ne seront pas supprimés.')) return;
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r||!r.success){ toast((r&&r.error)||'Erreur','err'); return; }
+      _customSections = _customSections.filter(function(s){ return s.id!==id; });
+      csRenderList(_customSections);
+      _applyCustomSections();
+      toast('Section supprimée','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .deleteCustomSection({ id:id, adminKey:S.adminKey });
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  ENR BUILDER — Injection dynamique dans les sections du tableau de bord
 // ══════════════════════════════════════════════════════════════════
 var _ENR_MODULE_VIEW_MAP = {
@@ -8421,6 +8655,26 @@ function openEnrRegistryPanel() {
   openSheet('enrRegistryOv');
   _enrBLoadTemplates();
   _enrBInitColorPicker();
+  _enrBInjectCustomModuleCheckboxes();
+}
+
+function _enrBInjectCustomModuleCheckboxes() {
+  var wrap = document.getElementById('enrBModulesWrap');
+  if (!wrap) return;
+  // Remove previously injected custom checkboxes
+  wrap.querySelectorAll('.enrBModChkCustom').forEach(function(el){ el.parentNode.remove(); });
+  // Add one checkbox per custom section
+  _customSections.forEach(function(sec){
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.value = sec.nom;
+    chk.className = 'enrBModChk enrBModChkCustom';
+    lbl.appendChild(chk);
+    lbl.appendChild(document.createTextNode(' '+sec.icone+' '+sec.nom));
+    wrap.appendChild(lbl);
+  });
 }
 
 function _enrBLoadTemplates() {
@@ -9233,6 +9487,60 @@ function openIfsId(fileId) {
     .getImageBase64(fileId);
 }
 </script>
+
+<!-- ═══ OVERLAY: Gestion des sections personnalisées ═══ -->
+<div class="ov" id="customSectionsOv">
+  <div class="sheet" style="max-width:600px;max-height:90vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">🗂 Sections personnalisées</div>
+      <button class="sh-x" onclick="closeSheet('customSectionsOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding:16px">
+
+      <!-- Formulaire création/édition -->
+      <div style="background:var(--ink2);border:1px solid rgba(52,152,219,.35);border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:.8rem;font-weight:800;color:#3498db;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+          <span id="csFormIcon">➕</span> <span id="csFormLabel">Nouvelle section</span>
+        </div>
+        <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.72rem">Icône</label>
+            <input class="fi" id="csIcone" value="📁" placeholder="📁" style="height:38px;font-size:1.4rem;text-align:center;cursor:pointer" onclick="csFocusEmoji(this)"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.72rem">Nom de la section <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="csNom" placeholder="ex. Sécurité électrique, EPI, Chimique…" style="height:38px;font-size:.88rem"/>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="fl" style="font-size:.72rem">Description (affichée dans la section)</label>
+          <input class="fi" id="csDesc" placeholder="ex. Suivi des contrôles d'équipements électriques" style="height:34px;font-size:.82rem"/>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="fl" style="font-size:.72rem">Couleur</label>
+          <div id="csColorPicker" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px;background:var(--ink3);border:1px solid var(--line);border-radius:8px"></div>
+          <input type="hidden" id="csColor" value="#3498db"/>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="csSaveSection()" style="flex:1;height:40px;background:#3498db;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:800;cursor:pointer">💾 <span id="csSaveBtnLbl">Créer la section</span></button>
+          <button onclick="csReset()" style="height:40px;padding:0 18px;background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:8px;font-size:.82rem;cursor:pointer">✕ Annuler</button>
+        </div>
+        <input type="hidden" id="csEditId"/>
+      </div>
+
+      <!-- Liste des sections existantes -->
+      <div style="font-size:.72rem;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Sections existantes</div>
+      <div id="csSectionsList">
+        <div style="color:var(--t3);font-size:.82rem;text-align:center;padding:20px;font-style:italic">Chargement…</div>
+      </div>
+
+      <div style="margin-top:16px;padding:10px 12px;background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.25);border-radius:8px;font-size:.75rem;color:var(--t2)">
+        💡 Les sections créées ici apparaissent dans la navigation. Associez-leur des ENR depuis le <span onclick="closeSheet('customSectionsOv');openEnrRegistryPanel()" style="color:#f1c40f;cursor:pointer;text-decoration:underline">Registre ENR</span> en choisissant la section dans les modules.
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ Menu contextuel cartes ═══ -->
 <div id="cardCtxMenu" style="display:none;position:fixed;z-index:9999;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:5px;min-width:196px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
