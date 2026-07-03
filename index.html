@@ -2560,7 +2560,7 @@ img{max-width:100%;display:block;}
       <div style="font-size:.95rem;font-weight:800;color:#f1c40f">📋 Registre ENR — Constructeur de formulaires</div>
       <div id="enrBTplName" style="font-size:.78rem;color:var(--t3);margin-left:4px"></div>
       <div style="flex:1"></div>
-      <button id="enrBSaveBtn" onclick="enrBSave()" style="display:none;background:#f1c40f;color:#1a1a2e;border:none;border-radius:7px;padding:6px 16px;font-size:.82rem;font-weight:800;cursor:pointer">💾 Enregistrer</button>
+      <button id="enrBSaveBtn" onclick="enrBSave()" title="Enregistrer (Ctrl+S)" style="display:none;background:#f1c40f;color:#1a1a2e;border:none;border-radius:7px;padding:6px 16px;font-size:.82rem;font-weight:800;cursor:pointer">💾 Enregistrer</button>
       <button onclick="closeSheet('enrRegistryOv')" style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:7px;padding:5px 12px;font-size:.82rem;cursor:pointer">✕ Fermer</button>
     </div>
 
@@ -2712,6 +2712,7 @@ img{max-width:100%;display:block;}
 
             <div style="display:flex;gap:8px;margin-top:14px">
               <button onclick="enrBSave()" style="flex:1;height:40px;background:#f1c40f;color:#1a1a2e;border:none;border-radius:8px;font-size:.88rem;font-weight:800;cursor:pointer">💾 Enregistrer le modèle</button>
+              <button onclick="enrBDuplicateTemplate()" title="Dupliquer ce modèle" style="height:40px;padding:0 14px;background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:8px;font-size:.82rem;cursor:pointer">📋 Dupliquer</button>
               <button onclick="enrBDeleteTemplate()" style="height:40px;padding:0 16px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:8px;font-size:.82rem;cursor:pointer">🗑 Supprimer</button>
             </div>
           </div>
@@ -3224,8 +3225,7 @@ function bootApp() {
   // Load custom sections + ENR builder buttons
   if (isAdmin() || isSupervisor()) {
     setTimeout(function(){
-      _loadCustomSections(); // also calls _loadDynEnrBtns internally
-      _loadDynEnrBtns();     // for built-in sections
+      _loadCustomSections(); // calls _applyCustomSections → _loadDynEnrBtns
     }, 1800);
   }
 
@@ -6784,6 +6784,34 @@ function _closeCtxMenu() {
 document.addEventListener('click',       _closeCtxMenu);
 document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#cardCtxMenu')) _closeCtxMenu(); });
 
+// ── Global keyboard shortcuts ──────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  // Escape → close topmost open overlay
+  if (e.key === 'Escape') {
+    var ovIds = ['enrFillOv','enrRegistryOv','customSectionsOv'];
+    for (var i=0; i<ovIds.length; i++) {
+      var ov = document.getElementById(ovIds[i]);
+      if (ov && ov.classList.contains('on')) {
+        if (ovIds[i]==='enrFillOv') closeSheet('enrFillOv');
+        else if (ovIds[i]==='enrRegistryOv') closeSheet('enrRegistryOv');
+        else if (ovIds[i]==='customSectionsOv') closeSheet('customSectionsOv');
+        return;
+      }
+    }
+    // Fall back to any open sheet overlay
+    var openSh = document.querySelector('.sheet-ov.on');
+    if (openSh) { var cl = openSh.id; if(cl) closeSheet(cl); }
+  }
+  // Ctrl+S inside ENR builder → save template
+  if ((e.ctrlKey||e.metaKey) && e.key==='s') {
+    var reg = document.getElementById('enrRegistryOv');
+    if (reg && reg.classList.contains('on') && _enrBActiveTpl) {
+      e.preventDefault();
+      enrBSave();
+    }
+  }
+});
+
 function duplicateInspection() {
   _closeCtxMenu();
   var records = _ctxKind === 'pest' ? _nuisiblesRecords : _incendieRecords;
@@ -8558,8 +8586,8 @@ var _ENR_MODULE_VIEW_MAP = {
 };
 
 function _loadDynEnrBtns() {
-  var doInject = function(tpls) {
-    // Reset all containers
+  var doInject = function(tpls, counts) {
+    counts = counts || {};
     Object.keys(_ENR_MODULE_VIEW_MAP).forEach(function(mod){
       var el = document.getElementById('enrDynBtns_' + _ENR_MODULE_VIEW_MAP[mod]);
       if (el) el.innerHTML = '';
@@ -8575,60 +8603,47 @@ function _loadDynEnrBtns() {
         var btn = document.createElement('button');
         btn.className = 'btn';
         btn.style.cssText = 'padding:7px 12px;font-size:.78rem;min-height:34px;background:'+col+'22;border:1px solid '+col+'55;color:'+col+';border-radius:var(--rs);white-space:nowrap;cursor:pointer';
-        btn.innerHTML = '📋 ' + esc(tpl.code || tpl.titre);
-        btn.title = tpl.titre || tpl.code;
-        // Main click → open fill form
+        var cnt = counts[tpl.id] || 0;
+        btn.innerHTML = '📋 ' + esc(tpl.code || tpl.titre)
+          + (cnt ? '<span style="display:inline-block;background:rgba(0,0,0,.35);border-radius:8px;padding:0 5px;font-size:.65rem;margin-left:4px;font-weight:700">'+cnt+'</span>' : '');
+        btn.title = (tpl.titre||tpl.code) + (cnt ? ' — '+cnt+' enregistrement'+(cnt>1?'s':'') : '');
         btn.onclick = function(e) {
           if (e.altKey || e.shiftKey) {
-            // Alt+click or Shift+click → view records
-            _enrBActiveTpl = tpl;
-            _enrBSections  = tpl.sections||[];
-            _enrBFillTpl   = tpl;
+            _enrBActiveTpl = tpl; _enrBSections = tpl.sections||[]; _enrBFillTpl = tpl;
             openEnrRegistryPanel();
             setTimeout(function(){ enrBOpenTemplate(tpl.id); enrBSwitchTab('records'); }, 600);
           } else {
-            // Normal click → new record
             _enrBFillRec = null;
             _enrBFillTpl = JSON.parse(JSON.stringify(tpl));
             _enrBOpenFillOv();
           }
         };
-        // Right-click context: show record count badge
-        _enrBLoadRecordCountBadge(btn, tpl.id);
         container.appendChild(btn);
       });
     });
   };
 
+  var injectWithCounts = function(tpls) {
+    google.script.run
+      .withSuccessHandler(function(r){ doInject(tpls, r&&r.success ? r.counts : {}); })
+      .withFailureHandler(function(){ doInject(tpls, {}); })
+      .getEnrRecordCounts({ adminKey: S.adminKey });
+  };
+
   if (_enrBTpls && _enrBTpls.length) {
-    doInject(_enrBTpls);
+    injectWithCounts(_enrBTpls);
   } else {
     google.script.run
       .withSuccessHandler(function(r){
         if (r&&r.success) {
           _enrBTpls = r.templates||[];
           _enrData  = _enrBTpls;
-          doInject(_enrBTpls);
+          injectWithCounts(_enrBTpls);
         }
       })
       .withFailureHandler(function(){})
       .getAllEnrTemplates(S.adminKey);
   }
-}
-
-function _enrBLoadRecordCountBadge(btn, tplId) {
-  google.script.run
-    .withSuccessHandler(function(r){
-      if (r&&r.success&&r.records&&r.records.length) {
-        var badge = document.createElement('span');
-        badge.style.cssText = 'display:inline-block;background:rgba(0,0,0,.35);border-radius:8px;padding:0 5px;font-size:.65rem;margin-left:4px;font-weight:700';
-        badge.textContent = r.records.length;
-        btn.appendChild(badge);
-        btn.title = btn.title + ' — ' + r.records.length + ' enregistrement'+(r.records.length>1?'s':'');
-      }
-    })
-    .withFailureHandler(function(){})
-    .getEnrRecords({ templateId:tplId, adminKey:S.adminKey });
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -8747,23 +8762,46 @@ function _enrBRenderTplList() {
 
 // ── Open / New template ───────────────────────────────────────────
 function enrBNewTemplate() {
+  if (_enrBDirty && !confirm('Des modifications non enregistrées seront perdues. Continuer ?')) return;
+  _enrBDirty = false;
   _enrBActiveTpl = { id:null, titre:'', code:'', modules:[], color:'#f1c40f', sections:[], statut:'Brouillon', description:'', rev:'01', edition:'', frequence:'', responsable:'', approbateur:'', duree:'', ref:'' };
   _enrBSections = [];
   _enrBRenderTplList();
   _enrBShowTabs();
   enrBSwitchTab('info');
   _enrBFillInfoForm(_enrBActiveTpl);
+  _enrBUpdateDirtyUI();
 }
 
 function enrBOpenTemplate(id) {
+  if (_enrBDirty && !confirm('Des modifications non enregistrées seront perdues. Continuer ?')) return;
   var t = _enrBTpls.find(function(x){ return x.id===id; });
   if (!t) return;
-  _enrBActiveTpl = JSON.parse(JSON.stringify(t)); // deep copy
+  _enrBDirty = false;
+  _enrBActiveTpl = JSON.parse(JSON.stringify(t));
   _enrBSections  = JSON.parse(JSON.stringify(t.sections||[]));
   _enrBRenderTplList();
   _enrBShowTabs();
   enrBSwitchTab('info');
   _enrBFillInfoForm(_enrBActiveTpl);
+  _enrBUpdateDirtyUI();
+}
+
+function _enrBMarkDirty() {
+  _enrBDirty = true;
+  _enrBUpdateDirtyUI();
+}
+
+function _enrBUpdateDirtyUI() {
+  var sb = document.getElementById('enrBSaveBtn');
+  if (!sb) return;
+  if (_enrBDirty) {
+    sb.style.background = '#e67e22';
+    sb.textContent = '💾 Enregistrer *';
+  } else {
+    sb.style.background = '#f1c40f';
+    sb.textContent = '💾 Enregistrer';
+  }
 }
 
 function _enrBShowTabs() {
@@ -8771,7 +8809,16 @@ function _enrBShowTabs() {
   var tabs = document.getElementById('enrBTabs');
   var nm = document.getElementById('enrBTplName');
   if (w) w.style.display = 'none';
-  if (tabs) { tabs.style.display = 'flex'; }
+  if (tabs) {
+    tabs.style.display = 'flex';
+    // Mark dirty on any info field change
+    var infoPane = document.getElementById('enrBTabInfo');
+    if (infoPane && !infoPane._dirtyWired) {
+      infoPane._dirtyWired = true;
+      infoPane.addEventListener('input', function(){ if (_enrBActiveTpl) _enrBMarkDirty(); });
+      infoPane.addEventListener('change', function(){ if (_enrBActiveTpl) _enrBMarkDirty(); });
+    }
+  }
   if (nm) nm.textContent = _enrBActiveTpl ? (_enrBActiveTpl.code ? '— '+_enrBActiveTpl.code : '— Nouveau') : '';
   var sb = document.getElementById('enrBSaveBtn');
   if (sb) sb.style.display = 'inline-block';
@@ -8856,8 +8903,9 @@ function enrBSave() {
       _enrBRenderSidebar();
       var nm = document.getElementById('enrBTplName');
       if (nm) nm.textContent = '— '+(_enrBActiveTpl.code||_enrBActiveTpl.titre);
+      _enrBDirty = false;
+      _enrBUpdateDirtyUI();
       toast('Modèle enregistré ✓','ok');
-      // Refresh section header buttons
       _loadDynEnrBtns();
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
@@ -8886,6 +8934,32 @@ function enrBDeleteTemplate() {
     .deleteEnrTemplate({ id:_enrBActiveTpl.id, adminKey:S.adminKey });
 }
 
+function enrBDuplicateTemplate() {
+  if (!_enrBActiveTpl) return;
+  var src = JSON.parse(JSON.stringify(_enrBActiveTpl));
+  // Clear id + adjust name so it saves as new
+  delete src.id;
+  src.titre = (src.titre||'Modèle') + ' (copie)';
+  src.code  = (src.code||'') + '_copie';
+  src.adminKey = S.adminKey;
+  toast('Duplication…','info');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { toast((r&&r.error)||'Erreur','err'); return; }
+      src.id = r.id;
+      _enrBTpls.push(src);
+      _enrBActiveTpl = JSON.parse(JSON.stringify(src));
+      _enrBSections  = _enrBActiveTpl.sections||[];
+      _enrBRenderSidebar();
+      _enrBShowTabs();
+      _enrBFillInfoForm(_enrBActiveTpl);
+      toast('Modèle dupliqué ✓ — pensez à renommer','ok');
+      _loadDynEnrBtns();
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .saveEnrTemplate(src);
+}
+
 // ══════════════════════════════════════════════════════════════════
 //  SECTION BUILDER
 // ══════════════════════════════════════════════════════════════════
@@ -8900,8 +8974,8 @@ function enrBAddSection(type) {
   if (type==='texte')     sec.content = '';
   if (type==='signature') sec.signataires = [{ label:'Responsable', role:'' }];
   _enrBSections.push(sec);
+  _enrBMarkDirty();
   _enrBRenderSections();
-  // scroll to bottom
   setTimeout(function(){ var el=document.getElementById('enrBSectionsList'); if(el){ var last=el.lastElementChild; if(last) last.scrollIntoView({behavior:'smooth',block:'nearest'}); } },50);
 }
 
@@ -9026,22 +9100,22 @@ function _enrBRenderColRow(si, ci, col) {
 
 // Section/field/column mutators
 function enrBToggleSec(i){ _enrBSections[i].collapsed=!_enrBSections[i].collapsed; _enrBRenderSections(); }
-function enrBRemoveSection(i){ if(!confirm('Supprimer cette section ?')) return; _enrBSections.splice(i,1); _enrBRenderSections(); }
-function enrBMoveSection(i,d){ var s=_enrBSections; var j=i+d; if(j<0||j>=s.length) return; var t=s[i]; s[i]=s[j]; s[j]=t; _enrBRenderSections(); }
+function enrBRemoveSection(i){ if(!confirm('Supprimer cette section ?')) return; _enrBSections.splice(i,1); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBMoveSection(i,d){ var s=_enrBSections; var j=i+d; if(j<0||j>=s.length) return; var t=s[i]; s[i]=s[j]; s[j]=t; _enrBMarkDirty(); _enrBRenderSections(); }
 function _enrBSecProp(i,k,v){ _enrBSections[i][k]=v; }
 
-function enrBAddField(si){ if(!_enrBSections[si].fields) _enrBSections[si].fields=[]; _enrBSections[si].fields.push({id:'f_'+Date.now(),label:'',type:'text',placeholder:'',required:false}); _enrBRenderSections(); }
-function enrBRemoveField(si,fi){ _enrBSections[si].fields.splice(fi,1); _enrBRenderSections(); }
-function enrBMoveField(si,fi,d){ var fs=_enrBSections[si].fields; var j=fi+d; if(j<0||j>=fs.length) return; var t=fs[fi]; fs[fi]=fs[j]; fs[j]=t; _enrBRenderSections(); }
+function enrBAddField(si){ if(!_enrBSections[si].fields) _enrBSections[si].fields=[]; _enrBSections[si].fields.push({id:'f_'+Date.now(),label:'',type:'text',placeholder:'',required:false}); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBRemoveField(si,fi){ _enrBSections[si].fields.splice(fi,1); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBMoveField(si,fi,d){ var fs=_enrBSections[si].fields; var j=fi+d; if(j<0||j>=fs.length) return; var t=fs[fi]; fs[fi]=fs[j]; fs[j]=t; _enrBMarkDirty(); _enrBRenderSections(); }
 function _enrBFieldProp(si,fi,k,v){ _enrBSections[si].fields[fi][k]=v; }
 
-function enrBAddColumn(si){ if(!_enrBSections[si].columns) _enrBSections[si].columns=[]; _enrBSections[si].columns.push({id:'c_'+Date.now(),label:'',type:'text',width:''}); _enrBRenderSections(); }
-function enrBRemoveCol(si,ci){ _enrBSections[si].columns.splice(ci,1); _enrBRenderSections(); }
-function enrBMoveCol(si,ci,d){ var cs=_enrBSections[si].columns; var j=ci+d; if(j<0||j>=cs.length) return; var t=cs[ci]; cs[ci]=cs[j]; cs[j]=t; _enrBRenderSections(); }
+function enrBAddColumn(si){ if(!_enrBSections[si].columns) _enrBSections[si].columns=[]; _enrBSections[si].columns.push({id:'c_'+Date.now(),label:'',type:'text',width:''}); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBRemoveCol(si,ci){ _enrBSections[si].columns.splice(ci,1); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBMoveCol(si,ci,d){ var cs=_enrBSections[si].columns; var j=ci+d; if(j<0||j>=cs.length) return; var t=cs[ci]; cs[ci]=cs[j]; cs[j]=t; _enrBMarkDirty(); _enrBRenderSections(); }
 function _enrBColProp(si,ci,k,v){ _enrBSections[si].columns[ci][k]=v; }
 
-function enrBAddSig(si){ if(!_enrBSections[si].signataires) _enrBSections[si].signataires=[]; _enrBSections[si].signataires.push({label:'',role:''}); _enrBRenderSections(); }
-function enrBRemoveSig(si,gi){ _enrBSections[si].signataires.splice(gi,1); _enrBRenderSections(); }
+function enrBAddSig(si){ if(!_enrBSections[si].signataires) _enrBSections[si].signataires=[]; _enrBSections[si].signataires.push({label:'',role:''}); _enrBMarkDirty(); _enrBRenderSections(); }
+function enrBRemoveSig(si,gi){ _enrBSections[si].signataires.splice(gi,1); _enrBMarkDirty(); _enrBRenderSections(); }
 function _enrBSigProp(si,gi,k,v){ _enrBSections[si].signataires[gi][k]=v; }
 
 // ══════════════════════════════════════════════════════════════════

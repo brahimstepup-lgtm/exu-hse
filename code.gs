@@ -2519,7 +2519,7 @@ function saveEnrTemplate(p) {
       JSON.stringify(p.modules||[]),
       p.color||'#f1c40f',
       JSON.stringify(p.sections||[]),
-      (rowIdx>0 ? data[rowIdx-2][6] : now),
+      (rowIdx>0 ? data[rowIdx-1][6] : now),
       now,
       String(p.statut||'Actif'),
       String(p.description||'')
@@ -2563,6 +2563,22 @@ function getEnrRecords(p) {
       result.push({ id:r[0], templateId:r[1], refCode:r[2], titre:r[3], auteur:r[4], date:r[5], statut:r[6], data:_parseJSON_(r[7],{}) });
     }
     return { success:true, records:result };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// Returns { success, counts: { templateId: count } } — one call instead of N
+function getEnrRecordCounts(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrRecSheet_();
+    var data = sh.getDataRange().getValues();
+    var counts = {};
+    for (var i = 1; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var tid = data[i][1];
+      counts[tid] = (counts[tid]||0) + 1;
+    }
+    return { success:true, counts:counts };
   } catch(e) { return { success:false, error:e.message }; }
 }
 
