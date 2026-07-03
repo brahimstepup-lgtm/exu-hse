@@ -2541,319 +2541,275 @@ img{max-width:100%;display:block;}
 </div>
 
 <!-- ═══ OVERLAY: Registre ENR ═══ -->
-<div class="ov" id="enrRegistryOv">
-  <div class="sheet" style="max-height:96vh;max-width:680px;margin:0 auto">
-    <div class="sh-handle"></div>
-    <div class="sh-head">
-      <div class="sh-title">📄 Registre des ENR</div>
-      <button class="sh-x" onclick="closeSheet('enrRegistryOv')">✕</button>
+<div class="ov" id="enrRegistryOv" style="padding:0;align-items:stretch;justify-content:stretch">
+  <div id="enrBRoot" style="display:flex;flex-direction:column;width:100%;height:100%;max-width:100%;background:var(--ink1)">
+
+    <!-- ── Top bar ── -->
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--ink2)">
+      <div style="font-size:.95rem;font-weight:800;color:#f1c40f">📋 Registre ENR — Constructeur de formulaires</div>
+      <div id="enrBTplName" style="font-size:.78rem;color:var(--t3);margin-left:4px"></div>
+      <div style="flex:1"></div>
+      <button id="enrBSaveBtn" onclick="enrBSave()" style="display:none;background:#f1c40f;color:#1a1a2e;border:none;border-radius:7px;padding:6px 16px;font-size:.82rem;font-weight:800;cursor:pointer">💾 Enregistrer</button>
+      <button onclick="closeSheet('enrRegistryOv')" style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:7px;padding:5px 12px;font-size:.82rem;cursor:pointer">✕ Fermer</button>
     </div>
-    <div class="sh-body" style="overflow-y:auto;padding:16px">
 
-      <!-- ── FORMULAIRE ── -->
-      <div id="enrFormWrap" style="background:var(--ink2);border-radius:12px;margin-bottom:20px;border:1px solid rgba(241,196,15,.4);overflow:hidden">
+    <!-- ── Body: sidebar + main ── -->
+    <div style="display:flex;flex:1;overflow:hidden">
 
-        <!-- En-tête formulaire -->
-        <div style="background:rgba(241,196,15,.12);border-bottom:1px solid rgba(241,196,15,.3);padding:12px 16px;display:flex;align-items:center;gap:10px">
-          <div id="enrFormBadge" style="width:10px;height:10px;border-radius:50%;background:#f1c40f;flex-shrink:0"></div>
-          <div id="enrFormTitle" style="font-size:.88rem;font-weight:800;color:#f1c40f;flex:1">➕ Nouvel enregistrement ENR</div>
-          <input type="hidden" id="enrFormId"/>
+      <!-- Sidebar -->
+      <div id="enrBSidebar" style="width:230px;flex-shrink:0;border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;background:var(--ink2)">
+        <div style="padding:10px">
+          <button onclick="enrBNewTemplate()" style="width:100%;background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.45);color:#f1c40f;border-radius:8px;padding:8px;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:8px">➕ Nouveau modèle</button>
+          <input id="enrBSearch" class="fi" placeholder="🔍 Rechercher…" oninput="enrBFilterSidebar()" style="height:30px;font-size:.78rem;margin-bottom:6px"/>
+          <!-- Module filter chips -->
+          <div id="enrBModFilter" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"></div>
         </div>
-
-        <div style="padding:14px 16px">
-
-          <!-- ══ SECTION 1 : IDENTIFICATION ══ -->
-          <div class="enr-section-hd">🔖 Identification</div>
-          <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Code ENR <span style="color:#e74c3c">*</span></label>
-              <input class="fi" id="enrFormCode" placeholder="ENR-HSE 1" style="height:34px;font-size:.86rem;font-weight:800;letter-spacing:.8px;color:#f1c40f"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Titre / Intitulé <span style="color:#e74c3c">*</span></label>
-              <input class="fi" id="enrFormTitre" placeholder="ex. Fiche d'inspection périodique des extincteurs" style="height:34px;font-size:.85rem"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Statut</label>
-              <select class="fi" id="enrFormStatut" style="height:34px;font-size:.82rem">
-                <option value="Actif">🟢 Actif</option>
-                <option value="En révision">🟡 En révision</option>
-                <option value="Archivé">🔘 Archivé</option>
-                <option value="Suspendu">🔴 Suspendu</option>
-              </select>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Priorité</label>
-              <select class="fi" id="enrFormPriorite" style="height:34px;font-size:.82rem">
-                <option value="Normale">🔵 Normale</option>
-                <option value="Haute">🔴 Haute</option>
-                <option value="Basse">⚪ Basse</option>
-              </select>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Type de document</label>
-              <select class="fi" id="enrFormType" style="height:34px;font-size:.82rem">
-                <option value="">-- Type --</option>
-                <option value="Fiche inspection">📋 Fiche inspection</option>
-                <option value="Rapport">📊 Rapport</option>
-                <option value="Registre">📒 Registre</option>
-                <option value="Formulaire">📝 Formulaire</option>
-                <option value="Procédure">📌 Procédure</option>
-                <option value="Compte-rendu">📄 Compte-rendu</option>
-                <option value="Suivi">📈 Suivi / Tableau de bord</option>
-                <option value="Autre">🔹 Autre</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Module / Domaine</label>
-              <select class="fi" id="enrFormModule" style="height:34px;font-size:.82rem">
-                <option value="">-- Domaine --</option>
-                <option value="Tags HSE">🏷 Tags HSE</option>
-                <option value="Incendie">🧯 Incendie (Ext. / RIA)</option>
-                <option value="Nuisibles">🪲 Contrôle Nuisibles</option>
-                <option value="Sensibilisation">📋 Sensibilisation</option>
-                <option value="EPI">🦺 Équipements de protection</option>
-                <option value="Risques chimiques">⚗️ Risques chimiques</option>
-                <option value="Accidents / Incidents">🚨 Accidents / Incidents</option>
-                <option value="Autre">🔹 Autre</option>
-              </select>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Tags / Mots-clés <span style="color:var(--t3);font-weight:400">(séparés par virgule)</span></label>
-              <input class="fi" id="enrFormTags" placeholder="ex. incendie, inspection, mensuel" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-          <!-- Couleur -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <label class="fl" style="font-size:.72rem;white-space:nowrap;margin:0">Couleur</label>
-            <div id="enrColorPicker" style="display:flex;gap:7px;flex-wrap:wrap">
-              <div class="enr-color-opt" data-color="#f1c40f" style="background:#f1c40f" title="Or"></div>
-              <div class="enr-color-opt" data-color="#e74c3c" style="background:#e74c3c" title="Rouge"></div>
-              <div class="enr-color-opt" data-color="#e67e22" style="background:#e67e22" title="Orange"></div>
-              <div class="enr-color-opt" data-color="#2ecc71" style="background:#2ecc71" title="Vert"></div>
-              <div class="enr-color-opt" data-color="#3498db" style="background:#3498db" title="Bleu"></div>
-              <div class="enr-color-opt" data-color="#9b59b6" style="background:#9b59b6" title="Violet"></div>
-              <div class="enr-color-opt" data-color="#1abc9c" style="background:#1abc9c" title="Turquoise"></div>
-              <div class="enr-color-opt" data-color="#e91e63" style="background:#e91e63" title="Rose"></div>
-              <div class="enr-color-opt" data-color="#607d8b" style="background:#607d8b" title="Gris"></div>
-            </div>
-            <input type="hidden" id="enrFormColor" value="#f1c40f"/>
-          </div>
-
-          <!-- ══ SECTION 2 : MÉDIA — PHOTO & DOCUMENT ══ -->
-          <div class="enr-section-hd">📎 Photo &amp; Document</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-
-            <!-- Zone photo -->
-            <div>
-              <label class="fl" style="font-size:.72rem;margin-bottom:6px">📷 Photo / Miniature</label>
-              <input type="file" id="enrPhotoInput" accept="image/*" onchange="enrHandlePhoto(this)" style="display:none"/>
-              <div id="enrPhotoZone" onclick="document.getElementById('enrPhotoInput').click()"
-                style="border:2px dashed rgba(241,196,15,.4);border-radius:8px;min-height:90px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .2s;position:relative;overflow:hidden;background:rgba(241,196,15,.04)"
-                onmouseover="this.style.borderColor='rgba(241,196,15,.8)'" onmouseout="this.style.borderColor='rgba(241,196,15,.4)'">
-                <img id="enrPhotoPreviewImg" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:6px"/>
-                <div id="enrPhotoZonePlaceholder" style="text-align:center;pointer-events:none;z-index:1">
-                  <div style="font-size:1.4rem">🖼</div>
-                  <div style="font-size:.7rem;color:var(--t3)">Cliquer pour ajouter</div>
-                  <div style="font-size:.65rem;color:var(--t3)">JPG, PNG, WEBP</div>
-                </div>
-                <div id="enrPhotoOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 8px;z-index:2;display:flex;align-items:center;justify-content:space-between">
-                  <span id="enrPhotoStatus" style="font-size:.65rem;color:#fff"></span>
-                  <button onclick="event.stopPropagation();deleteEnrPhoto()" style="background:rgba(231,76,60,.7);border:none;color:#fff;border-radius:4px;padding:2px 6px;font-size:.65rem;cursor:pointer">✕ Suppr.</button>
-                </div>
-              </div>
-              <input type="hidden" id="enrFormPhotoUrl" value=""/>
-              <input type="hidden" id="enrFormPhotoId" value=""/>
-            </div>
-
-            <!-- Zone document -->
-            <div>
-              <label class="fl" style="font-size:.72rem;margin-bottom:6px">📄 Fichier document (PDF / DOC…)</label>
-              <input type="file" id="enrDocInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" onchange="enrHandleDoc(this)" style="display:none"/>
-              <div id="enrDocZone" onclick="document.getElementById('enrDocInput').click()"
-                style="border:2px dashed rgba(52,152,219,.4);border-radius:8px;min-height:90px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .2s;background:rgba(52,152,219,.04)"
-                onmouseover="this.style.borderColor='rgba(52,152,219,.8)'" onmouseout="this.style.borderColor='rgba(52,152,219,.4)'">
-                <div id="enrDocZonePlaceholder" style="text-align:center">
-                  <div style="font-size:1.4rem">📁</div>
-                  <div style="font-size:.7rem;color:var(--t3)">Cliquer pour ajouter</div>
-                  <div style="font-size:.65rem;color:var(--t3)">PDF, DOC, XLS, PPT…</div>
-                </div>
-                <div id="enrDocInfo" style="display:none;padding:8px;width:100%;box-sizing:border-box">
-                  <div style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.3);border-radius:6px;padding:8px;text-align:center">
-                    <div id="enrDocIcon" style="font-size:1.5rem">📄</div>
-                    <div id="enrDocName" style="font-size:.72rem;color:var(--t1);font-weight:600;word-break:break-all;margin:3px 0"></div>
-                    <div id="enrDocSize" style="font-size:.65rem;color:var(--t3)"></div>
-                    <button onclick="event.stopPropagation();deleteEnrDoc()" style="margin-top:5px;background:rgba(231,76,60,.7);border:none;color:#fff;border-radius:4px;padding:2px 8px;font-size:.65rem;cursor:pointer">✕ Retirer</button>
-                  </div>
-                </div>
-              </div>
-              <div id="enrDocUploadStatus" style="font-size:.7rem;color:var(--t3);margin-top:3px;text-align:center"></div>
-              <input type="hidden" id="enrFormDocUrl" value=""/>
-              <input type="hidden" id="enrFormDocId" value=""/>
-              <input type="hidden" id="enrFormDocNom" value=""/>
-            </div>
-          </div>
-
-          <!-- ══ SECTION 3 : VERSIONING & DATES ══ -->
-          <div class="enr-section-hd">🔄 Versioning &amp; Planification</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Révision</label>
-              <input class="fi" id="enrFormRev" placeholder="ex. 01" style="height:34px;font-size:.85rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Édition / Année</label>
-              <input class="fi" id="enrFormEdition" placeholder="ex. 2025" style="height:34px;font-size:.85rem"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Date de création</label>
-              <input class="fi" id="enrFormDateCreation" type="date" style="height:34px;font-size:.82rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Dernière révision</label>
-              <input class="fi" id="enrFormDateRev" type="date" style="height:34px;font-size:.82rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Prochaine révision</label>
-              <input class="fi" id="enrFormDateProchaine" type="date" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-          <div style="margin-bottom:12px">
-            <label class="fl" style="font-size:.72rem">Fréquence de mise à jour</label>
-            <select class="fi" id="enrFormFrequence" style="height:34px;font-size:.82rem">
-              <option value="">-- Fréquence --</option>
-              <option value="Mensuelle">📅 Mensuelle</option>
-              <option value="Trimestrielle">📅 Trimestrielle</option>
-              <option value="Semestrielle">📅 Semestrielle</option>
-              <option value="Annuelle">📅 Annuelle</option>
-              <option value="Sur événement">⚡ Sur événement</option>
-              <option value="Autre">🔹 Autre</option>
-            </select>
-          </div>
-          <!-- Historique des révisions -->
-          <div style="margin-bottom:12px">
-            <label class="fl" style="font-size:.72rem">Historique des révisions</label>
-            <textarea class="fi" id="enrFormHistorique" rows="3" placeholder="Rév. 01 — 2024-01-15 — Création initiale&#10;Rév. 02 — 2025-03-10 — Mise à jour suite audit…" style="font-size:.78rem;resize:vertical;min-height:60px;font-family:monospace"></textarea>
-          </div>
-
-          <!-- ══ SECTION 4 : RESPONSABILITÉS ══ -->
-          <div class="enr-section-hd">👤 Responsabilités</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Responsable du document</label>
-              <input class="fi" id="enrFormResponsable" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Rédacteur</label>
-              <input class="fi" id="enrFormRedacteur" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Approbateur</label>
-              <input class="fi" id="enrFormApprobateur" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Diffusion</label>
-              <input class="fi" id="enrFormDiffusion" placeholder="ex. HSE, Direction, Maintenance" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-
-          <!-- ══ SECTION 5 : GESTION DOCUMENTAIRE ══ -->
-          <div class="enr-section-hd">🗄 Gestion documentaire</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Durée de conservation</label>
-              <select class="fi" id="enrFormDuree" style="height:34px;font-size:.82rem">
-                <option value="">-- Durée --</option>
-                <option value="1 an">1 an</option>
-                <option value="3 ans">3 ans</option>
-                <option value="5 ans">5 ans</option>
-                <option value="10 ans">10 ans</option>
-                <option value="Permanente">Permanente</option>
-              </select>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Support</label>
-              <select class="fi" id="enrFormSupport" style="height:34px;font-size:.82rem">
-                <option value="">-- Support --</option>
-                <option value="Papier">🖨 Papier</option>
-                <option value="Numérique">💻 Numérique</option>
-                <option value="Les deux">📂 Papier + Numérique</option>
-              </select>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">Exemplaires</label>
-              <input class="fi" id="enrFormExemplaires" type="number" min="1" placeholder="ex. 2" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div>
-              <label class="fl" style="font-size:.72rem">Lieu de classement / archivage</label>
-              <input class="fi" id="enrFormLieu" placeholder="ex. Armoire HSE — Bureau 12" style="height:34px;font-size:.82rem"/>
-            </div>
-            <div>
-              <label class="fl" style="font-size:.72rem">ENR liés / dépendances</label>
-              <input class="fi" id="enrFormLies" placeholder="ex. ENR-HSE 2, ENR-HSE 7" style="height:34px;font-size:.82rem"/>
-            </div>
-          </div>
-          <div style="margin-bottom:12px">
-            <label class="fl" style="font-size:.72rem">Référence réglementaire / normative</label>
-            <input class="fi" id="enrFormRef" placeholder="ex. Art. R4215-1 Code du travail / ISO 45001 § 9.1" style="height:34px;font-size:.82rem"/>
-          </div>
-
-          <!-- ══ SECTION 6 : COMPLÉMENTS ══ -->
-          <div class="enr-section-hd">📝 Compléments</div>
-          <div style="margin-bottom:8px">
-            <label class="fl" style="font-size:.72rem">Objet / Description</label>
-            <textarea class="fi" id="enrFormDesc" rows="3" placeholder="Décrivez l'objet du document, son périmètre d'application, les données enregistrées…" style="font-size:.82rem;resize:vertical;min-height:64px"></textarea>
-          </div>
-          <div style="margin-bottom:8px">
-            <label class="fl" style="font-size:.72rem">Lien Drive / URL externe</label>
-            <input class="fi" id="enrFormLien" placeholder="https://drive.google.com/…" style="height:34px;font-size:.82rem"/>
-          </div>
-          <div style="margin-bottom:16px">
-            <label class="fl" style="font-size:.72rem">Observations / Remarques internes</label>
-            <textarea class="fi" id="enrFormObs" rows="2" placeholder="Toute remarque utile à la gestion de ce document…" style="font-size:.82rem;resize:none"></textarea>
-          </div>
-
-          <!-- Actions -->
-          <div style="display:flex;gap:8px">
-            <button class="btn" onclick="submitEnrEntry()" style="flex:1;height:42px;font-size:.9rem;background:#f1c40f;color:#1a1a2e;font-weight:800;border:none;border-radius:8px">💾 Enregistrer l'ENR</button>
-            <button class="btn" onclick="resetEnrForm()" style="height:42px;padding:0 18px;font-size:.82rem;background:var(--ink3);color:var(--t2);border:1px solid var(--line);border-radius:8px">✕ Annuler</button>
-          </div>
+        <div id="enrBTplList" style="flex:1;padding:0 8px 12px">
+          <div style="color:var(--t3);font-size:.78rem;text-align:center;padding:20px;font-style:italic">Chargement…</div>
         </div>
       </div>
 
-      <!-- ── LISTE ENR ── -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px">ENR configurés</div>
-        <div id="enrCount" style="font-size:.72rem;color:var(--t3)"></div>
+      <!-- Main panel -->
+      <div id="enrBMain" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+
+        <!-- Welcome state (default) -->
+        <div id="enrBWelcome" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--t3)">
+          <div style="font-size:3rem">📋</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--t2)">Sélectionnez un modèle ENR</div>
+          <div style="font-size:.78rem;text-align:center;max-width:300px">ou créez un nouveau modèle pour démarrer la construction de votre formulaire ENR.</div>
+          <button onclick="enrBNewTemplate()" style="background:rgba(241,196,15,.18);border:1px solid rgba(241,196,15,.45);color:#f1c40f;border-radius:8px;padding:8px 20px;font-size:.84rem;font-weight:700;cursor:pointer">➕ Créer un nouveau modèle</button>
+        </div>
+
+        <!-- Tab bar (hidden until template selected) -->
+        <div id="enrBTabs" style="display:none;flex-shrink:0;border-bottom:1px solid var(--line);background:var(--ink2);padding:0 14px;display:none">
+          <button class="enrBTab on" data-tab="info" onclick="enrBSwitchTab('info')">ℹ️ Informations</button>
+          <button class="enrBTab" data-tab="builder" onclick="enrBSwitchTab('builder')">🔧 Structure</button>
+          <button class="enrBTab" data-tab="records" onclick="enrBSwitchTab('records')">📝 Enregistrements</button>
+        </div>
+
+        <!-- Tab: Informations -->
+        <div id="enrBTabInfo" class="enrBTabPane" style="flex:1;overflow-y:auto;padding:16px;display:none">
+          <div style="max-width:700px;margin:0 auto">
+
+            <div style="display:grid;grid-template-columns:130px 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="fl" style="font-size:.72rem">Code ENR <span style="color:#e74c3c">*</span></label>
+                <input class="fi" id="enrBCode" placeholder="ENR-HSE 1" style="height:34px;font-size:.88rem;font-weight:800;color:#f1c40f;letter-spacing:.5px"/>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Titre / Intitulé <span style="color:#e74c3c">*</span></label>
+                <input class="fi" id="enrBTitre" placeholder="ex. Fiche d'inspection des extincteurs" style="height:34px;font-size:.85rem"/>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="fl" style="font-size:.72rem">Statut</label>
+                <select class="fi" id="enrBStatut" style="height:34px;font-size:.82rem">
+                  <option value="Actif">🟢 Actif</option>
+                  <option value="Brouillon">🟡 Brouillon</option>
+                  <option value="Archivé">🔘 Archivé</option>
+                </select>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Modules associés <span style="color:var(--t3);font-weight:400">(multi-sélection)</span></label>
+                <div id="enrBModulesWrap" style="display:flex;flex-wrap:wrap;gap:5px;padding:5px;background:var(--ink3);border:1px solid var(--line);border-radius:8px;min-height:34px">
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Tags HSE" class="enrBModChk"/> 🏷 Tags HSE</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Incendie" class="enrBModChk"/> 🧯 Incendie</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Nuisibles" class="enrBModChk"/> 🪲 Nuisibles</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Sensibilisation" class="enrBModChk"/> 📋 Sensibilisation</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="EPI" class="enrBModChk"/> 🦺 EPI</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Risques chimiques" class="enrBModChk"/> ⚗️ Chimique</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Accidents" class="enrBModChk"/> 🚨 Accidents</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:.72rem;cursor:pointer;color:var(--t1);white-space:nowrap"><input type="checkbox" value="Autre" class="enrBModChk"/> 🔹 Autre</label>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:10px">
+              <label class="fl" style="font-size:.72rem">Description / Objet</label>
+              <textarea class="fi" id="enrBDesc" rows="3" placeholder="Décrivez l'objet de cet ENR, son périmètre, ses données…" style="resize:vertical;font-size:.82rem;min-height:60px"></textarea>
+            </div>
+
+            <!-- Couleur -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <label class="fl" style="font-size:.72rem;margin:0;white-space:nowrap">Couleur</label>
+              <div id="enrBColorPicker" style="display:flex;gap:7px;flex-wrap:wrap">
+                <div class="enrBColorOpt" data-color="#f1c40f" style="background:#f1c40f" title="Or"></div>
+                <div class="enrBColorOpt" data-color="#e74c3c" style="background:#e74c3c" title="Rouge"></div>
+                <div class="enrBColorOpt" data-color="#e67e22" style="background:#e67e22" title="Orange"></div>
+                <div class="enrBColorOpt" data-color="#2ecc71" style="background:#2ecc71" title="Vert"></div>
+                <div class="enrBColorOpt" data-color="#3498db" style="background:#3498db" title="Bleu"></div>
+                <div class="enrBColorOpt" data-color="#9b59b6" style="background:#9b59b6" title="Violet"></div>
+                <div class="enrBColorOpt" data-color="#1abc9c" style="background:#1abc9c" title="Turquoise"></div>
+                <div class="enrBColorOpt" data-color="#e91e63" style="background:#e91e63" title="Rose"></div>
+                <div class="enrBColorOpt" data-color="#607d8b" style="background:#607d8b" title="Gris"></div>
+              </div>
+              <input type="hidden" id="enrBColor" value="#f1c40f"/>
+            </div>
+
+            <!-- Métadonnées documentaires -->
+            <div class="enrBSectionHd">📋 Métadonnées documentaires</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="fl" style="font-size:.72rem">Révision</label>
+                <input class="fi" id="enrBRev" placeholder="01" style="height:34px;font-size:.85rem"/>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Édition</label>
+                <input class="fi" id="enrBEdition" placeholder="2025" style="height:34px;font-size:.85rem"/>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Fréquence mise à jour</label>
+                <select class="fi" id="enrBFrequence" style="height:34px;font-size:.8rem">
+                  <option value="">-- Fréquence --</option>
+                  <option value="Mensuelle">Mensuelle</option>
+                  <option value="Trimestrielle">Trimestrielle</option>
+                  <option value="Semestrielle">Semestrielle</option>
+                  <option value="Annuelle">Annuelle</option>
+                  <option value="Sur événement">Sur événement</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="fl" style="font-size:.72rem">Responsable</label>
+                <input class="fi" id="enrBResponsable" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Approbateur</label>
+                <input class="fi" id="enrBApprobateur" placeholder="Nom / Fonction" style="height:34px;font-size:.82rem"/>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="fl" style="font-size:.72rem">Durée de conservation</label>
+                <select class="fi" id="enrBDuree" style="height:34px;font-size:.8rem">
+                  <option value="">--</option>
+                  <option value="1 an">1 an</option>
+                  <option value="3 ans">3 ans</option>
+                  <option value="5 ans">5 ans</option>
+                  <option value="10 ans">10 ans</option>
+                  <option value="Permanente">Permanente</option>
+                </select>
+              </div>
+              <div>
+                <label class="fl" style="font-size:.72rem">Référence réglementaire</label>
+                <input class="fi" id="enrBRef" placeholder="ISO 45001 / Art. R4215-1…" style="height:34px;font-size:.82rem"/>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px">
+              <button onclick="enrBSave()" style="flex:1;height:40px;background:#f1c40f;color:#1a1a2e;border:none;border-radius:8px;font-size:.88rem;font-weight:800;cursor:pointer">💾 Enregistrer le modèle</button>
+              <button onclick="enrBDeleteTemplate()" style="height:40px;padding:0 16px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:8px;font-size:.82rem;cursor:pointer">🗑 Supprimer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Structure (builder) -->
+        <div id="enrBTabBuilder" class="enrBTabPane" style="flex:1;overflow-y:auto;padding:14px;display:none">
+          <div style="max-width:780px;margin:0 auto">
+
+            <!-- Add section toolbar -->
+            <div style="background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+              <span style="font-size:.72rem;font-weight:700;color:var(--t2);white-space:nowrap">➕ Ajouter une section :</span>
+              <button class="enrBAddBtn" onclick="enrBAddSection('champs')">📝 Groupe de champs</button>
+              <button class="enrBAddBtn" onclick="enrBAddSection('tableau')">📊 Tableau</button>
+              <button class="enrBAddBtn" onclick="enrBAddSection('texte')">📄 Bloc de texte</button>
+              <button class="enrBAddBtn" onclick="enrBAddSection('signature')">✍️ Signatures</button>
+              <button class="enrBAddBtn" onclick="enrBAddSection('separateur')">── Séparateur</button>
+            </div>
+
+            <div id="enrBSectionsList">
+              <div style="color:var(--t3);font-size:.82rem;text-align:center;padding:30px;font-style:italic;border:2px dashed var(--line);border-radius:10px">
+                Aucune section — cliquez sur un bouton ci-dessus pour ajouter la première section
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Enregistrements -->
+        <div id="enrBTabRecords" class="enrBTabPane" style="flex:1;overflow:hidden;display:none;flex-direction:column">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;gap:10px;background:var(--ink2)">
+            <div style="font-size:.82rem;font-weight:700;color:var(--t2)">Enregistrements</div>
+            <div id="enrBRecCount" style="font-size:.72rem;color:var(--t3)"></div>
+            <div style="flex:1"></div>
+            <button onclick="enrBNewRecord()" style="background:rgba(46,204,113,.18);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:7px;padding:5px 14px;font-size:.78rem;font-weight:700;cursor:pointer">➕ Nouvel enregistrement</button>
+          </div>
+          <div id="enrBRecList" style="flex:1;overflow-y:auto;padding:14px">
+            <div style="color:var(--t3);font-size:.82rem;text-align:center;padding:30px;font-style:italic">Chargement…</div>
+          </div>
+        </div>
+
+      </div><!-- /enrBMain -->
+    </div><!-- /body flex -->
+  </div><!-- /enrBRoot -->
+</div><!-- /enrRegistryOv -->
+
+<!-- ── ENR: Overlay de saisie d'un enregistrement ── -->
+<div class="ov" id="enrFillOv" style="z-index:10001;padding:0;align-items:stretch;justify-content:stretch">
+  <div style="display:flex;flex-direction:column;width:100%;max-width:720px;height:100%;margin:0 auto;background:var(--ink1)">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--ink2)">
+      <div id="enrFillTitle" style="font-size:.9rem;font-weight:800;color:#f1c40f;flex:1">📝 Nouvel enregistrement</div>
+      <button onclick="closeSheet('enrFillOv')" style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:7px;padding:5px 12px;font-size:.82rem;cursor:pointer">✕</button>
+    </div>
+    <!-- Record meta -->
+    <div style="padding:10px 14px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--ink2);display:grid;grid-template-columns:130px 1fr 1fr;gap:8px">
+      <div>
+        <label class="fl" style="font-size:.7rem">Réf / Code</label>
+        <input class="fi" id="enrFillRef" placeholder="auto" style="height:30px;font-size:.82rem"/>
       </div>
-      <!-- Filtre rapide -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="enrFilterRow"></div>
-      <div id="enrRegistryList">
-        <div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Chargement…</div>
+      <div>
+        <label class="fl" style="font-size:.7rem">Auteur</label>
+        <input class="fi" id="enrFillAuteur" placeholder="Nom / Fonction" style="height:30px;font-size:.82rem"/>
       </div>
+      <div>
+        <label class="fl" style="font-size:.7rem">Statut</label>
+        <select class="fi" id="enrFillStatut" style="height:30px;font-size:.8rem">
+          <option value="Brouillon">🟡 Brouillon</option>
+          <option value="Validé">🟢 Validé</option>
+          <option value="Clôturé">🔘 Clôturé</option>
+        </select>
+      </div>
+    </div>
+    <div id="enrFillBody" style="flex:1;overflow-y:auto;padding:14px"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--line);flex-shrink:0;display:flex;gap:8px;background:var(--ink2)">
+      <button onclick="enrBSubmitRecord()" style="flex:1;height:40px;background:#2ecc71;color:#1a1a2e;border:none;border-radius:8px;font-size:.88rem;font-weight:800;cursor:pointer">💾 Enregistrer</button>
+      <button onclick="closeSheet('enrFillOv')" style="height:40px;padding:0 20px;background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:8px;font-size:.82rem;cursor:pointer">Annuler</button>
     </div>
   </div>
 </div>
 
 <style>
-.enr-section-hd{font-size:.7rem;font-weight:800;color:rgba(241,196,15,.85);text-transform:uppercase;letter-spacing:.8px;padding:5px 0;margin:6px 0 8px;border-bottom:1px solid rgba(241,196,15,.18);display:flex;align-items:center;gap:5px}
-.enr-color-opt{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
-.enr-color-opt:hover{transform:scale(1.18)}
-.enr-color-opt.selected{border-color:#fff;transform:scale(1.22);box-shadow:0 0 0 2px rgba(255,255,255,.45)}
-.enr-filter-btn{background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:20px;padding:4px 12px;font-size:.72rem;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
-.enr-filter-btn.on{background:rgba(241,196,15,.2);border-color:rgba(241,196,15,.5);color:#f1c40f;font-weight:700}
-.enr-tag-chip{display:inline-block;background:rgba(241,196,15,.12);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:10px;padding:1px 7px;font-size:.65rem;font-weight:600;margin:1px}
-.enr-doc-icon-pdf{color:#e74c3c}.enr-doc-icon-doc{color:#3498db}.enr-doc-icon-xls{color:#2ecc71}.enr-doc-icon-ppt{color:#e67e22}
+/* ENR Builder styles */
+.enrBTab{background:none;border:none;border-bottom:3px solid transparent;color:var(--t3);padding:10px 16px;font-size:.8rem;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
+.enrBTab:hover{color:var(--t1)}
+.enrBTab.on{color:#f1c40f;border-bottom-color:#f1c40f}
+.enrBTabPane{display:none}
+.enrBTabPane.on{display:flex;flex-direction:column}
+.enrBSectionHd{font-size:.68rem;font-weight:800;color:rgba(241,196,15,.8);text-transform:uppercase;letter-spacing:.8px;padding:4px 0;margin:12px 0 8px;border-bottom:1px solid rgba(241,196,15,.2)}
+.enrBAddBtn{background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:6px;padding:5px 10px;font-size:.75rem;cursor:pointer;transition:background .15s,border-color .15s}
+.enrBAddBtn:hover{background:rgba(241,196,15,.12);border-color:rgba(241,196,15,.4);color:#f1c40f}
+.enrBColorOpt{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
+.enrBColorOpt:hover{transform:scale(1.18)}
+.enrBColorOpt.sel{border-color:#fff;transform:scale(1.22);box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+.enrBTplItem{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;transition:background .15s,border-color .15s;display:flex;align-items:flex-start;gap:8px}
+.enrBTplItem:hover{background:rgba(255,255,255,.05);border-color:var(--line)}
+.enrBTplItem.on{background:rgba(241,196,15,.1);border-color:rgba(241,196,15,.35)}
+.enrBSecCard{background:var(--ink2);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.enrBSecCard.dragging{opacity:.5}
+.enrBSecHead{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--ink3);border-bottom:1px solid var(--line);cursor:pointer}
+.enrBSecBody{padding:12px}
+.enrBFieldRow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--line)}
+.enrBFieldRow:last-child{border-bottom:none}
+.enrBSmBtn{background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:5px;padding:3px 7px;font-size:.72rem;cursor:pointer;flex-shrink:0}
+.enrBSmBtn:hover{background:var(--ink4)}
+.enrBSmBtn.del{border-color:rgba(231,76,60,.4);color:#e74c3c}
+.enrBSmBtn.del:hover{background:rgba(231,76,60,.12)}
+.enrBRecCard{background:var(--ink2);border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.enrFillSec{background:var(--ink2);border:1px solid var(--line);border-radius:9px;margin-bottom:12px;overflow:hidden}
+.enrFillSecHead{padding:8px 12px;background:var(--ink3);border-bottom:1px solid var(--line);font-size:.75rem;font-weight:700;color:var(--t2)}
+.enrFillSecBody{padding:10px 12px}
 </style>
 
 <!-- ═══ OVERLAY: Gestion des Prestataires & Griffes ═══ -->
@@ -3728,65 +3684,48 @@ function _loadEnrForDashboard() {
     .withSuccessHandler(function(r) {
       var body = document.getElementById('adminEnrWidgetBody');
       if (!body) return;
-      if (!r||!r.success||!r.data||!r.data.length) {
-        body.innerHTML = '<div style="color:var(--t3);font-size:.8rem;font-style:italic">Aucun ENR configuré — <span onclick="openEnrRegistryPanel()" style="color:#f1c40f;cursor:pointer;text-decoration:underline">Ajouter maintenant</span></div>';
+      var list = (r&&r.success) ? (r.templates||[]) : [];
+      _enrData = list;
+      _enrBTpls = list;
+      if (!list.length) {
+        body.innerHTML = '<div style="color:var(--t3);font-size:.8rem;font-style:italic">Aucun modèle ENR — <span onclick="openEnrRegistryPanel()" style="color:#f1c40f;cursor:pointer;text-decoration:underline">Créer un modèle</span></div>';
         return;
       }
-      _enrData = r.data;
-      var stDot = { 'Actif':'#2ecc71','En révision':'#f1c40f','Archivé':'#7f8c8d','Suspendu':'#e74c3c' };
-      var today = new Date(); today.setHours(0,0,0,0);
-      // Stats rapides
-      var actifs   = r.data.filter(function(e){ return !e.statut||e.statut==='Actif'; }).length;
-      var revision = r.data.filter(function(e){ return e.statut==='En révision'; }).length;
-      var alertes  = r.data.filter(function(e){
-        if (!e.dateProchaine) return false;
-        return (new Date(e.dateProchaine)-today)/(1000*60*60*24) <= 30;
-      }).length;
+      var stCol = { 'Actif':'#2ecc71','Brouillon':'#f1c40f','Archivé':'#7f8c8d' };
+      var actifs  = list.filter(function(t){ return t.statut==='Actif'; }).length;
+      var brouil  = list.filter(function(t){ return t.statut==='Brouillon'; }).length;
       body.innerHTML =
         '<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">'
         +'<div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
+          +'<div style="font-weight:800;font-size:1.2rem;color:#2ecc71">'+list.length+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t3)">Modèles</div></div>'
+        +'<div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
           +'<div style="font-weight:800;font-size:1.2rem;color:#2ecc71">'+actifs+'</div>'
           +'<div style="font-size:.68rem;color:var(--t3)">Actifs</div></div>'
-        +'<div style="background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
-          +'<div style="font-weight:800;font-size:1.2rem;color:#f1c40f">'+revision+'</div>'
-          +'<div style="font-size:.68rem;color:var(--t3)">En révision</div></div>'
-        +(alertes?'<div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
-          +'<div style="font-weight:800;font-size:1.2rem;color:#e74c3c">'+alertes+'</div>'
-          +'<div style="font-size:.68rem;color:var(--t3)">Révisions urgentes</div></div>':'')
+        +(brouil?'<div style="background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:80px">'
+          +'<div style="font-weight:800;font-size:1.2rem;color:#f1c40f">'+brouil+'</div>'
+          +'<div style="font-size:.68rem;color:var(--t3)">Brouillons</div></div>':'')
         +'</div>'
-        +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">'+
-        r.data.map(function(e){
-          var col  = e.color || '#f1c40f';
-          var dot  = stDot[e.statut] || '#2ecc71';
-          var warn = '';
-          if (e.dateProchaine) {
-            var diff = Math.round((new Date(e.dateProchaine)-today)/(1000*60*60*24));
-            if (diff<0)       warn='<div style="font-size:.63rem;color:#e74c3c;font-weight:700;margin-top:3px">⚠ Révision en retard</div>';
-            else if(diff<=30) warn='<div style="font-size:.63rem;color:#f1c40f;font-weight:700;margin-top:3px">⏰ Dans '+diff+'j</div>';
-          }
-          return '<div style="background:var(--ink3);border-radius:9px;border:1px solid var(--line);border-left:3px solid '+col+';overflow:hidden;cursor:pointer" onclick="openEnrRegistryPanel()">'
-            // Photo si présente
-            +(e.photoUrl?'<div style="width:100%;height:90px;overflow:hidden">'
-              +'<img src="'+esc(e.photoUrl)+'" style="width:100%;height:90px;object-fit:cover;display:block"/>'
-              +'</div>':'')
-            +'<div style="padding:9px 11px">'
-              +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">'
-                +'<span style="width:6px;height:6px;border-radius:50%;background:'+dot+';flex-shrink:0"></span>'
-                +'<span style="font-weight:900;font-size:.8rem;color:'+col+';letter-spacing:.5px">'+esc(e.code)+'</span>'
-                +(e.priorite&&e.priorite!=='Normale'?'<span style="margin-left:auto;font-size:.6rem;color:'+({'Haute':'#e74c3c','Basse':'#7f8c8d'}[e.priorite]||'#3498db')+'">●</span>':'')
-              +'</div>'
-              +'<div style="font-size:.77rem;color:var(--t1);font-weight:600;line-height:1.3;margin-bottom:3px">'+esc(e.titre)+'</div>'
-              +(e.module?'<div style="font-size:.66rem;color:'+col+';opacity:.8;margin-bottom:2px">'+esc(e.module)+'</div>':'')
-              +(e.responsable?'<div style="font-size:.65rem;color:var(--t3)">👤 '+esc(e.responsable)+'</div>':'')
-              +((e.rev||e.edition)?'<div style="font-size:.63rem;color:var(--t3)">'+(e.rev?'Rév.'+esc(e.rev)+' ':'')+  (e.edition?'Éd.'+esc(e.edition):'')+'</div>':'')
-              +(e.docUrl?'<div style="font-size:.63rem;color:#3498db;margin-top:3px">📎 '+esc(e.docNom||'Document')+'</div>':'')
-              +warn
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">'
+        + list.slice(0,8).map(function(t){
+          var col = t.color||'#f1c40f';
+          var sc  = stCol[t.statut]||'#7f8c8d';
+          var mods = (t.modules||[]).slice(0,2).map(function(m){ return '<span style="font-size:.6rem;background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 5px">'+esc(m)+'</span>'; }).join(' ');
+          var nsec = (t.sections||[]).length;
+          return '<div style="background:var(--ink3);border-radius:9px;border:1px solid var(--line);border-left:3px solid '+col+';padding:9px 11px;cursor:pointer" onclick="openEnrRegistryPanel()">'
+            +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">'
+              +'<span style="width:6px;height:6px;border-radius:50%;background:'+sc+';flex-shrink:0"></span>'
+              +'<span style="font-weight:900;font-size:.8rem;color:'+col+';letter-spacing:.5px">'+esc(t.code||t.titre)+'</span>'
             +'</div>'
-            +'</div>';
-        }).join('')+'</div>';
+            +'<div style="font-size:.76rem;color:var(--t1);font-weight:600;line-height:1.3;margin-bottom:5px">'+esc(t.titre)+'</div>'
+            +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'+mods+'</div>'
+            +(nsec ? '<div style="font-size:.63rem;color:var(--t3)">'+nsec+' section'+(nsec>1?'s':'')+'</div>' : '')
+          +'</div>';
+        }).join('')
+        +'</div>';
     })
     .withFailureHandler(function(){})
-    .getEnrRegistry(S.adminKey);
+    .getAllEnrTemplates(S.adminKey);
 }
 
 /* ══════════════════════════════════════════
@@ -8367,6 +8306,21 @@ var _prestaFormSigMime  = '';
    ADMIN — REGISTRE ENR
 ══════════════════════════════════════════ */
 
+
+// ══════════════════════════════════════════════════════════════════
+//  ENR BUILDER — State & Init
+// ══════════════════════════════════════════════════════════════════
+var _enrBTpls       = [];   // all templates from server
+var _enrBActiveTpl  = null; // currently selected template object
+var _enrBSections   = [];   // working copy of sections being edited
+var _enrBTab        = 'info';
+var _enrBRecords    = [];
+var _enrBFillRec    = null; // record being filled/edited
+var _enrBFillTpl    = null; // template for fill form
+var _enrBModFilter  = '';
+var _enrBDirty      = false;
+
+// Keep old vars for legacy dashboard code
 var _enrData = [];
 var _enrFilterModule = '';
 var _enrPhotoB64 = ''; var _enrPhotoMime = '';
@@ -8374,1520 +8328,651 @@ var _enrDocB64  = ''; var _enrDocMime   = ''; var _enrDocFileName = '';
 
 function openEnrRegistryPanel() {
   if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
-  resetEnrForm();
-  _initEnrColorPicker();
   openSheet('enrRegistryOv');
-  _loadEnrRegistry();
+  _enrBLoadTemplates();
+  _enrBInitColorPicker();
 }
 
-function _initEnrColorPicker() {
-  document.querySelectorAll('.enr-color-opt').forEach(function(el) {
-    el.onclick = function() {
-      document.querySelectorAll('.enr-color-opt').forEach(function(x){ x.classList.remove('selected'); });
-      el.classList.add('selected');
-      document.getElementById('enrFormColor').value = el.dataset.color;
-    };
-  });
-  var first = document.querySelector('.enr-color-opt');
-  if (first) { first.classList.add('selected'); document.getElementById('enrFormColor').value = first.dataset.color; }
-}
-
-function _loadEnrRegistry() {
+function _enrBLoadTemplates() {
   google.script.run
     .withSuccessHandler(function(r) {
-      if (r&&r.success) { _enrData = r.data || []; _renderEnrFilterRow(); _renderEnrRegistry(); }
-      else toast((r&&r.error)||'Erreur chargement ENR','err');
+      if (!r||!r.success) { toast((r&&r.error)||'Erreur chargement','err'); return; }
+      _enrBTpls = r.templates || [];
+      _enrData  = _enrBTpls; // keep dashboard compat
+      _enrBRenderSidebar();
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
-    .getEnrRegistry(S.adminKey);
+    .getAllEnrTemplates(S.adminKey);
 }
 
-function _renderEnrFilterRow() {
-  var modules = [];
-  _enrData.forEach(function(e){ if (e.module && modules.indexOf(e.module)<0) modules.push(e.module); });
-  var row = document.getElementById('enrFilterRow');
-  if (!row) return;
-  row.innerHTML = '<button class="enr-filter-btn'+((!_enrFilterModule)?'  on':'')+'" onclick="setEnrFilter(\'\')">Tous ('+_enrData.length+')</button>'
-    + modules.map(function(m){
-        var cnt = _enrData.filter(function(e){ return e.module===m; }).length;
-        return '<button class="enr-filter-btn'+(_enrFilterModule===m?' on':'')+'" onclick="setEnrFilter(\''+m+'\')">'+esc(m)+' ('+cnt+')</button>';
-      }).join('');
-  var cnt = document.getElementById('enrCount');
-  if (cnt) cnt.textContent = _enrData.length + ' enregistrement' + (_enrData.length>1?'s':'');
-}
-
-function setEnrFilter(m) {
-  _enrFilterModule = m;
-  _renderEnrFilterRow();
-  _renderEnrRegistry();
-}
-
-var _ENR_STATUT_STYLE = {
-  'Actif':       { dot:'#2ecc71', bg:'rgba(46,204,113,.15)', border:'rgba(46,204,113,.4)', label:'🟢 Actif' },
-  'En révision': { dot:'#f1c40f', bg:'rgba(241,196,15,.15)', border:'rgba(241,196,15,.4)', label:'🟡 En révision' },
-  'Archivé':     { dot:'#7f8c8d', bg:'rgba(127,140,141,.15)', border:'rgba(127,140,141,.4)', label:'🔘 Archivé' },
-  'Suspendu':    { dot:'#e74c3c', bg:'rgba(231,76,60,.15)', border:'rgba(231,76,60,.4)', label:'🔴 Suspendu' }
-};
-
-function _renderEnrRegistry() {
-  var body = document.getElementById('enrRegistryList');
-  if (!body) return;
-  var list = _enrFilterModule ? _enrData.filter(function(e){ return e.module===_enrFilterModule; }) : _enrData;
-  if (!list.length) {
-    body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">'
-      + (_enrFilterModule ? 'Aucun ENR dans ce domaine.' : 'Aucun ENR configuré — utilisez le formulaire ci-dessus pour en ajouter.')
-      +'</div>';
-    return;
-  }
-  body.innerHTML = list.map(function(e) {
-    var realIdx = _enrData.indexOf(e);
-    var col  = e.color || '#f1c40f';
-    var st   = _ENR_STATUT_STYLE[e.statut] || _ENR_STATUT_STYLE['Actif'];
-    var today = new Date(); today.setHours(0,0,0,0);
-    var prochaineAlert = '';
-    if (e.dateProchaine) {
-      var dp = new Date(e.dateProchaine);
-      var diff = Math.round((dp-today)/(1000*60*60*24));
-      if (diff < 0)       prochaineAlert = '<span style="color:#e74c3c;font-size:.7rem;font-weight:700">⚠ Révision en retard de '+Math.abs(diff)+'j</span>';
-      else if (diff <= 30) prochaineAlert = '<span style="color:#f1c40f;font-size:.7rem;font-weight:700">⏰ Révision dans '+diff+'j</span>';
-    }
-    var priCol = { 'Haute':'#e74c3c','Normale':'#3498db','Basse':'#7f8c8d' }[e.priorite||'Normale']||'#3498db';
-    var tagChips = (e.tags||'').split(',').filter(function(t){ return t.trim(); })
-      .map(function(t){ return '<span class="enr-tag-chip">'+esc(t.trim())+'</span>'; }).join('');
-    return '<div style="background:var(--ink2);border-radius:10px;margin-bottom:12px;border:1px solid var(--line);border-left:4px solid '+col+';overflow:hidden">'
-      // ── Header ──
-      +'<div style="display:flex;align-items:stretch;gap:0">'
-        // Miniature photo si présente
-        +(e.photoUrl?'<div style="width:80px;flex-shrink:0;cursor:pointer" onclick="window.open(\''+esc(e.photoUrl)+'\',\'_blank\')">'
-          +'<img src="'+esc(e.photoUrl)+'" style="width:80px;height:100%;min-height:70px;object-fit:cover;display:block"/></div>':'')
-        +'<div style="flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:5px">'
-          +'<div style="display:flex;align-items:flex-start;gap:8px">'
-            +'<div style="flex-shrink:0;background:'+col+'22;border:1px solid '+col+'55;border-radius:7px;padding:4px 9px;text-align:center">'
-              +'<div style="font-weight:900;font-size:.85rem;color:'+col+';letter-spacing:.5px;white-space:nowrap">'+esc(e.code)+'</div>'
-              +(e.typeDoc?'<div style="font-size:.58rem;color:'+col+';opacity:.7">'+esc(e.typeDoc)+'</div>':'')
-            +'</div>'
-            +'<div style="flex:1;min-width:0">'
-              +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);line-height:1.3;margin-bottom:3px">'+esc(e.titre)+'</div>'
-              +'<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'
-                +(e.module?'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+esc(e.module)+'</span>':'')
-                +'<span style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:600;color:var(--t1)">'+st.label+'</span>'
-                +(e.priorite&&e.priorite!=='Normale'?'<span style="background:'+priCol+'22;border:1px solid '+priCol+'55;color:'+priCol+';border-radius:4px;padding:1px 6px;font-size:.63rem;font-weight:700">'+esc(e.priorite)+'</span>':'')
-                +prochaineAlert
-              +'</div>'
-              +(tagChips?'<div style="margin-top:3px">'+tagChips+'</div>':'')
-            +'</div>'
-            +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
-              +'<button onclick="editEnrEntry('+realIdx+')" title="Modifier" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:.76rem">✏</button>'
-              +'<button onclick="deleteEnrEntry('+realIdx+')" title="Supprimer" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:.76rem">🗑</button>'
-            +'</div>'
-          +'</div>'
-          // Fichiers attachés
-          +((e.docUrl||e.lien)?
-            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">'
-            +(e.docUrl?'<a href="'+esc(e.docUrl)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.3);color:#3498db;border-radius:6px;padding:3px 9px;font-size:.7rem;text-decoration:none;font-weight:600">📎 '+(esc(e.docNom||'Document'))+'</a>':'')
-            +(e.lien?'<a href="'+esc(e.lien)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);color:#f1c40f;border-radius:6px;padding:3px 9px;font-size:.7rem;text-decoration:none;font-weight:600">🔗 Lien externe</a>':'')
-            +'</div>'
-          :'')
-        +'</div>'
-      +'</div>'
-      // ── Grille détails ──
-      +'<div style="border-top:1px solid var(--line);padding:8px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px 12px">'
-        +_enrDetailCell('🔄','Version', (e.rev?'Rév. '+e.rev:'')+(e.edition?' Éd. '+e.edition:'')||'—')
-        +_enrDetailCell('📅','Fréquence', e.frequence||'—')
-        +_enrDetailCell('⏱','Prochaine rév.', e.dateProchaine?new Date(e.dateProchaine).toLocaleDateString('fr-FR'):'—')
-        +_enrDetailCell('👤','Responsable', e.responsable||'—')
-        +_enrDetailCell('✍','Rédacteur', e.redacteur||'—')
-        +_enrDetailCell('✅','Approbateur', e.approbateur||'—')
-        +_enrDetailCell('📢','Diffusion', e.diffusion||'—')
-        +_enrDetailCell('🗄','Conservation', e.duree||'—')
-        +_enrDetailCell('💾','Support', e.support||'—')
-        +_enrDetailCell('📂','Classement', e.lieu||'—')
-        +_enrDetailCell('📋','Exemplaires', e.exemplaires||'—')
-        +(e.enrLies?_enrDetailCell('🔗','ENR liés', e.enrLies):'')
-        +(e.refRegl?_enrDetailCell('⚖','Référence régl.', e.refRegl):'')
-      +'</div>'
-      // ── Complément texte ──
-      +((e.description||e.observations||e.historique)?
-        '<div style="border-top:1px solid var(--line);padding:8px 14px">'
-        +(e.description?'<div style="font-size:.78rem;color:var(--t2);margin-bottom:4px">'+esc(e.description)+'</div>':'')
-        +(e.observations?'<div style="font-size:.74rem;color:var(--t3);font-style:italic;margin-bottom:4px">💬 '+esc(e.observations)+'</div>':'')
-        +(e.historique?'<details style="margin-top:4px"><summary style="font-size:.7rem;color:var(--t3);cursor:pointer">📜 Historique des révisions</summary>'
-          +'<pre style="font-size:.68rem;color:var(--t2);background:var(--ink3);border-radius:5px;padding:8px;margin:4px 0 0;overflow-x:auto;white-space:pre-wrap">'+esc(e.historique)+'</pre></details>':'')
-        +'</div>'
-      :'')
-      +'</div>';
-  }).join('');
-}
-
-function _enrDetailCell(ico, lbl, val) {
-  if (!val || val==='—') return '<div style="font-size:.7rem"><span style="color:var(--t3)">'+ico+' '+lbl+'</span><br/><span style="color:var(--t3);font-style:italic">—</span></div>';
-  return '<div style="font-size:.7rem"><span style="color:var(--t3)">'+ico+' '+lbl+'</span><br/><span style="color:var(--t1);font-weight:600">'+esc(val)+'</span></div>';
-}
-
-// ── Utilitaire lecture champ ──────────────────────────────────
-function _fv(id) { var el=document.getElementById(id); return el?(el.value||'').trim():''; }
-
-// ── Upload photo ENR ─────────────────────────────────────────
-function enrHandlePhoto(input) {
-  var file = input.files[0]; if (!file) return;
-  if (file.size > 3*1024*1024) { toast('Photo trop lourde (max 3 Mo)','err'); return; }
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    _enrPhotoB64  = ev.target.result.split(',')[1];
-    _enrPhotoMime = file.type || 'image/jpeg';
-    var img = document.getElementById('enrPhotoPreviewImg');
-    img.src = ev.target.result; img.style.display = 'block';
-    document.getElementById('enrPhotoZonePlaceholder').style.display = 'none';
-    document.getElementById('enrPhotoOverlay').style.display = 'flex';
-    document.getElementById('enrPhotoStatus').textContent = file.name;
-  };
-  reader.readAsDataURL(file);
-}
-
-function deleteEnrPhoto() {
-  var fileId = _fv('enrFormPhotoId');
-  if (fileId) { google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:fileId }); }
-  _enrPhotoB64=''; _enrPhotoMime='';
-  document.getElementById('enrFormPhotoUrl').value = '';
-  document.getElementById('enrFormPhotoId').value  = '';
-  var img = document.getElementById('enrPhotoPreviewImg'); img.src=''; img.style.display='none';
-  document.getElementById('enrPhotoZonePlaceholder').style.display='flex';
-  document.getElementById('enrPhotoOverlay').style.display='none';
-  document.getElementById('enrPhotoInput').value='';
-}
-
-// ── Upload document ENR ───────────────────────────────────────
-var _ENR_DOC_ICONS = { pdf:'\U0001f4d5', doc:'\U0001f4d8', docx:'\U0001f4d8', xls:'\U0001f4d7', xlsx:'\U0001f4d7', ppt:'\U0001f4d9', pptx:'\U0001f4d9', txt:'\U0001f4c3', csv:'\U0001f4ca' };
-function enrHandleDoc(input) {
-  var file = input.files[0]; if (!file) return;
-  if (file.size > 10*1024*1024) { toast('Fichier trop grand (max 10 Mo)','err'); return; }
-  var ext = (file.name.split('.').pop()||'').toLowerCase();
-  _enrDocB64 = ''; _enrDocMime = file.type || 'application/octet-stream'; _enrDocFileName = file.name;
-  document.getElementById('enrDocZonePlaceholder').style.display='none';
-  document.getElementById('enrDocInfo').style.display='block';
-  document.getElementById('enrDocIcon').textContent = _ENR_DOC_ICONS[ext]||'\U0001f4c4';
-  document.getElementById('enrDocName').textContent = file.name;
-  document.getElementById('enrDocSize').textContent = (file.size/1024).toFixed(1)+' Ko';
-  document.getElementById('enrDocUploadStatus').textContent = '⏳ Prêt à téléverser lors de l\'enregistrement';
-  var reader = new FileReader();
-  reader.onload = function(ev){ _enrDocB64 = ev.target.result.split(',')[1]; };
-  reader.readAsDataURL(file);
-}
-
-function deleteEnrDoc() {
-  var fileId = _fv('enrFormDocId');
-  if (fileId) { google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:fileId }); }
-  _enrDocB64=''; _enrDocMime=''; _enrDocFileName='';
-  ['enrFormDocUrl','enrFormDocId','enrFormDocNom'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('enrDocZonePlaceholder').style.display='flex';
-  document.getElementById('enrDocInfo').style.display='none';
-  document.getElementById('enrDocUploadStatus').textContent='';
-  document.getElementById('enrDocInput').value='';
-}
-
-// ── Soumettre ENR ────────────────────────────────────────────
-function submitEnrEntry() {
-  var code  = _fv('enrFormCode');
-  var titre = _fv('enrFormTitre');
-  if (!code || !titre) { toast('Code ENR et titre sont obligatoires','err'); return; }
-  var id  = _fv('enrFormId');
-  var now = new Date().toLocaleDateString('fr-FR');
-  var existing = id ? (_enrData.find(function(e){ return e.id===id; })||{}) : {};
-  var entry = {
-    id:id||('ENR_'+Date.now()), code:code, titre:titre,
-    statut:_fv('enrFormStatut')||'Actif', priorite:_fv('enrFormPriorite')||'Normale',
-    typeDoc:_fv('enrFormType'), module:_fv('enrFormModule'), tags:_fv('enrFormTags'),
-    color:_fv('enrFormColor')||'#f1c40f',
-    rev:_fv('enrFormRev'), edition:_fv('enrFormEdition'),
-    dateCreation:_fv('enrFormDateCreation')||(existing.dateCreation||now),
-    dateRev:_fv('enrFormDateRev'), dateProchaine:_fv('enrFormDateProchaine'),
-    frequence:_fv('enrFormFrequence'), historique:_fv('enrFormHistorique'),
-    responsable:_fv('enrFormResponsable'), redacteur:_fv('enrFormRedacteur'),
-    approbateur:_fv('enrFormApprobateur'), diffusion:_fv('enrFormDiffusion'),
-    duree:_fv('enrFormDuree'), support:_fv('enrFormSupport'),
-    lieu:_fv('enrFormLieu'), exemplaires:_fv('enrFormExemplaires'),
-    enrLies:_fv('enrFormLies'), refRegl:_fv('enrFormRef'),
-    description:_fv('enrFormDesc'), lien:_fv('enrFormLien'), observations:_fv('enrFormObs'),
-    photoUrl:_fv('enrFormPhotoUrl')||existing.photoUrl||'',
-    photoId:_fv('enrFormPhotoId')||existing.photoId||'',
-    docUrl:_fv('enrFormDocUrl')||existing.docUrl||'',
-    docId:_fv('enrFormDocId')||existing.docId||'',
-    docNom:_fv('enrFormDocNom')||existing.docNom||''
-  };
-  if (_enrPhotoB64) {
-    showLoader('Téléversement photo…');
-    google.script.run
-      .withSuccessHandler(function(r) {
-        hideSplash();
-        if (r&&r.success) { entry.photoUrl=r.url; entry.photoId=r.fileId; document.getElementById('enrFormPhotoUrl').value=r.url; document.getElementById('enrFormPhotoId').value=r.fileId; }
-        _enrUploadDocThenSave(entry,id);
-      })
-      .withFailureHandler(function(e){ hideSplash(); toast('Erreur photo: '+e.message,'err'); _enrUploadDocThenSave(entry,id); })
-      .saveEnrFile({ adminKey:S.adminKey, base64:_enrPhotoB64, mime:_enrPhotoMime, enrCode:code, fileType:'photo', oldFileId:existing.photoId||'' });
-  } else { _enrUploadDocThenSave(entry,id); }
-}
-
-function _enrUploadDocThenSave(entry,id) {
-  if (_enrDocB64) {
-    showLoader('Téléversement document…');
-    google.script.run
-      .withSuccessHandler(function(r) {
-        hideSplash();
-        if (r&&r.success) { entry.docUrl=r.url; entry.docId=r.fileId; entry.docNom=_enrDocFileName; document.getElementById('enrFormDocUrl').value=r.url; document.getElementById('enrFormDocId').value=r.fileId; document.getElementById('enrFormDocNom').value=_enrDocFileName; document.getElementById('enrDocUploadStatus').textContent='✅ Document téléversé'; }
-        _enrFinalSave(entry,id);
-      })
-      .withFailureHandler(function(e){ hideSplash(); toast('Erreur document: '+e.message,'err'); _enrFinalSave(entry,id); })
-      .saveEnrFile({ adminKey:S.adminKey, base64:_enrDocB64, mime:_enrDocMime, enrCode:entry.code, fileType:'document', oldFileId:entry.docId||'' });
-  } else { _enrFinalSave(entry,id); }
-}
-
-function _enrFinalSave(entry,id) {
-  if (id) { var idx=_enrData.findIndex(function(e){ return e.id===id; }); if(idx>=0) _enrData[idx]=entry; else _enrData.push(entry); }
-  else { _enrData.push(entry); }
-  _saveEnrRegistry(function(){ resetEnrForm(); _renderEnrFilterRow(); _renderEnrRegistry(); });
-}
-
-function editEnrEntry(i) {
-  var e = _enrData[i]; if (!e) return;
-  var tv = { enrFormId:e.id, enrFormCode:e.code, enrFormTitre:e.titre,
-    enrFormRev:e.rev||'', enrFormEdition:e.edition||'',
-    enrFormDateCreation:e.dateCreation||'', enrFormDateRev:e.dateRev||'', enrFormDateProchaine:e.dateProchaine||'',
-    enrFormTags:e.tags||'', enrFormHistorique:e.historique||'',
-    enrFormResponsable:e.responsable||'', enrFormRedacteur:e.redacteur||'',
-    enrFormApprobateur:e.approbateur||'', enrFormDiffusion:e.diffusion||'',
-    enrFormLieu:e.lieu||'', enrFormExemplaires:e.exemplaires||'',
-    enrFormLies:e.enrLies||'', enrFormRef:e.refRegl||'',
-    enrFormDesc:e.description||'', enrFormLien:e.lien||'', enrFormObs:e.observations||'',
-    enrFormColor:e.color||'#f1c40f',
-    enrFormPhotoUrl:e.photoUrl||'', enrFormPhotoId:e.photoId||'',
-    enrFormDocUrl:e.docUrl||'', enrFormDocId:e.docId||'', enrFormDocNom:e.docNom||'' };
-  Object.keys(tv).forEach(function(id){ var el=document.getElementById(id); if(el) el.value=tv[id]; });
-  var sv = { enrFormStatut:e.statut, enrFormPriorite:e.priorite, enrFormType:e.typeDoc,
-             enrFormModule:e.module, enrFormFrequence:e.frequence, enrFormDuree:e.duree, enrFormSupport:e.support };
-  Object.keys(sv).forEach(function(id){ var el=document.getElementById(id); if(el) el.value=sv[id]||''; });
-  document.querySelectorAll('.enr-color-opt').forEach(function(el){ el.classList.toggle('selected', el.dataset.color===(e.color||'#f1c40f')); });
-  _enrPhotoB64=''; _enrPhotoMime='';
-  if (e.photoUrl) {
-    var img=document.getElementById('enrPhotoPreviewImg'); img.src=e.photoUrl; img.style.display='block';
-    document.getElementById('enrPhotoZonePlaceholder').style.display='none';
-    document.getElementById('enrPhotoOverlay').style.display='flex';
-    document.getElementById('enrPhotoStatus').textContent='Photo existante';
-  }
-  _enrDocB64=''; _enrDocMime=''; _enrDocFileName=e.docNom||'';
-  if (e.docUrl && e.docNom) {
-    var ext=(e.docNom.split('.').pop()||'').toLowerCase();
-    document.getElementById('enrDocZonePlaceholder').style.display='none';
-    document.getElementById('enrDocInfo').style.display='block';
-    document.getElementById('enrDocIcon').textContent=_ENR_DOC_ICONS[ext]||'\U0001f4c4';
-    document.getElementById('enrDocName').textContent=e.docNom;
-    document.getElementById('enrDocSize').textContent='';
-    document.getElementById('enrDocUploadStatus').textContent='✅ Document existant';
-  }
-  document.getElementById('enrFormTitle').textContent='✏ Modifier — '+e.code;
-  document.getElementById('enrFormWrap').scrollIntoView({ behavior:'smooth', block:'start' });
-}
-
-function deleteEnrEntry(i) {
-  var e = _enrData[i]; if (!e) return;
-  if (!confirm('Supprimer définitivement l\'ENR «'+e.code+' — '+e.titre+'» ?')) return;
-  if (e.photoId) google.script.run.withSuccessHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:e.photoId });
-  if (e.docId)   google.script.run.withSuccessHandler(function(){}).deleteEnrFile({ adminKey:S.adminKey, fileId:e.docId });
-  _enrData.splice(i,1);
-  _saveEnrRegistry(function(){ _renderEnrFilterRow(); _renderEnrRegistry(); });
-}
-
-function _saveEnrRegistry(cb) {
-  showLoader('Enregistrement…');
-  google.script.run
-    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success){ toast('✓ Registre ENR sauvegardé','ok'); if(cb) cb(); } else toast((r&&r.error)||'Erreur','err'); })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveEnrRegistry({ adminKey:S.adminKey, data:_enrData });
-}
-
-function resetEnrForm() {
-  var ids=['enrFormId','enrFormCode','enrFormTitre','enrFormRev','enrFormEdition','enrFormTags',
-           'enrFormDateCreation','enrFormDateRev','enrFormDateProchaine','enrFormHistorique',
-           'enrFormResponsable','enrFormRedacteur','enrFormApprobateur','enrFormDiffusion',
-           'enrFormLieu','enrFormExemplaires','enrFormLies','enrFormRef',
-           'enrFormDesc','enrFormLien','enrFormObs',
-           'enrFormPhotoUrl','enrFormPhotoId','enrFormDocUrl','enrFormDocId','enrFormDocNom'];
-  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  ['enrFormStatut','enrFormPriorite','enrFormType','enrFormModule','enrFormFrequence','enrFormDuree','enrFormSupport']
-    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
-  document.querySelectorAll('.enr-color-opt').forEach(function(el,i){ el.classList.toggle('selected',i===0); });
-  var first=document.querySelector('.enr-color-opt'); var ce=document.getElementById('enrFormColor'); if(ce) ce.value=first?first.dataset.color:'#f1c40f';
-  _enrPhotoB64=''; _enrPhotoMime='';
-  var img=document.getElementById('enrPhotoPreviewImg'); if(img){ img.src=''; img.style.display='none'; }
-  var ph=document.getElementById('enrPhotoZonePlaceholder'); if(ph) ph.style.display='flex';
-  var pov=document.getElementById('enrPhotoOverlay'); if(pov) pov.style.display='none';
-  var pi=document.getElementById('enrPhotoInput'); if(pi) pi.value='';
-  _enrDocB64=''; _enrDocMime=''; _enrDocFileName='';
-  var dp=document.getElementById('enrDocZonePlaceholder'); if(dp) dp.style.display='flex';
-  var di=document.getElementById('enrDocInfo'); if(di) di.style.display='none';
-  var ds=document.getElementById('enrDocUploadStatus'); if(ds) ds.textContent='';
-  var din=document.getElementById('enrDocInput'); if(din) din.value='';
-  var t=document.getElementById('enrFormTitle'); if(t) t.textContent='➕ Nouvel enregistrement ENR';
-}
-
-
-function openPrestatairesPanel() {
-  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
-  _prestaFormSigB64 = ''; _prestaFormSigMime = '';
-  resetPrestaForm();
-  openSheet('prestatairesOv');
-  _loadPrestataires();
-}
-
-function _loadPrestataires() {
-  google.script.run
-    .withSuccessHandler(function(r) {
-      if (r&&r.success) { _prestatairesData = r.data || []; _renderPrestataires(); }
-    })
-    .withFailureHandler(function(){})
-    .getPrestataires(S.adminKey);
-}
-
-function _renderPrestataires() {
-  var body = document.getElementById('prestatairesListBody');
-  if (!body) return;
-  if (!_prestatairesData.length) {
-    body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:20px;font-style:italic">Aucun prestataire configuré</div>';
-    return;
-  }
-  body.innerHTML = _prestatairesData.map(function(p) {
-    return '<div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--line);display:flex;align-items:center;gap:12px">'
-      +(p.sigUrl?'<img src="'+p.sigUrl+'" style="height:48px;width:120px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:2px;background:#fff;flex-shrink:0"/>'
-               :'<div style="height:48px;width:120px;border:1px dashed #555;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666;font-size:.75rem;flex-shrink:0">Pas de griffe</div>')
-      +'<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:var(--t1)">'+esc(p.nom)+'</div>'
-      +'<div style="font-size:.75rem;color:var(--t3);margin-top:2px">'+(p.sigUrl?'✅ Griffe configurée':'⚠️ Sans griffe')+'</div></div>'
-      +'<div style="display:flex;gap:6px;flex-shrink:0">'
-      +'<button onclick="editPrestataire(\''+p.id+'\')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">✏ Modifier</button>'
-      +'<button onclick="deletePrestataire_(\''+p.id+'\',\''+esc(p.nom)+'\')" style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.78rem">🗑</button>'
-      +'</div></div>';
-  }).join('');
-}
-
-function prestaFormHandleSig(input) {
-  var file = input.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    _prestaFormSigB64  = e.target.result;
-    _prestaFormSigMime = file.type || 'image/png';
-    document.getElementById('prestaFormSigName').textContent = file.name;
-    document.getElementById('prestaFormSigImg').src = e.target.result;
-    document.getElementById('prestaFormSigPreview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-
-function submitPrestataire() {
-  var nom = (document.getElementById('prestaFormNom')||{}).value.trim();
-  if (!nom) { toast('Nom du prestataire requis','err'); return; }
-  var id  = (document.getElementById('prestaFormId')||{}).value.trim() || '';
-  var payload = { adminKey:S.adminKey, nom:nom };
-  if (id) payload.id = id;
-  if (_prestaFormSigB64) { payload.sigBase64 = _prestaFormSigB64; payload.mime = _prestaFormSigMime; }
-  showLoader('Enregistrement…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) { toast('✅ Prestataire enregistré','ok'); resetPrestaForm(); _loadPrestataires(); _reloadPrestatairesSelects(); }
-      else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .savePrestataire(payload);
-}
-
-function editPrestataire(id) {
-  var p = _prestatairesData.find(function(x){ return x.id===id; });
-  if (!p) return;
-  document.getElementById('prestaFormNom').value = p.nom;
-  document.getElementById('prestaFormId').value  = p.id;
-  if (p.sigUrl) {
-    document.getElementById('prestaFormSigName').textContent = 'Griffe existante';
-    document.getElementById('prestaFormSigImg').src = p.sigUrl;
-    document.getElementById('prestaFormSigPreview').style.display = 'block';
-  }
-  document.getElementById('prestaFormCancelBtn').style.display = '';
-  document.getElementById('prestaFormNom').focus();
-}
-
-function resetPrestaForm() {
-  var f = document.getElementById('prestaFormNom'); if (f) f.value = '';
-  var i = document.getElementById('prestaFormId');  if (i) i.value = '';
-  _prestaFormSigB64 = ''; _prestaFormSigMime = '';
-  var pi = document.getElementById('prestaFormSigInput'); if (pi) pi.value = '';
-  var sn = document.getElementById('prestaFormSigName'); if (sn) sn.textContent = 'Aucune image';
-  var sp = document.getElementById('prestaFormSigPreview'); if (sp) sp.style.display = 'none';
-  var cb = document.getElementById('prestaFormCancelBtn'); if (cb) cb.style.display = 'none';
-}
-
-function deletePrestataire_(id, nom) {
-  if (!confirm('Supprimer le prestataire "'+nom+'" ?')) return;
-  showLoader('Suppression…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) { toast('Prestataire supprimé','ok'); _loadPrestataires(); _reloadPrestatairesSelects(); }
-      else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deletePrestataire({ adminKey:S.adminKey, id:id });
-}
-
-// Remplir les selects de prestataires dans les configs ENR
-function _reloadPrestatairesSelects() {
-  ['rnPrestaGriffeSelect','inspPrestaGriffeSelect','enr13PrestaGriffeSelect','enr15PrestaGriffeSelect'].forEach(function(sid) {
-    var sel = document.getElementById(sid); if (!sel) return;
-    var cur = sel.value;
-    sel.innerHTML = '<option value="">— Choisir un prestataire —</option>';
-    _prestatairesData.forEach(function(p) {
-      var o = document.createElement('option');
-      o.value = p.id; o.textContent = p.nom + (p.sigUrl ? ' ✅' : ' (sans griffe)');
-      sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
+function _enrBInitColorPicker() {
+  document.querySelectorAll('.enrBColorOpt').forEach(function(el) {
+    el.onclick = function() {
+      document.querySelectorAll('.enrBColorOpt').forEach(function(x){ x.classList.remove('sel'); });
+      el.classList.add('sel');
+      document.getElementById('enrBColor').value = el.dataset.color;
+    };
   });
 }
 
-function previewPrestaGriffe(previewId, imgId, id) {
-  var p = _prestatairesData.find(function(x){ return x.id===id; });
-  var prev = document.getElementById(previewId);
-  var img  = document.getElementById(imgId);
-  if (!prev || !img) return;
-  if (p && p.sigUrl) { img.src = p.sigUrl; prev.style.display = 'block'; }
-  else               { prev.style.display = 'none'; }
-  // Mettre à jour la variable pour l'impression
-  if (id === (document.getElementById('rnPrestaGriffeSelect')||{}).value) {
-    _rnPrestataireSigUrl = (p&&p.sigUrl) || '';
-    _rnPrestataireSigNom = (p&&p.nom)    || '';
+// ── Sidebar ──────────────────────────────────────────────────────
+function _enrBRenderSidebar() {
+  // Module filter chips
+  var mods = [];
+  _enrBTpls.forEach(function(t){ (t.modules||[]).forEach(function(m){ if(mods.indexOf(m)<0) mods.push(m); }); });
+  var mf = document.getElementById('enrBModFilter');
+  if (mf) {
+    mf.innerHTML = '<button class="enrBModChip'+(!_enrBModFilter?' on':'')+'" onclick="enrBSetModFilter(\'\')">Tous</button>'
+      + mods.map(function(m){ return '<button class="enrBModChip'+(_enrBModFilter===m?' on':'')+'" onclick="enrBSetModFilter(\''+esc(m)+'\')">'+esc(m)+'</button>'; }).join('');
   }
+  _enrBRenderTplList();
 }
 
-// ── Toggles dans les configs ──
-function toggleRnPrestaGriffe() {
-  var oui  = document.getElementById('rnPrestaGriffeOui');
-  var zone = document.getElementById('rnPrestaGriffeZone');
-  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
-}
+function enrBSetModFilter(m) { _enrBModFilter = m; _enrBRenderSidebar(); }
 
-function toggleInspPrestaGriffe() {
-  var oui  = document.getElementById('inspPrestaGriffeOui');
-  var zone = document.getElementById('inspPrestaGriffeZone');
-  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
-}
+function enrBFilterSidebar() { _enrBRenderTplList(); }
 
-function toggleEnr13PrestaGriffe() {
-  var oui  = document.getElementById('enr13PrestaGriffeOui');
-  var zone = document.getElementById('enr13PrestaGriffeZone');
-  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
-}
-
-function toggleEnr15PrestaGriffe() {
-  var oui  = document.getElementById('enr15PrestaGriffeOui');
-  var zone = document.getElementById('enr15PrestaGriffeZone');
-  if (zone) zone.style.display = (oui&&oui.checked) ? 'block' : 'none';
-}
-
-function previewPrestaGriffeEnr(previewId, imgId, id, enrKey) {
-  var p = _prestatairesData.find(function(x){ return x.id===id; });
-  var prev = document.getElementById(previewId);
-  var img  = document.getElementById(imgId);
-  if (!prev || !img) return;
-  if (p && p.sigUrl) { img.src = p.sigUrl; prev.style.display = 'block'; }
-  else               { prev.style.display = 'none'; }
-  if (enrKey === 'enr13') { _enr13PrestataireSigUrl = (p&&p.sigUrl)||''; _enr13PrestataireSigNom = (p&&p.nom)||''; }
-  if (enrKey === 'enr15') { _enr15PrestataireSigUrl = (p&&p.sigUrl)||''; _enr15PrestataireSigNom = (p&&p.nom)||''; }
-}
-
-function saveEnr13PrestaConfig() {
-  var oui = document.getElementById('enr13PrestaGriffeOui');
-  var id  = (oui&&oui.checked) ? ((document.getElementById('enr13PrestaGriffeSelect')||{}).value||'') : '';
-  showLoader('Sauvegarde…');
-  google.script.run
-    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Griffe ENR-13 sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveEnr13PrestaId({ adminKey:S.adminKey, prestaId:id });
-}
-
-function saveEnr15PrestaConfig() {
-  var oui = document.getElementById('enr15PrestaGriffeOui');
-  var id  = (oui&&oui.checked) ? ((document.getElementById('enr15PrestaGriffeSelect')||{}).value||'') : '';
-  showLoader('Sauvegarde…');
-  google.script.run
-    .withSuccessHandler(function(r){ hideSplash(); if(r&&r.success) toast('✓ Griffe ENR-15 sauvegardée','ok'); else toast('Erreur: '+(r&&r.error||'?'),'err'); })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveEnr15PrestaId({ adminKey:S.adminKey, prestaId:id });
-}
-
-// Compatibilité : ancienne référence supprimée
-function _rnRenderPrestaGriffe(url, nom) {
-  _rnPrestataireSigUrl = url || '';
-  _rnPrestataireSigNom = nom || '';
-}
-
-function rnTogglePresta() {
-  var oui = document.getElementById('rn_presta_oui');
-  var det = document.getElementById('rn_presta_details');
-  if (det) det.style.display = (oui&&oui.checked) ? '' : 'none';
-}
-
-
-function _rnFillZones() {
-  var sel = document.getElementById('rn_zone');
-  if (!sel) return;
-  var saved = sel.value;
-  sel.innerHTML = '<option value="">— Sélectionner —</option>';
-  (_configuredZones||[]).forEach(function(z) {
-    var o = document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o);
+function _enrBRenderTplList() {
+  var q = (document.getElementById('enrBSearch')||{}).value||'';
+  q = q.toLowerCase();
+  var list = _enrBTpls.filter(function(t){
+    if (_enrBModFilter && !(t.modules||[]).includes(_enrBModFilter)) return false;
+    if (q && (t.titre||'').toLowerCase().indexOf(q)<0 && (t.code||'').toLowerCase().indexOf(q)<0) return false;
+    return true;
   });
-  if (saved) sel.value = saved;
-}
-
-function openRapportNuisibles() {
-  showLoader('Chargement…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
-      _rnDocCode           = r.docCode           || 'ENR-HSE 8';
-      _rnDocRev            = r.docRev            || '01';
-      _rnDocEdition        = r.docEdition        || '';
-      // Résoudre la griffe du prestataire sélectionné
-      var prestaList = r.prestataires || [];
-      var prestaId   = r.prestaId     || '';
-      var prestaObj  = prestaList.find(function(x){ return x.id===prestaId; }) || null;
-      _rnPrestataireSigUrl = (prestaObj&&prestaObj.sigUrl) || '';
-      _rnPrestataireSigNom = (prestaObj&&prestaObj.nom)    || '';
-      if (r.logoUrl) _hseLogoUrl = r.logoUrl;
-      if (r.sigMap)  Object.assign(_userSigMap, r.sigMap);
-      // Réinitialiser champs
-      document.getElementById('rn_date').value       = todayStr();
-      document.getElementById('rn_emplacement').value = '';
-      document.getElementById('rn_type').value        = '';
-      document.getElementById('rn_desc').value        = '';
-      document.getElementById('rn_actions').value     = '';
-      document.getElementById('rn_statut').value      = 'En cours';
-      rnClearPhoto();
-      // Prestataire
-      var nonRad = document.getElementById('rn_presta_non');
-      if (nonRad) { nonRad.checked = true; }
-      document.getElementById('rn_presta_details').style.display = 'none';
-      document.getElementById('rn_presta_nom').value   = '';
-      // Zones
-      if (_configuredZones && _configuredZones.length) {
-        _rnFillZones();
-      } else {
-        // Charger les zones si pas encore en mémoire
-        google.script.run
-          .withSuccessHandler(function(rc) {
-            if (rc&&rc.success) { _configuredZones = rc.zones||[]; _rnFillZones(); }
-          })
-          .withFailureHandler(function(){})
-          .getPestConfigData(S.adminKey);
-      }
-      openSheet('rapportNuisiblesOv');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .getRapportNuisiblesConfig(S.adminKey);
-}
-
-function submitRapportNuisibles() {
-  var date       = document.getElementById('rn_date').value.trim();
-  var zone       = document.getElementById('rn_zone').value.trim();
-  var emplacement= document.getElementById('rn_emplacement').value.trim();
-  var type       = document.getElementById('rn_type').value.trim();
-  var desc       = document.getElementById('rn_desc').value.trim();
-  var actions    = document.getElementById('rn_actions').value.trim();
-  var statut     = document.getElementById('rn_statut').value.trim();
-  var ouiRad     = document.getElementById('rn_presta_oui');
-  var prestaInfo = ouiRad&&ouiRad.checked ? 'Oui' : 'Non';
-  var prestaNom  = document.getElementById('rn_presta_nom').value.trim();
-  if (!date||!zone||!type) { toast('Date, zone et type de nuisible sont requis','err'); return; }
-  showLoader('Enregistrement…');
-  var payload = {
-    token:              S.adminKey,
-    date:               date,
-    zone:               zone,
-    emplacement:        emplacement,
-    typeNuisible:       type,
-    description:        desc,
-    actionsImmediates:  actions,
-    statut:             statut,
-    prestaireInforme:   prestaInfo,
-    prestaireNom:       prestaInfo==='Oui' ? prestaNom : '',
-    superviseurNom:     S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
-  };
-  if (_rnPhotoB64) { payload.photoNuisible = _rnPhotoB64; payload.mime = _rnPhotoMime || 'image/jpeg'; }
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) {
-        toast('✅ Rapport enregistré (#'+r.id+')','ok');
-        closeSheet('rapportNuisiblesOv');
-        renderRapportNuisibles();
-      } else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveRapportNuisibles(payload);
-}
-
-function renderRapportNuisibles() {
-  var body = document.getElementById('nuisiblesBody');
-  if (!body) return;
-  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
-  google.script.run
-    .withSuccessHandler(function(r) {
-      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
-      _rapportNuisiblesRecords = r.data;
-      // Charger la config prestataire pour l'impression (griffe, logo, userSigMap)
-      google.script.run
-        .withSuccessHandler(function(rn) {
-          if (rn&&rn.success) {
-            _rnDocCode    = rn.docCode    || 'ENR-HSE 8';
-            _rnDocRev     = rn.docRev     || '01';
-            _rnDocEdition = rn.docEdition || '';
-            var prestaList = rn.prestataires || [];
-            var prestaId   = rn.prestaId     || '';
-            var prestaObj  = prestaList.find(function(x){ return x.id===prestaId; }) || null;
-            _rnPrestataireSigUrl = (prestaObj&&prestaObj.sigUrl) || '';
-            _rnPrestataireSigNom = (prestaObj&&prestaObj.nom)    || '';
-            if (rn.logoUrl) _hseLogoUrl = rn.logoUrl;
-            if (rn.sigMap)  Object.assign(_userSigMap, rn.sigMap);
-          }
-        })
-        .withFailureHandler(function(){})
-        .getRapportNuisiblesConfig(S.adminKey);
-      _renderRapportNuisiblesList();
-    })
-    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
-    .getRapportNuisibles(S.adminKey);
-}
-
-var RN_STATUT_COLORS = { 'En cours':'#e74c3c', 'Traité':'#e67e22', 'Résolu':'#27ae60' };
-var RN_STATUT_ICONS  = { 'En cours':'🔴', 'Traité':'🟠', 'Résolu':'✅' };
-
-function _renderRapportNuisiblesList() {
-  var body = document.getElementById('nuisiblesBody');
-  if (!body) return;
-  var data = _rapportNuisiblesRecords;
-  if (!data||!data.length) {
-    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🚨</div><div>Aucun rapport de présence enregistré.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Rapport présence » pour signaler une présence.</div></div>';
-    return;
-  }
-  body.innerHTML = data.map(function(c,i) {
-    var statColor = RN_STATUT_COLORS[c.statut]||'#888';
-    var statIcon  = RN_STATUT_ICONS[c.statut]||'•';
-    var badgeCls  = c.statut==='Résolu' ? 'badge-ok' : c.statut==='Traité' ? 'badge-partial' : 'badge-nok';
-    // Ligne infos complémentaires
-    var infoLine = '';
-    if (c.emplacement) infoLine += '<span>📌 '+esc(c.emplacement)+'</span>';
-    if (c.prestaireInforme==='Oui'&&c.prestaireNom) infoLine += '<span>🏢 '+esc(c.prestaireNom)+'</span>';
-    // Indicateurs
-    var indicators = '';
-    if (c.photoNuisible) indicators += '<div style="font-size:.78rem;color:#3b82f6;margin-top:4px">📷 Photo jointe</div>';
-    if (c.docCloture)    indicators += '<div style="font-size:.78rem;color:#27ae60;margin-top:2px">📁 ENR-13 clôturé</div>';
-    if (c.actionsImmediates) indicators += '<div style="font-size:.78rem;color:var(--t2);margin-top:2px;line-height:1.4">⚡ '+esc(c.actionsImmediates.substring(0,80))+(c.actionsImmediates.length>80?'…':'')+'</div>';
-    return '<div class="hse-card" onclick="openRapportNuisiblesDetail('+i+')" oncontextmenu="event.preventDefault()" style="cursor:pointer">'
-      +'<div class="hse-card-header">'
-      +'<div><div class="hse-card-title">🚨 '+esc(c.typeNuisible||'Nuisibles')+'</div>'
-      +'<div class="hse-card-meta"><span>📅 '+esc(c.date)+'</span>'+(c.zone?'<span>📍 '+esc(c.zone)+'</span>':'')+'<span>🦺 '+esc(c.superviseurNom)+'</span></div>'
-      +(infoLine?'<div class="hse-card-meta" style="margin-top:2px">'+infoLine+'</div>':'')
-      +'</div>'
-      +'<span class="hse-card-badge '+badgeCls+'">'+statIcon+' '+esc(c.statut)+'</span>'
-      +'</div>'
-      +(c.description?'<div style="font-size:.8rem;color:var(--t2);margin-top:6px;line-height:1.4">'+esc(c.description.substring(0,100))+(c.description.length>100?'…':'')+'</div>':'')
-      +indicators
-      +'<div style="display:flex;gap:8px;margin-top:10px" onclick="event.stopPropagation()">'
-      +'<button class="btn btn-g" onclick="openRapportNuisiblesDetail('+i+')" style="flex:1;font-size:.78rem;height:32px">👁 Voir le rapport</button>'
-      +'<button class="btn btn-g" onclick="printRapportNuisibles('+i+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
-      +(c.statut!=='Résolu'?'<button class="btn" onclick="openCloture('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#27ae60;border-radius:var(--rs)" title="Clôturer le cas">📁</button>':'')
-      +(isAdmin()?'<button class="btn" onclick="deleteRapportNuisiblesRecord('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:var(--rs)" title="Supprimer">🗑</button>':'')
-      +'</div>'
-      +'</div>';
-  }).join('');
-}
-
-function openRapportNuisiblesDetail(idx) {
-  var c = _rapportNuisiblesRecords[idx];
-  if (!c) return;
-  _rnCurrentIdx = idx;
-  document.getElementById('rapportNuisiblesDetailTitle').textContent = '🚨 Rapport #'+c.id+' — '+c.typeNuisible;
-  var statColor = RN_STATUT_COLORS[c.statut]||'#888';
-  var statIcon  = RN_STATUT_ICONS[c.statut]||'•';
-  var row = function(label, value) {
-    if (!value) return '';
-    return '<div style="margin-bottom:10px"><div style="font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">'+label+'</div>'
-      +'<div style="font-size:.88rem;color:var(--t1);white-space:pre-wrap">'+esc(value)+'</div></div>';
-  };
-  var prestaBlock = '';
-  if (c.prestaireInforme) {
-    prestaBlock = '<div style="background:rgba(125,60,152,.12);border-radius:8px;padding:10px;margin:10px 0;border:1px solid rgba(125,60,152,.3)">'
-      +'<div style="font-size:.75rem;font-weight:700;color:#9b59b6;text-transform:uppercase;margin-bottom:6px">🏢 Prestataire</div>'
-      +row('Prestataire informé', c.prestaireInforme)
-      +row('Nom du prestataire', c.prestaireNom)
-      +'</div>';
-  }
-  var html = '<div style="padding:4px 0">'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
-    +'<span style="background:'+statColor+';color:#fff;padding:4px 14px;border-radius:999px;font-size:.78rem;font-weight:700">'+statIcon+' '+esc(c.statut)+'</span>'
-    +'</div>'
-    +row('Date de constatation', c.date)
-    +row('Zone', c.zone)
-    +row('Emplacement précis', c.emplacement)
-    +row('Type de nuisible', c.typeNuisible)
-    +row('Description / Observations', c.description)
-    +row('Actions immédiates', c.actionsImmediates)
-    +(c.photoNuisible?'<div style="margin-bottom:10px"><div style="font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📷 Photo du nuisible</div><img src="'+c.photoNuisible+'" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #444"/></div>':'')
-    +prestaBlock
-    +(c.docCloture?'<div style="margin-bottom:10px;padding:10px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);border-radius:8px"><div style="font-size:.75rem;font-weight:700;color:#27ae60;text-transform:uppercase;margin-bottom:6px">📁 Document de clôture (ENR-13)</div><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60;font-size:.88rem">📎 Voir / Télécharger le document ENR-13</a></div>':'')
-    +row('Superviseur', c.superviseurNom)
-    +row('Date de création', c.dateCreation)
-    +'</div>';
-  document.getElementById('rapportNuisiblesDetailBody').innerHTML = html;
-  openSheet('rapportNuisiblesDetailOv');
-}
-
-function deleteRapportNuisiblesRecord(idx) {
-  var c = _rapportNuisiblesRecords[idx];
-  if (!c) return;
-  if (!confirm('Supprimer le rapport #'+c.id+' ?')) return;
-  showLoader('Suppression…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) { toast('Rapport supprimé','ok'); renderRapportNuisibles(); }
-      else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .deleteRapportNuisibles({ adminKey:S.adminKey, id:c.id });
-}
-
-function printRapportNuisibles(idx) {
-  var c = _rapportNuisiblesRecords[idx];
-  if (!c) return;
-  // Si la config n'est pas encore chargée, la charger puis relancer l'impression
-  if (!_rnPrestataireSigUrl && _prestatairesData.length === 0) {
-    showLoader('Chargement de la configuration…');
-    google.script.run
-      .withSuccessHandler(function(rn) {
-        hideSplash();
-        if (rn&&rn.success) {
-          _rnDocCode    = rn.docCode    || 'ENR-HSE 8';
-          _rnDocRev     = rn.docRev     || '01';
-          _rnDocEdition = rn.docEdition || '';
-          _prestatairesData = rn.prestataires || [];
-          var prestaId  = rn.prestaId || '';
-          var prestaObj = _prestatairesData.find(function(x){ return x.id===prestaId; }) || null;
-          _rnPrestataireSigUrl = (prestaObj&&prestaObj.sigUrl) || '';
-          _rnPrestataireSigNom = (prestaObj&&prestaObj.nom)    || '';
-          if (rn.logoUrl) _hseLogoUrl = rn.logoUrl;
-          if (rn.sigMap)  Object.assign(_userSigMap, rn.sigMap);
-        }
-        _doPrintRapportNuisibles(idx);
-      })
-      .withFailureHandler(function(e){ hideSplash(); _doPrintRapportNuisibles(idx); })
-      .getRapportNuisiblesConfig(S.adminKey);
-    return;
-  }
-  _doPrintRapportNuisibles(idx);
-}
-
-function _doPrintRapportNuisibles(idx) {
-  var c = _rapportNuisiblesRecords[idx];
-  if (!c) return;
-  var statColor = RN_STATUT_COLORS[c.statut]||'#888';
-  var logoUrl   = _hseLogoDataUrl || _hseLogoUrl || '';
-  // Griffe Superviseur/Déclarant : chercher par matricule courant puis par nom
-  var supSigUrl = _userSigMap[S_AUTH&&S_AUTH.matricule]
-                || _userSigMap[c.superviseurNom]
-                || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var now    = new Date();
-  var edDate = _rnDocEdition || (now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear());
-  var today  = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-
-  var prestaSection = '';
-  if (c.prestaireInforme) {
-    prestaSection = '<div class="section-title">🏢 Prestataire</div>'
-      +'<div class="row2">'
-      +'<div class="field"><div class="fl">Prestataire informé ?</div>'
-      +'<div class="fv" style="font-weight:700;color:'+(c.prestaireInforme==='Oui'?'#006600':'#cc0000')+'">'+esc(c.prestaireInforme)+'</div></div>'
-      +(c.prestaireNom?'<div class="field"><div class="fl">Nom du prestataire</div><div class="fv">'+esc(c.prestaireNom)+'</div></div>':'<div></div>')
-      +'</div>';
-  }
-
-  // Tableau de signatures
-  // Colonne prestataire : visible dès qu'une griffe prestataire est configurée
-  var showPrestaCol = !!_rnPrestataireSigUrl;
-  var colW = showPrestaCol ? '50%' : '100%';
-  var sigTableHTML =
-    '<table class="sig-table"><tr>'
-    // Colonne Superviseur
-    +'<td style="width:'+colW+'"><div class="sig-title">Superviseur HSE / Déclarant</div>'
-    +'<div class="sig-field-label">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.superviseurNom||'')+'</span></div>'
-    +'<div class="sig-field-label">Signature / Griffe :</div>'
-    +(supSigUrl
-      ? '<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+supSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-10px;width:200px;max-height:80px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
-      : '<div class="sig-line-lg"></div>')
-    +'<div class="sig-field-label">Date :</div>'
-    +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
-    +'</td>'
-    // Colonne Prestataire (conditionnelle)
-    +(showPrestaCol
-      ? '<td style="width:50%"><div class="sig-title">Prestataire</div>'
-        +'<div class="sig-field-label">Nom :</div>'
-        +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(c.prestaireNom||_rnPrestataireSigNom||'')+'</span></div>'
-        +'<div class="sig-field-label">Signature / Griffe :</div>'
-        +'<div style="position:relative;height:60px;overflow:visible;margin-bottom:-18px"><img src="'+_rnPrestataireSigUrl+'" alt="Griffe" style="position:absolute;top:-14px;left:-4px;width:200px;max-height:80px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
-        +'<div class="sig-field-label">Date :</div>'
-        +'<div class="sig-line"></div>'
-        +'</td>'
-      : '')
-    +'</tr></table>';
-
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport Nuisibles #'+c.id+'</title>'
-    +'<style>'
-    +'*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:A4 portrait;margin:16mm 14mm}'
-    +'body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#111;background:#fff}'
-    +'.header{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:8px}'
-    +'.logo-box{width:120px;min-width:120px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
-    +'.logo-box img{max-width:108px;max-height:58px;object-fit:contain}'
-    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
-    +'.doc-title{font-size:11.5pt;font-weight:900;text-align:center;color:#7d3c98;line-height:1.3;text-transform:uppercase}'
-    +'.doc-sub{font-size:8pt;color:#555;margin-top:2px;text-align:center}'
-    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
-    +'.doc-meta .mk{font-weight:700;white-space:nowrap} .doc-meta .mv{white-space:nowrap}'
-    +'.badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:9pt;font-weight:700;color:#fff}'
-    +'.section-title{background:#7d3c98;color:#fff;font-weight:700;font-size:9pt;padding:4px 10px;margin:10px 0 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'.field{margin-bottom:7px}'
-    +'.fl{font-size:7pt;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:1px}'
-    +'.fv{font-size:9pt;color:#111;white-space:pre-wrap;padding:3px 7px;border:1px solid #ccc;min-height:20px;background:#fafafa}'
-    +'.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
-    +'.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}'
-    // Table de signatures
-    +'.sig-table{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:14px}'
-    +'.sig-table td{width:50%;border-right:1px solid #bbb;padding:7px 10px;vertical-align:top;font-size:8pt}'
-    +'.sig-table td:last-child{border-right:none}'
-    +'.sig-title{font-weight:bold;font-size:7.5pt;text-transform:uppercase;color:#7d3c98;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:6px}'
-    +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px;margin-top:4px}'
-    +'.sig-line{border-bottom:1px dotted #999;height:16px;margin-bottom:4px;padding-left:2px}'
-    +'.sig-line-lg{border-bottom:1px dotted #999;height:54px;margin-bottom:4px}'
-    +'.footer{text-align:center;font-size:7pt;color:#999;border-top:1px solid #ddd;padding-top:5px;margin-top:8px}'
-    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'.section-title{background:#7d3c98!important;color:#fff!important}'
-    +'button{display:none}}'
-    +'</style></head><body>'
-    // En-tête
-    +'<div class="header">'
-    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;font-style:italic;text-align:center">LOGO</div>')
-    +'<div class="title-box">'
-    +'<div class="doc-title">Rapport de Présence de Nuisibles</div>'
-    +'<div class="doc-sub">Hygiène · Sécurité · Environnement</div>'
-    +'</div>'
-    +'<div class="doc-meta">'
-    +'<span class="mk">Réf. :</span><span class="mv" style="font-weight:700">'+esc(_rnDocCode)+'</span>'
-    +'<span class="mk">Rév. :</span><span class="mv">'+esc(_rnDocRev)+'</span>'
-    +'<span class="mk">Éd. :</span><span class="mv">'+esc(edDate)+'</span>'
-    +'<span class="mk">N° :</span><span class="mv" style="font-weight:700">#'+c.id+'</span>'
-    +'</div>'
-    +'</div>'
-    // Statut
-    +'<div style="margin-bottom:8px"><span class="badge" style="background:'+statColor+'">'+esc(RN_STATUT_ICONS[c.statut]||'')+'  '+esc(c.statut)+'</span></div>'
-    // Identification
-    +'<div class="section-title">📋 Identification</div>'
-    +'<div class="row3">'
-    +'<div class="field"><span class="fl">Date de constatation</span><div class="fv">'+esc(c.date)+'</div></div>'
-    +'<div class="field"><span class="fl">Zone</span><div class="fv">'+esc(c.zone)+'</div></div>'
-    +'<div class="field"><span class="fl">Emplacement précis</span><div class="fv">'+esc(c.emplacement||'—')+'</div></div>'
-    +'</div>'
-    +'<div class="field"><span class="fl">Type de nuisible</span><div class="fv">'+esc(c.typeNuisible)+'</div></div>'
-    // Observations
-    +'<div class="section-title">🔍 Observations</div>'
-    +'<div class="field"><span class="fl">Description / Observations</span><div class="fv" style="min-height:36px">'+esc(c.description||'—')+'</div></div>'
-    // Actions
-    +'<div class="section-title">⚡ Actions</div>'
-    +'<div class="field"><span class="fl">Actions immédiates prises</span><div class="fv" style="min-height:28px">'+esc(c.actionsImmediates||'—')+'</div></div>'
-    // Photo nuisible
-    +(c.photoNuisible?'<div class="section-title">📷 Photo du nuisible</div><div style="margin-bottom:10px"><img src="'+c.photoNuisible+'" alt="Photo nuisible" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc;border-radius:6px"/></div>':'')
-    // Doc clôture
-    +(c.docCloture?'<div class="section-title">📁 Document de clôture (ENR-13)</div><div style="margin-bottom:10px;padding:8px;border:1px solid #27ae60;border-radius:6px;font-size:9pt"><a href="'+c.docCloture+'" target="_blank" style="color:#27ae60">📎 Voir le document ENR-13</a></div>':'')
-    // Prestataire
-    +prestaSection
-    // Tableau de signatures en bas
-    + sigTableHTML
-    +'<div class="footer">'+esc(_rnDocCode)+' — Rév. '+esc(_rnDocRev)+' — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
-    +'<script>window.onload=function(){window.print();}<\/script>'
-    +'</body></html>';
-
-  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
-  if (w) { w.document.write(html); w.document.close(); }
-  else toast('Autorisez les popups pour imprimer','err');
-}
-
-var _nuisiblesCurrentTab = 'inspections';
-
-function switchNuisiblesTab(tab) {
-  _nuisiblesCurrentTab = tab;
-  ['inspections','rapports'].forEach(function(t) {
-    var btn = document.getElementById('nuisTab_'+t);
-    if (btn) btn.className = 'gsort-tab'+(t===tab?' on':'');
-  });
-  var filters = document.getElementById('nuisInspFilters');
-  var inspBtns = document.querySelector('#view-nuisibles .insp-type-row');
-  if (filters) filters.style.display = tab==='inspections' ? '' : 'none';
-  // Boutons type inspection
-  var typeBtnsRow = document.getElementById('nuisInspTypeRow');
-  if (typeBtnsRow) typeBtnsRow.style.display = tab==='inspections' ? '' : 'none';
-  if (tab === 'inspections') renderNuisibles();
-  else renderRapportNuisibles();
-}
-
-function renderNuisibles() {
-  var body = document.getElementById('nuisiblesBody');
-  if (!body) return;
-  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
-  google.script.run
-    .withSuccessHandler(function(r) {
-      if (!r||!r.success) { body.innerHTML='<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
-      if (!r.data.length) {
-        body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">🪲</div><div>Aucune inspection enregistrée.</div><div style="margin-top:8px;font-size:.8rem">Cliquez sur « Insp. Globale » pour commencer.</div></div>';
-        return;
-      }
-      _nuisiblesRecords = r.data;
-      _renderNuisiblesList();
-    })
-    .withFailureHandler(function(e){ body.innerHTML='<div style="color:red">'+e.message+'</div>'; })
-    .getPestChecklists(S.adminKey);
-}
-
-/* ══════════════════════════════════════════
-   ADMIN — GESTION DES THÈMES
-══════════════════════════════════════════ */
-
-function openThemesAdmin() {
-  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
-  showLoader('Chargement…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      var themes = (r&&r.success&&r.data)||[];
-      var list = document.getElementById('themesList');
-      list.innerHTML = '';
-      if (themes.length) {
-        themes.forEach(function(t){ addThemeRow(t); });
-      } else {
-        addThemeRow('Sécurité incendie');
-        addThemeRow('Risques chimiques');
-        addThemeRow('Port des EPI');
-        addThemeRow('Gestes et postures');
-      }
-      openSheet('themesAdminOv');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .getSensibilisationThemes(S.adminKey);
-}
-
-function addThemeRow(val) {
-  var list = document.getElementById('themesList');
-  var row = document.createElement('div');
-  row.className = 'themes-row';
-  row.innerHTML = '<input class="fi theme-input" value="'+(val?esc(val):'')+'"/>'
-    + '<button onclick="this.parentNode.remove()" style="background:var(--ink3);border:1px solid var(--line2);color:#ef4444;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.88rem">✕</button>';
-  list.appendChild(row);
-  if (!val) row.querySelector('input').focus();
-}
-
-function saveThemes() {
-  var themes = [];
-  document.querySelectorAll('#themesList .theme-input').forEach(function(inp){
-    var v = inp.value.trim();
-    if (v) themes.push(v);
-  });
-  if (!themes.length) { toast('Ajoutez au moins un thème','err'); return; }
-  showLoader('Enregistrement…');
-  google.script.run
-    .withSuccessHandler(function(r) {
-      hideSplash();
-      if (r&&r.success) {
-        toast('✓ '+(r.data.length)+' thèmes enregistrés','ok');
-        closeSheet('themesAdminOv');
-      } else toast('Erreur: '+(r&&r.error||'?'),'err');
-    })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveSensibilisationThemes({ adminKey:S.adminKey, themes:themes });
-}
-
-/* ══════════════════════════════════════════
-   MULTI-SELECT ÉQUIPEMENT
-══════════════════════════════════════════ */
-
-var _equipAll = (function(){
-  var a = [];
-  for (var i=1; i<=100; i++) a.push(String(i));
-  return a;
-})();
-var _equipCustom  = [];
-var _equipSelected = [];
-var _equipSearchQ  = '';
-
-function renderEquipTags() {
-  var area = document.getElementById('equipTagsArea');
-  if (!area) return;
-  if (!_equipSelected.length) {
-    area.innerHTML = '<span id="equipPlaceholder" style="color:var(--t3);font-size:.9rem">Sélectionnez des numéros…</span>';
-    return;
-  }
-  area.innerHTML = _equipSelected.map(function(v) {
-    return '<span class="equip-tag" onmousedown="event.preventDefault();removeEquipTag(\''+v+'\')" title="Retirer '+v+'">'
-      + esc(v) + ' <span style="opacity:.6;font-size:.75em">✕</span></span>';
-  }).join('');
-}
-
-function removeEquipTag(val) {
-  _equipSelected = _equipSelected.filter(function(v){ return v !== val; });
-  renderEquipTags();
-  _renderEquipMultiList();
-}
-
-function _renderEquipMultiList() {
-  var allNums = _equipAll.concat(_equipCustom);
-  var q = _equipSearchQ;
-  var filtered = q ? allNums.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase())!==-1; }) : allNums;
-  var list = document.getElementById('equipMultiList');
-  if (!list) return;
-  if (!filtered.length) {
-    list.innerHTML = '<div style="padding:10px 14px;color:var(--t3);font-size:.85rem">Aucun résultat</div>';
-    return;
-  }
-  list.innerHTML = filtered.map(function(v) {
-    var isChecked = _equipSelected.indexOf(v) !== -1;
-    var isCustom  = _equipCustom.indexOf(v) !== -1;
-    return '<div class="equip-multi-item'+(isChecked?' checked-item':'')+'" onmousedown="event.preventDefault();toggleEquipSelect(\''+v+'\')">'
-      + '<input type="checkbox" '+(isChecked?'checked':'')+' style="pointer-events:none;accent-color:var(--y)"/>'
-      + (isCustom ? '<span style="color:var(--y);font-size:.75rem;font-weight:700">★ </span>' : '')
-      + '<span>'+esc(v)+'</span>'
-      + '</div>';
-  }).join('');
-}
-
-function toggleEquipSelect(val) {
-  var idx = _equipSelected.indexOf(val);
-  if (idx === -1) _equipSelected.push(val);
-  else _equipSelected.splice(idx, 1);
-  renderEquipTags();
-  _renderEquipMultiList();
-}
-
-function toggleEquipDropdown() {
-  var dd = document.getElementById('equipMultiDropdown');
-  if (!dd) return;
-  if (dd.style.display === 'block') {
-    dd.style.display = 'none';
-  } else {
-    dd.style.display = 'block';
-    var s = document.getElementById('equipMultiSearch');
-    if (s) { s.value = ''; }
-    _equipSearchQ = '';
-    _renderEquipMultiList();
-    if (s) s.focus();
-  }
-}
-
-function filterEquipMulti(q) {
-  _equipSearchQ = (q||'').trim();
-  _renderEquipMultiList();
-}
-
-function addEquipCustom() {
-  var input = document.getElementById('equipCustomInput');
-  var val = (input.value||'').trim();
-  if (!val) return;
-  if (_equipAll.indexOf(val) === -1 && _equipCustom.indexOf(val) === -1) {
-    _equipCustom.push(val);
-  }
-  if (_equipSelected.indexOf(val) === -1) _equipSelected.push(val);
-  input.value = '';
-  renderEquipTags();
-  _equipSearchQ = '';
-  var s = document.getElementById('equipMultiSearch');
-  if (s) s.value = '';
-  _renderEquipMultiList();
-}
-
-document.addEventListener('click', function(e) {
-  var wrapper = document.getElementById('equipMultiWrapper');
-  var dd = document.getElementById('equipMultiDropdown');
-  if (dd && wrapper && !wrapper.contains(e.target)) {
-    dd.style.display = 'none';
-  }
-});
-
-var _enr13PrestataireSigUrl = '';
-var _enr13PrestataireSigNom = '';
-var _enr15PrestataireSigUrl = '';
-var _enr15PrestataireSigNom = '';
-
-/* ══════════════════════════════════════════
-   HELPERS GRIFFES ENR-13 / ENR-15
-══════════════════════════════════════════ */
-function _buildGriffeTable13(visaText, today) {
-  var hseSigUrl  = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var nom        = visaText || (S_AUTH&&S_AUTH.nom) || '';
-  var hseSigCell = hseSigUrl
-    ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
-      +'<img src="'+hseSigUrl+'" alt="Griffe HSE" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
-    : '<div class="sig-line-lg"></div>';
-  var showPresta = !!_enr13PrestataireSigUrl;
-  var prestaSigCell = showPresta
-    ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
-      +'<img src="'+_enr13PrestataireSigUrl+'" alt="Griffe prestataire" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
-    : '<div class="sig-line-lg"></div>';
-  return '<table class="sig-table"><tr>'
-    +'<td><div class="sig-title">Responsable HSE / Visa</div>'
-    +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(nom)+'</span></div>'
-    +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +hseSigCell
-    +'<div class="sig-lbl">Date :</div>'
-    +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
-    +'</td>'
-    +'<td><div class="sig-title">Prestataire / Intervenant</div>'
-    +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(_enr13PrestataireSigNom||'')+'</span></div>'
-    +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +prestaSigCell
-    +'<div class="sig-lbl">Date :</div>'
-    +'<div class="sig-line"></div>'
-    +'</td>'
-    +'</tr></table>';
-}
-
-function _buildGriffeTable15(visaText, today) {
-  var hseSigUrl  = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var nom        = visaText || (S_AUTH&&S_AUTH.nom) || '';
-  var hseSigCell = hseSigUrl
-    ? '<div style="position:relative;height:56px;overflow:visible;margin-bottom:-12px">'
-      +'<img src="'+hseSigUrl+'" alt="Griffe HSE" style="position:absolute;top:-10px;left:-6px;width:185px;max-height:70px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
-    : '<div class="sig-line-lg"></div>';
-  var showPresta = !!_enr15PrestataireSigUrl;
-  var prestaSigCell = showPresta
-    ? '<div style="position:relative;height:56px;overflow:visible;margin-bottom:-12px">'
-      +'<img src="'+_enr15PrestataireSigUrl+'" alt="Griffe prestataire" style="position:absolute;top:-10px;left:-6px;width:185px;max-height:70px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
-    : '<div class="sig-line-lg"></div>';
-  return '<table class="sig-table"><tr>'
-    +'<td><div class="sig-title">Responsable HSE / Visa</div>'
-    +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(nom)+'</span></div>'
-    +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +hseSigCell
-    +'<div class="sig-lbl">Date :</div>'
-    +'<div class="sig-line"><span style="font-size:8pt">'+esc(today)+'</span></div>'
-    +'</td>'
-    +'<td><div class="sig-title">Prestataire / Intervenant</div>'
-    +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(_enr15PrestataireSigNom||'')+'</span></div>'
-    +'<div class="sig-lbl">Signature / Griffe :</div>'
-    +prestaSigCell
-    +'<div class="sig-lbl">Date :</div>'
-    +'<div class="sig-line"></div>'
-    +'</td>'
-    +'</tr></table>';
-}
-
-/* ══════════════════════════════════════════
-   LISTE DES PRODUITS ENR-13 (admin)
-══════════════════════════════════════════ */
-var _enr13Products = []; // [{ref:'FDS', nom:'GOLIATHGEL'}, …]
-
-function _renderEnr13ProductsList() {
-  var el = document.getElementById('enr13ProdList');
+  var el = document.getElementById('enrBTplList');
   if (!el) return;
-  if (!_enr13Products.length) {
-    el.innerHTML = '<span style="font-size:.75rem;color:var(--t3)">Aucun produit — ajoutez-en ci-dessus</span>';
-  } else {
-    el.innerHTML = _enr13Products.map(function(p, i) {
-      return '<div style="display:flex;align-items:center;gap:8px;background:var(--ink3);border-radius:7px;padding:5px 9px">'
-        +'<span style="background:#27ae60;color:#fff;font-size:.7rem;font-weight:700;border-radius:4px;padding:1px 6px;min-width:38px;text-align:center">'+esc(p.ref)+'</span>'
-        +'<span style="flex:1;font-size:.82rem;color:var(--t1)">'+esc(p.nom)+'</span>'
-        +'<button onclick="removeEnr13Product('+i+')" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.85rem;padding:0 4px" title="Supprimer">✕</button>'
-        +'</div>';
-    }).join('');
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--t3);font-size:.75rem;text-align:center;padding:16px;font-style:italic">Aucun modèle</div>';
+    return;
   }
-  _refreshEnr13ProductSelects();
+  el.innerHTML = list.map(function(t) {
+    var active = _enrBActiveTpl && _enrBActiveTpl.id === t.id;
+    var col = t.color || '#f1c40f';
+    var mods = (t.modules||[]).slice(0,2).map(function(m){ return '<span style="font-size:.6rem;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.2);color:#f1c40f;border-radius:4px;padding:1px 5px">'+esc(m)+'</span>'; }).join('');
+    return '<div class="enrBTplItem'+(active?' on':'')+'" onclick="enrBOpenTemplate(\''+t.id+'\')">'
+      +'<div style="width:3px;height:36px;background:'+col+';border-radius:2px;flex-shrink:0;margin-top:2px"></div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:.75rem;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(t.code||t.titre)+'</div>'
+        +'<div style="font-size:.68rem;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">'+esc(t.titre)+'</div>'
+        +'<div style="display:flex;gap:3px;flex-wrap:wrap">'+mods+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
 }
 
-function addEnr13Product() {
-  var ref = (document.getElementById('enr13ProdRefInput')||{}).value || 'FDS';
-  var inp = document.getElementById('enr13ProdNomInput');
-  var nom = (inp ? inp.value.trim() : '');
-  if (!nom) return;
-  _enr13Products.push({ref: ref, nom: nom});
-  if (inp) inp.value = '';
-  _renderEnr13ProductsList();
+// ── Open / New template ───────────────────────────────────────────
+function enrBNewTemplate() {
+  _enrBActiveTpl = { id:null, titre:'', code:'', modules:[], color:'#f1c40f', sections:[], statut:'Brouillon', description:'', rev:'01', edition:'', frequence:'', responsable:'', approbateur:'', duree:'', ref:'' };
+  _enrBSections = [];
+  _enrBRenderTplList();
+  _enrBShowTabs();
+  enrBSwitchTab('info');
+  _enrBFillInfoForm(_enrBActiveTpl);
 }
 
-function removeEnr13Product(idx) {
-  _enr13Products.splice(idx, 1);
-  _renderEnr13ProductsList();
+function enrBOpenTemplate(id) {
+  var t = _enrBTpls.find(function(x){ return x.id===id; });
+  if (!t) return;
+  _enrBActiveTpl = JSON.parse(JSON.stringify(t)); // deep copy
+  _enrBSections  = JSON.parse(JSON.stringify(t.sections||[]));
+  _enrBRenderTplList();
+  _enrBShowTabs();
+  enrBSwitchTab('info');
+  _enrBFillInfoForm(_enrBActiveTpl);
 }
 
-function _refreshEnr13ProductSelects() {
-  var opts = '<option value="">— Sélectionner —</option>'
-    + _enr13Products.map(function(p){
-        return '<option value="'+esc(p.nom)+'">'+esc('['+p.ref+'] '+p.nom)+'</option>';
-      }).join('');
-  ['enr13_produit_r','enr13_produit_v','enr13_produit_g'].forEach(function(id) {
-    var sel = document.getElementById(id);
-    if (!sel) return;
-    var cur = sel.value;
-    sel.innerHTML = opts;
-    sel.value = cur;
+function _enrBShowTabs() {
+  var w = document.getElementById('enrBWelcome');
+  var tabs = document.getElementById('enrBTabs');
+  var nm = document.getElementById('enrBTplName');
+  if (w) w.style.display = 'none';
+  if (tabs) { tabs.style.display = 'flex'; }
+  if (nm) nm.textContent = _enrBActiveTpl ? (_enrBActiveTpl.code ? '— '+_enrBActiveTpl.code : '— Nouveau') : '';
+  var sb = document.getElementById('enrBSaveBtn');
+  if (sb) sb.style.display = 'inline-block';
+}
+
+function enrBSwitchTab(tab) {
+  _enrBTab = tab;
+  document.querySelectorAll('.enrBTab').forEach(function(b){ b.classList.toggle('on', b.dataset.tab===tab); });
+  document.querySelectorAll('.enrBTabPane').forEach(function(p){ p.classList.remove('on'); });
+  var pane = document.getElementById('enrBTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if (pane) pane.classList.add('on');
+  if (tab==='builder') _enrBRenderSections();
+  if (tab==='records') _enrBLoadRecords();
+}
+
+// ── Info form ─────────────────────────────────────────────────────
+function _enrBFillInfoForm(t) {
+  function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; }
+  sv('enrBCode', t.code);
+  sv('enrBTitre', t.titre);
+  sv('enrBDesc', t.description||'');
+  sv('enrBRev', t.rev||'');
+  sv('enrBEdition', t.edition||'');
+  sv('enrBResponsable', t.responsable||'');
+  sv('enrBApprobateur', t.approbateur||'');
+  sv('enrBRef', t.ref||'');
+  var statEl = document.getElementById('enrBStatut');
+  if (statEl) statEl.value = t.statut||'Brouillon';
+  var freqEl = document.getElementById('enrBFrequence');
+  if (freqEl) freqEl.value = t.frequence||'';
+  var dureeEl = document.getElementById('enrBDuree');
+  if (dureeEl) dureeEl.value = t.duree||'';
+  // modules checkboxes
+  var mods = t.modules||[];
+  document.querySelectorAll('.enrBModChk').forEach(function(ch){ ch.checked = mods.indexOf(ch.value)>=0; });
+  // color picker
+  var col = t.color||'#f1c40f';
+  document.getElementById('enrBColor').value = col;
+  document.querySelectorAll('.enrBColorOpt').forEach(function(el){
+    el.classList.toggle('sel', el.dataset.color===col);
   });
+  // Init color click if not done
+  _enrBInitColorPicker();
 }
 
-function saveEnr13Products() {
-  showLoader('Sauvegarde des produits…');
+function _enrBReadInfoForm() {
+  var mods = [];
+  document.querySelectorAll('.enrBModChk:checked').forEach(function(ch){ mods.push(ch.value); });
+  return {
+    code: (document.getElementById('enrBCode')||{}).value||'',
+    titre: (document.getElementById('enrBTitre')||{}).value||'',
+    description: (document.getElementById('enrBDesc')||{}).value||'',
+    statut: (document.getElementById('enrBStatut')||{}).value||'Brouillon',
+    modules: mods,
+    color: (document.getElementById('enrBColor')||{}).value||'#f1c40f',
+    rev: (document.getElementById('enrBRev')||{}).value||'',
+    edition: (document.getElementById('enrBEdition')||{}).value||'',
+    frequence: (document.getElementById('enrBFrequence')||{}).value||'',
+    responsable: (document.getElementById('enrBResponsable')||{}).value||'',
+    approbateur: (document.getElementById('enrBApprobateur')||{}).value||'',
+    duree: (document.getElementById('enrBDuree')||{}).value||'',
+    ref: (document.getElementById('enrBRef')||{}).value||''
+  };
+}
+
+// ── Save template ─────────────────────────────────────────────────
+function enrBSave() {
+  if (!_enrBActiveTpl) return;
+  var info = _enrBReadInfoForm();
+  if (!info.titre.trim()) { toast('Le titre est requis','err'); return; }
+  var payload = Object.assign({}, _enrBActiveTpl, info, { sections: _enrBSections, adminKey: S.adminKey });
+  toast('Enregistrement…','info');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { toast((r&&r.error)||'Erreur','err'); return; }
+      if (!_enrBActiveTpl.id) _enrBActiveTpl.id = r.id;
+      payload.id = r.id;
+      // update local list
+      var idx = _enrBTpls.findIndex(function(x){ return x.id===r.id; });
+      if (idx>=0) _enrBTpls[idx] = payload; else _enrBTpls.push(payload);
+      _enrBActiveTpl = JSON.parse(JSON.stringify(payload));
+      _enrBRenderSidebar();
+      var nm = document.getElementById('enrBTplName');
+      if (nm) nm.textContent = '— '+(_enrBActiveTpl.code||_enrBActiveTpl.titre);
+      toast('Modèle enregistré ✓','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .saveEnrTemplate(payload);
+}
+
+function enrBDeleteTemplate() {
+  if (!_enrBActiveTpl||!_enrBActiveTpl.id) return;
+  if (!confirm('Supprimer ce modèle et tous ses enregistrements ?')) return;
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success) { toast((r&&r.error)||'Erreur','err'); return; }
+      _enrBTpls = _enrBTpls.filter(function(x){ return x.id!==_enrBActiveTpl.id; });
+      _enrBActiveTpl = null; _enrBSections = [];
+      _enrBRenderSidebar();
+      // back to welcome
+      var w = document.getElementById('enrBWelcome'); if(w) w.style.display='';
+      var tabs = document.getElementById('enrBTabs'); if(tabs) tabs.style.display='none';
+      var nm = document.getElementById('enrBTplName'); if(nm) nm.textContent='';
+      var sb = document.getElementById('enrBSaveBtn'); if(sb) sb.style.display='none';
+      document.querySelectorAll('.enrBTabPane').forEach(function(p){ p.classList.remove('on'); });
+      toast('Modèle supprimé','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .deleteEnrTemplate({ id:_enrBActiveTpl.id, adminKey:S.adminKey });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  SECTION BUILDER
+// ══════════════════════════════════════════════════════════════════
+var _ENR_SEC_TYPES = { champs:'📝 Groupe de champs', tableau:'📊 Tableau', texte:'📄 Texte', signature:'✍️ Signatures', separateur:'── Séparateur' };
+var _ENR_FIELD_TYPES = ['text','textarea','number','date','time','select','checkbox','radio','photo'];
+var _ENR_FIELD_LABELS = { text:'Texte court', textarea:'Texte long', number:'Nombre', date:'Date', time:'Heure', select:'Liste déroulante', checkbox:'Case à cocher', radio:'Choix unique (radio)', photo:'Photo' };
+
+function enrBAddSection(type) {
+  var sec = { id:'sec_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), type:type, titre:_ENR_SEC_TYPES[type]||'Section', collapsed:false };
+  if (type==='champs')    sec.fields = [];
+  if (type==='tableau')   { sec.columns = []; sec.initialRows = 3; sec.allowAddRows = true; }
+  if (type==='texte')     sec.content = '';
+  if (type==='signature') sec.signataires = [{ label:'Responsable', role:'' }];
+  _enrBSections.push(sec);
+  _enrBRenderSections();
+  // scroll to bottom
+  setTimeout(function(){ var el=document.getElementById('enrBSectionsList'); if(el){ var last=el.lastElementChild; if(last) last.scrollIntoView({behavior:'smooth',block:'nearest'}); } },50);
+}
+
+function _enrBRenderSections() {
+  var el = document.getElementById('enrBSectionsList');
+  if (!el) return;
+  if (!_enrBSections.length) {
+    el.innerHTML = '<div style="color:var(--t3);font-size:.82rem;text-align:center;padding:30px;font-style:italic;border:2px dashed var(--line);border-radius:10px">Aucune section — cliquez ci-dessus pour ajouter</div>';
+    return;
+  }
+  el.innerHTML = _enrBSections.map(function(sec, i){ return _enrBRenderSec(sec, i); }).join('');
+}
+
+function _enrBRenderSec(sec, i) {
+  var total = _enrBSections.length;
+  var moveUp   = i>0        ? '<button class="enrBSmBtn" onclick="enrBMoveSection('+i+',-1)" title="Monter">▲</button>' : '<button class="enrBSmBtn" disabled style="opacity:.3">▲</button>';
+  var moveDown = i<total-1  ? '<button class="enrBSmBtn" onclick="enrBMoveSection('+i+',1)" title="Descendre">▼</button>' : '<button class="enrBSmBtn" disabled style="opacity:.3">▼</button>';
+  var body = '';
+
+  if (sec.type==='separateur') {
+    return '<div class="enrBSecCard" id="enrBSec_'+i+'">'
+      +'<div class="enrBSecHead">'
+        +'<span style="color:var(--t3);font-size:.8rem;flex:1">── Séparateur ──</span>'
+        +moveUp+moveDown
+        +'<button class="enrBSmBtn del" onclick="enrBRemoveSection('+i+')">✕</button>'
+      +'</div>'
+    +'</div>';
+  }
+
+  if (sec.type==='texte') {
+    body = '<div class="enrBSecBody">'
+      +'<label class="fl" style="font-size:.72rem">Contenu du bloc texte</label>'
+      +'<textarea class="fi" rows="4" style="resize:vertical;font-size:.82rem;min-height:70px" onchange="_enrBSecProp('+i+',\'content\',this.value)" placeholder="Entrez le contenu de ce bloc de texte (instructions, notes, …)">'+esc(sec.content||'')+'</textarea>'
+    +'</div>';
+  }
+
+  if (sec.type==='signature') {
+    var sigs = (sec.signataires||[]).map(function(s,si){
+      return '<div class="enrBFieldRow">'
+        +'<input class="fi" style="flex:1;height:28px;font-size:.78rem" value="'+esc(s.label||'')+'" placeholder="Libellé" onchange="_enrBSigProp('+i+','+si+',\'label\',this.value)"/>'
+        +'<input class="fi" style="flex:1;height:28px;font-size:.78rem" value="'+esc(s.role||'')+'" placeholder="Rôle / Fonction" onchange="_enrBSigProp('+i+','+si+',\'role\',this.value)"/>'
+        +'<button class="enrBSmBtn del" onclick="enrBRemoveSig('+i+','+si+')">✕</button>'
+      +'</div>';
+    }).join('');
+    body = '<div class="enrBSecBody">'
+      +sigs
+      +'<button class="enrBAddBtn" style="margin-top:6px" onclick="enrBAddSig('+i+')">+ Ajouter un signataire</button>'
+    +'</div>';
+  }
+
+  if (sec.type==='champs') {
+    var fields = (sec.fields||[]).map(function(f,fi){ return _enrBRenderFieldRow(i,fi,f); }).join('');
+    body = '<div class="enrBSecBody">'
+      +(fields || '<div style="color:var(--t3);font-size:.78rem;font-style:italic;margin-bottom:8px">Aucun champ — cliquez ci-dessous</div>')
+      +'<button class="enrBAddBtn" onclick="enrBAddField('+i+')">+ Ajouter un champ</button>'
+    +'</div>';
+  }
+
+  if (sec.type==='tableau') {
+    var cols = (sec.columns||[]).map(function(col,ci){ return _enrBRenderColRow(i,ci,col); }).join('');
+    body = '<div class="enrBSecBody">'
+      +'<div style="font-size:.72rem;font-weight:700;color:var(--t2);margin-bottom:6px">Colonnes</div>'
+      +(cols || '<div style="color:var(--t3);font-size:.78rem;font-style:italic;margin-bottom:8px">Aucune colonne</div>')
+      +'<button class="enrBAddBtn" onclick="enrBAddColumn('+i+')">+ Ajouter une colonne</button>'
+      +'<div style="display:flex;align-items:center;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'
+        +'<label style="font-size:.72rem;color:var(--t2);display:flex;align-items:center;gap:5px">'
+          +'Lignes initiales : <input type="number" min="1" max="50" value="'+(sec.initialRows||3)+'" style="width:54px;background:var(--ink3);border:1px solid var(--line);color:var(--t1);border-radius:5px;padding:3px 6px;font-size:.78rem" onchange="_enrBSecProp('+i+',\'initialRows\',+this.value)"/>'
+        +'</label>'
+        +'<label style="font-size:.72rem;color:var(--t2);display:flex;align-items:center;gap:5px;cursor:pointer">'
+          +'<input type="checkbox" '+(sec.allowAddRows?'checked':'')+' onchange="_enrBSecProp('+i+',\'allowAddRows\',this.checked)"/> Permettre l\'ajout de lignes'
+        +'</label>'
+      +'</div>'
+    +'</div>';
+  }
+
+  var collapsed = sec.collapsed;
+  return '<div class="enrBSecCard" id="enrBSec_'+i+'">'
+    +'<div class="enrBSecHead" onclick="enrBToggleSec('+i+')">'
+      +'<span style="font-size:.75rem;font-weight:700;color:var(--t2);flex:1">'+(_ENR_SEC_TYPES[sec.type]||sec.type)+' &nbsp;·&nbsp; </span>'
+      +'<input class="fi" style="flex:2;height:26px;font-size:.78rem;font-weight:600" value="'+esc(sec.titre||'')+'" placeholder="Titre de la section" onclick="event.stopPropagation()" onchange="_enrBSecProp('+i+',\'titre\',this.value)"/>'
+      +'<span style="margin-left:6px;color:var(--t3);font-size:.8rem">'+(collapsed?'▸':'▾')+'</span>'
+      +moveUp+moveDown
+      +'<button class="enrBSmBtn del" onclick="event.stopPropagation();enrBRemoveSection('+i+')" style="margin-left:4px">✕</button>'
+    +'</div>'
+    +(collapsed ? '' : body)
+  +'</div>';
+}
+
+function _enrBRenderFieldRow(si, fi, f) {
+  var typeOpts = _ENR_FIELD_TYPES.map(function(t){ return '<option value="'+t+'"'+( f.type===t?' selected':'')+'>'+(_ENR_FIELD_LABELS[t]||t)+'</option>'; }).join('');
+  var hasOpts = f.type==='select'||f.type==='radio';
+  return '<div class="enrBFieldRow" id="enrFR_'+si+'_'+fi+'">'
+    +'<span style="color:var(--t3);font-size:.7rem;width:18px;text-align:center">⠿</span>'
+    +'<input class="fi" style="flex:2;height:26px;font-size:.78rem" value="'+esc(f.label||'')+'" placeholder="Libellé du champ" onchange="_enrBFieldProp('+si+','+fi+',\'label\',this.value)"/>'
+    +'<select class="fi" style="flex:1.2;height:26px;font-size:.72rem" onchange="_enrBFieldProp('+si+','+fi+',\'type\',this.value);_enrBRenderSections()">'+typeOpts+'</select>'
+    +'<input class="fi" style="flex:2;height:26px;font-size:.76rem" value="'+esc(f.placeholder||'')+'" placeholder="Placeholder / Aide" onchange="_enrBFieldProp('+si+','+fi+',\'placeholder\',this.value)"/>'
+    +(hasOpts ? '<input class="fi" style="flex:2;height:26px;font-size:.72rem" value="'+esc((f.options||[]).join(';'))+'" placeholder="opt1;opt2;opt3" title="Options séparées par ;" onchange="_enrBFieldProp('+si+','+fi+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>' : '<div style="flex:2"></div>')
+    +'<label style="display:flex;align-items:center;gap:3px;font-size:.7rem;cursor:pointer;white-space:nowrap;flex-shrink:0">'
+      +'<input type="checkbox" '+(f.required?'checked':'')+' onchange="_enrBFieldProp('+si+','+fi+',\'required\',this.checked)"/> Req.'
+    +'</label>'
+    +'<button class="enrBSmBtn" onclick="enrBMoveField('+si+','+fi+',-1)" title="Monter">▲</button>'
+    +'<button class="enrBSmBtn" onclick="enrBMoveField('+si+','+fi+',1)" title="Descendre">▼</button>'
+    +'<button class="enrBSmBtn del" onclick="enrBRemoveField('+si+','+fi+')">✕</button>'
+  +'</div>';
+}
+
+function _enrBRenderColRow(si, ci, col) {
+  var colTypeOpts = ['text','number','date','select','checkbox'].map(function(t){
+    return '<option value="'+t+'"'+(col.type===t?' selected':'')+'>'+(_ENR_FIELD_LABELS[t]||t)+'</option>';
+  }).join('');
+  return '<div class="enrBFieldRow" id="enrCR_'+si+'_'+ci+'">'
+    +'<span style="color:var(--t3);font-size:.7rem;width:18px;text-align:center">⠿</span>'
+    +'<input class="fi" style="flex:2;height:26px;font-size:.78rem" value="'+esc(col.label||'')+'" placeholder="En-tête de colonne" onchange="_enrBColProp('+si+','+ci+',\'label\',this.value)"/>'
+    +'<select class="fi" style="flex:1.2;height:26px;font-size:.72rem" onchange="_enrBColProp('+si+','+ci+',\'type\',this.value)">'+colTypeOpts+'</select>'
+    +(col.type==='select' ? '<input class="fi" style="flex:2;height:26px;font-size:.72rem" value="'+esc((col.options||[]).join(';'))+'" placeholder="opt1;opt2" onchange="_enrBColProp('+si+','+ci+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>' : '<div style="flex:2"></div>')
+    +'<input class="fi" style="width:54px;height:26px;font-size:.72rem" value="'+esc(col.width||'')+'" placeholder="Largeur" onchange="_enrBColProp('+si+','+ci+',\'width\',this.value)"/>'
+    +'<button class="enrBSmBtn" onclick="enrBMoveCol('+si+','+ci+',-1)">▲</button>'
+    +'<button class="enrBSmBtn" onclick="enrBMoveCol('+si+','+ci+',1)">▼</button>'
+    +'<button class="enrBSmBtn del" onclick="enrBRemoveCol('+si+','+ci+')">✕</button>'
+  +'</div>';
+}
+
+// Section/field/column mutators
+function enrBToggleSec(i){ _enrBSections[i].collapsed=!_enrBSections[i].collapsed; _enrBRenderSections(); }
+function enrBRemoveSection(i){ if(!confirm('Supprimer cette section ?')) return; _enrBSections.splice(i,1); _enrBRenderSections(); }
+function enrBMoveSection(i,d){ var s=_enrBSections; var j=i+d; if(j<0||j>=s.length) return; var t=s[i]; s[i]=s[j]; s[j]=t; _enrBRenderSections(); }
+function _enrBSecProp(i,k,v){ _enrBSections[i][k]=v; }
+
+function enrBAddField(si){ if(!_enrBSections[si].fields) _enrBSections[si].fields=[]; _enrBSections[si].fields.push({id:'f_'+Date.now(),label:'',type:'text',placeholder:'',required:false}); _enrBRenderSections(); }
+function enrBRemoveField(si,fi){ _enrBSections[si].fields.splice(fi,1); _enrBRenderSections(); }
+function enrBMoveField(si,fi,d){ var fs=_enrBSections[si].fields; var j=fi+d; if(j<0||j>=fs.length) return; var t=fs[fi]; fs[fi]=fs[j]; fs[j]=t; _enrBRenderSections(); }
+function _enrBFieldProp(si,fi,k,v){ _enrBSections[si].fields[fi][k]=v; }
+
+function enrBAddColumn(si){ if(!_enrBSections[si].columns) _enrBSections[si].columns=[]; _enrBSections[si].columns.push({id:'c_'+Date.now(),label:'',type:'text',width:''}); _enrBRenderSections(); }
+function enrBRemoveCol(si,ci){ _enrBSections[si].columns.splice(ci,1); _enrBRenderSections(); }
+function enrBMoveCol(si,ci,d){ var cs=_enrBSections[si].columns; var j=ci+d; if(j<0||j>=cs.length) return; var t=cs[ci]; cs[ci]=cs[j]; cs[j]=t; _enrBRenderSections(); }
+function _enrBColProp(si,ci,k,v){ _enrBSections[si].columns[ci][k]=v; }
+
+function enrBAddSig(si){ if(!_enrBSections[si].signataires) _enrBSections[si].signataires=[]; _enrBSections[si].signataires.push({label:'',role:''}); _enrBRenderSections(); }
+function enrBRemoveSig(si,gi){ _enrBSections[si].signataires.splice(gi,1); _enrBRenderSections(); }
+function _enrBSigProp(si,gi,k,v){ _enrBSections[si].signataires[gi][k]=v; }
+
+// ══════════════════════════════════════════════════════════════════
+//  RECORDS (Enregistrements)
+// ══════════════════════════════════════════════════════════════════
+function _enrBLoadRecords() {
+  if (!_enrBActiveTpl||!_enrBActiveTpl.id) { document.getElementById('enrBRecList').innerHTML='<div style="color:var(--t3);font-size:.82rem;text-align:center;padding:20px;font-style:italic">Enregistrez d\'abord ce modèle.</div>'; return; }
+  document.getElementById('enrBRecList').innerHTML='<div style="color:var(--t3);font-size:.82rem;text-align:center;padding:20px">Chargement…</div>';
   google.script.run
     .withSuccessHandler(function(r){
-      hideSplash();
-      if (r&&r.success) toast('✓ Produits ENR-13 sauvegardés','ok');
-      else toast('Erreur: '+(r&&r.error||'?'),'err');
+      if (!r||!r.success){ toast((r&&r.error)||'Erreur','err'); return; }
+      _enrBRecords = r.records||[];
+      _enrBRenderRecords();
     })
-    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
-    .saveEnr13Products({ adminKey: S.adminKey, products: _enr13Products });
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .getEnrRecords({ templateId:_enrBActiveTpl.id, adminKey:S.adminKey });
 }
 
-/* ══════════════════════════════════════════
-   ENR-HSE-13 — Exécution de la Lutte contre les Nuisibles
-══════════════════════════════════════════ */
-function openEnr13Exec() {
-  var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
-  var el = document.getElementById('enr13_date');
-  if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
-  // Si la liste est vide, charger depuis le backend
-  if (!_enr13Products.length) {
-    google.script.run
-      .withSuccessHandler(function(r){
-        if (r&&r.success&&r.products) { _enr13Products = r.products; }
-        _refreshEnr13ProductSelects();
-      })
-      .withFailureHandler(function(){})
-      .getEnr13Products(S.adminKey);
-  } else {
-    _refreshEnr13ProductSelects();
+function _enrBRenderRecords() {
+  var el = document.getElementById('enrBRecList');
+  var cnt = document.getElementById('enrBRecCount');
+  if (cnt) cnt.textContent = _enrBRecords.length + ' enregistrement'+ (_enrBRecords.length!==1?'s':'');
+  if (!_enrBRecords.length) {
+    el.innerHTML='<div style="color:var(--t3);font-size:.82rem;text-align:center;padding:30px;font-style:italic">Aucun enregistrement — cliquez sur "Nouvel enregistrement" pour commencer.</div>';
+    return;
   }
-  openSheet('enr13ExecOv');
+  var statCols = { 'Brouillon':'#f1c40f', 'Validé':'#2ecc71', 'Clôturé':'#7f8c8d' };
+  el.innerHTML = _enrBRecords.map(function(rec,i){
+    var col = statCols[rec.statut]||'#7f8c8d';
+    return '<div class="enrBRecCard">'
+      +'<div style="width:3px;height:40px;background:'+col+';border-radius:2px;flex-shrink:0"></div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:.78rem;font-weight:700;color:var(--t1)">'+esc(rec.refCode||rec.id.slice(-6))+'</span>'
+          +'<span style="font-size:.7rem;background:'+col+'22;border:1px solid '+col+'55;color:'+col+';border-radius:4px;padding:1px 6px">'+esc(rec.statut)+'</span>'
+          +'<span style="font-size:.7rem;color:var(--t3)">'+esc(rec.date||'')+'</span>'
+          +'<span style="font-size:.7rem;color:var(--t3)">'+esc(rec.auteur||'')+'</span>'
+        +'</div>'
+        +(rec.titre ? '<div style="font-size:.75rem;color:var(--t2);margin-top:2px">'+esc(rec.titre)+'</div>' : '')
+      +'</div>'
+      +'<button onclick="enrBEditRecord('+i+')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;flex-shrink:0">✏️ Modifier</button>'
+      +'<button onclick="enrBDeleteRecord('+i+')" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;flex-shrink:0">🗑</button>'
+    +'</div>';
+  }).join('');
 }
 
-function _gv13(id) { var el=document.getElementById(id); return el?(el.type==='checkbox'?el.checked:el.value.trim()):''; }
+function enrBNewRecord() {
+  if (!_enrBActiveTpl) return;
+  _enrBFillRec = null;
+  _enrBFillTpl = _enrBActiveTpl;
+  _enrBOpenFillOv();
+}
 
-function printEnr13Exec() {
-  var date   = _gv13('enr13_date');
-  var site   = _gv13('enr13_site');
-  var visa   = _gv13('enr13_visa');
-  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
-  var now = new Date(); var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var fmtDate = date ? (function(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];})(date) : '';
+function enrBEditRecord(i) {
+  _enrBFillRec = _enrBRecords[i];
+  _enrBFillTpl = _enrBActiveTpl;
+  _enrBOpenFillOv();
+}
 
-  function row13(label, ids, isZone) {
-    var cols = ['r','v','g','o'];
-    var html = '<tr><td class="rl">'+(isZone?'<span style="padding-left:10px">':'')+(label)+(isZone?'</span>':'')+'</td>';
-    ids.forEach(function(id,i){
-      var val = _gv13(id);
-      if (i < 3 && isZone) {
-        html += '<td class="tc">'+(val?'✓':'')+'</td>';
-      } else {
-        html += '<td class="tc">'+esc(val||'')+'</td>';
+function enrBDeleteRecord(i) {
+  if (!confirm('Supprimer cet enregistrement ?')) return;
+  var id = _enrBRecords[i].id;
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r||!r.success){ toast((r&&r.error)||'Erreur','err'); return; }
+      _enrBRecords.splice(i,1);
+      _enrBRenderRecords();
+      toast('Supprimé','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .deleteEnrRecord({ id:id, adminKey:S.adminKey });
+}
+
+// ── Fill overlay ──────────────────────────────────────────────────
+function _enrBOpenFillOv() {
+  var tpl = _enrBFillTpl;
+  var rec = _enrBFillRec;
+  var recData = rec ? (rec.data||{}) : {};
+
+  document.getElementById('enrFillTitle').textContent = rec ? ('✏️ Modifier — '+(rec.refCode||'')) : ('📝 Nouvel enregistrement — '+tpl.code);
+  document.getElementById('enrFillRef').value = rec ? (rec.refCode||'') : '';
+  document.getElementById('enrFillAuteur').value = rec ? (rec.auteur||'') : '';
+  document.getElementById('enrFillStatut').value = rec ? (rec.statut||'Brouillon') : 'Brouillon';
+
+  var body = document.getElementById('enrFillBody');
+  body.innerHTML = (tpl.sections||[]).map(function(sec, si){
+    if (sec.type==='separateur') return '<hr style="border:none;border-top:1px solid var(--line);margin:12px 0"/>';
+    if (sec.type==='texte') return '<div class="enrFillSec"><div class="enrFillSecHead">'+esc(sec.titre||'')+'</div><div class="enrFillSecBody" style="font-size:.82rem;color:var(--t2);white-space:pre-wrap">'+esc(sec.content||'')+'</div></div>';
+
+    if (sec.type==='champs') {
+      var fields = (sec.fields||[]).map(function(f, fi){
+        var fid = 'enrFill_'+si+'_'+fi;
+        var val = recData[f.id]||'';
+        var inp = '';
+        if (f.type==='textarea') inp='<textarea class="fi" id="'+fid+'" rows="3" style="resize:vertical;font-size:.82rem" placeholder="'+esc(f.placeholder||'')+'">'+esc(val)+'</textarea>';
+        else if (f.type==='select') inp='<select class="fi" id="'+fid+'" style="height:32px;font-size:.82rem"><option value=""></option>'+(f.options||[]).map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+        else if (f.type==='checkbox') inp='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="'+fid+'"'+(val?' checked':'')+'/> '+esc(f.label||'')+'</label>';
+        else if (f.type==='radio') inp='<div style="display:flex;flex-wrap:wrap;gap:8px">'+(f.options||[]).map(function(o){ return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem"><input type="radio" name="'+fid+'" value="'+esc(o)+'"'+(val===o?' checked':'')+'/> '+esc(o)+'</label>'; }).join('')+'</div>';
+        else if (f.type==='photo') inp='<input type="file" id="'+fid+'" accept="image/*" style="font-size:.78rem"/>'+(val?'<a href="'+esc(val)+'" target="_blank" style="font-size:.7rem;color:#3498db;display:block;margin-top:3px">📷 Photo existante</a>':'');
+        else inp='<input class="fi" id="'+fid+'" type="'+f.type+'" style="height:32px;font-size:.82rem" placeholder="'+esc(f.placeholder||'')+'" value="'+esc(val)+'"/>';
+        if (f.type==='checkbox'||f.type==='radio') {
+          return '<div style="margin-bottom:8px">'+inp+'</div>';
+        }
+        return '<div style="margin-bottom:8px">'
+          +'<label class="fl" style="font-size:.72rem">'+esc(f.label||'')+(f.required?' <span style="color:#e74c3c">*</span>':'')+'</label>'
+          +inp
+        +'</div>';
+      }).join('');
+      return '<div class="enrFillSec"><div class="enrFillSecHead">'+esc(sec.titre||'')+'</div><div class="enrFillSecBody">'+fields+'</div></div>';
+    }
+
+    if (sec.type==='tableau') {
+      var cols = sec.columns||[];
+      if (!cols.length) return '';
+      var stored = recData[sec.id]||{cols:cols.map(function(){return[];}),rows:sec.initialRows||3};
+      // build table
+      var nRows = stored.rows || sec.initialRows || 3;
+      var rows = stored.data || [];
+      // pad rows
+      while (rows.length < nRows) rows.push({});
+      var thead = '<thead><tr>'+cols.map(function(col){ return '<th style="font-size:.72rem;font-weight:700;padding:5px 8px;white-space:nowrap;border-bottom:1px solid var(--line);color:var(--t2)">'+esc(col.label||'')+'</th>'; }).join('')+(sec.allowAddRows?'<th style="width:30px"></th>':'')+'</tr></thead>';
+      var tbody = '<tbody id="enrFillTbl_'+si+'">';
+      for (var ri=0;ri<nRows;ri++) {
+        tbody += _enrBFillTableRow(si, ri, cols, rows[ri]||{}, sec.allowAddRows);
       }
-    });
-    return html+'</tr>';
-  }
+      tbody += '</tbody>';
+      var addRowBtn = sec.allowAddRows ? '<button onclick="enrBFillAddRow('+si+')" style="margin-top:6px;font-size:.72rem;background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:5px;padding:3px 10px;cursor:pointer">+ Ligne</button>' : '';
+      return '<div class="enrFillSec"><div class="enrFillSecHead">'+esc(sec.titre||'')+'</div>'
+        +'<div style="overflow-x:auto;padding:8px">'
+          +'<table style="width:100%;border-collapse:collapse;font-size:.8rem" id="enrFillTblWrap_'+si+'">'+thead+tbody+'</table>'
+          +addRowBtn
+        +'</div></div>';
+    }
 
-  var zones = [
-    {lbl:'Zone stockage MP', pfx:'enr13_zmp'},
-    {lbl:'Niveau 1',         pfx:'enr13_zn1'},
-    {lbl:'Niveau 0',         pfx:'enr13_zn0'},
-    {lbl:'Niveau -1',        pfx:'enr13_znm1'},
-    {lbl:'Extérieur',        pfx:'enr13_zext'},
-    {lbl:'Bloc vestiaire',   pfx:'enr13_zvest'}
-  ];
-
-  var zoneRows = zones.map(function(z){
-    return row13(z.lbl, [z.pfx+'_r',z.pfx+'_v',z.pfx+'_g',z.pfx+'_o'], true);
+    if (sec.type==='signature') {
+      var sigs = (sec.signataires||[]).map(function(s,gi){
+        var fid = 'enrFillSig_'+si+'_'+gi;
+        return '<div style="flex:1;min-width:150px;text-align:center">'
+          +'<div style="border:1px solid var(--line);border-radius:6px;height:60px;margin-bottom:5px;background:var(--ink3)"></div>'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--t2)">'+esc(s.label||'')+'</div>'
+          +(s.role ? '<div style="font-size:.68rem;color:var(--t3)">'+esc(s.role)+'</div>' : '')
+          +'<input class="fi" id="'+fid+'" placeholder="Nom et prénom" style="height:26px;font-size:.72rem;margin-top:5px" value="'+esc((recData[s.label]||''))+'"/>'
+        +'</div>';
+      }).join('');
+      return '<div class="enrFillSec"><div class="enrFillSecHead">'+esc(sec.titre||'')+'</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:10px;padding:10px">'+sigs+'</div>'
+      +'</div>';
+    }
+    return '';
   }).join('');
 
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-13</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:A4 portrait;margin:14mm 12mm}'
-    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
-    +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
-    +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
-    +'.logo-box img{max-width:98px;max-height:55px;object-fit:contain}'
-    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
-    +'.doc-title{font-size:10.5pt;font-weight:900;text-align:center;text-transform:uppercase;line-height:1.3}'
-    +'.doc-sub{font-size:8.5pt;font-weight:700;text-align:center;margin-top:3px;text-transform:uppercase}'
-    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
-    +'.doc-meta .mk{font-weight:700;white-space:nowrap}.doc-meta .mv{white-space:nowrap}'
-    +'.meta-line{display:flex;gap:16px;margin-bottom:10px;font-size:9pt}'
-    +'.meta-line span{font-weight:700}'
-    +'table.main{width:100%;border-collapse:collapse;font-size:8.5pt}'
-    +'table.main th,table.main td{border:1px solid #555;padding:5px 6px}'
-    +'table.main th{background:#e8e8e8;font-weight:700;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'.rl{font-weight:600;text-align:left;width:30%}'
-    +'.tc{text-align:center}'
-    +'.zone-hdr{background:#d0f0d8;font-weight:700;text-align:left;font-size:8pt;text-transform:uppercase;letter-spacing:.4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'.sig-table{width:100%;border-collapse:collapse;border:1.5px solid #555;margin-top:16px}'
-    +'.sig-table td{border:1px solid #bbb;padding:8px 12px;vertical-align:top;font-size:8pt;width:50%}'
-    +'.sig-title{font-weight:700;font-size:7.5pt;text-transform:uppercase;color:#27ae60;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:6px}'
-    +'.sig-lbl{font-size:7pt;color:#666;margin-bottom:2px;margin-top:4px}'
-    +'.sig-line{border-bottom:1px dotted #999;height:16px;margin-bottom:4px;padding-left:2px}'
-    +'.sig-line-lg{border-bottom:1px dotted #999;height:54px;margin-bottom:4px}'
-    +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
-    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
-    +'</style></head><body>'
-    +'<div class="hdr">'
-    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
-    +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Exécution de la Lutte contre les Nuisibles</div></div>'
-    +'<div class="doc-meta"><span class="mk">N° Réf.</span><span class="mv" style="font-weight:700">ENR-HSE-13</span>'
-    +'<span class="mk">Date</span><span class="mv">21/11/2021</span>'
-    +'<span class="mk">Version</span><span class="mv">01</span></div>'
-    +'</div>'
-    +'<div class="meta-line"><div>Date : <span>'+esc(fmtDate||'___________')+'</span></div><div>Site : <span>'+esc(site||'___________')+'</span></div></div>'
-    +'<table class="main">'
-    +'<thead><tr>'
-    +'<th style="width:30%"></th>'
-    +'<th>Insectes rampants</th>'
-    +'<th>Insectes volants</th>'
-    +'<th>Rongeurs</th>'
-    +'<th>Observations</th>'
-    +'</tr></thead>'
-    +'<tbody>'
-    + row13('Produit utilisé',          ['enr13_produit_r','enr13_produit_v','enr13_produit_g','enr13_produit_o'], false)
-    + row13('N° de lot',                ['enr13_lot_r','enr13_lot_v','enr13_lot_g','enr13_lot_o'], false)
-    + row13('Dilution (insecticides)',   ['enr13_dilution_r','enr13_dilution_v','enr13_dilution_g','enr13_dilution_o'], false)
-    + row13('Mode de traitement<br><span style="font-size:7.5pt;font-weight:400">(pulvérisation, mise en place des appâts, etc.)</span>', ['enr13_mode_r','enr13_mode_v','enr13_mode_g','enr13_mode_o'], false)
-    +'<tr><td class="zone-hdr" colspan="5" style="border:1px solid #555;padding:4px 8px">Zones traitées</td></tr>'
-    + zoneRows
-    +'</tbody></table>'
-    + _buildGriffeTable13(visa, today)
-    +'<div class="footer">ENR-HSE-13 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
-    +'<script>window.onload=function(){window.print();}<\/script>'
-    +'</body></html>';
-
-  var w = window.open('','_blank','width=900,height=680,scrollbars=yes');
-  if (w) { w.document.write(html); w.document.close(); }
-  else toast('Autorisez les popups pour imprimer','err');
+  openSheet('enrFillOv');
 }
 
-/* ══════════════════════════════════════════
-   ENR-HSE-15 — Vérification de la Lutte contre les Nuisibles
-══════════════════════════════════════════ */
-function openEnr15Verif() {
-  var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
-  var el = document.getElementById('enr15_date');
-  if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
-  openSheet('enr15VerifOv');
-}
-
-function _gv15(id) {
-  var el = document.getElementById(id);
-  if (!el) return false;
-  return el.type === 'checkbox' ? el.checked : el.value.trim();
-}
-
-function printEnr15Verif() {
-  var date  = _gv15('enr15_date');
-  var visa  = _gv15('enr15_visa');
-  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
-  var now = new Date(); var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var fmtDate = date ? (function(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];})(date) : '';
-
-  var zones15 = [
-    {lbl:'Zone stockage MP', pfx:'enr15_mp'},
-    {lbl:'Niveau 1',         pfx:'enr15_n1'},
-    {lbl:'Niveau 0',         pfx:'enr15_n0'},
-    {lbl:'Niveau -1',        pfx:'enr15_nm1'},
-    {lbl:'Extérieur',        pfx:'enr15_ext'},
-    {lbl:'Administration',   pfx:'enr15_adm'}
-  ];
-  var cols15 = ['caf','fou','aca','abe','mou','mos','pap','ron'];
-
-  var zoneRows15 = zones15.map(function(z){
-    var cells = cols15.map(function(c){
-      var v = _gv15(z.pfx+'_'+c);
-      return '<td class="tc" style="font-size:11pt">'+(v?'✓':'')+'</td>';
-    }).join('');
-    return '<tr><td class="rl">'+esc(z.lbl)+'</td>'+cells+'</tr>';
+function _enrBFillTableRow(si, ri, cols, rowData, allowDel) {
+  var cells = cols.map(function(col,ci){
+    var fid='enrFillTblCell_'+si+'_'+ri+'_'+ci;
+    var val=rowData[col.id||ci]||'';
+    var inp='';
+    if (col.type==='select') inp='<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+(col.options||[]).map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+    else if (col.type==='checkbox') inp='<input type="checkbox" id="'+fid+'"'+(val?' checked':'')+'/>';
+    else inp='<input id="'+fid+'" type="'+(col.type==='number'?'number':(col.type==='date'?'date':'text'))+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px" value="'+esc(val)+'"/>';
+    return '<td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+inp+'</td>';
   }).join('');
-
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-15</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:A4 landscape;margin:12mm 10mm}'
-    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#111;background:#fff}'
-    +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
-    +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
-    +'.logo-box img{max-width:98px;max-height:55px;object-fit:contain}'
-    +'.title-box{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 4px;border-right:1.5px solid #222}'
-    +'.doc-title{font-size:10pt;font-weight:900;text-align:center;text-transform:uppercase;line-height:1.3}'
-    +'.doc-sub{font-size:8.5pt;font-weight:700;text-align:center;margin-top:3px;text-transform:uppercase}'
-    +'.doc-meta{min-width:120px;font-size:8pt;padding:6px;display:grid;grid-template-columns:auto auto;gap:1px 6px;align-content:center}'
-    +'.doc-meta .mk{font-weight:700;white-space:nowrap}.doc-meta .mv{white-space:nowrap}'
-    +'.meta-line{margin-bottom:10px;font-size:9pt}'
-    +'.meta-line span{font-weight:700}'
-    +'table.main{width:100%;border-collapse:collapse;font-size:8pt}'
-    +'table.main th,table.main td{border:1px solid #555;padding:4px 5px;text-align:center}'
-    +'.rl{font-weight:600;text-align:left!important;width:18%}'
-    +'.tc{text-align:center}'
-    +'.sig-table{width:100%;border-collapse:collapse;border:1.5px solid #555;margin-top:14px}'
-    +'.sig-table td{border:1px solid #bbb;padding:7px 12px;vertical-align:top;font-size:8pt;width:50%}'
-    +'.sig-title{font-weight:700;font-size:7.5pt;text-transform:uppercase;color:#3498db;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:5px}'
-    +'.sig-lbl{font-size:7pt;color:#666;margin-bottom:2px;margin-top:4px}'
-    +'.sig-line{border-bottom:1px dotted #999;height:16px;margin-bottom:4px;padding-left:2px}'
-    +'.sig-line-lg{border-bottom:1px dotted #999;height:52px;margin-bottom:4px}'
-    +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
-    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
-    +'</style></head><body>'
-    +'<div class="hdr">'
-    +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
-    +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Vérification de la Lutte contre les Nuisibles</div></div>'
-    +'<div class="doc-meta"><span class="mk">Réf.</span><span class="mv" style="font-weight:700">ENR-HSE-15</span>'
-    +'<span class="mk">Date</span><span class="mv">21/11/2021</span>'
-    +'<span class="mk">V</span><span class="mv">01</span></div>'
-    +'</div>'
-    +'<div class="meta-line">Date : <span>'+esc(fmtDate||'___________')+'</span></div>'
-    +'<table class="main">'
-    +'<thead>'
-    +'<tr>'
-    +'<th rowspan="2" style="width:18%"></th>'
-    +'<th colspan="3">Insectes rampants</th>'
-    +'<th colspan="4">Insectes volants</th>'
-    +'<th rowspan="2">Cadavres<br>de rongeurs</th>'
-    +'</tr>'
-    +'<tr>'
-    +'<th style="font-size:7.5pt">Cafard</th>'
-    +'<th style="font-size:7.5pt">Fourmi</th>'
-    +'<th style="font-size:7.5pt">Acarien</th>'
-    +'<th style="font-size:7.5pt">Abeilles</th>'
-    +'<th style="font-size:7.5pt">Mouches</th>'
-    +'<th style="font-size:7.5pt">Moustique</th>'
-    +'<th style="font-size:7.5pt">Papillon<br>mites</th>'
-    +'</tr>'
-    +'<tr><th colspan="9" style="text-align:left;padding-left:8px;font-size:8pt">Espèces</th></tr>'
-    +'</thead>'
-    +'<tbody>'
-    + zoneRows15
-    +'</tbody></table>'
-    + _buildGriffeTable15(visa, today)
-    +'<div class="footer">ENR-HSE-15 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
-    +'<script>window.onload=function(){window.print();}<\/script>'
-    +'</body></html>';
-
-  var w = window.open('','_blank','width=1100,height=680,scrollbars=yes');
-  if (w) { w.document.write(html); w.document.close(); }
-  else toast('Autorisez les popups pour imprimer','err');
+  return '<tr id="enrFillTblRow_'+si+'_'+ri+'">'+cells+(allowDel ? '<td style="padding:3px;text-align:center"><button onclick="enrBFillDelRow('+si+','+ri+')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:.8rem">✕</button></td>' : '')+'</tr>';
 }
+
+function enrBFillAddRow(si) {
+  var sec = (_enrBFillTpl.sections||[])[si];
+  var tbody = document.getElementById('enrFillTbl_'+si);
+  if (!tbody||!sec) return;
+  var ri = tbody.rows.length;
+  var row = document.createElement('tr');
+  row.id = 'enrFillTblRow_'+si+'_'+ri;
+  row.innerHTML = (sec.columns||[]).map(function(col,ci){
+    var fid='enrFillTblCell_'+si+'_'+ri+'_'+ci;
+    var inp = col.type==='select'
+      ? '<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+(col.options||[]).map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select>'
+      : col.type==='checkbox' ? '<input type="checkbox" id="'+fid+'"/>'
+      : '<input id="'+fid+'" type="'+(col.type==='number'?'number':(col.type==='date'?'date':'text'))+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"/>';
+    return '<td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+inp+'</td>';
+  }).join('') + (sec.allowAddRows ? '<td style="padding:3px;text-align:center"><button onclick="enrBFillDelRow('+si+','+ri+')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:.8rem">✕</button></td>' : '');
+  tbody.appendChild(row);
+}
+
+function enrBFillDelRow(si, ri) {
+  var row = document.getElementById('enrFillTblRow_'+si+'_'+ri);
+  if (row) row.remove();
+}
+
+function enrBBSubmitRecord() { enrBSubmitRecord(); } // alias
+
+function enrBSubmitRecord() {
+  var tpl = _enrBFillTpl;
+  var refCode = (document.getElementById('enrFillRef')||{}).value||'';
+  var auteur  = (document.getElementById('enrFillAuteur')||{}).value||'';
+  var statut  = (document.getElementById('enrFillStatut')||{}).value||'Brouillon';
+
+  var data = {};
+  (tpl.sections||[]).forEach(function(sec, si){
+    if (sec.type==='champs') {
+      (sec.fields||[]).forEach(function(f, fi){
+        var fid='enrFill_'+si+'_'+fi;
+        var el=document.getElementById(fid);
+        if (!el) return;
+        if (f.type==='checkbox') data[f.id]=el.checked;
+        else if (f.type==='radio') {
+          var rad=document.querySelector('input[name="'+fid+'"]:checked');
+          data[f.id]=rad?rad.value:'';
+        }
+        else data[f.id]=el.value||'';
+      });
+    }
+    if (sec.type==='tableau') {
+      var tblEl = document.getElementById('enrFillTblWrap_'+si);
+      if (!tblEl) return;
+      var tbody = document.getElementById('enrFillTbl_'+si);
+      if (!tbody) return;
+      var rows = [];
+      Array.from(tbody.rows).forEach(function(tr){
+        var rowData={};
+        (sec.columns||[]).forEach(function(col,ci){
+          var el2=document.getElementById('enrFillTblCell_'+si+'_'+tr.rowIndex+'_'+ci) || tr.cells[ci] && tr.cells[ci].querySelector('input,select');
+          if (!el2) return;
+          rowData[col.id||ci] = el2.type==='checkbox'?el2.checked:(el2.value||'');
+        });
+        rows.push(rowData);
+      });
+      data[sec.id]={ rows:rows.length, data:rows };
+    }
+    if (sec.type==='signature') {
+      (sec.signataires||[]).forEach(function(s,gi){
+        var el2=document.getElementById('enrFillSig_'+si+'_'+gi);
+        if (el2) data[s.label]=el2.value||'';
+      });
+    }
+  });
+
+  var payload = {
+    adminKey: S.adminKey,
+    templateId: tpl.id,
+    refCode: refCode,
+    auteur: auteur,
+    statut: statut,
+    titre: tpl.titre,
+    data: data
+  };
+  if (_enrBFillRec) payload.id = _enrBFillRec.id;
+
+  toast('Enregistrement…','info');
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r||!r.success){ toast((r&&r.error)||'Erreur','err'); return; }
+      closeSheet('enrFillOv');
+      payload.id = r.id;
+      payload.date = new Date().toISOString().slice(0,10);
+      if (_enrBFillRec) {
+        var idx = _enrBRecords.findIndex(function(x){ return x.id===_enrBFillRec.id; });
+        if (idx>=0) _enrBRecords[idx] = payload; else _enrBRecords.push(payload);
+      } else {
+        _enrBRecords.push(payload);
+      }
+      _enrBRenderRecords();
+      toast('Enregistrement sauvegardé ✓','ok');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .saveEnrRecord(payload);
+}
+
+// Sidebar style for module filter chips
+(function(){
+  var s=document.createElement('style');
+  s.textContent='.enrBModChip{background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:12px;padding:2px 8px;font-size:.68rem;cursor:pointer}.enrBModChip.on{background:rgba(241,196,15,.18);border-color:rgba(241,196,15,.4);color:#f1c40f;font-weight:700}';
+  document.head.appendChild(s);
+})();
+
+// _loadEnrForDashboard defined in renderAdmin section above
+
 
 /* ── Helper: ouvrir une image Drive depuis son fileId ── */
 function openIfsId(fileId) {

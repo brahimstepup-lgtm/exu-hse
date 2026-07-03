@@ -2446,6 +2446,159 @@ function deleteEnrFile(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── ENR Builder : Templates & Enregistrements (Google Sheets) ──────────────
+
+var ENR_TPL_SHEET = 'ENR_Templates';
+var ENR_REC_SHEET = 'ENR_Records';
+
+function _parseJSON_(s, fallback) {
+  try { return JSON.parse(s); } catch(e) { return fallback; }
+}
+
+function _getEnrTplSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(ENR_TPL_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ENR_TPL_SHEET);
+    sh.appendRow(['id','titre','code','modules','color','sections','dateCreated','dateModified','statut','description']);
+    sh.getRange(1,1,1,10).setFontWeight('bold').setBackground('#1a1a2e').setFontColor('#f1c40f');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function _getEnrRecSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(ENR_REC_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ENR_REC_SHEET);
+    sh.appendRow(['id','templateId','refCode','titre','auteur','date','statut','data']);
+    sh.getRange(1,1,1,8).setFontWeight('bold').setBackground('#1a1a2e').setFontColor('#f1c40f');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function getAllEnrTemplates(adminKey) {
+  if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrTplSheet_();
+    var data = sh.getDataRange().getValues();
+    var result = [];
+    for (var i = 1; i < data.length; i++) {
+      var r = data[i];
+      if (!r[0]) continue;
+      result.push({
+        id:r[0], titre:r[1], code:r[2],
+        modules:_parseJSON_(r[3],[]),
+        color:r[4]||'#f1c40f',
+        sections:_parseJSON_(r[5],[]),
+        dateCreated:r[6], dateModified:r[7],
+        statut:r[8]||'Actif', description:r[9]||''
+      });
+    }
+    return { success:true, templates:result };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveEnrTemplate(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrTplSheet_();
+    var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+    var id = p.id || ('ENRT_' + new Date().getTime());
+    var data = sh.getDataRange().getValues();
+    var rowIdx = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === id) { rowIdx = i + 1; break; }
+    }
+    var row = [
+      id,
+      String(p.titre||'').trim(),
+      String(p.code||'').trim(),
+      JSON.stringify(p.modules||[]),
+      p.color||'#f1c40f',
+      JSON.stringify(p.sections||[]),
+      (rowIdx>0 ? data[rowIdx-2][6] : now),
+      now,
+      String(p.statut||'Actif'),
+      String(p.description||'')
+    ];
+    if (rowIdx > 0) {
+      sh.getRange(rowIdx,1,1,row.length).setValues([row]);
+    } else {
+      sh.appendRow(row);
+    }
+    return { success:true, id:id };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteEnrTemplate(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrTplSheet_();
+    var data = sh.getDataRange().getValues();
+    for (var i = data.length-1; i >= 1; i--) {
+      if (data[i][0] === p.id) { sh.deleteRow(i+1); break; }
+    }
+    var rsh = _getEnrRecSheet_();
+    var rdata = rsh.getDataRange().getValues();
+    for (var j = rdata.length-1; j >= 1; j--) {
+      if (rdata[j][1] === p.id) rsh.deleteRow(j+1);
+    }
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getEnrRecords(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrRecSheet_();
+    var data = sh.getDataRange().getValues();
+    var result = [];
+    for (var i = 1; i < data.length; i++) {
+      var r = data[i];
+      if (!r[0]) continue;
+      if (p.templateId && r[1] !== p.templateId) continue;
+      result.push({ id:r[0], templateId:r[1], refCode:r[2], titre:r[3], auteur:r[4], date:r[5], statut:r[6], data:_parseJSON_(r[7],{}) });
+    }
+    return { success:true, records:result };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function saveEnrRecord(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrRecSheet_();
+    var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    var id = p.id || ('ENRR_' + new Date().getTime());
+    var data = sh.getDataRange().getValues();
+    var rowIdx = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === id) { rowIdx = i+1; break; }
+    }
+    var row = [id, String(p.templateId||''), String(p.refCode||''), String(p.titre||''), String(p.auteur||''), p.date||now, String(p.statut||'Brouillon'), JSON.stringify(p.data||{})];
+    if (rowIdx > 0) {
+      sh.getRange(rowIdx,1,1,row.length).setValues([row]);
+    } else {
+      sh.appendRow(row);
+    }
+    return { success:true, id:id };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteEnrRecord(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = _getEnrRecSheet_();
+    var data = sh.getDataRange().getValues();
+    for (var i = data.length-1; i >= 1; i--) {
+      if (data[i][0] === p.id) { sh.deleteRow(i+1); break; }
+    }
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 function saveRapportNuisiblesConfig(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
   try {
