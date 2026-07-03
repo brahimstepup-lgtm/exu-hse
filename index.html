@@ -8735,6 +8735,7 @@ function _enrBRenderRecords() {
         +'</div>'
         +(rec.titre ? '<div style="font-size:.75rem;color:var(--t2);margin-top:2px">'+esc(rec.titre)+'</div>' : '')
       +'</div>'
+      +'<button onclick="enrBPrintRecord('+i+')" style="background:rgba(241,196,15,.12);border:1px solid rgba(241,196,15,.35);color:#f1c40f;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;flex-shrink:0">🖨️ Imprimer</button>'
       +'<button onclick="enrBEditRecord('+i+')" style="background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;flex-shrink:0">✏️ Modifier</button>'
       +'<button onclick="enrBDeleteRecord('+i+')" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;flex-shrink:0">🗑</button>'
     +'</div>';
@@ -8766,6 +8767,156 @@ function enrBDeleteRecord(i) {
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
     .deleteEnrRecord({ id:id, adminKey:S.adminKey });
+}
+
+// ── Print record ──────────────────────────────────────────────────
+function enrBPrintRecord(i) {
+  var rec = _enrBRecords[i];
+  var tpl = _enrBActiveTpl;
+  if (!rec||!tpl) return;
+  var data = rec.data || {};
+
+  // Retrieve logo from config (same pattern as existing ENR prints)
+  var logoUrl = (typeof _hseLogoDataUrl!=='undefined' && _hseLogoDataUrl) ? _hseLogoDataUrl : (typeof _hseLogoUrl!=='undefined' ? _hseLogoUrl : '');
+  var company = 'HSE Tags';
+  var today = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'});
+  var col = tpl.color || '#1a5276';
+
+  // Build sections HTML
+  var sectionsHtml = (tpl.sections||[]).map(function(sec){
+    if (sec.type==='separateur') return '<hr style="border:none;border-top:1px solid #ccc;margin:12px 0"/>';
+
+    if (sec.type==='texte') {
+      return '<div style="margin-bottom:14px">'
+        +(sec.titre ? '<div style="font-weight:700;font-size:9pt;margin-bottom:5px;color:#333">'+_pesc(sec.titre)+'</div>' : '')
+        +'<div style="font-size:8.5pt;color:#444;white-space:pre-wrap;background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;padding:8px">'+_pesc(sec.content||'')+'</div>'
+      +'</div>';
+    }
+
+    if (sec.type==='champs') {
+      var rows = (sec.fields||[]).map(function(f){
+        var val = data[f.id];
+        if (val===undefined||val===null||val==='') val='';
+        if (typeof val==='boolean') val = val?'✓ Oui':'☐ Non';
+        return '<tr>'
+          +'<td style="padding:5px 8px;font-size:8pt;font-weight:600;color:#555;width:38%;border-bottom:1px solid #eee;vertical-align:top">'+_pesc(f.label||'')+(f.required?' *':'')+'</td>'
+          +'<td style="padding:5px 8px;font-size:8.5pt;color:#222;border-bottom:1px solid #eee;vertical-align:top">'+_pesc(String(val))+'</td>'
+        +'</tr>';
+      }).join('');
+      return '<div style="margin-bottom:16px">'
+        +(sec.titre ? '<div style="background:'+col+';color:#fff;font-size:8pt;font-weight:700;padding:5px 10px;margin-bottom:0;letter-spacing:.3px">'+_pesc(sec.titre)+'</div>' : '')
+        +'<table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6"><tbody>'+rows+'</tbody></table>'
+      +'</div>';
+    }
+
+    if (sec.type==='tableau') {
+      var cols = sec.columns||[];
+      if (!cols.length) return '';
+      var recTbl = data[sec.id]||{};
+      var tblRows = recTbl.data||[];
+      var thead = '<thead><tr>'+cols.map(function(c){ return '<th style="background:#f0f0f0;border:1px solid #ccc;padding:4px 8px;font-size:7.5pt;font-weight:700;color:#333">'+_pesc(c.label||'')+'</th>'; }).join('')+'</tr></thead>';
+      var tbody = '<tbody>'+tblRows.map(function(row){
+        return '<tr>'+cols.map(function(c,ci){
+          var v = row[c.id||ci];
+          if (v===undefined||v===null||v==='') v='';
+          if (typeof v==='boolean') v=v?'✓':'';
+          return '<td style="border:1px solid #ccc;padding:4px 8px;font-size:8pt;color:#333">'+_pesc(String(v))+'</td>';
+        }).join('')+'</tr>';
+      }).join('')+'</tbody>';
+      if (!tblRows.length) {
+        // empty rows based on initialRows
+        tbody='<tbody>';
+        for (var r=0;r<(sec.initialRows||3);r++) tbody+='<tr>'+cols.map(function(){ return '<td style="border:1px solid #ccc;height:22px;padding:4px 8px"></td>'; }).join('')+'</tr>';
+        tbody+='</tbody>';
+      }
+      return '<div style="margin-bottom:16px">'
+        +(sec.titre ? '<div style="background:'+col+';color:#fff;font-size:8pt;font-weight:700;padding:5px 10px;margin-bottom:0">'+_pesc(sec.titre)+'</div>' : '')
+        +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:8pt">'+thead+tbody+'</table></div>'
+      +'</div>';
+    }
+
+    if (sec.type==='signature') {
+      var sigBoxes = (sec.signataires||[]).map(function(s){
+        var name = data[s.label]||'';
+        return '<td style="border:1px solid #ccc;padding:8px;text-align:center;width:'+(100/Math.max((sec.signataires||[]).length,1))+'%">'
+          +'<div style="height:50px;border-bottom:1px solid #999;margin-bottom:5px"></div>'
+          +'<div style="font-size:7.5pt;font-weight:700;color:#333">'+_pesc(s.label||'')+'</div>'
+          +(s.role ? '<div style="font-size:7pt;color:#666">'+_pesc(s.role)+'</div>' : '')
+          +(name ? '<div style="font-size:7.5pt;color:#222;margin-top:3px;font-style:italic">'+_pesc(name)+'</div>' : '')
+        +'</td>';
+      }).join('');
+      return '<div style="margin-bottom:16px">'
+        +(sec.titre ? '<div style="background:'+col+';color:#fff;font-size:8pt;font-weight:700;padding:5px 10px;margin-bottom:0">'+_pesc(sec.titre)+'</div>' : '')
+        +'<table style="width:100%;border-collapse:collapse;border:1px solid #ccc"><tbody><tr>'+sigBoxes+'</tr></tbody></table>'
+      +'</div>';
+    }
+    return '';
+  }).join('');
+
+  // Module tags
+  var modTags = (tpl.modules||[]).map(function(m){ return '<span style="background:#eaf2fb;border:1px solid #aed6f1;color:#1a5276;border-radius:3px;padding:1px 6px;font-size:7pt;margin-right:3px">'+_pesc(m)+'</span>'; }).join('');
+
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
+    +'<title>'+_pesc(tpl.code||'ENR')+' — '+_pesc(rec.refCode||rec.id.slice(-6))+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#222;font-size:9pt;padding:0}'
+    +'.page{padding:12mm 14mm;max-width:210mm;margin:0 auto}'
+    +'.doc-header{display:flex;align-items:stretch;border:2px solid '+col+';margin-bottom:14px;border-radius:3px;overflow:hidden}'
+    +'.doc-logo{width:80px;min-height:60px;background:#f8f9fa;border-right:2px solid '+col+';display:flex;align-items:center;justify-content:center;padding:6px}'
+    +'.doc-logo img{max-width:72px;max-height:52px;object-fit:contain}'
+    +'.doc-meta{flex:1;padding:8px 12px}'
+    +'.doc-code-box{background:'+col+';color:#fff;padding:6px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:110px}'
+    +'@media print{'
+    +'body{padding:0}'
+    +'.page{padding:8mm 10mm}'
+    +'tr{page-break-inside:avoid}'
+    +'div{page-break-inside:avoid}'
+    +'}'
+    +'</style>'
+    +'</head><body><div class="page">'
+    // Document header
+    +'<div class="doc-header">'
+      +'<div class="doc-logo">'+(logoUrl?'<img src="'+logoUrl+'" alt="Logo"/>':'<span style="font-size:9pt;font-weight:700;color:'+col+';text-align:center">'+_pesc(company)+'</span>')+'</div>'
+      +'<div class="doc-meta">'
+        +'<div style="font-size:13pt;font-weight:800;color:'+col+';margin-bottom:3px">'+_pesc(tpl.titre||'')+'</div>'
+        +'<div style="font-size:7.5pt;color:#666;margin-bottom:5px">'+modTags+'</div>'
+        +'<div style="display:flex;gap:16px;font-size:7.5pt;color:#555">'
+          +(tpl.rev?'<span><b>Rév.</b> '+_pesc(tpl.rev)+'</span>':'')
+          +(tpl.responsable?'<span><b>Resp.</b> '+_pesc(tpl.responsable)+'</span>':'')
+          +(tpl.ref?'<span><b>Réf.</b> '+_pesc(tpl.ref)+'</span>':'')
+        +'</div>'
+      +'</div>'
+      +'<div class="doc-code-box">'
+        +'<div style="font-size:11pt;font-weight:900;letter-spacing:.5px">'+_pesc(tpl.code||'ENR')+'</div>'
+        +'<div style="font-size:7pt;margin-top:3px;opacity:.85">'+_pesc(rec.refCode||rec.id.slice(-6))+'</div>'
+      +'</div>'
+    +'</div>'
+    // Record info bar
+    +'<div style="display:flex;gap:0;margin-bottom:14px;border:1px solid #dee2e6;border-radius:3px;overflow:hidden">'
+      +'<div style="flex:1;padding:6px 12px;border-right:1px solid #dee2e6"><span style="font-size:7pt;color:#666">Date</span><div style="font-size:9pt;font-weight:700">'+_pesc(rec.date||today)+'</div></div>'
+      +'<div style="flex:1;padding:6px 12px;border-right:1px solid #dee2e6"><span style="font-size:7pt;color:#666">Auteur / Rédacteur</span><div style="font-size:9pt;font-weight:700">'+_pesc(rec.auteur||'')+'</div></div>'
+      +'<div style="flex:1;padding:6px 12px;border-right:1px solid #dee2e6"><span style="font-size:7pt;color:#666">Statut</span><div style="font-size:9pt;font-weight:700">'+_pesc(rec.statut||'')+'</div></div>'
+      +(tpl.approbateur?'<div style="flex:1;padding:6px 12px"><span style="font-size:7pt;color:#666">Approbateur</span><div style="font-size:9pt;font-weight:700">'+_pesc(tpl.approbateur)+'</div></div>':'')
+    +'</div>'
+    // Sections
+    + sectionsHtml
+    // Footer
+    +'<div style="margin-top:16px;padding-top:8px;border-top:1px solid #ccc;display:flex;justify-content:space-between;font-size:7pt;color:#888">'
+      +'<span>'+_pesc(tpl.code||'ENR')+' — Rév.'+_pesc(tpl.rev||'01')+' — '+_pesc(tpl.ref||'')+'</span>'
+      +'<span>'+_pesc(company)+' — Document interne — Généré le '+today+'</span>'
+    +'</div>'
+    +'</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+  +'</body></html>';
+
+  var w = window.open('','_blank','width=900,height=700,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+function _pesc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Fill overlay ──────────────────────────────────────────────────
