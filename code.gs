@@ -2615,6 +2615,48 @@ function deleteEnrRecord(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Source de données externe pour champs/colonnes ────────────────
+// p = { sheetUrl, sheetTab, sheetColumn, hasHeader, adminKey }
+// sheetColumn : lettre (A, B…) ou en-tête exact si hasHeader=true
+function fetchSheetColumnValues(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var url = String(p.sheetUrl||'').trim();
+    var m = url.match(/\/d\/([\w-]+)/);
+    if (!m) return { success:false, error:'URL Google Sheets invalide' };
+    var ssId = m[1];
+    var ss;
+    try { ss = SpreadsheetApp.openById(ssId); }
+    catch(e) { return { success:false, error:'Impossible d\'ouvrir le fichier. Vérifiez les permissions de partage.' }; }
+
+    var sh = p.sheetTab ? ss.getSheetByName(String(p.sheetTab).trim()) : ss.getSheets()[0];
+    if (!sh) return { success:false, error:'Onglet introuvable : '+p.sheetTab };
+
+    var colInput = String(p.sheetColumn||'A').trim();
+    var colIdx;
+    var hasHeader = !!p.hasHeader;
+
+    // Try to resolve as column letter (A, B, AA…)
+    if (/^[A-Za-z]+$/.test(colInput)) {
+      colIdx = 0;
+      var upper = colInput.toUpperCase();
+      for (var k=0; k<upper.length; k++) colIdx = colIdx*26 + (upper.charCodeAt(k)-64);
+      colIdx -= 1; // 0-based
+    } else {
+      return { success:false, error:'Colonne invalide. Saisissez une lettre (A, B, C…)' };
+    }
+
+    var data = sh.getDataRange().getValues();
+    var startRow = hasHeader ? 1 : 0;
+    var seen = {}, values = [];
+    for (var i=startRow; i<data.length; i++) {
+      var v = String(data[i][colIdx]||'').trim();
+      if (v && !seen[v]) { seen[v]=true; values.push(v); }
+    }
+    return { success:true, values:values, count:values.length };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Sections personnalisées ────────────────────────────────────────
 function getCustomSections(adminKey) {
   if (!isAdmin_(adminKey) && !isSessionAdmin_(adminKey)) return { success:false, error:'Accès refusé' };

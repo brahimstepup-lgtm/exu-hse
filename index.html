@@ -2792,6 +2792,93 @@ img{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- ── ENR Builder : Panel de configuration de source de données ── -->
+<div class="ov" id="enrBDsPanel" style="z-index:10002;padding:0;align-items:center;justify-content:center">
+  <div style="background:var(--ink1);border:1px solid var(--line);border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--ink2);border-radius:14px 14px 0 0">
+      <span style="font-size:1rem">⛁</span>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:800;color:var(--t1)" id="enrBDsPanelTitle">Source de données</div>
+        <div style="font-size:.72rem;color:var(--t3)" id="enrBDsFieldLabel">—</div>
+      </div>
+      <button onclick="closeSheet('enrBDsPanel')" style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:6px;padding:4px 10px;font-size:.8rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- Enable toggle -->
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--ink2)">
+        <input type="checkbox" id="enrBDsEnabled" onchange="enrBDsToggle(this.checked)" style="width:16px;height:16px;accent-color:#f1c40f"/>
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">Activer une source de données</div>
+          <div style="font-size:.7rem;color:var(--t3)">Remplace les options fixes par une liste dynamique</div>
+        </div>
+      </label>
+
+      <!-- Type selector (shown when enabled) -->
+      <div id="enrBDsTypeBlock" style="display:none;display:none">
+        <div style="font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Type de source</div>
+        <div style="display:flex;gap:8px">
+          <label id="enrBDsTypeManualLbl" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px;border:2px solid var(--line);border-radius:8px;transition:border-color .15s;text-align:center" onclick="enrBDsSetType('manual')">
+            <input type="radio" name="enrBDsType" value="manual" style="display:none"/>
+            <span style="font-size:1.4rem">📝</span>
+            <span style="font-size:.78rem;font-weight:700;color:var(--t1)">Liste manuelle</span>
+            <span style="font-size:.68rem;color:var(--t3)">Saisir les valeurs ici</span>
+          </label>
+          <label id="enrBDsTypeSheetLbl" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px;border:2px solid var(--line);border-radius:8px;transition:border-color .15s;text-align:center" onclick="enrBDsSetType('sheet')">
+            <input type="radio" name="enrBDsType" value="sheet" style="display:none"/>
+            <span style="font-size:1.4rem">📊</span>
+            <span style="font-size:.78rem;font-weight:700;color:var(--t1)">Google Sheet / Excel</span>
+            <span style="font-size:.68rem;color:var(--t3)">Importer depuis un fichier</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Manual values config -->
+      <div id="enrBDsManualBlock" style="display:none">
+        <label class="fl" style="font-size:.72rem;margin-bottom:4px">Valeurs — une par ligne</label>
+        <textarea id="enrBDsManualValues" class="fi" rows="7" placeholder="Valeur 1&#10;Valeur 2&#10;Valeur 3" style="resize:vertical;font-size:.8rem;line-height:1.6"></textarea>
+        <div style="font-size:.68rem;color:var(--t3);margin-top:4px" id="enrBDsManualCount">0 valeur(s)</div>
+      </div>
+
+      <!-- Sheet config -->
+      <div id="enrBDsSheetBlock" style="display:none;flex-direction:column;gap:10px">
+        <div>
+          <label class="fl" style="font-size:.72rem;margin-bottom:4px">URL Google Sheets</label>
+          <input id="enrBDsSheetUrl" class="fi" style="height:32px;font-size:.78rem" placeholder="https://docs.google.com/spreadsheets/d/…"/>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label class="fl" style="font-size:.72rem;margin-bottom:4px">Nom de l'onglet</label>
+            <input id="enrBDsSheetTab" class="fi" style="height:30px;font-size:.78rem" placeholder="Feuille1"/>
+          </div>
+          <div style="width:90px">
+            <label class="fl" style="font-size:.72rem;margin-bottom:4px">Colonne</label>
+            <input id="enrBDsSheetCol" class="fi" style="height:30px;font-size:.78rem;text-transform:uppercase" placeholder="A" maxlength="3"/>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--t2);cursor:pointer">
+          <input type="checkbox" id="enrBDsSheetHeader" style="accent-color:#f1c40f"/> La première ligne est un en-tête (à ignorer)
+        </label>
+        <button onclick="enrBDsPreview()" style="height:34px;background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🔄 Prévisualiser les valeurs</button>
+        <!-- Preview result -->
+        <div id="enrBDsPreviewArea" style="display:none;background:var(--ink2);border:1px solid var(--line);border-radius:7px;padding:10px">
+          <div style="font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px" id="enrBDsPreviewTitle">Valeurs importées</div>
+          <div id="enrBDsPreviewList" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+        </div>
+        <!-- Cache info -->
+        <div id="enrBDsCacheInfo" style="font-size:.68rem;color:var(--t3)"></div>
+      </div>
+
+    </div>
+    <!-- Footer -->
+    <div style="padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0;background:var(--ink2);border-radius:0 0 14px 14px">
+      <button onclick="enrBDsApply()" style="flex:1;height:36px;background:#f1c40f;color:#1a1a2e;border:none;border-radius:7px;font-size:.82rem;font-weight:800;cursor:pointer">✓ Appliquer</button>
+      <button onclick="closeSheet('enrBDsPanel')" style="height:36px;padding:0 16px;background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:7px;font-size:.82rem;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <style>
 /* ENR Builder styles */
 .enrBTab{background:none;border:none;border-bottom:3px solid transparent;color:var(--t3);padding:10px 16px;font-size:.8rem;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
@@ -2822,6 +2909,10 @@ img{max-width:100%;display:block;}
 .enrFillSec{background:var(--ink2);border:1px solid var(--line);border-radius:9px;margin-bottom:12px;overflow:hidden}
 .enrFillSecHead{padding:8px 12px;background:var(--ink3);border-bottom:1px solid var(--line);font-size:.75rem;font-weight:700;color:var(--t2)}
 .enrFillSecBody{padding:10px 12px}
+/* Data source panel */
+#enrBDsPanel .ov-inner{border-radius:14px}
+#enrBDsTypeManualLbl,#enrBDsTypeSheetLbl{transition:border-color .15s,background .15s}
+#enrBDsTypeManualLbl:hover,#enrBDsTypeSheetLbl:hover{background:var(--ink3)}
 </style>
 
 <!-- ═══ OVERLAY: Gestion des Prestataires & Griffes ═══ -->
@@ -9066,13 +9157,30 @@ function _enrBRenderSec(sec, i) {
 
 function _enrBRenderFieldRow(si, fi, f) {
   var typeOpts = _ENR_FIELD_TYPES.map(function(t){ return '<option value="'+t+'"'+( f.type===t?' selected':'')+'>'+(_ENR_FIELD_LABELS[t]||t)+'</option>'; }).join('');
-  var hasOpts = f.type==='select'||f.type==='radio';
+  var hasOpts = f.type==='select'||f.type==='radio'||f.type==='checkbox';
+  var ds = f.dataSource||{};
+  var dsActive = hasOpts && ds.enabled;
+  // Show data source status hint in the options area
+  var optCell;
+  if (hasOpts) {
+    var dsLabel = dsActive
+      ? (ds.type==='sheet'
+          ? '<span style="color:#3498db;font-size:.68rem;white-space:nowrap">⛁ Sheet ('+( (ds.cachedValues||ds.values||[]).length)+' val.)</span>'
+          : '<span style="color:#2ecc71;font-size:.68rem;white-space:nowrap">⛁ Manuel ('+( (ds.values||[]).length)+' val.)</span>')
+      : '<input class="fi" style="flex:1;height:26px;font-size:.72rem" value="'+esc((f.options||[]).join(';'))+'" placeholder="opt1;opt2;opt3" title="Options fixes (séparées par ;)" onchange="_enrBFieldProp('+si+','+fi+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>';
+    optCell = '<div style="flex:2;display:flex;align-items:center;gap:4px">'
+      + dsLabel
+      +'<button class="enrBSmBtn" style="'+(dsActive?'color:#f1c40f;border-color:#f1c40f44':'color:var(--t3)')+';padding:0 5px;font-size:.7rem;flex-shrink:0" onclick="enrBOpenDsPanel('+si+','+fi+',false)" title="Configurer la source de données">⛁</button>'
+    +'</div>';
+  } else {
+    optCell = '<div style="flex:2"></div>';
+  }
   return '<div class="enrBFieldRow" id="enrFR_'+si+'_'+fi+'">'
     +'<span style="color:var(--t3);font-size:.7rem;width:18px;text-align:center">⠿</span>'
     +'<input class="fi" style="flex:2;height:26px;font-size:.78rem" value="'+esc(f.label||'')+'" placeholder="Libellé du champ" onchange="_enrBFieldProp('+si+','+fi+',\'label\',this.value)"/>'
     +'<select class="fi" style="flex:1.2;height:26px;font-size:.72rem" onchange="_enrBFieldProp('+si+','+fi+',\'type\',this.value);_enrBRenderSections()">'+typeOpts+'</select>'
     +'<input class="fi" style="flex:2;height:26px;font-size:.76rem" value="'+esc(f.placeholder||'')+'" placeholder="Placeholder / Aide" onchange="_enrBFieldProp('+si+','+fi+',\'placeholder\',this.value)"/>'
-    +(hasOpts ? '<input class="fi" style="flex:2;height:26px;font-size:.72rem" value="'+esc((f.options||[]).join(';'))+'" placeholder="opt1;opt2;opt3" title="Options séparées par ;" onchange="_enrBFieldProp('+si+','+fi+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>' : '<div style="flex:2"></div>')
+    +optCell
     +'<label style="display:flex;align-items:center;gap:3px;font-size:.7rem;cursor:pointer;white-space:nowrap;flex-shrink:0">'
       +'<input type="checkbox" '+(f.required?'checked':'')+' onchange="_enrBFieldProp('+si+','+fi+',\'required\',this.checked)"/> Req.'
     +'</label>'
@@ -9086,11 +9194,27 @@ function _enrBRenderColRow(si, ci, col) {
   var colTypeOpts = ['text','number','date','select','checkbox'].map(function(t){
     return '<option value="'+t+'"'+(col.type===t?' selected':'')+'>'+(_ENR_FIELD_LABELS[t]||t)+'</option>';
   }).join('');
+  var ds = col.dataSource||{};
+  var dsActive = col.type==='select' && ds.enabled;
+  var optCell;
+  if (col.type==='select') {
+    var dsLabel = dsActive
+      ? (ds.type==='sheet'
+          ? '<span style="color:#3498db;font-size:.68rem;white-space:nowrap">⛁ Sheet ('+((ds.cachedValues||ds.values||[]).length)+' val.)</span>'
+          : '<span style="color:#2ecc71;font-size:.68rem;white-space:nowrap">⛁ Manuel ('+((ds.values||[]).length)+' val.)</span>')
+      : '<input class="fi" style="flex:1;height:26px;font-size:.72rem" value="'+esc((col.options||[]).join(';'))+'" placeholder="opt1;opt2" onchange="_enrBColProp('+si+','+ci+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>';
+    optCell = '<div style="flex:2;display:flex;align-items:center;gap:4px">'
+      +dsLabel
+      +'<button class="enrBSmBtn" style="'+(dsActive?'color:#f1c40f;border-color:#f1c40f44':'color:var(--t3)')+';padding:0 5px;font-size:.7rem;flex-shrink:0" onclick="enrBOpenDsPanel('+si+','+ci+',true)" title="Source de données">⛁</button>'
+    +'</div>';
+  } else {
+    optCell = '<div style="flex:2"></div>';
+  }
   return '<div class="enrBFieldRow" id="enrCR_'+si+'_'+ci+'">'
     +'<span style="color:var(--t3);font-size:.7rem;width:18px;text-align:center">⠿</span>'
     +'<input class="fi" style="flex:2;height:26px;font-size:.78rem" value="'+esc(col.label||'')+'" placeholder="En-tête de colonne" onchange="_enrBColProp('+si+','+ci+',\'label\',this.value)"/>'
-    +'<select class="fi" style="flex:1.2;height:26px;font-size:.72rem" onchange="_enrBColProp('+si+','+ci+',\'type\',this.value)">'+colTypeOpts+'</select>'
-    +(col.type==='select' ? '<input class="fi" style="flex:2;height:26px;font-size:.72rem" value="'+esc((col.options||[]).join(';'))+'" placeholder="opt1;opt2" onchange="_enrBColProp('+si+','+ci+',\'options\',this.value.split(\';\').map(function(s){return s.trim();}).filter(Boolean))"/>' : '<div style="flex:2"></div>')
+    +'<select class="fi" style="flex:1.2;height:26px;font-size:.72rem" onchange="_enrBColProp('+si+','+ci+',\'type\',this.value);_enrBRenderSections()">'+colTypeOpts+'</select>'
+    +optCell
     +'<input class="fi" style="width:54px;height:26px;font-size:.72rem" value="'+esc(col.width||'')+'" placeholder="Largeur" onchange="_enrBColProp('+si+','+ci+',\'width\',this.value)"/>'
     +'<button class="enrBSmBtn" onclick="enrBMoveCol('+si+','+ci+',-1)">▲</button>'
     +'<button class="enrBSmBtn" onclick="enrBMoveCol('+si+','+ci+',1)">▼</button>'
@@ -9117,6 +9241,158 @@ function _enrBColProp(si,ci,k,v){ _enrBSections[si].columns[ci][k]=v; }
 function enrBAddSig(si){ if(!_enrBSections[si].signataires) _enrBSections[si].signataires=[]; _enrBSections[si].signataires.push({label:'',role:''}); _enrBMarkDirty(); _enrBRenderSections(); }
 function enrBRemoveSig(si,gi){ _enrBSections[si].signataires.splice(gi,1); _enrBMarkDirty(); _enrBRenderSections(); }
 function _enrBSigProp(si,gi,k,v){ _enrBSections[si].signataires[gi][k]=v; }
+
+// ══════════════════════════════════════════════════════════════════
+//  DATA SOURCE PANEL — configuration de source de données par champ
+// ══════════════════════════════════════════════════════════════════
+var _enrBDsCtx = null; // { si, fi, isCol }
+
+function enrBOpenDsPanel(si, fi, isCol) {
+  _enrBDsCtx = { si:si, fi:fi, isCol:isCol };
+  var item = isCol ? _enrBSections[si].columns[fi] : _enrBSections[si].fields[fi];
+  if (!item) return;
+  var ds = item.dataSource || {};
+
+  // Panel label
+  document.getElementById('enrBDsFieldLabel').textContent = (item.label||'Champ sans nom') + (isCol?' (colonne tableau)':'');
+
+  // Enable toggle
+  document.getElementById('enrBDsEnabled').checked = !!ds.enabled;
+
+  // Type blocks
+  _enrBDsToggleBlocks(!!ds.enabled);
+
+  // Set type
+  var t = ds.type || 'manual';
+  document.querySelectorAll('input[name="enrBDsType"]').forEach(function(r){ r.checked = r.value===t; });
+  _enrBDsShowTypeBlock(t);
+
+  // Manual values
+  document.getElementById('enrBDsManualValues').value = (ds.values||[]).join('\n');
+  _enrBDsUpdateManualCount();
+
+  // Sheet fields
+  document.getElementById('enrBDsSheetUrl').value = ds.sheetUrl||'';
+  document.getElementById('enrBDsSheetTab').value = ds.sheetTab||'';
+  document.getElementById('enrBDsSheetCol').value = ds.sheetColumn||'A';
+  document.getElementById('enrBDsSheetHeader').checked = ds.hasHeader !== false;
+
+  // Preview area
+  var prev = document.getElementById('enrBDsPreviewArea');
+  var cache = ds.cachedValues||[];
+  if (t==='sheet' && cache.length) {
+    _enrBDsShowPreview(cache, true);
+  } else {
+    prev.style.display='none';
+  }
+  document.getElementById('enrBDsCacheInfo').textContent = (t==='sheet' && cache.length) ? 'Cache : '+cache.length+' valeur(s) — cliquez Prévisualiser pour rafraîchir' : '';
+
+  // Manual count live update
+  document.getElementById('enrBDsManualValues').addEventListener('input', _enrBDsUpdateManualCount);
+
+  openSheet('enrBDsPanel');
+}
+
+function enrBDsToggle(on) {
+  _enrBDsToggleBlocks(on);
+}
+
+function _enrBDsToggleBlocks(on) {
+  document.getElementById('enrBDsTypeBlock').style.display  = on ? 'block' : 'none';
+  var t = (document.querySelector('input[name="enrBDsType"]:checked')||{}).value || 'manual';
+  document.getElementById('enrBDsManualBlock').style.display = (on && t==='manual') ? 'block' : 'none';
+  document.getElementById('enrBDsSheetBlock').style.display  = (on && t==='sheet')  ? 'flex'  : 'none';
+}
+
+function enrBDsSetType(t) {
+  document.querySelectorAll('input[name="enrBDsType"]').forEach(function(r){ r.checked=r.value===t; });
+  _enrBDsShowTypeBlock(t);
+  // Update card styles
+  document.getElementById('enrBDsTypeManualLbl').style.borderColor = (t==='manual') ? '#f1c40f' : 'var(--line)';
+  document.getElementById('enrBDsTypeSheetLbl').style.borderColor  = (t==='sheet')  ? '#f1c40f' : 'var(--line)';
+}
+
+function _enrBDsShowTypeBlock(t) {
+  var on = document.getElementById('enrBDsEnabled').checked;
+  document.getElementById('enrBDsManualBlock').style.display = (on && t==='manual') ? 'block' : 'none';
+  document.getElementById('enrBDsSheetBlock').style.display  = (on && t==='sheet')  ? 'flex'  : 'none';
+  document.getElementById('enrBDsTypeManualLbl').style.borderColor = (t==='manual') ? '#f1c40f' : 'var(--line)';
+  document.getElementById('enrBDsTypeSheetLbl').style.borderColor  = (t==='sheet')  ? '#f1c40f' : 'var(--line)';
+}
+
+function _enrBDsUpdateManualCount() {
+  var lines = (document.getElementById('enrBDsManualValues').value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  document.getElementById('enrBDsManualCount').textContent = lines.length + ' valeur(s)';
+}
+
+function enrBDsPreview() {
+  var url  = (document.getElementById('enrBDsSheetUrl').value||'').trim();
+  var tab  = (document.getElementById('enrBDsSheetTab').value||'').trim();
+  var col  = (document.getElementById('enrBDsSheetCol').value||'A').trim().toUpperCase();
+  var hdr  = document.getElementById('enrBDsSheetHeader').checked;
+  if (!url) { toast('Saisissez l\'URL du fichier','err'); return; }
+  var btn = document.querySelector('#enrBDsSheetBlock button');
+  var origTxt = btn.textContent;
+  btn.textContent = '⏳ Chargement…'; btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(r){
+      btn.textContent = origTxt; btn.disabled = false;
+      if (!r||!r.success) { toast(r&&r.error||'Erreur lors de l\'import','err'); return; }
+      _enrBDsShowPreview(r.values, false);
+      document.getElementById('enrBDsCacheInfo').textContent = r.values.length+' valeur(s) importée(s)';
+    })
+    .withFailureHandler(function(e){ btn.textContent=origTxt; btn.disabled=false; toast(e.message,'err'); })
+    .fetchSheetColumnValues({ sheetUrl:url, sheetTab:tab, sheetColumn:col, hasHeader:hdr, adminKey:S.adminKey });
+}
+
+function _enrBDsShowPreview(values, fromCache) {
+  var area = document.getElementById('enrBDsPreviewArea');
+  var list = document.getElementById('enrBDsPreviewList');
+  var title = document.getElementById('enrBDsPreviewTitle');
+  title.textContent = (fromCache ? 'Valeurs en cache — ' : 'Valeurs importées — ') + values.length + ' entrée(s)';
+  list.innerHTML = values.slice(0,50).map(function(v){
+    return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:.7rem;background:rgba(241,196,15,.12);border:1px solid rgba(241,196,15,.25);color:#f1c40f">'+esc(v)+'</span>';
+  }).join('')+(values.length>50 ? '<span style="font-size:.68rem;color:var(--t3)"> …et '+(values.length-50)+' autres</span>' : '');
+  area.style.display='block';
+  // Store fetched values temporarily for Apply
+  area._fetchedValues = values;
+}
+
+function enrBDsApply() {
+  if (!_enrBDsCtx) return;
+  var ctx = _enrBDsCtx;
+  var enabled = document.getElementById('enrBDsEnabled').checked;
+  var type = (document.querySelector('input[name="enrBDsType"]:checked')||{}).value || 'manual';
+
+  var ds = { enabled: enabled, type: type };
+
+  if (enabled && type==='manual') {
+    ds.values = (document.getElementById('enrBDsManualValues').value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    if (!ds.values.length) { toast('Saisissez au moins une valeur','err'); return; }
+  }
+  if (enabled && type==='sheet') {
+    ds.sheetUrl    = (document.getElementById('enrBDsSheetUrl').value||'').trim();
+    ds.sheetTab    = (document.getElementById('enrBDsSheetTab').value||'').trim();
+    ds.sheetColumn = (document.getElementById('enrBDsSheetCol').value||'A').trim().toUpperCase();
+    ds.hasHeader   = document.getElementById('enrBDsSheetHeader').checked;
+    var prevArea = document.getElementById('enrBDsPreviewArea');
+    ds.cachedValues = prevArea._fetchedValues || [];
+    if (!ds.sheetUrl) { toast('L\'URL du fichier est requise','err'); return; }
+    if (!ds.cachedValues.length) { toast('Prévisualisez d\'abord les valeurs pour les mettre en cache','err'); return; }
+  }
+
+  // Save to field/column
+  var target = ctx.isCol ? _enrBSections[ctx.si].columns[ctx.fi] : _enrBSections[ctx.si].fields[ctx.fi];
+  target.dataSource = ds;
+  // Also sync options array for backward compat (fill form fallback)
+  if (enabled) {
+    target.options = (type==='manual' ? ds.values : (ds.cachedValues||[]));
+  }
+  _enrBMarkDirty();
+  closeSheet('enrBDsPanel');
+  _enrBRenderSections();
+  toast('Source de données configurée ✓', 'ok');
+}
 
 // ══════════════════════════════════════════════════════════════════
 //  RECORDS (Enregistrements)
@@ -9341,6 +9617,16 @@ function _pesc(s) {
 }
 
 // ── Fill overlay ──────────────────────────────────────────────────
+// Résout les options d'un champ/colonne : dataSource > options fixes
+function _enrBDsResolveOptions(f) {
+  var ds = f.dataSource;
+  if (ds && ds.enabled) {
+    if (ds.type === 'manual') return ds.values || [];
+    if (ds.type === 'sheet')  return ds.cachedValues || ds.values || [];
+  }
+  return f.options || [];
+}
+
 function _enrBOpenFillOv() {
   var tpl = _enrBFillTpl;
   var rec = _enrBFillRec;
@@ -9362,9 +9648,23 @@ function _enrBOpenFillOv() {
         var val = recData[f.id]||'';
         var inp = '';
         if (f.type==='textarea') inp='<textarea class="fi" id="'+fid+'" rows="3" style="resize:vertical;font-size:.82rem" placeholder="'+esc(f.placeholder||'')+'">'+esc(val)+'</textarea>';
-        else if (f.type==='select') inp='<select class="fi" id="'+fid+'" style="height:32px;font-size:.82rem"><option value=""></option>'+(f.options||[]).map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
-        else if (f.type==='checkbox') inp='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="'+fid+'"'+(val?' checked':'')+'/> '+esc(f.label||'')+'</label>';
-        else if (f.type==='radio') inp='<div style="display:flex;flex-wrap:wrap;gap:8px">'+(f.options||[]).map(function(o){ return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem"><input type="radio" name="'+fid+'" value="'+esc(o)+'"'+(val===o?' checked':'')+'/> '+esc(o)+'</label>'; }).join('')+'</div>';
+        else if (f.type==='select') {
+          var fOpts = _enrBDsResolveOptions(f);
+          inp='<select class="fi" id="'+fid+'" style="height:32px;font-size:.82rem"><option value=""></option>'+fOpts.map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+        }
+        else if (f.type==='checkbox') {
+          var fOpts2 = _enrBDsResolveOptions(f);
+          if (fOpts2.length) {
+            var vals2 = val ? val.split('||') : [];
+            inp='<div style="display:flex;flex-wrap:wrap;gap:8px">'+fOpts2.map(function(o,oi){ return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem"><input type="checkbox" id="'+fid+'_'+oi+'" name="'+fid+'" value="'+esc(o)+'"'+(vals2.indexOf(o)>=0?' checked':'')+'/> '+esc(o)+'</label>'; }).join('')+'</div>';
+          } else {
+            inp='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="'+fid+'"'+(val?' checked':'')+'/> '+esc(f.label||'')+'</label>';
+          }
+        }
+        else if (f.type==='radio') {
+          var fOpts3 = _enrBDsResolveOptions(f);
+          inp='<div style="display:flex;flex-wrap:wrap;gap:8px">'+fOpts3.map(function(o){ return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.8rem"><input type="radio" name="'+fid+'" value="'+esc(o)+'"'+(val===o?' checked':'')+'/> '+esc(o)+'</label>'; }).join('')+'</div>';
+        }
         else if (f.type==='photo') inp='<input type="file" id="'+fid+'" accept="image/*" style="font-size:.78rem"/>'+(val?'<a href="'+esc(val)+'" target="_blank" style="font-size:.7rem;color:#3498db;display:block;margin-top:3px">📷 Photo existante</a>':'');
         else inp='<input class="fi" id="'+fid+'" type="'+f.type+'" style="height:32px;font-size:.82rem" placeholder="'+esc(f.placeholder||'')+'" value="'+esc(val)+'"/>';
         if (f.type==='checkbox'||f.type==='radio') {
@@ -9426,7 +9726,7 @@ function _enrBFillTableRow(si, ri, cols, rowData, allowDel) {
     var fid='enrFillTblCell_'+si+'_'+ri+'_'+ci;
     var val=rowData[col.id||ci]||'';
     var inp='';
-    if (col.type==='select') inp='<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+(col.options||[]).map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+    if (col.type==='select') { var cOpts=_enrBDsResolveOptions(col); inp='<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+cOpts.map(function(o){ return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>'; }
     else if (col.type==='checkbox') inp='<input type="checkbox" id="'+fid+'"'+(val?' checked':'')+'/>';
     else inp='<input id="'+fid+'" type="'+(col.type==='number'?'number':(col.type==='date'?'date':'text'))+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px" value="'+esc(val)+'"/>';
     return '<td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+inp+'</td>';
@@ -9444,7 +9744,7 @@ function enrBFillAddRow(si) {
   row.innerHTML = (sec.columns||[]).map(function(col,ci){
     var fid='enrFillTblCell_'+si+'_'+ri+'_'+ci;
     var inp = col.type==='select'
-      ? '<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+(col.options||[]).map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select>'
+      ? '<select id="'+fid+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"><option value=""></option>'+_enrBDsResolveOptions(col).map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select>'
       : col.type==='checkbox' ? '<input type="checkbox" id="'+fid+'"/>'
       : '<input id="'+fid+'" type="'+(col.type==='number'?'number':(col.type==='date'?'date':'text'))+'" style="width:100%;background:transparent;border:none;color:var(--t1);font-size:.78rem;padding:3px"/>';
     return '<td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+inp+'</td>';
@@ -9471,9 +9771,24 @@ function enrBSubmitRecord() {
       (sec.fields||[]).forEach(function(f, fi){
         var fid='enrFill_'+si+'_'+fi;
         var el=document.getElementById(fid);
+        if (f.type==='checkbox') {
+          // Multi-option checkbox (from dataSource)
+          var cbOpts = _enrBDsResolveOptions(f);
+          if (cbOpts.length) {
+            var checked = [];
+            cbOpts.forEach(function(o,oi){
+              var cEl = document.getElementById(fid+'_'+oi);
+              if (cEl && cEl.checked) checked.push(o);
+            });
+            data[f.id] = checked.join('||');
+          } else {
+            if (!el) return;
+            data[f.id] = el.checked;
+          }
+          return;
+        }
         if (!el) return;
-        if (f.type==='checkbox') data[f.id]=el.checked;
-        else if (f.type==='radio') {
+        if (f.type==='radio') {
           var rad=document.querySelector('input[name="'+fid+'"]:checked');
           data[f.id]=rad?rad.value:'';
         }
