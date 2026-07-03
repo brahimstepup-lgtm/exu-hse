@@ -858,6 +858,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="sensibilisation" id="sbSensi" style="display:none"><span class="snav-i">📋</span>Sensibilisation</button>
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
+  <button class="snav" data-v="accident" id="sbAccident" style="display:none"><span class="snav-i">🚨</span>Accident de Travail</button>
 </nav>
 
 <!-- APP -->
@@ -1067,6 +1068,24 @@ img{max-width:100%;display:block;}
       </div>
       <div id="nuisiblesBody"></div>
     </div>
+
+    <!-- ACCIDENT DE TRAVAIL -->
+    <div class="view" id="view-accident">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">🚨 Accident de Travail</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="configAccidentBtn" class="btn btn-g" onclick="openConfigAccident()" style="padding:7px 10px;font-size:.78rem;min-height:34px;display:none">⚙ Configurer</button>
+          <button class="btn" onclick="openRapportAccident()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(231,76,60,.18);border:1px solid rgba(231,76,60,.45);color:#e74c3c;border-radius:var(--rs)">📋 ENRHSE008 — Rapport</button>
+          <button class="btn" onclick="openFicheDeclaration()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(230,126,34,.18);border:1px solid rgba(230,126,34,.45);color:#e67e22;border-radius:var(--rs)">📝 ENRHSE62 — Déclaration</button>
+        </div>
+      </div>
+      <!-- Onglets -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px">
+        <button class="gsort-tab on" id="accTab_rapport" onclick="switchAccidentTab('rapport')">📋 Rapports d'Accident</button>
+        <button class="gsort-tab" id="accTab_declaration" onclick="switchAccidentTab('declaration')" style="color:#e67e22">📝 Déclarations</button>
+      </div>
+      <div id="accidentBody"></div>
+    </div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1077,6 +1096,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="sensibilisation" id="nbSensi" style="display:none"><span class="nb-icon">📋</span><span>Sensi.</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="accident" id="nbAccident" style="display:none"><span class="nb-icon">🚨</span><span>Accident</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -1982,6 +2002,460 @@ img{max-width:100%;display:block;}
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('cloturaNuisiblesOv')">Annuler</button>
       <button class="btn" onclick="submitCloture()" style="background:#27ae60;color:#fff">✅ Clôturer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Config Accident de Travail ═══ -->
+<div class="ov" id="accidentConfigOv">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">⚙ Configuration Accident de Travail</div>
+      <button class="sh-x" onclick="closeSheet('accidentConfigOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto">
+
+      <!-- ── ENRHSE008 ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(231,76,60,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">📋 Code document — ENRHSE008 Rapport d'Accident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
+            <input class="fi" id="accEnr008Code" value="ENRHSE008" placeholder="ENRHSE008" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="accEnr008Rev" value="V.1" placeholder="V.1" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
+            <input class="fi" id="accEnr008Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+        </div>
+        <button class="btn" onclick="saveAccidentConfigEnr('008')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e74c3c;color:#fff">💾 Sauvegarder ENRHSE008</button>
+      </div>
+
+      <!-- ── ENRHSE62 ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(230,126,34,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#e67e22;margin-bottom:10px">📝 Code document — ENRHSE62 Fiche Déclaration (Bilingue)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Code document</label>
+            <input class="fi" id="accEnr62Code" value="ENRHSE62" placeholder="ENRHSE62" style="height:32px;font-size:.85rem;font-weight:700;letter-spacing:.5px"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision</label>
+            <input class="fi" id="accEnr62Rev" value="V.1" placeholder="V.1" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition</label>
+            <input class="fi" id="accEnr62Edition" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+          </div>
+        </div>
+        <button class="btn" onclick="saveAccidentConfigEnr('62')" style="height:34px;font-size:.82rem;padding:0 14px;background:#e67e22;color:#fff">💾 Sauvegarder ENRHSE62</button>
+      </div>
+
+      <!-- ── Gestion des zones ── -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(52,152,219,.35)">
+        <div style="font-size:.82rem;font-weight:700;color:#3498db;margin-bottom:10px">📍 Zones / Départements</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="fi" id="accNewZoneInput" placeholder="Nouvelle zone…" style="flex:1;height:34px;font-size:.85rem" onkeydown="if(event.key==='Enter'){addAccidentZone();event.preventDefault();}"/>
+          <button class="btn" onclick="addAccidentZone()" style="height:34px;padding:0 12px;font-size:.82rem;background:#3498db;color:#fff">+ Ajouter</button>
+        </div>
+        <div id="accZoneChipsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px">
+          <span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>
+        </div>
+        <button class="btn" onclick="saveZonesConfig()" style="height:32px;font-size:.8rem;padding:0 12px;background:#3498db;color:#fff">💾 Sauvegarder les zones</button>
+      </div>
+
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('accidentConfigOv')">Fermer</button>
+      <button class="btn" onclick="saveAccidentConfig()" style="background:#e74c3c;color:#fff;font-weight:700">💾 Tout sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: ENRHSE008 — Rapport d'Accident ═══ -->
+<div class="ov" id="rapportAccidentOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📋 ENRHSE008 — Rapport d'Accident</div>
+      <button class="sh-x" onclick="closeSheet('rapportAccidentOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+
+      <!-- Identification -->
+      <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:10px">🔖 Identification de l'Accident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Date de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="date" id="ra_date" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Heure <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="time" id="ra_heure" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Zone / Département <span style="color:#e74c3c">*</span></label>
+            <select class="fi" id="ra_zone" style="height:38px">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Lieu précis</label>
+            <input class="fi" id="ra_lieu" placeholder="Ex : Atelier, zone de stockage…" style="height:38px"/>
+          </div>
+        </div>
+        <div>
+          <label class="fl">Nature de l'accident</label>
+          <select class="fi" id="ra_nature" style="height:38px" onchange="toggleRaNatureAutre()">
+            <option value="">— Sélectionner —</option>
+            <option value="Chute de plain-pied">🚶 Chute de plain-pied</option>
+            <option value="Chute de hauteur">⬇ Chute de hauteur</option>
+            <option value="Heurt / Collision">💥 Heurt / Collision</option>
+            <option value="Coupure / Lacération">🔪 Coupure / Lacération</option>
+            <option value="Brûlure">🔥 Brûlure</option>
+            <option value="Intoxication / Inhalation">☣ Intoxication / Inhalation</option>
+            <option value="Écrasement">⚙ Écrasement</option>
+            <option value="Électrocution">⚡ Électrocution</option>
+            <option value="Effort excessif / TMS">💪 Effort excessif / TMS</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <div id="ra_nature_autre_wrap" style="display:none;margin-top:8px">
+            <label class="fl" style="font-size:.78rem;color:#e74c3c">Précisez la nature de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="ra_nature_autre" placeholder="Décrivez la nature de l'accident…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Victime -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">👤 Victime</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Nom & Prénom <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="ra_victime_nom" placeholder="Nom complet" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Matricule</label>
+            <input class="fi" id="ra_victime_mat" list="accEmpDatalist" oninput="_accLookupEmployee('ra')" placeholder="Rechercher un matricule…" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Poste / Fonction</label>
+            <input class="fi" id="ra_victime_poste" placeholder="Ex : Opérateur, Technicien…" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Ancienneté</label>
+            <input class="fi" id="ra_victime_anc" placeholder="Ex : 2 ans, 6 mois…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Circonstances -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Description des circonstances <span style="color:#e74c3c">*</span></label>
+        <textarea class="fi" id="ra_circonstances" rows="3" placeholder="Décrire précisément ce qui s'est passé avant, pendant et après l'accident…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Blessures -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Siège de la lésion</label>
+          <select class="fi" id="ra_siege" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Tête / Crâne">Tête / Crâne</option>
+            <option value="Yeux">Yeux</option>
+            <option value="Cou">Cou</option>
+            <option value="Épaule / Bras">Épaule / Bras</option>
+            <option value="Main / Doigts">Main / Doigts</option>
+            <option value="Torse / Dos">Torse / Dos</option>
+            <option value="Jambe / Genou">Jambe / Genou</option>
+            <option value="Pied / Cheville">Pied / Cheville</option>
+            <option value="Multiple">Multiple</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Nature de la lésion</label>
+          <select class="fi" id="ra_lesion" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Plaie / Coupure">Plaie / Coupure</option>
+            <option value="Contusion / Hématome">Contusion / Hématome</option>
+            <option value="Fracture">Fracture</option>
+            <option value="Entorse / Foulure">Entorse / Foulure</option>
+            <option value="Brûlure">Brûlure</option>
+            <option value="Intoxication">Intoxication</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Témoins -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Témoin(s)</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input class="fi" id="ra_temoins_search" list="accWitnessDatalist" placeholder="Rechercher par nom ou matricule…" style="flex:1;height:38px" onkeydown="if(event.key==='Enter'){addRaTemoins();event.preventDefault();}"/>
+          <button type="button" onclick="addRaTemoins()" style="height:38px;padding:0 12px;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;flex-shrink:0">+ Ajouter</button>
+        </div>
+        <datalist id="accWitnessDatalist"></datalist>
+        <div id="ra_temoins_chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:20px"></div>
+        <input type="hidden" id="ra_temoins"/>
+      </div>
+
+      <!-- Actions immédiates -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Actions immédiates prises</label>
+        <textarea class="fi" id="ra_actions" rows="2" placeholder="Ex : soins de premiers secours, évacuation, alerte médecin…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Causes -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Causes identifiées</label>
+        <textarea class="fi" id="ra_causes" rows="2" placeholder="Causes directes et indirectes de l'accident…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Actions correctives -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Mesures correctives préconisées</label>
+        <textarea class="fi" id="ra_correctives" rows="2" placeholder="Actions à mettre en place pour éviter la récurrence…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Photo certificat médical -->
+      <div style="margin-bottom:12px;background:rgba(231,76,60,.05);border:1px solid rgba(231,76,60,.2);border-radius:10px;padding:12px">
+        <div style="font-size:.82rem;font-weight:700;color:#e74c3c;margin-bottom:8px">📄 Certificat médical initial</div>
+        <label class="fl" style="font-size:.78rem;margin-bottom:6px">Photo du certificat médical initial (optionnel)</label>
+        <input type="file" id="ra_photo_input" accept="image/*" capture="environment" onchange="raHandlePhoto(this)" style="display:none"/>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" onclick="document.getElementById('ra_photo_input').click()" style="background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">📷 Ajouter la photo du certificat</button>
+          <span id="ra_photo_name" style="font-size:12px;color:#aaa">Aucune photo sélectionnée</span>
+        </div>
+        <div id="ra_photo_preview" style="margin-top:8px;display:none">
+          <img id="ra_photo_img" src="" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid #444;object-fit:contain"/>
+          <button type="button" onclick="raClearPhoto()" style="display:block;margin-top:4px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px">✕ Supprimer</button>
+        </div>
+      </div>
+
+      <!-- Statut -->
+      <div style="margin-bottom:4px">
+        <label class="fl">Statut du rapport</label>
+        <select class="fi" id="ra_statut" style="height:38px">
+          <option value="En cours d'investigation">🔴 En cours d'investigation</option>
+          <option value="Mesures en cours">🟠 Mesures en cours</option>
+          <option value="Clôturé">✅ Clôturé</option>
+        </select>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('rapportAccidentOv')">Annuler</button>
+      <button class="btn" onclick="submitRapportAccident()" style="background:#e74c3c;color:#fff;font-weight:700">💾 Enregistrer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="accEmpDatalist"></datalist>
+
+<!-- ═══ OVERLAY: ENRHSE62 — Fiche Déclaration Accident du Travail ═══ -->
+<div class="ov" id="ficheDeclarationOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📝 ENRHSE62 — Déclaration Accident du Travail</div>
+      <button class="sh-x" onclick="closeSheet('ficheDeclarationOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+
+      <!-- Informations accident -->
+      <div style="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.3);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:.82rem;font-weight:700;color:#e67e22;margin-bottom:10px">📅 Informations sur l'Accident</div>
+        <!-- Type d'accident -->
+        <div style="margin-bottom:10px">
+          <label class="fl" style="margin-bottom:6px">Type d'accident</label>
+          <div style="display:flex;gap:16px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.88rem;cursor:pointer">
+              <input type="radio" name="fd_type_accident" id="fd_type_travail" value="Travail" checked/> Accident du travail
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.88rem;cursor:pointer">
+              <input type="radio" name="fd_type_accident" id="fd_type_trajet" value="Trajet"/> Accident de trajet
+            </label>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Date de l'accident <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="date" id="fd_date" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Heure</label>
+            <input class="fi" type="time" id="fd_heure" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Zone / Département <span style="color:#e74c3c">*</span></label>
+            <select class="fi" id="fd_zone" style="height:38px">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Lieu précis</label>
+            <input class="fi" id="fd_lieu" placeholder="Ex : Ligne de production 3…" style="height:38px"/>
+          </div>
+        </div>
+        <div>
+          <label class="fl">Nature de l'accident</label>
+          <select class="fi" id="fd_nature" style="height:38px" onchange="toggleFdNatureAutre()">
+            <option value="">— Sélectionner —</option>
+            <option value="Chute de plain-pied">🚶 Chute de plain-pied</option>
+            <option value="Chute de hauteur">⬇ Chute de hauteur</option>
+            <option value="Heurt / Collision">💥 Heurt / Collision</option>
+            <option value="Coupure / Lacération">🔪 Coupure / Lacération</option>
+            <option value="Brûlure">🔥 Brûlure</option>
+            <option value="Intoxication / Inhalation">☣ Intoxication / Inhalation</option>
+            <option value="Écrasement">⚙ Écrasement</option>
+            <option value="Électrocution">⚡ Électrocution</option>
+            <option value="Effort excessif / TMS">💪 Effort excessif / TMS</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <div id="fd_nature_autre_wrap" style="display:none;margin-top:8px">
+            <label class="fl" style="font-size:.78rem;color:#e67e22">Précisez la nature <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="fd_nature_autre" placeholder="Décrivez la nature de l'accident…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations employé -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">👤 Informations de l'Employé</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Nom & Prénom <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="fd_nom" placeholder="Nom complet" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Matricule</label>
+            <input class="fi" id="fd_matricule" list="accEmpDatalist" oninput="_accLookupEmployee('fd')" placeholder="Rechercher un matricule…" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Poste / Fonction</label>
+            <input class="fi" id="fd_poste" placeholder="Ex : Opérateur de production" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Département</label>
+            <input class="fi" id="fd_dept" placeholder="Ex : Production, Maintenance…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Description de l'accident <span style="color:#e74c3c">*</span></label>
+        <textarea class="fi" id="fd_description" rows="3" placeholder="Décrire les circonstances de l'accident de manière précise…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Blessures -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Partie du corps atteinte</label>
+          <select class="fi" id="fd_partie_corps" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Tête / Crâne">Tête / Crâne</option>
+            <option value="Yeux">Yeux</option>
+            <option value="Cou">Cou</option>
+            <option value="Épaule / Bras">Épaule / Bras</option>
+            <option value="Main / Doigts">Main / Doigts</option>
+            <option value="Torse / Dos">Torse / Dos</option>
+            <option value="Jambe / Genou">Jambe / Genou</option>
+            <option value="Pied / Cheville">Pied / Cheville</option>
+            <option value="Multiple">Multiple</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Type de blessure</label>
+          <select class="fi" id="fd_blessure" style="height:38px">
+            <option value="">— Sélectionner —</option>
+            <option value="Plaie / Coupure">Plaie / Coupure</option>
+            <option value="Contusion">Contusion</option>
+            <option value="Fracture">Fracture</option>
+            <option value="Entorse">Entorse</option>
+            <option value="Brûlure">Brûlure</option>
+            <option value="Intoxication">Intoxication</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Soins -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Soins prodigués</label>
+        <select class="fi" id="fd_soins" style="height:38px">
+          <option value="">— Sélectionner —</option>
+          <option value="Premiers secours sur site">Premiers secours sur site</option>
+          <option value="Médecin du travail">Médecin du travail</option>
+          <option value="Hospitalisation">Hospitalisation</option>
+          <option value="Arrêt de travail">Arrêt de travail</option>
+          <option value="Sans arrêt">Sans arrêt</option>
+        </select>
+      </div>
+
+      <!-- Témoins -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Témoin(s)</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input class="fi" id="fd_temoins_search" list="accWitnessDatalist" placeholder="Rechercher par nom ou matricule…" style="flex:1;height:38px" onkeydown="if(event.key==='Enter'){addFdTemoins();event.preventDefault();}"/>
+          <button type="button" onclick="addFdTemoins()" style="height:38px;padding:0 12px;background:#e67e22;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;flex-shrink:0">+ Ajouter</button>
+        </div>
+        <div id="fd_temoins_chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:20px"></div>
+        <input type="hidden" id="fd_temoins"/>
+      </div>
+
+      <!-- Actions immédiates -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Actions immédiates prises</label>
+        <textarea class="fi" id="fd_actions_imm" rows="2" placeholder="Ex : premiers secours, évacuation, alerte médecin, arrêt de la machine…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Déclaré par -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label class="fl">Déclaré par</label>
+          <input class="fi" id="fd_declarant" placeholder="Nom du déclarant" style="height:38px"/>
+        </div>
+        <div>
+          <label class="fl">Fonction du déclarant</label>
+          <input class="fi" id="fd_declarant_fn" placeholder="Ex : Responsable HSE, Chef d'équipe…" style="height:38px"/>
+        </div>
+      </div>
+
+      <!-- Observations -->
+      <div style="margin-bottom:12px">
+        <label class="fl">Observations / Remarques</label>
+        <textarea class="fi" id="fd_observations" rows="2" placeholder="Toute information complémentaire utile…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Statut -->
+      <div style="margin-bottom:4px">
+        <label class="fl">Statut de la déclaration</label>
+        <select class="fi" id="fd_statut" style="height:38px">
+          <option value="Déclarée">📝 Déclarée</option>
+          <option value="En traitement">🔄 En traitement</option>
+          <option value="Clôturée">✅ Clôturée</option>
+        </select>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('ficheDeclarationOv')">Annuler</button>
+      <button class="btn" onclick="submitFicheDeclaration()" style="background:#e67e22;color:#fff;font-weight:700">💾 Enregistrer la déclaration</button>
     </div>
   </div>
 </div>
@@ -3268,6 +3742,9 @@ function bootApp() {
   splashMsg('Chargement des données…');
   setTimeout(function(){ document.getElementById('spFill').style.width='70%'; },80);
 
+  // Charger config accident de travail
+  _loadAccidentConfig();
+
   // Charger logo + griffes en priorité (sans attendre loadAll)
   google.script.run
     .withSuccessHandler(function(r) {
@@ -3396,7 +3873,7 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
-var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true, accident:true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
@@ -3453,6 +3930,7 @@ function applyRole(){
   var ceb=document.getElementById('configExtBtn');  if(ceb)  ceb.style.display  = admin?'':'none';
   var crb=document.getElementById('configRiaBtn');  if(crb)  crb.style.display  = admin?'':'none';
   var cpb=document.getElementById('configPestBtn'); if(cpb)  cpb.style.display  = admin?'':'none';
+  var cab=document.getElementById('configAccidentBtn'); if(cab) cab.style.display = admin?'':'none';
   // Bouton KPI dans le header
   var kb=document.getElementById('tbKpiBtn'); if(kb) kb.style.display = admin?'':'none';
   // Navigation admin : masquer pour non-admins
@@ -3461,7 +3939,7 @@ function applyRole(){
   });
   // Navigation superviseur
   var showSuper = admin || super_;
-  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','nbSensi','nbIncendie','nbNuisibles'].forEach(function(id){
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','sbAccident','nbSensi','nbIncendie','nbNuisibles','nbAccident'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
   // Redirige si vue interdite
@@ -3563,7 +4041,8 @@ function goV(v, btn){
               admin:'view-admin',
               sensibilisation:'view-sensibilisation',
               incendie:'view-incendie',
-              nuisibles:'view-nuisibles'};
+              nuisibles:'view-nuisibles',
+              accident:'view-accident'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -3580,6 +4059,7 @@ function renderCurrent(){
   else if(S.view==='sensibilisation') renderSensibilisation();
   else if(S.view==='incendie')   renderIncendie();
   else if(S.view==='nuisibles') renderNuisibles();
+  else if(S.view==='accident')  renderAccident();
   else renderTagsView();
 }
 
@@ -9885,6 +10365,726 @@ function printEnr15Verif() {
     +'</body></html>';
 
   var w = window.open('','_blank','width=1100,height=680,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+/* ══════════════════════════════════════════
+   ACCIDENT DE TRAVAIL
+══════════════════════════════════════════ */
+
+var _accidentConfig   = { enr008Rev:'V.1', enr62Rev:'V.1' };
+var _rapportAccidents = [];
+var _ficheDeclarations= [];
+var _accidentTab      = 'rapport';
+var _raPhotoB64       = '';
+var _raPhotoMime      = '';
+var _employeesDirectory = [];
+
+/* ── Annuaire employés (matricules) — Employees_DB ── */
+function _loadEmployeesDirectory() {
+  if (_employeesDirectory.length) { _fillEmployeeDatalist(); return; }
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.success) { _employeesDirectory = r.data || []; _fillEmployeeDatalist(); }
+    })
+    .withFailureHandler(function(){})
+    .getEmployeesDirectory(S.adminKey);
+}
+
+function _fillEmployeeDatalist() {
+  var dl = document.getElementById('accEmpDatalist');
+  if (!dl) return;
+  dl.innerHTML = _employeesDirectory.map(function(e) {
+    return '<option value="'+esc(e.matricule)+'">'+esc(e.matricule)+' — '+esc(e.name)+'</option>';
+  }).join('');
+  _fillWitnessDatalist();
+}
+
+function _accLookupEmployee(prefix) {
+  var mat = (document.getElementById(prefix+'_victime_mat') || document.getElementById(prefix+'_matricule') || {}).value;
+  mat = (mat||'').trim();
+  var emp = _employeesDirectory.find(function(e){ return e.matricule === mat; });
+  if (!emp) return;
+  if (prefix === 'ra') {
+    var nomEl = document.getElementById('ra_victime_nom');
+    var posteEl = document.getElementById('ra_victime_poste');
+    if (nomEl && !nomEl.value.trim()) nomEl.value = emp.name;
+  } else {
+    var nomEl2 = document.getElementById('fd_nom');
+    var deptEl = document.getElementById('fd_dept');
+    if (nomEl2 && !nomEl2.value.trim()) nomEl2.value = emp.name;
+    if (deptEl && !deptEl.value.trim()) deptEl.value = emp.dept;
+  }
+}
+
+/* ── Onglets ── */
+function switchAccidentTab(tab) {
+  _accidentTab = tab;
+  document.getElementById('accTab_rapport').classList.toggle('on', tab==='rapport');
+  document.getElementById('accTab_declaration').classList.toggle('on', tab==='declaration');
+  renderAccident();
+}
+
+/* ── Rendu principal ── */
+function renderAccident() {
+  var body = document.getElementById('accidentBody');
+  if (!body) return;
+  if (_accidentTab === 'rapport') {
+    _renderRapportAccidentList(body);
+  } else {
+    _renderFicheDeclarationList(body);
+  }
+  // charger les données si pas encore chargées
+  if (_accidentTab === 'rapport' && !_rapportAccidents.length) _loadRapportAccidents();
+  if (_accidentTab === 'declaration' && !_ficheDeclarations.length) _loadFicheDeclarations();
+}
+
+function _loadRapportAccidents() {
+  var body = document.getElementById('accidentBody');
+  if (body && _accidentTab==='rapport') body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _rapportAccidents = r.data||[]; if (_accidentTab==='rapport') _renderRapportAccidentList(document.getElementById('accidentBody')); }
+    })
+    .withFailureHandler(function(){})
+    .getRapportAccident(S.adminKey);
+}
+
+function _loadFicheDeclarations() {
+  var body = document.getElementById('accidentBody');
+  if (body && _accidentTab==='declaration') body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _ficheDeclarations = r.data||[]; if (_accidentTab==='declaration') _renderFicheDeclarationList(document.getElementById('accidentBody')); }
+    })
+    .withFailureHandler(function(){})
+    .getFicheDeclaration(S.adminKey);
+}
+
+/* ── Liste Rapports d'Accident ── */
+var _RA_STATUT_COLOR = {'En cours d\'investigation':'#e74c3c','Mesures en cours':'#e67e22','Clôturé':'#27ae60'};
+var _RA_STATUT_ICON  = {'En cours d\'investigation':'🔴','Mesures en cours':'🟠','Clôturé':'✅'};
+
+function _renderRapportAccidentList(body) {
+  if (!body) return;
+  var c = _accidentConfig;
+  var banner = '<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:1.4rem">📋</span>'
+    +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE008 — Rapport d\'Accident</div>'
+      +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Document de rapport complet suite à un accident de travail · Rév. '+(c.enr008Rev||'V.1')+'</div>'
+    +'</div>'
+  +'</div>';
+
+  var data = _rapportAccidents;
+  if (!data.length) {
+    body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucun rapport enregistré — cliquez sur «📋 ENRHSE008 — Rapport» pour créer le premier.</div>';
+    return;
+  }
+  body.innerHTML = banner + data.slice().reverse().map(function(r, ri) {
+    var idx   = data.length-1-ri;
+    var col   = _RA_STATUT_COLOR[r.statut] || '#e74c3c';
+    var ico   = _RA_STATUT_ICON[r.statut]  || '🔴';
+    return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="background:'+col+'22;border:1px solid '+col+'55;border-radius:8px;padding:4px 9px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.8rem;color:'+col+'">#'+esc(String(r.id))+'</div>'
+          +'<div style="font-size:.58rem;color:'+col+';opacity:.75">ENR008</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);margin-bottom:3px">'+esc(r.victimeNom||'—')+'</div>'
+          +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'
+            +'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+ico+' '+esc(r.statut||'—')+'</span>'
+            +(r.nature?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:1px 6px;font-size:.66rem">'+esc(r.nature)+'</span>':'')
+            +(r.zone?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t3);border-radius:4px;padding:1px 6px;font-size:.66rem">📍 '+esc(r.zone)+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
+          +(r.circonstances?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.circonstances).substring(0,120)+(r.circonstances.length>120?'…':'')+'</div>':'')
+        +'</div>'
+        +'<button onclick="printRapportAccident('+idx+')" title="Imprimer / Aperçu ENRHSE008" style="flex-shrink:0;background:rgba(231,76,60,.14);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.78rem;font-weight:700">🖨️</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+/* ── Liste Fiches Déclaration ── */
+var _FD_STATUT_COLOR = {'Déclarée':'#e67e22','En traitement':'#3498db','Clôturée':'#27ae60'};
+var _FD_STATUT_ICON  = {'Déclarée':'📝','En traitement':'🔄','Clôturée':'✅'};
+
+function _renderFicheDeclarationList(body) {
+  if (!body) return;
+  var c = _accidentConfig;
+  var banner = '<div style="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:1.4rem">📝</span>'
+    +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">ENRHSE62 — Fiche Déclaration Accident du Travail (Bilingue)</div>'
+      +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Déclaration officielle FR/AR · Rév. '+(c.enr62Rev||'V.1')+'</div>'
+    +'</div>'
+  +'</div>';
+
+  var data = _ficheDeclarations;
+  if (!data.length) {
+    body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucune déclaration enregistrée — cliquez sur «📝 ENRHSE62 — Déclaration» pour créer la première.</div>';
+    return;
+  }
+  body.innerHTML = banner + data.slice().reverse().map(function(r, ri) {
+    var idx = data.length-1-ri;
+    var col = _FD_STATUT_COLOR[r.statut] || '#e67e22';
+    var ico = _FD_STATUT_ICON[r.statut]  || '📝';
+    return '<div style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+col+';margin-bottom:10px;padding:12px 14px">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="background:'+col+'22;border:1px solid '+col+'55;border-radius:8px;padding:4px 9px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.8rem;color:'+col+'">#'+esc(String(r.id))+'</div>'
+          +'<div style="font-size:.58rem;color:'+col+';opacity:.75">ENR62</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);margin-bottom:3px">'+esc(r.nom||'—')+(r.matricule?' · '+esc(r.matricule):'')+'</div>'
+          +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'
+            +'<span style="background:'+col+'18;border:1px solid '+col+'44;color:'+col+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+ico+' '+esc(r.statut||'—')+'</span>'
+            +(r.blessure?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:1px 6px;font-size:.66rem">'+esc(r.blessure)+'</span>':'')
+            +(r.zone?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t3);border-radius:4px;padding:1px 6px;font-size:.66rem">📍 '+esc(r.zone)+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.poste?' · '+esc(r.poste):'')+'</div>'
+          +(r.description?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.description).substring(0,120)+(r.description.length>120?'…':'')+'</div>':'')
+        +'</div>'
+        +'<button onclick="printFicheDeclaration('+idx+')" title="Imprimer / Aperçu ENRHSE62" style="flex-shrink:0;background:rgba(230,126,34,.14);border:1px solid rgba(230,126,34,.4);color:#e67e22;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.78rem;font-weight:700">🖨️</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+/* ── Ouvrir formulaires ── */
+function openRapportAccident() {
+  // reset
+  ['ra_date','ra_heure','ra_lieu','ra_victime_nom','ra_victime_mat','ra_victime_poste','ra_victime_anc',
+   'ra_circonstances','ra_temoins','ra_actions','ra_causes','ra_correctives']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['ra_zone','ra_nature','ra_siege','ra_lesion','ra_statut']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('ra_date').value = todayStr();
+  var raNatureAutreInp=document.getElementById('ra_nature_autre'); if(raNatureAutreInp) raNatureAutreInp.value='';
+  var raNatureAutreWrap=document.getElementById('ra_nature_autre_wrap'); if(raNatureAutreWrap) raNatureAutreWrap.style.display='none';
+  _raTemoinsArr=[]; _renderRaTemoinsChips();
+  var tSrch=document.getElementById('ra_temoins_search'); if(tSrch) tSrch.value='';
+  _raPhotoB64=''; _raPhotoMime='';
+  var pv=document.getElementById('ra_photo_preview'); if(pv) pv.style.display='none';
+  var pn=document.getElementById('ra_photo_name'); if(pn) pn.textContent='Aucune photo sélectionnée';
+  _fillAccidentZones('ra_zone');
+  _loadEmployeesDirectory();
+  openSheet('rapportAccidentOv');
+}
+
+function openFicheDeclaration() {
+  ['fd_date','fd_heure','fd_lieu','fd_nom','fd_matricule','fd_poste','fd_dept','fd_description',
+   'fd_declarant','fd_declarant_fn','fd_observations','fd_actions_imm']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['fd_zone','fd_nature','fd_partie_corps','fd_blessure','fd_soins','fd_statut']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('fd_date').value = todayStr();
+  var fdTypeT=document.getElementById('fd_type_travail'); if(fdTypeT) fdTypeT.checked=true;
+  var fdNatWrap=document.getElementById('fd_nature_autre_wrap'); if(fdNatWrap) fdNatWrap.style.display='none';
+  var fdNatAutre=document.getElementById('fd_nature_autre'); if(fdNatAutre) fdNatAutre.value='';
+  _fdTemoinsArr=[]; _renderFdTemoinsChips();
+  var fdTSrch=document.getElementById('fd_temoins_search'); if(fdTSrch) fdTSrch.value='';
+  _fillAccidentZones('fd_zone');
+  _loadEmployeesDirectory();
+  openSheet('ficheDeclarationOv');
+}
+
+function _fillAccidentZones(selId) {
+  var sel = document.getElementById(selId);
+  if (!sel) return;
+  var zones = (_configuredZones&&_configuredZones.length) ? _configuredZones
+    : (S.zones&&S.zones.length) ? S.zones : [];
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  zones.forEach(function(z){ var o=document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o); });
+}
+
+/* ── Gestion zones Accident ── */
+function _renderAccidentZoneChips() {
+  var el = document.getElementById('accZoneChipsList');
+  if (!el) return;
+  el.innerHTML = _configuredZones.length
+    ? _configuredZones.map(function(z,i){
+        return '<span class="zone-chip">'+esc(z)
+          +'<span class="zrm" onclick="removeAccidentZone('+i+')" title="Supprimer"> ✕</span></span>';
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--t3)">Aucune zone — ajoutez-en ci-dessus</span>';
+}
+function addAccidentZone() {
+  var inp = document.getElementById('accNewZoneInput');
+  var val = (inp.value||'').trim();
+  if (!val) return;
+  if (_configuredZones.indexOf(val)===-1) _configuredZones.push(val);
+  inp.value = '';
+  _renderAccidentZoneChips();
+  _renderZoneChips();
+}
+function removeAccidentZone(idx) {
+  _configuredZones.splice(idx,1);
+  _renderAccidentZoneChips();
+  _renderZoneChips();
+}
+
+/* ── Témoins multi-sélection ── */
+var _raTemoinsArr = [];
+function _fillWitnessDatalist() {
+  var dl = document.getElementById('accWitnessDatalist');
+  if (!dl) return;
+  dl.innerHTML = _employeesDirectory.map(function(e) {
+    return '<option value="'+esc(e.name)+'">'+esc(e.matricule)+'</option>'
+      +'<option value="'+esc(e.matricule)+'">'+esc(e.name)+'</option>';
+  }).join('');
+}
+function addRaTemoins() {
+  var inp = document.getElementById('ra_temoins_search');
+  var val = (inp&&inp.value||'').trim();
+  if (!val) return;
+  var emp = _employeesDirectory.find(function(e){ return e.name===val||e.matricule===val; });
+  var label = emp ? (emp.name+' ('+emp.matricule+')') : val;
+  if (_raTemoinsArr.indexOf(label)===-1) _raTemoinsArr.push(label);
+  inp.value='';
+  _renderRaTemoinsChips();
+}
+function removeRaTemoins(idx) {
+  _raTemoinsArr.splice(idx,1);
+  _renderRaTemoinsChips();
+}
+function _renderRaTemoinsChips() {
+  var el = document.getElementById('ra_temoins_chips');
+  if (el) el.innerHTML = _raTemoinsArr.map(function(t,i){
+    return '<span class="zone-chip">'+esc(t)+'<span class="zrm" onclick="removeRaTemoins('+i+')" title="Supprimer"> ✕</span></span>';
+  }).join('');
+  var h = document.getElementById('ra_temoins');
+  if (h) h.value = _raTemoinsArr.join(', ');
+}
+
+/* ── Témoins Fiche Déclaration ── */
+var _fdTemoinsArr = [];
+function addFdTemoins() {
+  var inp = document.getElementById('fd_temoins_search');
+  var val = (inp&&inp.value||'').trim();
+  if (!val) return;
+  var emp = _employeesDirectory.find(function(e){ return e.name===val||e.matricule===val; });
+  var label = emp ? (emp.name+' ('+emp.matricule+')') : val;
+  if (_fdTemoinsArr.indexOf(label)===-1) _fdTemoinsArr.push(label);
+  inp.value='';
+  _renderFdTemoinsChips();
+}
+function removeFdTemoins(idx) {
+  _fdTemoinsArr.splice(idx,1);
+  _renderFdTemoinsChips();
+}
+function _renderFdTemoinsChips() {
+  var el = document.getElementById('fd_temoins_chips');
+  if (el) el.innerHTML = _fdTemoinsArr.map(function(t,i){
+    return '<span class="zone-chip">'+esc(t)+'<span class="zrm" onclick="removeFdTemoins('+i+')" title="Supprimer"> ✕</span></span>';
+  }).join('');
+  var h = document.getElementById('fd_temoins');
+  if (h) h.value = _fdTemoinsArr.join(', ');
+}
+function toggleFdNatureAutre() {
+  var sel = document.getElementById('fd_nature');
+  var wrap = document.getElementById('fd_nature_autre_wrap');
+  if (!sel||!wrap) return;
+  wrap.style.display = sel.value==='Autre' ? '' : 'none';
+  if (sel.value!=='Autre') { var inp=document.getElementById('fd_nature_autre'); if(inp) inp.value=''; }
+}
+
+/* ── Toggle "Autre" pour nature de l'accident ── */
+function toggleRaNatureAutre() {
+  var sel = document.getElementById('ra_nature');
+  var wrap = document.getElementById('ra_nature_autre_wrap');
+  if (!sel||!wrap) return;
+  wrap.style.display = sel.value==='Autre' ? '' : 'none';
+  if (sel.value!=='Autre') { var inp=document.getElementById('ra_nature_autre'); if(inp) inp.value=''; }
+}
+
+/* ── Photo Rapport Accident ── */
+function raHandlePhoto(input) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 3*1024*1024) { toast('Photo trop lourde (max 3 Mo)','err'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _raPhotoB64  = e.target.result.split(',')[1];
+    _raPhotoMime = file.type || 'image/jpeg';
+    var img = document.getElementById('ra_photo_img');
+    var pv  = document.getElementById('ra_photo_preview');
+    var pn  = document.getElementById('ra_photo_name');
+    img.src = e.target.result; pv.style.display='block'; pn.textContent=file.name;
+  };
+  reader.readAsDataURL(file);
+}
+function raClearPhoto() {
+  _raPhotoB64=''; _raPhotoMime='';
+  document.getElementById('ra_photo_input').value='';
+  document.getElementById('ra_photo_preview').style.display='none';
+  document.getElementById('ra_photo_name').textContent='Aucune photo sélectionnée';
+}
+
+/* ── Soumettre Rapport d'Accident ── */
+function submitRapportAccident() {
+  var date   = document.getElementById('ra_date').value.trim();
+  var zone   = document.getElementById('ra_zone').value.trim();
+  var vicNom = document.getElementById('ra_victime_nom').value.trim();
+  if (!date||!zone||!vicNom) { toast('Date, zone et nom de la victime sont requis','err'); return; }
+  showLoader('Enregistrement…');
+  var payload = {
+    token:          S.adminKey,
+    date:           date,
+    heure:          document.getElementById('ra_heure').value.trim(),
+    zone:           zone,
+    lieu:           document.getElementById('ra_lieu').value.trim(),
+    nature:         (function(){ var n=document.getElementById('ra_nature').value.trim(); if(n==='Autre'){var a=(document.getElementById('ra_nature_autre')||{}).value||''; return a.trim()?'Autre: '+a.trim():'Autre';} return n; })(),
+    victimeNom:     vicNom,
+    victimeMat:     document.getElementById('ra_victime_mat').value.trim(),
+    victimePoste:   document.getElementById('ra_victime_poste').value.trim(),
+    victimeAnc:     document.getElementById('ra_victime_anc').value.trim(),
+    circonstances:  document.getElementById('ra_circonstances').value.trim(),
+    temoins:        document.getElementById('ra_temoins').value.trim(),
+    actions:        document.getElementById('ra_actions').value.trim(),
+    causes:         document.getElementById('ra_causes').value.trim(),
+    correctives:    document.getElementById('ra_correctives').value.trim(),
+    siege:          document.getElementById('ra_siege').value.trim(),
+    lesion:         document.getElementById('ra_lesion').value.trim(),
+    statut:         document.getElementById('ra_statut').value.trim(),
+    declarantNom:   S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||''
+  };
+  if (_raPhotoB64) { payload.photo = _raPhotoB64; payload.mime = _raPhotoMime||'image/jpeg'; }
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Rapport d\'accident enregistré (#'+r.id+')','ok');
+        closeSheet('rapportAccidentOv');
+        _rapportAccidents = [];
+        _loadRapportAccidents();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveRapportAccident(payload);
+}
+
+/* ── Soumettre Fiche Déclaration ── */
+function submitFicheDeclaration() {
+  var date = document.getElementById('fd_date').value.trim();
+  var zone = document.getElementById('fd_zone').value.trim();
+  var nom  = document.getElementById('fd_nom').value.trim();
+  if (!date||!zone||!nom) { toast('Date, zone et nom de l\'employé sont requis','err'); return; }
+  showLoader('Enregistrement…');
+  var payload = {
+    token:         S.adminKey,
+    date:          date,
+    heure:         document.getElementById('fd_heure').value.trim(),
+    zone:          zone,
+    lieu:          document.getElementById('fd_lieu').value.trim(),
+    nom:           nom,
+    matricule:     document.getElementById('fd_matricule').value.trim(),
+    poste:         document.getElementById('fd_poste').value.trim(),
+    dept:          document.getElementById('fd_dept').value.trim(),
+    description:   document.getElementById('fd_description').value.trim(),
+    partieCorps:   document.getElementById('fd_partie_corps').value.trim(),
+    blessure:      document.getElementById('fd_blessure').value.trim(),
+    soins:         document.getElementById('fd_soins').value.trim(),
+    declarant:     document.getElementById('fd_declarant').value.trim(),
+    declarantFn:   document.getElementById('fd_declarant_fn').value.trim(),
+    observations:  document.getElementById('fd_observations').value.trim(),
+    statut:        document.getElementById('fd_statut').value.trim(),
+    typeAccident:  (document.querySelector('input[name="fd_type_accident"]:checked')||{}).value||'Travail',
+    nature:        (function(){ var n=(document.getElementById('fd_nature')||{}).value||''; if(n==='Autre'){var a=((document.getElementById('fd_nature_autre')||{}).value||'').trim(); return a?'Autre: '+a:'Autre';} return n; })(),
+    temoins:       document.getElementById('fd_temoins').value.trim(),
+    actionsImm:    (document.getElementById('fd_actions_imm')||{value:''}).value.trim()
+  };
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Déclaration enregistrée (#'+r.id+')','ok');
+        closeSheet('ficheDeclarationOv');
+        _ficheDeclarations = [];
+        _loadFicheDeclarations();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveFicheDeclaration(payload);
+}
+
+function openConfigAccident() {
+  if (!isAdmin()) { toast('Réservé à l\'administrateur','err'); return; }
+  var c = _accidentConfig;
+  var fv = function(id, val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+  fv('accEnr008Code',    c.enr008Code    || 'ENRHSE008');
+  fv('accEnr008Rev',     c.enr008Rev     || 'V.1');
+  fv('accEnr008Edition', c.enr008Edition || '');
+  fv('accEnr62Code',     c.enr62Code     || 'ENRHSE62');
+  fv('accEnr62Rev',      c.enr62Rev      || 'V.1');
+  fv('accEnr62Edition',  c.enr62Edition  || '');
+  _renderAccidentZoneChips();
+  openSheet('accidentConfigOv');
+}
+
+function _readAccidentConfigFields() {
+  var gv = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  _accidentConfig.enr008Code    = gv('accEnr008Code')    || 'ENRHSE008';
+  _accidentConfig.enr008Rev     = gv('accEnr008Rev')     || 'V.1';
+  _accidentConfig.enr008Edition = gv('accEnr008Edition');
+  _accidentConfig.enr62Code     = gv('accEnr62Code')     || 'ENRHSE62';
+  _accidentConfig.enr62Rev      = gv('accEnr62Rev')      || 'V.1';
+  _accidentConfig.enr62Edition  = gv('accEnr62Edition');
+}
+
+function saveAccidentConfigEnr(which) {
+  _readAccidentConfigFields();
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success) toast('✓ Config ENRHSE'+which+' sauvegardée','ok');
+      else toast((r&&r.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(){ toast('Erreur sauvegarde','err'); })
+    .saveSetting({ adminKey: S.adminKey, key: 'accidentConfig', value: JSON.stringify(_accidentConfig) });
+}
+
+function saveAccidentConfig() {
+  _readAccidentConfigFields();
+  google.script.run
+    .withSuccessHandler(function(r){ toast('✓ Config Accident sauvegardée','ok'); closeSheet('accidentConfigOv'); renderAccident(); })
+    .withFailureHandler(function(){ toast('Erreur sauvegarde','err'); })
+    .saveSetting({ adminKey: S.adminKey, key: 'accidentConfig', value: JSON.stringify(_accidentConfig) });
+}
+
+function _loadAccidentConfig() {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r && r.success && r.value) {
+        try { _accidentConfig = JSON.parse(r.value); } catch(e){}
+      }
+      if (S.view === 'accident') renderAccident();
+    })
+    .withFailureHandler(function(){})
+    .getSetting({ adminKey: S.adminKey, key: 'accidentConfig' });
+}
+
+/* ── Impression ENRHSE008 — Rapport d'enquête sur un accident ── */
+function printRapportAccident(idx) {
+  var r = _rapportAccidents[idx];
+  if (!r) return;
+  var c = _accidentConfig;
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date();
+  var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var edDate = c.enr008Edition || today;
+  var oui = function(cond){ return cond ? '<b>☑ Oui / نعم</b>' : '☐ Oui / نعم'; };
+  var non = function(cond){ return cond ? '<b>☑ Non / لا</b>' : '☐ Non / لا'; };
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport Accident #'+r.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:14mm 12mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'td,th{border:1px solid #333;padding:5px 7px;vertical-align:top}'
+    +'.header td{border:1.5px solid #222}'
+    +'.logo-box{width:110px;text-align:center;vertical-align:middle}'
+    +'.logo-box img{max-width:100px;max-height:55px;object-fit:contain}'
+    +'.title-box{text-align:center;font-weight:900;font-size:11pt;color:#7d3c98}'
+    +'.title-sub{font-size:8.5pt;color:#444;direction:rtl}'
+    +'.meta-box{font-size:8pt;width:130px}'
+    +'.meta-box div{display:flex;justify-content:space-between;border-bottom:1px dotted #999;padding:1px 0}'
+    +'.sec-title{background:#7d3c98;color:#fff;font-weight:700;font-size:9.5pt;padding:4px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.lbl{font-size:8pt;font-weight:700;color:#333;background:#f3f0f7}'
+    +'.val{font-size:9pt;min-height:18px}'
+    +'.bil{direction:rtl;font-size:8pt;color:#555;display:block}'
+    +'.type-row td{text-align:center;font-weight:700;padding:6px}'
+    +'.footer{text-align:center;font-size:7pt;color:#999;border-top:1px solid #ddd;padding-top:5px;margin-top:8px}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<table class="header"><tr>'
+    +'<td class="logo-box" rowspan="3">'+(logoUrl?'<img src="'+logoUrl+'"/>':'<span style="font-size:7pt;color:#aaa">LOGO</span>')+'</td>'
+    +'<td colspan="2" rowspan="3"><div class="title-box">Rapport d\'enquête sur un accident</div><div class="title-sub">تقرير تحقيق حول حادث</div></td>'
+    +'<td class="meta-box"><div><b>Réf:</b><span>'+esc(c.enr008Code||'ENRHSE008')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Rév:</b><span>'+esc(c.enr008Rev||'V.1')+'</span></div></td></tr>'
+    +'<tr><td class="meta-box"><div><b>Éd:</b><span>'+esc(edDate)+'</span></div></td></tr>'
+    +'</table>'
+    +'<table class="type-row"><tr><td>'+(r.nature&&r.nature.indexOf('Trajet')!==-1?'☐':'☑')+' Travail / عمل</td><td>'+(r.nature&&r.nature.indexOf('Trajet')!==-1?'☑':'☐')+' Trajet / مسار</td></tr></table>'
+    +'<table><tr><td class="sec-title" colspan="2">Rapport de la victime — تقرير الضحية</td></tr></table>'
+    +'<table><tr><td class="sec-title" colspan="2">INFORMATIONS GÉNÉRALES / المعلومات العامة</td></tr>'
+    +'<tr><td class="lbl" style="width:50%">Nom et prénom<span class="bil">اللقب و الاسم</span><div class="val">'+esc(r.victimeNom||'—')+' <span style="color:#888;font-size:8pt">(Mat. '+esc(r.victimeMat||'—')+')</span></div></td>'
+    +'<td class="lbl">Date de naissance<span class="bil">تاريخ الميلاد</span><div class="val">—</div></td></tr>'
+    +'<tr><td class="lbl">Département / service<span class="bil">القسم / المصلحة</span><div class="val">'+esc(r.zone||'—')+'</div></td>'
+    +'<td class="lbl">Fonction<span class="bil">الوظيفة</span><div class="val">'+esc(r.poste||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Date de l\'accident<span class="bil">تاريخ الحادث</span><div class="val">'+esc(r.date||'—')+'</div></td>'
+    +'<td class="lbl">Heure de l\'accident<span class="bil">وقت الحادث</span><div class="val">'+esc(r.heure||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Lieu de l\'accident — مكان وقوع الحادث</td></tr>'
+    +'<tr><td class="lbl">Lieu précis / المكان<div class="val">'+esc(r.lieu||'—')+'</div></td>'
+    +'<td class="lbl">Zone / المنطقة<div class="val">'+esc(r.zone||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Détails / تفاصيل<div class="val" style="min-height:30px">'+esc(r.circonstances||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl">Nature de la lésion<span class="bil">طبيعة الإصابة</span><div class="val">'+esc(r.lesion||'—')+'</div></td>'
+    +'<td class="lbl">Siège de la lésion<span class="bil">موقع الإصابة</span><div class="val">'+esc(r.siege||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Ancienneté de la victime / الأقدمية<div class="val">'+esc(r.anciennete||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Décrire brièvement l\'accident — وصف الحادث بإيجاز</td></tr>'
+    +'<tr><td class="val" colspan="2" style="min-height:40px">'+esc(r.circonstances||'—')+'</td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Témoins — الشهود</td></tr>'
+    +'<tr><td class="lbl" colspan="2">Nom et prénom<span class="bil">اللقب و الاسم</span><div class="val">'+esc(r.temoins||'—')+'</div></td></tr>'
+    +'<tr><td class="sec-title" colspan="2">Actions et causes</td></tr>'
+    +'<tr><td class="lbl">Actions immédiates<div class="val">'+esc(r.actions||'—')+'</div></td>'
+    +'<td class="lbl">Causes identifiées<div class="val">'+esc(r.causes||'—')+'</div></td></tr>'
+    +'<tr><td class="lbl" colspan="2">Mesures correctives préconisées<div class="val">'+esc(r.correctives||'—')+'</div></td></tr>'
+    +'</table>'
+    +(r.photoUrl?'<div class="sec-title" style="margin-top:8px">📷 Photo</div><div style="margin:6px 0"><img src="'+r.photoUrl+'" style="max-width:100%;max-height:200px;object-fit:contain;border:1px solid #ccc"/></div>':'')
+    +(function(){
+        var declSigUrl = _userSigMap[r.declarant] || _userSigMap[S_AUTH&&S_AUTH.matricule] || '';
+        var sigCell = declSigUrl
+          ? '<img src="'+declSigUrl+'" style="max-height:52px;max-width:130px;object-fit:contain"/>'
+          : '&nbsp;';
+        return '<table style="margin-top:10px"><tr>'
+          +'<td style="text-align:center;font-weight:700;width:33%">Statut: '+esc(r.statut||'—')+'</td>'
+          +'<td style="text-align:center;width:34%">Déclarant: '+esc(r.declarant||'—')+'</td>'
+          +'<td style="text-align:center;width:33%;min-height:60px">Signature / التوقيع :<br>'+sigCell+'</td>'
+          +'</tr></table>';
+      })()
+    +'<div class="footer">'+esc(c.enr008Code||'ENRHSE008')+' — Rév. '+esc(c.enr008Rev||'V.1')+' — Document qualité interne — Généré le '+today+' — HSE Tags</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
+  if (w) { w.document.write(html); w.document.close(); }
+  else toast('Autorisez les popups pour imprimer','err');
+}
+
+/* ── Impression ENRHSE62 — Fiche Déclaration Accident du Travail (bilingue) ── */
+function printFicheDeclaration(idx) {
+  var r = _ficheDeclarations[idx];
+  if (!r) return;
+  var c = _accidentConfig;
+  var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
+  var now = new Date();
+  var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var edDate = c.enr62Edition || today;
+  var typeAcc = r.typeAccident || 'Travail';
+  var chk = function(cond){ return cond ? '&#9746;' : '&#9744;'; };
+  var declSigUrl = _userSigMap[r.declarant] || _userSigMap[S_AUTH&&S_AUTH.matricule] || '';
+  var sigHtml = declSigUrl ? '<img src="'+declSigUrl+'" style="max-height:60px;max-width:150px;object-fit:contain"/>' : '';
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>ENRHSE62 — Déclaration #'+r.id+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:13mm 11mm}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#111;background:#fff}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:6px}'
+    +'td,th{border:1px solid #555;padding:4px 7px;vertical-align:top}'
+    +'.hdr td{border:1.5px solid #333;padding:3px 6px}'
+    +'.logo-c{width:105px;text-align:center;vertical-align:middle;padding:4px}'
+    +'.logo-c img{max-width:95px;max-height:52px;object-fit:contain}'
+    +'.t-main{text-align:center;vertical-align:middle;padding:6px 10px}'
+    +'.t-title{font-weight:900;font-size:12pt;color:#e67e22;display:block}'
+    +'.t-ar{font-size:9.5pt;color:#444;direction:rtl;display:block;margin-top:3px}'
+    +'.meta{font-size:7.5pt;width:120px;padding:2px 5px}'
+    +'.meta div{display:flex;justify-content:space-between;border-bottom:1px dotted #aaa;padding:1px 0}'
+    +'.sec{background:#e67e22;color:#fff;font-weight:700;font-size:9pt;padding:3px 7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.lbl{font-size:7.5pt;font-weight:700;color:#444;background:#fdf2e9;padding:3px 6px}'
+    +'.val{font-size:9pt;padding:3px 6px;min-height:16px}'
+    +'.bil{direction:rtl;font-size:7.5pt;color:#777;display:block}'
+    +'.chk{font-size:11pt;margin-right:3px}'
+    +'.type-bar td{text-align:center;padding:5px 8px;font-size:9pt;font-weight:700;background:#fff8f0}'
+    +'.footer{text-align:center;font-size:6.5pt;color:#aaa;border-top:1px solid #ddd;padding-top:4px;margin-top:6px}'
+    +'@media print{button,no-print{display:none!important}}'
+    +'</style></head><body>'
+
+    /* ── En-tête ── */
+    +'<table class="hdr"><tr>'
+    +'<td class="logo-c" rowspan="3">'+(logoUrl?'<img src="'+logoUrl+'"/>':'<div style="font-size:7pt;color:#aaa;border:1px dashed #ccc;padding:10px">LOGO</div>')+'</td>'
+    +'<td class="t-main" rowspan="3"><span class="t-title">Fiche de Déclaration d\'Accident du Travail</span><span class="t-ar">استمارة تصريح بحادث عمل</span></td>'
+    +'<td class="meta"><div><b>Réf :</b><span>'+esc(c.enr62Code||'ENRHSE62')+'</span></div></td></tr>'
+    +'<tr><td class="meta"><div><b>Rév :</b><span>'+esc(c.enr62Rev||'V.1')+'</span></div></td></tr>'
+    +'<tr><td class="meta"><div><b>Éd :</b><span>'+esc(edDate)+'</span></div></td></tr>'
+    +'</table>'
+
+    /* ── Type d'accident ── */
+    +'<table class="type-bar"><tr>'
+    +'<td style="width:50%"><span class="chk">'+chk(typeAcc==='Travail')+'</span> Accident du travail / حادث عمل</td>'
+    +'<td style="width:50%"><span class="chk">'+chk(typeAcc==='Trajet')+'</span> Accident de trajet / حادث طريق</td>'
+    +'</tr></table>'
+
+    /* ── I. Informations générales ── */
+    +'<table><tr><td class="sec" colspan="4">I. INFORMATIONS GÉNÉRALES — المعلومات العامة</td></tr>'
+    +'<tr>'
+    +'<td class="lbl" style="width:25%">Nom et Prénom<span class="bil">اللقب والاسم</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.nom||'—')+'</td>'
+    +'<td class="lbl" style="width:25%">Fonction / Poste<span class="bil">الوظيفة / المنصب</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.poste||'—')+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl">Matricule<span class="bil">الرقم الوظيفي</span></td>'
+    +'<td class="val">'+esc(r.matricule||'—')+'</td>'
+    +'<td class="lbl">Service / Département<span class="bil">القسم / الدائرة</span></td>'
+    +'<td class="val">'+esc(r.dept||'—')+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl">Date de l\'accident<span class="bil">تاريخ الحادث</span></td>'
+    +'<td class="val">'+esc(r.date||'—')+'</td>'
+    +'<td class="lbl">Heure<span class="bil">الساعة</span></td>'
+    +'<td class="val">'+esc(r.heure||'—')+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl">Zone / Département<span class="bil">المنطقة / القسم</span></td>'
+    +'<td class="val">'+esc(r.zone||'—')+'</td>'
+    +'<td class="lbl">Lieu précis<span class="bil">المكان الدقيق</span></td>'
+    +'<td class="val">'+esc(r.lieu||'—')+'</td>'
+    +'</tr></table>'
+
+    /* ── II. Nature de l'accident ── */
+    +(r.nature ? '<table><tr><td class="sec" colspan="2">II. NATURE DE L\'ACCIDENT — طبيعة الحادث</td></tr>'
+      +'<tr><td class="lbl">Nature<span class="bil">الطبيعة</span></td><td class="val">'+esc(r.nature)+'</td></tr>'
+      +'</table>' : '')
+
+    /* ── III. Description de l'accident ── */
+    +'<table><tr><td class="sec" colspan="2">III. DESCRIPTION DE L\'ACCIDENT — وصف الحادث</td></tr>'
+    +'<tr><td colspan="2" class="val" style="min-height:45px;white-space:pre-wrap">'+esc(r.description||'—')+'</td></tr>'
+    +'</table>'
+
+    /* ── IV. Conséquences / blessures ── */
+    +'<table><tr><td class="sec" colspan="4">IV. CONSÉQUENCES — نتائج الحادث</td></tr>'
+    +'<tr>'
+    +'<td class="lbl" style="width:25%">Partie du corps atteinte<span class="bil">أماكن الإصابة</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.partieCorps||'—')+'</td>'
+    +'<td class="lbl" style="width:25%">Type de blessure<span class="bil">طبيعة الإصابة</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.blessure||'—')+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl" colspan="2">Soins prodigués<span class="bil">الرعاية الطبية المقدمة</span></td>'
+    +'<td class="val" colspan="2">'+esc(r.soins||'—')+'</td>'
+    +'</tr></table>'
+
+    /* ── V. Témoins ── */
+    +(r.temoins ? '<table><tr><td class="sec" colspan="2">V. TÉMOINS — الشهود</td></tr>'
+      +'<tr><td colspan="2" class="val">'+esc(r.temoins)+'</td></tr>'
+      +'</table>' : '')
+
+    /* ── VI. Actions immédiates ── */
+    +(r.actionsImm ? '<table><tr><td class="sec" colspan="2">VI. ACTIONS IMMÉDIATES — الإجراءات الفورية</td></tr>'
+      +'<tr><td colspan="2" class="val" style="min-height:30px;white-space:pre-wrap">'+esc(r.actionsImm)+'</td></tr>'
+      +'</table>' : '')
+
+    /* ── Observations ── */
+    +(r.observations ? '<table><tr><td class="sec" colspan="2">Observations / ملاحظات</td></tr>'
+      +'<tr><td colspan="2" class="val" style="min-height:24px;white-space:pre-wrap">'+esc(r.observations)+'</td></tr>'
+      +'</table>' : '')
+
+    /* ── VII. Visa HSE ── */
+    +'<table><tr><td class="sec" colspan="4">VII. VISA HSE — توقيع مسؤول السلامة</td></tr>'
+    +'<tr>'
+    +'<td class="lbl" style="width:25%">Déclaré par<span class="bil">صرح به</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.declarant||'—')+'</td>'
+    +'<td class="lbl" style="width:25%">Fonction<span class="bil">الصفة</span></td>'
+    +'<td class="val" style="width:25%">'+esc(r.declarantFn||'—')+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl" colspan="2">Date de déclaration<span class="bil">تاريخ التصريح</span></td>'
+    +'<td class="val" colspan="2">'+esc(r.dateCreation||today)+'</td>'
+    +'</tr><tr>'
+    +'<td class="lbl">Statut<span class="bil">الحالة</span></td>'
+    +'<td class="val">'+esc(r.statut||'—')+'</td>'
+    +'<td class="lbl">Signature / التوقيع</td>'
+    +'<td class="val" style="min-height:60px;text-align:center">'+sigHtml+'</td>'
+    +'</tr></table>'
+
+    +'<div class="footer">'+esc(c.enr62Code||'ENRHSE62')+' — Rév. '+esc(c.enr62Rev||'V.1')+' — Document qualité interne (bilingue FR/AR) — Généré le '+today+' — HSE Tags</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+  var w = window.open('','_blank','width=960,height=720,scrollbars=yes');
   if (w) { w.document.write(html); w.document.close(); }
   else toast('Autorisez les popups pour imprimer','err');
 }
