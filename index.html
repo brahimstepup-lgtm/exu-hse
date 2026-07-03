@@ -987,7 +987,10 @@ img{max-width:100%;display:block;}
     <div class="view" id="view-sensibilisation">
       <div class="ph view-hdr">
         <h1 class="ph-title">📋 Sensibilisation</h1>
-        <button class="btn btn-p" id="sensiNewBtn" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-p" id="sensiNewBtn" onclick="openSensiForm()" style="padding:10px 16px;font-size:.85rem;min-height:40px">＋ Nouvelle campagne</button>
+          <div id="enrDynBtns_sensibilisation" style="display:contents"></div>
+        </div>
       </div>
       <!-- Onglets -->
       <div style="display:flex;gap:8px;margin-bottom:16px;background:var(--ink2);border-radius:10px;padding:4px">
@@ -1021,6 +1024,7 @@ img{max-width:100%;display:block;}
           <button class="btn btn-p" onclick="openGlobalInspection()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌍 Insp. Ext.</button>
           <button class="btn btn-p" onclick="openGlobalInspectionRIA()" style="padding:7px 12px;font-size:.78rem;min-height:34px">🌊 Insp. RIA</button>
           <button class="btn btn-p" onclick="openIncendieForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Unitaire</button>
+          <div id="enrDynBtns_incendie" style="display:contents"></div>
         </div>
       </div>
       <!-- Tabs filtre -->
@@ -1042,6 +1046,7 @@ img{max-width:100%;display:block;}
           <button class="btn" onclick="openRapportNuisibles()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(125,60,152,.18);border:1px solid rgba(125,60,152,.45);color:#9b59b6;border-radius:var(--rs)">📄 Rapport présence</button>
           <button class="btn" onclick="openEnr13Exec()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(39,174,96,.18);border:1px solid rgba(39,174,96,.45);color:#27ae60;border-radius:var(--rs)">📋 ENR-13 Exécution</button>
           <button class="btn" onclick="openEnr15Verif()" style="padding:7px 12px;font-size:.78rem;min-height:34px;background:rgba(52,152,219,.18);border:1px solid rgba(52,152,219,.45);color:#3498db;border-radius:var(--rs)">✅ ENR-15 Vérification</button>
+          <div id="enrDynBtns_nuisibles" style="display:contents"></div>
         </div>
       </div>
       <!-- Boutons d'inspection par type -->
@@ -3210,6 +3215,8 @@ function bootApp() {
   applyRole();
   loadRespList();
   goV(isAdmin()?'home': isSupervisor()?'sensibilisation' :'all', null);
+  // Inject ENR builder buttons into section headers
+  if (isAdmin() || isSupervisor()) setTimeout(_loadDynEnrBtns, 2000);
 
   // Offline detection
   window.addEventListener('online',  function(){ setOffline(false); });
@@ -8308,6 +8315,89 @@ var _prestaFormSigMime  = '';
 
 
 // ══════════════════════════════════════════════════════════════════
+//  ENR BUILDER — Injection dynamique dans les sections du tableau de bord
+// ══════════════════════════════════════════════════════════════════
+var _ENR_MODULE_VIEW_MAP = {
+  'Nuisibles':       'nuisibles',
+  'Incendie':        'incendie',
+  'Sensibilisation': 'sensibilisation'
+};
+
+function _loadDynEnrBtns() {
+  var doInject = function(tpls) {
+    // Reset all containers
+    Object.keys(_ENR_MODULE_VIEW_MAP).forEach(function(mod){
+      var el = document.getElementById('enrDynBtns_' + _ENR_MODULE_VIEW_MAP[mod]);
+      if (el) el.innerHTML = '';
+    });
+    tpls.forEach(function(tpl) {
+      if (tpl.statut === 'Archivé') return;
+      (tpl.modules||[]).forEach(function(mod){
+        var viewKey = _ENR_MODULE_VIEW_MAP[mod];
+        if (!viewKey) return;
+        var container = document.getElementById('enrDynBtns_' + viewKey);
+        if (!container) return;
+        var col = tpl.color || '#f1c40f';
+        var btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.style.cssText = 'padding:7px 12px;font-size:.78rem;min-height:34px;background:'+col+'22;border:1px solid '+col+'55;color:'+col+';border-radius:var(--rs);white-space:nowrap;cursor:pointer';
+        btn.innerHTML = '📋 ' + esc(tpl.code || tpl.titre);
+        btn.title = tpl.titre || tpl.code;
+        // Main click → open fill form
+        btn.onclick = function(e) {
+          if (e.altKey || e.shiftKey) {
+            // Alt+click or Shift+click → view records
+            _enrBActiveTpl = tpl;
+            _enrBSections  = tpl.sections||[];
+            _enrBFillTpl   = tpl;
+            openEnrRegistryPanel();
+            setTimeout(function(){ enrBOpenTemplate(tpl.id); enrBSwitchTab('records'); }, 600);
+          } else {
+            // Normal click → new record
+            _enrBFillRec = null;
+            _enrBFillTpl = JSON.parse(JSON.stringify(tpl));
+            _enrBOpenFillOv();
+          }
+        };
+        // Right-click context: show record count badge
+        _enrBLoadRecordCountBadge(btn, tpl.id);
+        container.appendChild(btn);
+      });
+    });
+  };
+
+  if (_enrBTpls && _enrBTpls.length) {
+    doInject(_enrBTpls);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(r){
+        if (r&&r.success) {
+          _enrBTpls = r.templates||[];
+          _enrData  = _enrBTpls;
+          doInject(_enrBTpls);
+        }
+      })
+      .withFailureHandler(function(){})
+      .getAllEnrTemplates(S.adminKey);
+  }
+}
+
+function _enrBLoadRecordCountBadge(btn, tplId) {
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (r&&r.success&&r.records&&r.records.length) {
+        var badge = document.createElement('span');
+        badge.style.cssText = 'display:inline-block;background:rgba(0,0,0,.35);border-radius:8px;padding:0 5px;font-size:.65rem;margin-left:4px;font-weight:700';
+        badge.textContent = r.records.length;
+        btn.appendChild(badge);
+        btn.title = btn.title + ' — ' + r.records.length + ' enregistrement'+(r.records.length>1?'s':'');
+      }
+    })
+    .withFailureHandler(function(){})
+    .getEnrRecords({ templateId:tplId, adminKey:S.adminKey });
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  ENR BUILDER — State & Init
 // ══════════════════════════════════════════════════════════════════
 var _enrBTpls       = [];   // all templates from server
@@ -8513,6 +8603,8 @@ function enrBSave() {
       var nm = document.getElementById('enrBTplName');
       if (nm) nm.textContent = '— '+(_enrBActiveTpl.code||_enrBActiveTpl.titre);
       toast('Modèle enregistré ✓','ok');
+      // Refresh section header buttons
+      _loadDynEnrBtns();
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
     .saveEnrTemplate(payload);
@@ -8534,6 +8626,7 @@ function enrBDeleteTemplate() {
       var sb = document.getElementById('enrBSaveBtn'); if(sb) sb.style.display='none';
       document.querySelectorAll('.enrBTabPane').forEach(function(p){ p.classList.remove('on'); });
       toast('Modèle supprimé','ok');
+      _loadDynEnrBtns();
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
     .deleteEnrTemplate({ id:_enrBActiveTpl.id, adminKey:S.adminKey });
@@ -9109,6 +9202,8 @@ function enrBSubmitRecord() {
         _enrBRecords.push(payload);
       }
       _enrBRenderRecords();
+      // Refresh badges on section buttons
+      setTimeout(_loadDynEnrBtns, 300);
       toast('Enregistrement sauvegardé ✓','ok');
     })
     .withFailureHandler(function(e){ toast(e.message,'err'); })
