@@ -53,6 +53,20 @@ function hashPwd_(pwd) {
   return bytes.map(function(b){ return ('0'+(b&0xff).toString(16)).slice(-2); }).join('');
 }
 
+// Secret de signature des tokens. Généré et persisté automatiquement si
+// TOKEN_SECRET n'est pas défini — jamais de valeur codée en dur (le code
+// source étant public, un secret par défaut permettrait de forger des
+// sessions admin).
+function tokenSecret_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty('TOKEN_SECRET');
+  if (!s) {
+    s = Utilities.getUuid() + Utilities.getUuid();
+    props.setProperty('TOKEN_SECRET', s);
+  }
+  return s;
+}
+
 function getEdbSheet_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheetByName(EDB_SHEET);
 }
@@ -66,7 +80,7 @@ function loginUser(p) {
     // ── Accès maître admin : ADMIN_PASSWORD comme mot de passe de bootstrap ──
     var adminPwd = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
     if (adminPwd && String(pwd) === String(adminPwd)) {
-      var secret0 = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+      var secret0 = tokenSecret_();
       var expires0 = Date.now() + 8*3600*1000;
       var payload0 = mat+'.admin.'+expires0;
       var digest0 = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload0+secret0);
@@ -105,7 +119,7 @@ function loginUser(p) {
       if (!r[EDB.PWD]) return { success:false, error:'Mot de passe non défini. Contactez l\'administrateur.' };
       if (String(r[EDB.PWD]) !== hash) return { success:false, error:'Mot de passe incorrect' };
       var role = String(r[EDB.ROLE]||'user').toLowerCase().trim();
-      var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+      var secret = tokenSecret_();
       var expires = Date.now() + 8*3600*1000;
       var payload = mat+'.'+role+'.'+expires;
       var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
@@ -123,7 +137,7 @@ function verifySession_(token) {
     if (parts.length !== 4) return null;
     var mat=parts[0], role=parts[1], expires=parseInt(parts[2],10), sig=parts[3];
     if (Date.now() > expires) return null;
-    var secret = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET')||'hse-secret-2025';
+    var secret = tokenSecret_();
     var payload = mat+'.'+role+'.'+expires;
     var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload+secret);
     var expected = digest.map(function(b){return('0'+(b&0xff).toString(16)).slice(-2);}).join('').substring(0,16);
@@ -279,7 +293,7 @@ function adminSetRole(p) {
 // ================================================================
 function makeApresToken_(tagId, rowIndex) {
   var expires = Date.now() + 30 * 24 * 3600 * 1000;
-  var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+  var secret  = tokenSecret_();
   var payload = tagId + '.' + rowIndex + '.' + expires;
   var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
   var hash    = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
@@ -292,7 +306,7 @@ function verifyApresToken_(token) {
     if (parts.length !== 4) return null;
     var tagId = parts[0], rowIndex = parts[1], expires = parseInt(parts[2], 10), hash = parts[3];
     if (Date.now() > expires) return null;
-    var secret  = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET') || 'hse-secret-2025';
+    var secret  = tokenSecret_();
     var payload = tagId + '.' + rowIndex + '.' + expires;
     var digest  = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, payload + secret);
     var expected = digest.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('').substring(0, 16);
@@ -390,9 +404,14 @@ function submitApresFromEmail(p) {
 //  Garantit ID unique +1, statut "Ouvert", retour SUCCESS rapide
 // ================================================================
 function insertTagWithAutoIncrement(payload) {
+  var lock = LockService.getScriptLock();
   try {
     var sheet = getSheet_();
     if (!sheet) return 'ERROR: La feuille "plan" est introuvable.';
+
+    // Deux soumissions simultanées liraient le même max d'ID : verrou le
+    // temps de calculer l'ID et d'insérer la ligne.
+    lock.waitLock(20000);
 
     // Ordre 3 : balayage de la colonne A pour le max ID
     var lastRow = sheet.getLastRow();
@@ -439,6 +458,8 @@ function insertTagWithAutoIncrement(payload) {
     ]);
 
     var ir = sheet.getLastRow();
+    SpreadsheetApp.flush();
+    lock.releaseLock(); // les uploads photo peuvent prendre plusieurs secondes
 
     // Sauvegarde des photos (avant/après) sur la même ligne
     if (payload.photoAvant && payload.photoAvant.length > 10) {
@@ -460,6 +481,8 @@ function insertTagWithAutoIncrement(payload) {
     return { success: true, id: nextId, status: 'SUCCESS' };
   } catch (e) {
     return { success: false, error: e.toString() };
+  } finally {
+    try { if (lock.hasLock()) lock.releaseLock(); } catch (e2) {}
   }
 }
 
@@ -803,6 +826,8 @@ function getKPIs(adminKey) {
     if (!res.success) return res;
     var tags  = res.data;
     var today = new Date();
+    // Minuit local : un tag dont la date cible est aujourd'hui n'est pas en retard
+    var midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     var total = tags.length, ouverts = 0, fermes = 0, overdue = 0;
     var byZone={}, byDanger={}, byMonth={}, byGravite={Élevée:0,Moyenne:0,Faible:0};
     var durClosed = [], durOpen = [];
@@ -813,7 +838,7 @@ function getKPIs(adminKey) {
         ouverts++;
         if (t.dateCible) {
           var dc = new Date(t.dateCible);
-          if (!isNaN(dc.getTime()) && dc < today) overdue++;
+          if (!isNaN(dc.getTime()) && dc < midnight) overdue++;
         }
       }
       if (t.dateCreation) {
@@ -1047,7 +1072,8 @@ function sendTagEmail(p) {
     var ri = parseInt(p.rowIndex, 10);
     if (!ri || ri < DATA_START) return { success:false, error:'rowIndex invalide' };
 
-    var row = sheet.getRange(ri, 1, 1, 21).getValues()[0];
+    var row  = sheet.getRange(ri, 1, 1, 21).getValues()[0];
+    var resp = txt_(row[C.RESP]);
 
     // Résoudre les destinataires principaux (toList) envoyés depuis le client
     var toEmails = [];
@@ -1061,7 +1087,6 @@ function sendTagEmail(p) {
     }
     // Fallback : responsable du tag
     if (!toEmails.length) {
-      var resp = txt_(row[C.RESP]);
       if (!resp) return { success:false, error:'Aucun responsable assigné à ce tag' };
       var fallbackTo = respEmailFor_(resp);
       if (!fallbackTo) return { success:false, error:'Email non configuré pour « ' + resp + ' ».' };
@@ -1131,7 +1156,7 @@ function sendTagEmail(p) {
           '<div style="font-size:13px;opacity:.85;margin-top:2px">Hygiène · Sécurité · Environnement</div>' +
         '</div>' +
         '<div style="padding:16px 20px;color:#111">' +
-          '<p style="margin:0 0 12px">Bonjour <b>' + resp + '</b>,</p>' +
+          '<p style="margin:0 0 12px">Bonjour' + (resp ? ' <b>' + resp + '</b>' : '') + ',</p>' +
           '<p style="margin:0 0 16px">Un tag HSE vous est assigné. Voici les détails :</p>' +
           '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
             line('N° Cas', '#' + id) +
@@ -2531,7 +2556,6 @@ function saveRapportAccident(p) {
     var sh   = getRapportAccidentSheet_();
     var lr   = sh.getLastRow();
     var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
-    var ir   = sh.getLastRow() + 1;
     sh.appendRow([
       nextId,
       p.date ? new Date(p.date) : new Date(),
@@ -2555,6 +2579,7 @@ function saveRapportAccident(p) {
       new Date(),
       ''
     ]);
+    var ir = sh.getLastRow();
     if (p.photo && p.photo.length > 10) {
       var fn  = nextId + '.AccidentPhoto.' + nowHHMMSS_() + '.jpg';
       var url = savePhotoToFolder_(p.photo, fn, p.mime||'image/jpeg');
@@ -2614,7 +2639,7 @@ function getFicheDeclarationSheet_() {
       'Observations','Statut','Date Création',
       'Type Accident','Nature Accident','Témoins','Actions Immédiates'
     ]);
-    sh.getRange(1,1,1,18).setFontWeight('bold').setBackground('#d35400').setFontColor('#ffffff');
+    sh.getRange(1,1,1,22).setFontWeight('bold').setBackground('#d35400').setFontColor('#ffffff');
     sh.setColumnWidth(10, 260);
   }
   return sh;
