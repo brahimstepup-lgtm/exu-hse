@@ -859,6 +859,7 @@ img{max-width:100%;display:block;}
   <button class="snav" data-v="incendie" id="sbIncendie" style="display:none"><span class="snav-i">🧯</span>Suivi Incendie</button>
   <button class="snav" data-v="nuisibles" id="sbNuisibles" style="display:none"><span class="snav-i">🪲</span>Contrôle Nuisibles</button>
   <button class="snav" data-v="accident" id="sbAccident" style="display:none"><span class="snav-i">🚨</span>Accident de Travail</button>
+  <button class="snav" data-v="incidents" id="sbIncidents" style="display:none"><span class="snav-i">📣</span>Déclaration Incidents</button>
 </nav>
 
 <!-- APP -->
@@ -1086,6 +1087,23 @@ img{max-width:100%;display:block;}
       </div>
       <div id="accidentBody"></div>
     </div>
+
+    <!-- DÉCLARATION DES INCIDENTS -->
+    <div class="view" id="view-incidents">
+      <div class="ph view-hdr">
+        <h1 class="ph-title">📣 Déclaration des Incidents</h1>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="openIncidentForm()" style="padding:7px 12px;font-size:.78rem;min-height:34px">＋ Déclarer un incident</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="gsort-tab on" id="incFil_all" onclick="setIncidentFilter('all')">Tous</button>
+        <button class="gsort-tab" id="incFil_Ouvert" onclick="setIncidentFilter('Ouvert')">🟥 Ouverts</button>
+        <button class="gsort-tab" id="incFil_Encours" onclick="setIncidentFilter('En cours')">🟠 En cours</button>
+        <button class="gsort-tab" id="incFil_Cloture" onclick="setIncidentFilter('Clôturé')">✅ Clôturés</button>
+      </div>
+      <div id="incidentsBody"></div>
+    </div>
   </main>
 
   <nav class="bnav" id="mainBnav">
@@ -1097,6 +1115,7 @@ img{max-width:100%;display:block;}
     <button class="nb" data-v="incendie" id="nbIncendie" style="display:none"><span class="nb-icon">🧯</span><span>Incendie</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="nuisibles" id="nbNuisibles" style="display:none"><span class="nb-icon">🪲</span><span>Nuisibles</span><span class="nb-dot"></span></button>
     <button class="nb" data-v="accident" id="nbAccident" style="display:none"><span class="nb-icon">🚨</span><span>Accident</span><span class="nb-dot"></span></button>
+    <button class="nb" data-v="incidents" id="nbIncidents" style="display:none"><span class="nb-icon">📣</span><span>Incidents</span><span class="nb-dot"></span></button>
   </nav>
 </div>
 <button class="fab" id="fab" onclick="openQuick()">＋</button>
@@ -2457,6 +2476,134 @@ img{max-width:100%;display:block;}
       <button class="btn btn-g" onclick="closeSheet('ficheDeclarationOv')">Annuler</button>
       <button class="btn" onclick="submitFicheDeclaration()" style="background:#e67e22;color:#fff;font-weight:700">💾 Enregistrer la déclaration</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Déclaration d'un Incident ═══ -->
+<div class="ov" id="incidentFormOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head">
+      <div class="sh-title">📣 Déclarer un Incident</div>
+      <button class="sh-x" onclick="closeSheet('incidentFormOv')">✕</button>
+    </div>
+    <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+
+      <!-- Informations -->
+      <div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.3);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:.82rem;font-weight:700;color:#3498db;margin-bottom:10px">📌 Informations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Date <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="date" id="inc_date" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Heure <span style="color:#e74c3c">*</span></label>
+            <input class="fi" type="time" id="inc_heure" style="height:38px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Lieu / Zone <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="inc_lieu" list="incZonesDatalist" placeholder="Ex : étage 0, ligne HOLLOW…" style="height:38px"/>
+            <datalist id="incZonesDatalist"></datalist>
+          </div>
+          <div>
+            <label class="fl">Type <span style="color:#e74c3c">*</span></label>
+            <select class="fi" id="inc_type" style="height:38px">
+              <option value="">— Sélectionner —</option>
+              <option value="Accident sans arrêt">Accident sans arrêt</option>
+              <option value="Accident avec arrêt">Accident avec arrêt</option>
+              <option value="Presqu'accident">Presqu'accident</option>
+              <option value="Premiers soins">Premiers soins</option>
+              <option value="Incident matériel">Incident matériel</option>
+              <option value="Incident environnemental">Incident environnemental</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="fl">Gravité</label>
+            <select class="fi" id="inc_gravite" style="height:38px">
+              <option value="1">🟢 Niveau 1</option>
+              <option value="2">🟡 Niveau 2</option>
+              <option value="3">🟠 Niveau 3</option>
+              <option value="4">🔴 Niveau 4</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Responsable</label>
+            <input class="fi" id="inc_responsable" list="incRespDatalist" value="HSE" placeholder="Ex : HSE" style="height:38px"/>
+            <datalist id="incRespDatalist"></datalist>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Délai</label>
+            <input class="fi" type="date" id="inc_delai" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Statut</label>
+            <select class="fi" id="inc_statut" style="height:38px">
+              <option value="Ouvert">🟥 Ouvert</option>
+              <option value="En cours">🟠 En cours</option>
+              <option value="Clôturé">✅ Clôturé</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personne concernée -->
+      <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:10px">👤 Personne concernée</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="fl">Nom &amp; Prénom <span style="color:#e74c3c">*</span></label>
+            <input class="fi" id="inc_personne" placeholder="Nom complet" style="height:38px"/>
+          </div>
+          <div>
+            <label class="fl">Matricule</label>
+            <input class="fi" id="inc_matricule" list="accEmpDatalist" oninput="_incLookupEmployee()" placeholder="Rechercher un matricule…" style="height:38px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="margin-bottom:14px">
+        <label class="fl">Description <span style="color:#e74c3c">*</span></label>
+        <textarea class="fi" id="inc_description" rows="3" placeholder="Décrire l'incident : circonstances, causes apparentes, conséquences…" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- Documents -->
+      <div style="background:rgba(155,89,182,.06);border:1px solid rgba(155,89,182,.25);border-radius:10px;padding:12px;margin-bottom:4px">
+        <div style="font-size:.82rem;font-weight:700;color:#9b59b6;margin-bottom:4px">📎 Documents (optionnel)</div>
+        <div style="font-size:.72rem;color:var(--t3);margin-bottom:10px">PDF ou image — max 5 Mo par fichier. Les documents peuvent aussi être ajoutés plus tard depuis la fiche incident.</div>
+        <div id="incDocStageRows"></div>
+      </div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-g" onclick="closeSheet('incidentFormOv')">Annuler</button>
+      <button class="btn btn-p" onclick="submitIncident()" style="font-weight:700">💾 Enregistrer l'incident</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: Fiche Incident (détail) ═══ -->
+<div class="ov" id="incidentDetailOv">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sh-handle"></div>
+    <div class="sh-head" style="display:flex;align-items:flex-start;gap:8px;padding:12px 15px 8px">
+      <div id="incDetailHead" style="flex:1;min-width:0"></div>
+      <button class="sh-x" onclick="closeSheet('incidentDetailOv')">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;padding:4px 15px 10px;flex-wrap:wrap;border-bottom:1px solid var(--line);flex-shrink:0">
+      <button class="gsort-tab on" id="incTab_infos"   onclick="switchIncidentDetailTab('infos')">📋 Infos</button>
+      <button class="gsort-tab"    id="incTab_5m"      onclick="switchIncidentDetailTab('5m')">🔍 Analyse 5M</button>
+      <button class="gsort-tab"    id="incTab_actions" onclick="switchIncidentDetailTab('actions')">✅ Actions</button>
+      <button class="gsort-tab"    id="incTab_docs"    onclick="switchIncidentDetailTab('docs')">📕 Rapport d'enquête</button>
+    </div>
+    <div class="sh-body" id="incDetailBody" style="overflow-y:auto;padding-bottom:16px"></div>
   </div>
 </div>
 
@@ -3873,7 +4020,7 @@ function syncQueue(){
    AUTHENTIFICATION / RÔLES
 ══════════════════════════════════════════ */
 var ADMIN_ONLY_VIEWS = {home:true, admin:true};
-var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true, accident:true};
+var SUPERVISOR_VIEWS = {sensibilisation:true, incendie:true, nuisibles:true, accident:true, incidents:true};
 
 function isAdmin(){ return S.role==='admin' || S_AUTH.role==='admin'; }
 function isSupervisor(){ return S.role==='hse_supervisor' || S_AUTH.role==='hse_supervisor'; }
@@ -3939,7 +4086,7 @@ function applyRole(){
   });
   // Navigation superviseur
   var showSuper = admin || super_;
-  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','sbAccident','nbSensi','nbIncendie','nbNuisibles','nbAccident'].forEach(function(id){
+  ['sbSecSuper','sbSensi','sbIncendie','sbNuisibles','sbAccident','sbIncidents','nbSensi','nbIncendie','nbNuisibles','nbAccident','nbIncidents'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display = showSuper ? '' : 'none';
   });
   // Redirige si vue interdite
@@ -4042,7 +4189,8 @@ function goV(v, btn){
               sensibilisation:'view-sensibilisation',
               incendie:'view-incendie',
               nuisibles:'view-nuisibles',
-              accident:'view-accident'};
+              accident:'view-accident',
+              incidents:'view-incidents'};
   var tid = vmap[v]||'view-home';
   document.getElementById(tid).classList.add('on');
 
@@ -4060,6 +4208,7 @@ function renderCurrent(){
   else if(S.view==='incendie')   renderIncendie();
   else if(S.view==='nuisibles') renderNuisibles();
   else if(S.view==='accident')  renderAccident();
+  else if(S.view==='incidents') renderIncidents();
   else renderTagsView();
 }
 
@@ -10863,6 +11012,465 @@ function _loadAccidentConfig() {
     })
     .withFailureHandler(function(){})
     .getSetting({ adminKey: S.adminKey, key: 'accidentConfig' });
+}
+
+/* ══════════════════════════════════════════
+   DÉCLARATION DES INCIDENTS
+══════════════════════════════════════════ */
+var _incidents      = [];
+var _incidentFilter = 'all';
+var _incDetailIdx   = -1;
+var _incDetailTab   = 'infos';
+var _incDocsStaged  = { enr62:null, safetyAlert:null, rapportEnquete:null };
+
+var _INC_DOC_META = {
+  enr62:          { label:'Déclaration d\'accident (ENR 62)', icon:'📝', color:'#e67e22', field:'docEnr62' },
+  safetyAlert:    { label:'Safety Alert',                     icon:'⚠️', color:'#f1c40f', field:'docSafetyAlert' },
+  rapportEnquete: { label:'Rapport d\'enquête d\'accident',   icon:'📕', color:'#e74c3c', field:'docRapportEnquete' }
+};
+var _INC_GRAV_COLOR   = {'1':'#27ae60','2':'#f1c40f','3':'#e67e22','4':'#e74c3c'};
+var _INC_STATUT_COLOR = {'Ouvert':'#e74c3c','En cours':'#e67e22','Clôturé':'#27ae60'};
+var _INC_STATUT_ICON  = {'Ouvert':'🟥','En cours':'🟠','Clôturé':'✅'};
+
+/* ── Rendu principal ── */
+function renderIncidents() {
+  var body = document.getElementById('incidentsBody');
+  if (!body) return;
+  _renderIncidentsList(body);
+  if (!_incidents.length) _loadIncidents();
+}
+
+function _loadIncidents() {
+  var body = document.getElementById('incidentsBody');
+  if (body && !_incidents.length) body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r&&r.success) { _incidents = r.data||[]; if (S.view==='incidents') _renderIncidentsList(document.getElementById('incidentsBody')); }
+    })
+    .withFailureHandler(function(){})
+    .getIncidents(S.adminKey);
+}
+
+function setIncidentFilter(f) {
+  _incidentFilter = f;
+  var ids = { 'all':'incFil_all', 'Ouvert':'incFil_Ouvert', 'En cours':'incFil_Encours', 'Clôturé':'incFil_Cloture' };
+  Object.keys(ids).forEach(function(k) {
+    var el = document.getElementById(ids[k]);
+    if (el) el.classList.toggle('on', k===f);
+  });
+  _renderIncidentsList(document.getElementById('incidentsBody'));
+}
+
+function _incDocChips(r) {
+  return Object.keys(_INC_DOC_META).map(function(t) {
+    var m = _INC_DOC_META[t];
+    if (!r[m.field]) return '';
+    return '<span style="background:'+m.color+'18;border:1px solid '+m.color+'44;color:'+m.color+';border-radius:4px;padding:1px 6px;font-size:.64rem;font-weight:700">'+m.icon+' '+esc(m.label)+'</span>';
+  }).join('');
+}
+
+function _renderIncidentsList(body) {
+  if (!body) return;
+  var banner = '<div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:1.4rem">📣</span>'
+    +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:.88rem;color:var(--t1)">Registre des Incidents</div>'
+      +'<div style="font-size:.74rem;color:var(--t3);margin-top:2px">Déclaration, analyse 5M, plan d\'actions et documents d\'enquête (ENR 62 · Safety Alert · Rapport d\'enquête)</div>'
+    +'</div>'
+  +'</div>';
+
+  var data = _incidents;
+  if (!data.length) {
+    body.innerHTML = banner + '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucun incident déclaré — cliquez sur «＋ Déclarer un incident» pour créer le premier.</div>';
+    return;
+  }
+  var shown = 0;
+  var html = data.slice().reverse().map(function(r, ri) {
+    if (_incidentFilter!=='all' && r.statut!==_incidentFilter) return '';
+    shown++;
+    var idx  = data.length-1-ri;
+    var gCol = _INC_GRAV_COLOR[r.gravite] || '#3498db';
+    var sCol = _INC_STATUT_COLOR[r.statut] || '#e74c3c';
+    var sIco = _INC_STATUT_ICON[r.statut]  || '🟥';
+    return '<div onclick="openIncidentDetail('+idx+')" style="background:var(--ink2);border-radius:10px;border:1px solid var(--line);border-left:4px solid '+gCol+';margin-bottom:10px;padding:12px 14px;cursor:pointer">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="background:'+gCol+'22;border:1px solid '+gCol+'55;border-radius:8px;padding:4px 9px;text-align:center;flex-shrink:0">'
+          +'<div style="font-weight:900;font-size:.8rem;color:'+gCol+'">INC-'+esc(String(r.id))+'</div>'
+          +'<div style="font-size:.58rem;color:'+gCol+';opacity:.75">Grav. '+esc(r.gravite)+'</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-weight:700;font-size:.86rem;color:var(--t1);margin-bottom:3px">'+esc(r.personne||'—')+(r.matricule?' · '+esc(r.matricule):'')+'</div>'
+          +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'
+            +'<span style="background:'+sCol+'18;border:1px solid '+sCol+'44;color:'+sCol+';border-radius:4px;padding:1px 6px;font-size:.66rem;font-weight:700">'+sIco+' '+esc(r.statut||'—')+'</span>'
+            +(r.type?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:1px 6px;font-size:.66rem">'+esc(r.type)+'</span>':'')
+            +(r.lieu?'<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t3);border-radius:4px;padding:1px 6px;font-size:.66rem">📍 '+esc(r.lieu)+'</span>':'')
+            +_incDocChips(r)
+          +'</div>'
+          +'<div style="font-size:.72rem;color:var(--t3)">📅 '+esc(r.date||'—')+(r.heure?' à '+esc(r.heure):'')+(r.responsable?' · 👤 '+esc(r.responsable):'')+'</div>'
+          +(r.description?'<div style="font-size:.75rem;color:var(--t2);margin-top:4px;line-height:1.4">'+esc(r.description).substring(0,120)+(r.description.length>120?'…':'')+'</div>':'')
+        +'</div>'
+        +'<span style="flex-shrink:0;color:var(--t3);font-size:1rem;align-self:center">›</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  if (!shown) html = '<div style="color:var(--t3);font-size:.85rem;text-align:center;padding:30px;font-style:italic">Aucun incident pour ce filtre.</div>';
+  body.innerHTML = banner + html;
+}
+
+/* ── Formulaire de déclaration ── */
+function openIncidentForm() {
+  ['inc_date','inc_heure','inc_lieu','inc_delai','inc_personne','inc_matricule','inc_description']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['inc_type','inc_gravite','inc_statut']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('inc_date').value = todayStr();
+  var resp = document.getElementById('inc_responsable'); if (resp) resp.value='HSE';
+  _incDocsStaged = { enr62:null, safetyAlert:null, rapportEnquete:null };
+  _renderIncDocStageRows();
+  // datalists : zones + responsables + employés
+  var zdl = document.getElementById('incZonesDatalist');
+  if (zdl) {
+    var zones = (typeof _configuredZones!=='undefined'&&_configuredZones&&_configuredZones.length) ? _configuredZones
+      : (S.zones&&S.zones.length) ? S.zones : [];
+    zdl.innerHTML = zones.map(function(z){ return '<option value="'+esc(z)+'">'; }).join('');
+  }
+  var rdl = document.getElementById('incRespDatalist');
+  if (rdl) rdl.innerHTML = (S.respList||[]).map(function(n){ return '<option value="'+esc(n)+'">'; }).join('');
+  _loadEmployeesDirectory();
+  openSheet('incidentFormOv');
+}
+
+function _incLookupEmployee() {
+  var mat = (document.getElementById('inc_matricule')||{value:''}).value.trim();
+  var emp = _employeesDirectory.find(function(e){ return e.matricule === mat; });
+  if (!emp) return;
+  var nomEl = document.getElementById('inc_personne');
+  if (nomEl && !nomEl.value.trim()) nomEl.value = emp.name;
+}
+
+function _renderIncDocStageRows() {
+  var wrap = document.getElementById('incDocStageRows');
+  if (!wrap) return;
+  wrap.innerHTML = Object.keys(_INC_DOC_META).map(function(t) {
+    var m = _INC_DOC_META[t];
+    var staged = _incDocsStaged[t];
+    return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)">'
+      +'<span style="font-size:1rem">'+m.icon+'</span>'
+      +'<span style="flex:1;min-width:140px;font-size:.78rem;color:var(--t1);font-weight:600">'+esc(m.label)+'</span>'
+      +'<input type="file" id="inc_stage_'+t+'" accept=".pdf,image/*" onchange="incStageDoc(this,\''+t+'\')" style="display:none"/>'
+      +(staged
+        ? '<span style="font-size:.72rem;color:'+m.color+';max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📎 '+esc(staged.fileName)+'</span>'
+          +'<button type="button" onclick="incClearStagedDoc(\''+t+'\')" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.75rem">✕</button>'
+        : '<button type="button" onclick="document.getElementById(\'inc_stage_'+t+'\').click()" style="background:'+m.color+'22;border:1px solid '+m.color+'55;color:'+m.color+';border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.74rem;font-weight:700">⬆ Joindre</button>')
+    +'</div>';
+  }).join('');
+}
+
+function incStageDoc(input, type) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 5*1024*1024) { toast('Fichier trop lourd (max 5 Mo)','err'); input.value=''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _incDocsStaged[type] = {
+      docType:  type,
+      file:     e.target.result.split(',')[1],
+      mime:     file.type || 'application/pdf',
+      fileName: file.name
+    };
+    _renderIncDocStageRows();
+  };
+  reader.readAsDataURL(file);
+}
+function incClearStagedDoc(type) {
+  _incDocsStaged[type] = null;
+  _renderIncDocStageRows();
+}
+
+function submitIncident() {
+  var gv = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  var date = gv('inc_date'), lieu = gv('inc_lieu'), type = gv('inc_type'),
+      personne = gv('inc_personne'), description = gv('inc_description');
+  if (!date||!lieu||!type||!personne||!description) { toast('Date, lieu, type, personne concernée et description sont requis','err'); return; }
+  var docs = Object.keys(_incDocsStaged).map(function(t){ return _incDocsStaged[t]; }).filter(Boolean);
+  showLoader('Enregistrement…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r&&r.success) {
+        toast('✅ Incident déclaré (INC-'+r.id+')','ok');
+        closeSheet('incidentFormOv');
+        _incidents = [];
+        _loadIncidents();
+      } else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .saveIncident({
+      token:       S.adminKey,
+      date:        date,
+      heure:       gv('inc_heure'),
+      lieu:        lieu,
+      type:        type,
+      gravite:     gv('inc_gravite')||'1',
+      responsable: gv('inc_responsable')||'HSE',
+      delai:       gv('inc_delai'),
+      statut:      gv('inc_statut')||'Ouvert',
+      personne:    personne,
+      matricule:   gv('inc_matricule'),
+      description: description,
+      analyse5M:   '',
+      actions:     '[]',
+      declarant:   S_AUTH&&(S_AUTH.name||S_AUTH.matricule)||'',
+      docs:        docs
+    });
+}
+
+/* ── Fiche incident (détail) ── */
+function openIncidentDetail(idx) {
+  var r = _incidents[idx]; if (!r) return;
+  _incDetailIdx = idx;
+  _incDetailTab = 'infos';
+  _renderIncidentDetailHead(r);
+  switchIncidentDetailTab('infos');
+  openSheet('incidentDetailOv');
+}
+
+function _renderIncidentDetailHead(r) {
+  var el = document.getElementById('incDetailHead');
+  if (!el) return;
+  var gCol = _INC_GRAV_COLOR[r.gravite] || '#3498db';
+  var sCol = _INC_STATUT_COLOR[r.statut] || '#e74c3c';
+  var sIco = _INC_STATUT_ICON[r.statut]  || '🟥';
+  var badge = function(txt){ return '<span style="background:var(--ink3);border:1px solid var(--line);color:var(--t2);border-radius:4px;padding:2px 8px;font-size:.68rem;font-weight:600">'+txt+'</span>'; };
+  el.innerHTML = '<div style="display:flex;gap:12px;align-items:center">'
+    +'<div style="width:46px;height:46px;border-radius:10px;background:'+gCol+'22;border:1px solid '+gCol+'55;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">📣</div>'
+    +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:.7rem;color:var(--t3);font-weight:700;letter-spacing:.4px">INC-'+esc(String(r.id))+' · '+esc(r.date||'—')+(r.heure?' · '+esc(r.heure):'')+'</div>'
+      +'<div style="font-weight:800;font-size:1.05rem;color:var(--t1);margin:2px 0 5px">'+esc(r.personne||'—')+'</div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
+        +badge('Gravité '+esc(r.gravite||'—'))
+        +(r.type?badge(esc(r.type)):'')
+        +(r.lieu?badge('📍 '+esc(r.lieu)):'')
+        +'<span style="background:'+sCol+'18;border:1px solid '+sCol+'44;color:'+sCol+';border-radius:4px;padding:2px 8px;font-size:.68rem;font-weight:700">'+sIco+' '+esc(r.statut||'—')+'</span>'
+      +'</div>'
+    +'</div>'
+  +'</div>';
+}
+
+function switchIncidentDetailTab(tab) {
+  _incDetailTab = tab;
+  ['infos','5m','actions','docs'].forEach(function(t) {
+    var el = document.getElementById('incTab_'+t);
+    if (el) el.classList.toggle('on', t===tab);
+  });
+  _renderIncidentDetailTab();
+}
+
+function _renderIncidentDetailTab() {
+  var body = document.getElementById('incDetailBody');
+  var r = _incidents[_incDetailIdx];
+  if (!body || !r) return;
+  if (_incDetailTab==='infos')        body.innerHTML = _incTabInfosHtml(r);
+  else if (_incDetailTab==='5m')      body.innerHTML = _incTab5mHtml(r);
+  else if (_incDetailTab==='actions') body.innerHTML = _incTabActionsHtml(r);
+  else                                body.innerHTML = _incTabDocsHtml(r);
+}
+
+function _incInfoBox(label, value) {
+  return '<div style="background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:10px 12px">'
+    +'<div style="font-size:.64rem;color:var(--t3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px">'+label+'</div>'
+    +'<div style="font-size:.88rem;color:var(--t1)">'+(value||'—')+'</div>'
+  +'</div>';
+}
+
+function _incTabInfosHtml(r) {
+  var statutSel = '<select class="fi" style="height:34px;font-size:.82rem;margin-top:2px" onchange="_updIncidentField(\'statut\',this.value)">'
+    +['Ouvert','En cours','Clôturé'].map(function(s){
+      return '<option value="'+s+'"'+(r.statut===s?' selected':'')+'>'+(_INC_STATUT_ICON[s]||'')+' '+s+'</option>';
+    }).join('')
+  +'</select>';
+  return '<div style="font-size:.78rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin:12px 0 10px">📌 INFORMATIONS</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+      +_incInfoBox('Date &amp; Heure', esc(r.date||'—')+(r.heure?' à '+esc(r.heure):''))
+      +_incInfoBox('Lieu / Zone', esc(r.lieu))
+      +_incInfoBox('Type', esc(r.type))
+      +_incInfoBox('Gravité', 'Niveau '+esc(r.gravite||'—'))
+      +_incInfoBox('Responsable', esc(r.responsable))
+      +_incInfoBox('Délai', esc(r.delai))
+      +'<div style="background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:10px 12px">'
+        +'<div style="font-size:.64rem;color:var(--t3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px">Statut</div>'
+        +statutSel
+      +'</div>'
+      +_incInfoBox('Déclarant', esc(r.declarant))
+    +'</div>'
+    +'<div style="font-size:.78rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin:0 0 8px">📝 DESCRIPTION</div>'
+    +'<div style="background:rgba(52,152,219,.06);border:1px solid rgba(52,152,219,.25);border-left:4px solid #3498db;border-radius:10px;padding:12px 14px;font-size:.86rem;color:var(--t1);line-height:1.5;white-space:pre-wrap">'+(esc(r.description)||'—')+'</div>';
+}
+
+/* ── Onglet Analyse 5M ── */
+function _incParse5M(r) {
+  try { var o = JSON.parse(r.analyse5M||''); return (o&&typeof o==='object')?o:{}; } catch(e){ return {}; }
+}
+function _incTab5mHtml(r) {
+  var m = _incParse5M(r);
+  var rows = [
+    ['mo','👷 Main d\'œuvre',      'Compétences, formation, comportement, fatigue…'],
+    ['ma','⚙️ Matériel / Machine', 'Équipements, outils, EPI, état des machines…'],
+    ['me','📐 Méthode',            'Procédures, modes opératoires, consignes…'],
+    ['mi','🌍 Milieu',             'Environnement de travail : sol, éclairage, bruit, encombrement…'],
+    ['mt','🧪 Matière',            'Produits, matières premières, substances manipulées…']
+  ];
+  return '<div style="font-size:.78rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin:12px 0 10px">🔍 ANALYSE DES CAUSES — MÉTHODE 5M</div>'
+    + rows.map(function(x) {
+      return '<div style="margin-bottom:10px">'
+        +'<label class="fl">'+x[1]+'</label>'
+        +'<textarea class="fi" id="inc5m_'+x[0]+'" rows="2" placeholder="'+x[2]+'" style="resize:vertical">'+esc(m[x[0]]||'')+'</textarea>'
+      +'</div>';
+    }).join('')
+    +'<button class="btn btn-p" onclick="saveIncident5M()" style="width:100%;font-weight:700;margin-top:4px">💾 Enregistrer l\'analyse 5M</button>';
+}
+function saveIncident5M() {
+  var gv = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  var o = { mo:gv('inc5m_mo'), ma:gv('inc5m_ma'), me:gv('inc5m_me'), mi:gv('inc5m_mi'), mt:gv('inc5m_mt') };
+  _updIncidentField('analyse5M', JSON.stringify(o));
+}
+
+/* ── Onglet Actions ── */
+function _incParseActions(r) {
+  try { var a = JSON.parse(r.actions||'[]'); return Array.isArray(a)?a:[]; } catch(e){ return []; }
+}
+function _incActionRowHtml(a) {
+  a = a || {txt:'',resp:'',delai:'',statut:'À faire'};
+  return '<div class="inc-act-row" style="background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">'
+    +'<div style="display:flex;gap:8px;align-items:flex-start">'
+      +'<textarea class="fi ia-txt" rows="1" placeholder="Action à réaliser…" style="flex:1;resize:vertical">'+esc(a.txt||'')+'</textarea>'
+      +'<button type="button" onclick="this.closest(\'.inc-act-row\').remove()" title="Retirer" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:.85rem;padding:6px 4px">✕</button>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">'
+      +'<input class="fi ia-resp" placeholder="Responsable" value="'+esc(a.resp||'')+'" style="height:34px;font-size:.8rem"/>'
+      +'<input class="fi ia-delai" type="date" value="'+esc(a.delai||'')+'" style="height:34px;font-size:.8rem"/>'
+      +'<select class="fi ia-statut" style="height:34px;font-size:.8rem">'
+        +['À faire','En cours','Fait'].map(function(s){ return '<option value="'+s+'"'+(a.statut===s?' selected':'')+'>'+s+'</option>'; }).join('')
+      +'</select>'
+    +'</div>'
+  +'</div>';
+}
+function _incTabActionsHtml(r) {
+  var acts = _incParseActions(r);
+  return '<div style="font-size:.78rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin:12px 0 10px">✅ PLAN D\'ACTIONS</div>'
+    +'<div id="incActionRows">'
+      +(acts.length ? acts.map(_incActionRowHtml).join('') : '<div style="color:var(--t3);font-size:.8rem;font-style:italic;margin-bottom:8px">Aucune action — ajoutez-en ci-dessous.</div>')
+    +'</div>'
+    +'<button type="button" class="btn btn-g" onclick="addIncidentAction()" style="width:100%;margin-bottom:8px">＋ Ajouter une action</button>'
+    +'<button class="btn btn-p" onclick="saveIncidentActions()" style="width:100%;font-weight:700">💾 Enregistrer les actions</button>';
+}
+function addIncidentAction() {
+  var wrap = document.getElementById('incActionRows');
+  if (!wrap) return;
+  var hint = wrap.querySelector('div[style*="italic"]');
+  if (hint && !wrap.querySelector('.inc-act-row')) hint.remove();
+  wrap.insertAdjacentHTML('beforeend', _incActionRowHtml());
+}
+function saveIncidentActions() {
+  var list = [];
+  document.querySelectorAll('#incActionRows .inc-act-row').forEach(function(row) {
+    var txt = row.querySelector('.ia-txt').value.trim();
+    if (!txt) return;
+    list.push({
+      txt:    txt,
+      resp:   row.querySelector('.ia-resp').value.trim(),
+      delai:  row.querySelector('.ia-delai').value.trim(),
+      statut: row.querySelector('.ia-statut').value
+    });
+  });
+  _updIncidentField('actions', JSON.stringify(list));
+}
+
+/* ── Onglet Rapport d'enquête (documents) ── */
+function _incTabDocsHtml(r) {
+  return '<div style="font-size:.78rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin:12px 0 4px">📕 DOCUMENTS D\'ENQUÊTE</div>'
+    +'<div style="font-size:.72rem;color:var(--t3);margin-bottom:12px">Téléversez les documents liés à l\'incident (PDF ou image — max 5 Mo).</div>'
+    + Object.keys(_INC_DOC_META).map(function(t) {
+      var m = _INC_DOC_META[t];
+      var url = r[m.field];
+      return '<div style="background:var(--ink2);border:1px solid var(--line);border-left:4px solid '+m.color+';border-radius:10px;padding:12px;margin-bottom:10px">'
+        +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+          +'<span style="font-size:1.2rem">'+m.icon+'</span>'
+          +'<div style="flex:1;min-width:150px">'
+            +'<div style="font-weight:700;font-size:.84rem;color:var(--t1)">'+esc(m.label)+'</div>'
+            +'<div style="font-size:.7rem;color:'+(url?m.color:'var(--t3)')+';margin-top:2px">'+(url?'✓ Document téléversé':'Aucun document')+'</div>'
+          +'</div>'
+          +'<input type="file" id="inc_doc_up_'+t+'" accept=".pdf,image/*" onchange="incUploadDoc(this,\''+t+'\')" style="display:none"/>'
+          +(url?'<a href="'+esc(url)+'" target="_blank" rel="noopener" style="background:'+m.color+'22;border:1px solid '+m.color+'55;color:'+m.color+';border-radius:8px;padding:6px 10px;font-size:.74rem;font-weight:700;text-decoration:none">📄 Ouvrir</a>':'')
+          +'<button type="button" onclick="document.getElementById(\'inc_doc_up_'+t+'\').click()" style="background:'+m.color+'22;border:1px solid '+m.color+'55;color:'+m.color+';border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.74rem;font-weight:700">⬆ '+(url?'Remplacer':'Téléverser')+'</button>'
+          +(url?'<button type="button" onclick="incDeleteDoc(\''+t+'\')" title="Supprimer le document" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.74rem">✕</button>':'')
+        +'</div>'
+      +'</div>';
+    }).join('');
+}
+
+function incUploadDoc(input, type) {
+  var r = _incidents[_incDetailIdx]; if (!r) return;
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 5*1024*1024) { toast('Fichier trop lourd (max 5 Mo)','err'); input.value=''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    showLoader('Téléversement…');
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideSplash();
+        if (res&&res.success) {
+          r[_INC_DOC_META[type].field] = res.url;
+          toast('✓ Document téléversé','ok');
+          if (_incDetailTab==='docs') _renderIncidentDetailTab();
+          _renderIncidentsList(document.getElementById('incidentsBody'));
+        } else toast((res&&res.error)||'Erreur','err');
+      })
+      .withFailureHandler(function(err){ hideSplash(); toast(err.message,'err'); })
+      .uploadIncidentDoc({
+        token: S.adminKey, id: r.id, docType: type,
+        file: e.target.result.split(',')[1],
+        mime: file.type||'application/pdf',
+        fileName: file.name
+      });
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function incDeleteDoc(type) {
+  var r = _incidents[_incDetailIdx]; if (!r) return;
+  if (!confirm('Supprimer le document « '+_INC_DOC_META[type].label+' » ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideSplash();
+      if (res&&res.success) {
+        r[_INC_DOC_META[type].field] = '';
+        toast('✓ Document supprimé','ok');
+        if (_incDetailTab==='docs') _renderIncidentDetailTab();
+        _renderIncidentsList(document.getElementById('incidentsBody'));
+      } else toast((res&&res.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteIncidentDoc({ token:S.adminKey, id:r.id, docType:type });
+}
+
+/* ── Mise à jour d'un champ de l'incident courant ── */
+function _updIncidentField(field, value) {
+  var r = _incidents[_incDetailIdx]; if (!r) return;
+  var payload = { token:S.adminKey, id:r.id };
+  payload[field] = value;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res&&res.success) {
+        r[field] = value;
+        toast('✓ Enregistré','ok');
+        _renderIncidentDetailHead(r);
+        _renderIncidentsList(document.getElementById('incidentsBody'));
+      } else toast((res&&res.error)||'Erreur','err');
+    })
+    .withFailureHandler(function(e){ toast(e.message,'err'); })
+    .updateIncident(payload);
 }
 
 /* ── Impression ENRHSE008 — Rapport d'enquête sur un accident ── */

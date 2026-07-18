@@ -2716,3 +2716,177 @@ function getFicheDeclaration(token) {
     return { success:true, data:data };
   } catch(e) { return { success:false, error:e.message }; }
 }
+
+// ================================================================
+//  DÉCLARATION DES INCIDENTS — Registre INC
+//  Fiche incident (Infos / Analyse 5M / Actions / Rapport d'enquête)
+//  + Documents : ENR 62, Safety Alert, Rapport d'enquête
+// ================================================================
+var INC_DOC_COLS = { enr62:17, safetyAlert:18, rapportEnquete:19 };
+
+function getIncidentsSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Incidents');
+  if (!sh) {
+    sh = ss.insertSheet('Incidents');
+    sh.appendRow([
+      'ID','Date','Heure','Lieu / Zone','Type','Gravité','Responsable','Délai','Statut',
+      'Personne concernée','Matricule','Description','Analyse 5M','Actions','Déclarant','Date Création',
+      'Doc ENR62','Doc Safety Alert','Doc Rapport Enquête'
+    ]);
+    sh.getRange(1,1,1,19).setFontWeight('bold').setBackground('#2c3e50').setFontColor('#ffffff');
+    sh.setColumnWidth(12, 280); sh.setColumnWidth(13, 220); sh.setColumnWidth(14, 220);
+  }
+  return sh;
+}
+
+function _findIncidentRow_(sh, id) {
+  var lr = sh.getLastRow();
+  if (lr < 2) return -1;
+  var ids = sh.getRange(2,1,lr-1,1).getValues();
+  for (var i=0; i<ids.length; i++) if (String(ids[i][0]) === String(id)) return i+2;
+  return -1;
+}
+
+function saveIncidentFileToFolder_(b64, name, mime) {
+  try {
+    var clean  = String(b64).replace(/^data:[^;]+;base64,/, '');
+    var blob   = Utilities.newBlob(Utilities.base64Decode(clean), mime||'application/octet-stream', name);
+    var folder = DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+    var file   = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return 'https://drive.google.com/file/d/' + file.getId() + '/view';
+  } catch(e) { Logger.log('saveIncidentFileToFolder_: ' + e.message); return ''; }
+}
+
+function _trashDriveFileByUrl_(url) {
+  try {
+    var m = String(url||'').match(/[-\w]{25,}/);
+    if (m) DriveApp.getFileById(m[0]).setTrashed(true);
+  } catch(e) {}
+}
+
+function saveIncident(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh     = getIncidentsSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.heure||''),
+      String(p.lieu||''),
+      String(p.type||''),
+      String(p.gravite||'1'),
+      String(p.responsable||'HSE'),
+      p.delai ? new Date(p.delai) : '',
+      String(p.statut||'Ouvert'),
+      String(p.personne||''),
+      String(p.matricule||''),
+      String(p.description||''),
+      String(p.analyse5M||''),
+      String(p.actions||''),
+      String(p.declarant||''),
+      new Date(),
+      '','',''
+    ]);
+    var row = sh.getLastRow();
+    if (p.docs && p.docs.length) {
+      p.docs.forEach(function(d) {
+        var col = INC_DOC_COLS[d && d.docType];
+        if (!col || !d.file || d.file.length < 10) return;
+        var url = saveIncidentFileToFolder_(
+          d.file, 'INC-' + nextId + '.' + d.docType + '.' + String(d.fileName||'document'), d.mime);
+        if (url) sh.getRange(row, col).setValue(url);
+      });
+    }
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function getIncidents(token) {
+  if (!isSessionSuperOrAdmin_(token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getIncidentsSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2,1,lr-1,19).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      return {
+        id:               r[0],
+        date:             fmtDate_(r[1]),
+        heure:            fmtHeure_(r[2]),
+        lieu:             String(r[3]||''),
+        type:             String(r[4]||''),
+        gravite:          String(r[5]||'1'),
+        responsable:      String(r[6]||''),
+        delai:            fmtDate_(r[7]),
+        statut:           String(r[8]||'Ouvert'),
+        personne:         String(r[9]||''),
+        matricule:        String(r[10]||''),
+        description:      String(r[11]||''),
+        analyse5M:        String(r[12]||''),
+        actions:          String(r[13]||''),
+        declarant:        String(r[14]||''),
+        dateCreation:     fmtDate_(r[15]),
+        docEnr62:         String(r[16]||''),
+        docSafetyAlert:   String(r[17]||''),
+        docRapportEnquete:String(r[18]||'')
+      };
+    });
+    return { success:true, data:data };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function updateIncident(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getIncidentsSheet_();
+    var row = _findIncidentRow_(sh, p.id);
+    if (row < 0) return { success:false, error:'Incident introuvable' };
+    var map = { date:2, heure:3, lieu:4, type:5, gravite:6, responsable:7, delai:8,
+                statut:9, personne:10, matricule:11, description:12, analyse5M:13, actions:14 };
+    Object.keys(map).forEach(function(k) {
+      if (p[k] === undefined || p[k] === null) return;
+      var v = p[k];
+      if ((k==='date'||k==='delai') && v) v = new Date(v);
+      sh.getRange(row, map[k]).setValue(v);
+    });
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function uploadIncidentDoc(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var col = INC_DOC_COLS[p&&p.docType];
+    if (!col) return { success:false, error:'Type de document invalide' };
+    if (!p.file || p.file.length < 10) return { success:false, error:'Fichier manquant' };
+    var sh  = getIncidentsSheet_();
+    var row = _findIncidentRow_(sh, p.id);
+    if (row < 0) return { success:false, error:'Incident introuvable' };
+    var old = String(sh.getRange(row, col).getValue()||'');
+    var url = saveIncidentFileToFolder_(
+      p.file, 'INC-' + p.id + '.' + p.docType + '.' + String(p.fileName||'document'), p.mime);
+    if (!url) return { success:false, error:'Échec de l\'enregistrement du fichier' };
+    sh.getRange(row, col).setValue(url);
+    if (old) _trashDriveFileByUrl_(old);
+    return { success:true, url:url };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+function deleteIncidentDoc(p) {
+  if (!isSessionSuperOrAdmin_(p&&p.token)) return { success:false, error:'Accès refusé' };
+  try {
+    var col = INC_DOC_COLS[p&&p.docType];
+    if (!col) return { success:false, error:'Type de document invalide' };
+    var sh  = getIncidentsSheet_();
+    var row = _findIncidentRow_(sh, p.id);
+    if (row < 0) return { success:false, error:'Incident introuvable' };
+    var old = String(sh.getRange(row, col).getValue()||'');
+    sh.getRange(row, col).setValue('');
+    if (old) _trashDriveFileByUrl_(old);
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
