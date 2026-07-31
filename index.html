@@ -8689,8 +8689,10 @@ function _buildHSEPrintHTML(opts) {
     +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px}'
     +'.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
     +'.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
-    +'.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
-    +'@page{size:A4 portrait;margin:12mm 14mm}'
+    +'.sheet{padding:12mm 14mm}'
+    /* marge de page à 0 : supprime les en-têtes/pieds automatiques du navigateur
+       (date, heure, titre, URL) — les marges sont portées par .sheet */
+    +'@page{size:A4 portrait;margin:0}'
     +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'.type-header{background:#1a1a1a!important;color:#fff!important;page-break-after:avoid}'
     +'.check-table tr{page-break-inside:avoid}'
@@ -8703,6 +8705,7 @@ function _buildHSEPrintHTML(opts) {
   return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
     +'<title>'+esc(opts.title)+' — '+esc(docCode)+'</title><style>'+CSS+'</style></head><body>'
     +toolbarHTML
+    +'<div class="sheet">'
     +'<table class="doc-header"><tr>'
     +'<td class="col-logo">'+logoCell+'</td>'
     +'<td class="col-title"><div class="doc-title">Fiche de contrôle</div>'
@@ -8754,7 +8757,7 @@ function _buildHSEPrintHTML(opts) {
           : '')
         +'</tr></table>';
     })()
-    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Version '+esc(docRev)+' — Créé le '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
+    +'</div>'
     +autoScript
     +'</body></html>';
 }
