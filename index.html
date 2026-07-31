@@ -1540,6 +1540,17 @@ img{max-width:100%;display:block;}
           <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
           <span style="font-size:.75rem;color:var(--t3);white-space:nowrap">Fiche d'inspection</span>
         </div>
+        <!-- Version + date de création (en-tête de la fiche imprimée) -->
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Version</label>
+            <input class="fi" id="pestDocRevInput" value="2" placeholder="2" style="height:34px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date de création</label>
+            <input class="fi" id="pestDocEditionInput" placeholder="12/12/2021" style="height:34px;font-size:.85rem"/>
+          </div>
+        </div>
         <!-- Question griffe prestataire inspection -->
         <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid var(--line)">
           <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
@@ -1650,14 +1661,6 @@ img{max-width:100%;display:block;}
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Nuisibles)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Version</label>
-            <input class="fi" id="pestDocRevInput" value="2" placeholder="2" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
-          </div>
-          <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date de création</label>
-            <input class="fi" id="pestDocEditionInput" placeholder="12/12/2021" style="height:32px;font-size:.82rem"/>
-          </div>
           <div>
             <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
             <input class="fi" type="number" id="pestProchaineMonthsInput" value="3" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
