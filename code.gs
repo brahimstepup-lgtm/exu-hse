@@ -1713,7 +1713,7 @@ function getExtConfig(token) {
     var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
     var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
     var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
-    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '2';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
     return { success:true, data:config, extDocCode:extDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
@@ -1729,7 +1729,7 @@ function saveExtConfig(p) {
     var props = PropertiesService.getScriptProperties();
     props.setProperty('EXTINCTEUR_CONFIG', JSON.stringify(config));
     if (p.docCode)          props.setProperty('EXT_DOC_CODE',          String(p.docCode));
-    if (p.docRev      != null) props.setProperty('EXT_DOC_REV',         String(p.docRev).trim()||'01');
+    if (p.docRev      != null) props.setProperty('EXT_DOC_REV',         String(p.docRev).trim()||'2');
     if (p.docEdition  != null) props.setProperty('EXT_DOC_EDITION',     String(p.docEdition).trim());
     if (p.prochaineMonths != null) props.setProperty('EXT_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||12));
     return { success:true };
@@ -1768,7 +1768,7 @@ function getConfigData(adminKey) {
     var logoUrl                = props.getProperty('HSE_LOGO_URL')         || '';
     var signatureUrl           = props.getProperty('HSE_SIG_URL')          || '';
     var supervisorSignatureUrl = props.getProperty('HSE_SUP_SIG_URL')      || '';
-    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '01';
+    var extDocRev              = props.getProperty('EXT_DOC_REV')          || '2';
     var extDocEdition          = props.getProperty('EXT_DOC_EDITION')      || '';
     var extProchaineMonths     = props.getProperty('EXT_PROCHAINE_MONTHS') || '12';
     return { success:true, extConfig:extConfig, zones:zones, checklists:checklists, riaConfig:riaConfig, extDocCode:extDocCode, riaDocCode:riaDocCode, logoUrl:logoUrl, signatureUrl:signatureUrl, supervisorSignatureUrl:supervisorSignatureUrl, extDocRev:extDocRev, extDocEdition:extDocEdition, extProchaineMonths:extProchaineMonths, sigMap:_buildSigMap_() };
@@ -1837,7 +1837,7 @@ function getPestConfigData(adminKey) {
     var logoUrl                 = props.getProperty('HSE_LOGO_URL')          || '';
     var signatureUrl            = props.getProperty('HSE_SIG_URL')           || '';
     var supervisorSignatureUrl  = props.getProperty('HSE_SUP_SIG_URL')       || '';
-    var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '01';
+    var pestDocRev              = props.getProperty('PEST_DOC_REV')          || '2';
     var pestDocEdition          = props.getProperty('PEST_DOC_EDITION')      || '';
     var pestProchaineMonths     = props.getProperty('PEST_PROCHAINE_MONTHS') || '3';
     var inspPrestaId  = props.getProperty('PEST_INSP_PRESTA_ID')  || '';
@@ -1891,7 +1891,7 @@ function savePestConfig(p) {
   try {
     var props = PropertiesService.getScriptProperties();
     props.setProperty('PEST_CONFIG', JSON.stringify(p.pestConfig||{}));
-    if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'01');
+    if (p.docRev      != null) props.setProperty('PEST_DOC_REV',          String(p.docRev).trim()||'2');
     if (p.docEdition  != null) props.setProperty('PEST_DOC_EDITION',      String(p.docEdition).trim());
     if (p.prochaineMonths != null) props.setProperty('PEST_PROCHAINE_MONTHS', String(parseInt(p.prochaineMonths)||3));
     if (p.inspPrestaId    != null) props.setProperty('PEST_INSP_PRESTA_ID',   String(p.inspPrestaId).trim());
