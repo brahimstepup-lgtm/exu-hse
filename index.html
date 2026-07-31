@@ -1295,12 +1295,12 @@ img{max-width:100%;display:block;}
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Ext. &amp; RIA)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
           <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
-            <input class="fi" id="extDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Version</label>
+            <input class="fi" id="extDocRevInput" value="2" placeholder="2" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
           </div>
           <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
-            <input class="fi" id="extDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date de création</label>
+            <input class="fi" id="extDocEditionInput" placeholder="12/12/2021" style="height:32px;font-size:.82rem"/>
           </div>
           <div>
             <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
@@ -1540,6 +1540,17 @@ img{max-width:100%;display:block;}
           <input class="fi" id="pestDocCodeInput" value="ENR-HSE 7" placeholder="ex. : ENR-HSE 7" style="height:34px;font-size:.85rem;flex:1;letter-spacing:.5px;font-weight:600"/>
           <span style="font-size:.75rem;color:var(--t3);white-space:nowrap">Fiche d'inspection</span>
         </div>
+        <!-- Version + date de création (en-tête de la fiche imprimée) -->
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Version</label>
+            <input class="fi" id="pestDocRevInput" value="2" placeholder="2" style="height:34px;font-size:.85rem;font-weight:700;text-align:center"/>
+          </div>
+          <div>
+            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date de création</label>
+            <input class="fi" id="pestDocEditionInput" placeholder="12/12/2021" style="height:34px;font-size:.85rem"/>
+          </div>
+        </div>
         <!-- Question griffe prestataire inspection -->
         <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid var(--line)">
           <span style="font-size:.8rem;color:var(--t2);flex:1">Besoin d'une griffe prestataire ?</span>
@@ -1650,14 +1661,6 @@ img{max-width:100%;display:block;}
       <div style="background:var(--ink2);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line)">
         <div style="font-size:.82rem;font-weight:700;color:var(--t1);margin-bottom:8px">🖨 Paramètres d'impression (Nuisibles)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Révision (Rév.)</label>
-            <input class="fi" id="pestDocRevInput" value="01" placeholder="01" style="height:32px;font-size:.85rem;font-weight:700;text-align:center"/>
-          </div>
-          <div>
-            <label class="fl" style="font-size:.76rem;margin-bottom:3px">Date d'édition (Éd.)</label>
-            <input class="fi" id="pestDocEditionInput" placeholder="JJ/MM/AAAA (auto)" style="height:32px;font-size:.82rem"/>
-          </div>
           <div>
             <label class="fl" style="font-size:.76rem;margin-bottom:3px">Prochaine insp. (mois)</label>
             <input class="fi" type="number" id="pestProchaineMonthsInput" value="3" min="1" max="60" style="height:32px;font-size:.85rem;text-align:center"/>
@@ -5855,7 +5858,7 @@ function openConfigExt() {
       _configuredZones       = r.zones||[];
       _extConfig             = r.extConfig||[];
       _extDocCode            = r.extDocCode            || 'ENR-HSE 1';
-      _extDocRev             = r.extDocRev             || '01';
+      _extDocRev             = r.extDocRev             || '2';
       _extDocEdition         = r.extDocEdition         || '';
       _extProchaineMonths    = parseInt(r.extProchaineMonths)  || 12;
       _hseLogoUrl            = r.logoUrl               || '';
@@ -5973,7 +5976,7 @@ function saveExtConfigLocal() {
   var dcEl = document.getElementById('extDocCodeInput');
   _extDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 1';
   var rvEl = document.getElementById('extDocRevInput');
-  _extDocRev = (rvEl&&rvEl.value.trim()) || '01';
+  _extDocRev = (rvEl&&rvEl.value.trim()) || '2';
   var edEl = document.getElementById('extDocEditionInput');
   _extDocEdition = (edEl&&edEl.value.trim()) || '';
   var pmEl = document.getElementById('extProchaineMonthsInput');
@@ -5994,10 +5997,10 @@ function saveExtConfigLocal() {
 ══════════════════════════════════════════ */
 var _extDocCode           = 'ENR-HSE 1';
 var _riaDocCode           = 'ENR-HSE 2';
-var _extDocRev            = '01';
+var _extDocRev            = '2';
 var _extDocEdition        = '';
 var _extProchaineMonths   = 12;
-var _pestDocRev           = '01';
+var _pestDocRev           = '2';
 var _pestDocEdition       = '';
 var _pestProchaineMonths  = 3;
 var _hseLogoUrl               = '';
@@ -7714,7 +7717,7 @@ function openConfigPest() {
       if (!r||!r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
       _pestConfig             = r.pestConfig || {};
       _pestDocCode            = (_pestConfig.docCode)  || 'ENR-HSE 7';
-      _pestDocRev             = r.pestDocRev           || '01';
+      _pestDocRev             = r.pestDocRev           || '2';
       _pestDocEdition         = r.pestDocEdition       || '';
       _pestProchaineMonths    = parseInt(r.pestProchaineMonths) || 3;
       _hseLogoUrl             = r.logoUrl              || _hseLogoUrl;
@@ -7868,7 +7871,7 @@ function saveFullPestConfig() {
   var dcEl = document.getElementById('pestDocCodeInput');
   _pestDocCode = (dcEl&&dcEl.value.trim()) || 'ENR-HSE 7';
   var rvEl2 = document.getElementById('pestDocRevInput');
-  _pestDocRev = (rvEl2&&rvEl2.value.trim()) || '01';
+  _pestDocRev = (rvEl2&&rvEl2.value.trim()) || '2';
   var edEl2 = document.getElementById('pestDocEditionInput');
   _pestDocEdition = (edEl2&&edEl2.value.trim()) || '';
   var pmEl2 = document.getElementById('pestProchaineMonthsInput');
@@ -8580,6 +8583,9 @@ function _fmtDate(s) {
   return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s;
 }
 
+/* Date de création du document qualité (remplace l'ancienne date d'édition auto) */
+var DOC_CREATION_DATE = '12/12/2021';
+
 /* ──────────────────────────────────────────────────────────────────
    GÉNÉRATEUR HTML COMMUN — ISO 9001 (Extincteurs + RIA + Nuisibles)
    opts.sections = [{sectionTitle, prefix, items:[{num,zone,emplacement,checks,statut,note}], checklist:[{key,label}]}]
@@ -8593,11 +8599,8 @@ function _buildHSEPrintHTML(opts) {
     || _userSigMap[opts.superviseur]
     || _userSigMap[S_AUTH&&S_AUTH.matricule]
     || '';
-  var now         = new Date();
-  var _autoDate   = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var editionDate = _autoDate;
-  var docRev      = opts.docRev      || '01';
-  var docEdition  = opts.docEdition  || _autoDate;
+  var docRev      = opts.docRev      || '2';
+  var docEdition  = opts.docEdition  || DOC_CREATION_DATE;
 
   var typeTables = '';
   (opts.sections||[]).forEach(function(sec) {
@@ -8660,7 +8663,8 @@ function _buildHSEPrintHTML(opts) {
     +'.col-ref{width:24%;font-size:8pt;padding:4px 8px!important}'
     +'.doc-title{font-size:11pt;font-weight:bold;text-transform:uppercase;line-height:1.3}'
     +'.doc-subtitle{font-size:8.5pt;margin-top:3px}'
-    +'.ref-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
+    +'.ref-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 6px;border-bottom:1px solid #ddd;padding:2px 0;font-size:7.5pt}'
+    +'.ref-row>span{white-space:nowrap}'
     +'.ref-row:last-child{border-bottom:none}.ref-label{font-weight:bold}'
     +'.info-table{width:100%;border-collapse:collapse;border:1px solid #000;border-top:none;margin-bottom:10px}'
     +'.info-table td{border-right:1px solid #ccc;padding:5px 8px;vertical-align:middle}'
@@ -8688,8 +8692,10 @@ function _buildHSEPrintHTML(opts) {
     +'.sig-field-label{font-size:7pt;color:#666;margin-bottom:1px}'
     +'.sig-line{border-bottom:1px dotted #aaa;height:14px;margin-bottom:5px}'
     +'.sig-line-lg{border-bottom:1px dotted #aaa;height:28px;margin-bottom:5px}'
-    +'.footer{text-align:center;font-size:7pt;color:#777;border-top:1px solid #bbb;padding-top:4px;margin-top:6px}'
-    +'@page{size:A4 portrait;margin:12mm 14mm}'
+    +'.sheet{padding:12mm 14mm}'
+    /* marge de page à 0 : supprime les en-têtes/pieds automatiques du navigateur
+       (date, heure, titre, URL) — les marges sont portées par .sheet */
+    +'@page{size:A4 portrait;margin:0}'
     +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'.type-header{background:#1a1a1a!important;color:#fff!important;page-break-after:avoid}'
     +'.check-table tr{page-break-inside:avoid}'
@@ -8702,6 +8708,7 @@ function _buildHSEPrintHTML(opts) {
   return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
     +'<title>'+esc(opts.title)+' — '+esc(docCode)+'</title><style>'+CSS+'</style></head><body>'
     +toolbarHTML
+    +'<div class="sheet">'
     +'<table class="doc-header"><tr>'
     +'<td class="col-logo">'+logoCell+'</td>'
     +'<td class="col-title"><div class="doc-title">Fiche de contrôle</div>'
@@ -8709,9 +8716,8 @@ function _buildHSEPrintHTML(opts) {
     +'<div class="doc-subtitle" style="font-size:8pt;margin-top:3px;font-weight:600">'+esc(opts.title)+etatBadge+'</div></td>'
     +'<td class="col-ref">'
     +'<div class="ref-row"><span class="ref-label">Réf&nbsp;:</span><span style="font-weight:700;font-size:8.5pt">'+esc(docCode)+'</span></div>'
-    +'<div class="ref-row"><span class="ref-label">Rév&nbsp;:</span><span>'+esc(docRev)+'</span></div>'
-    +'<div class="ref-row"><span class="ref-label">Page&nbsp;:</span><span>1/1</span></div>'
-    +'<div class="ref-row" style="border:none"><span class="ref-label">Éd.&nbsp;:</span><span>'+esc(docEdition)+'</span></div>'
+    +'<div class="ref-row"><span class="ref-label">Version&nbsp;:</span><span>'+esc(docRev)+'</span></div>'
+    +'<div class="ref-row" style="border:none"><span class="ref-label">Date de création&nbsp;:</span><span>'+esc(docEdition)+'</span></div>'
     +'</td></tr></table>'
     +'<table class="info-table"><tr>'
     +'<td style="width:28%"><span class="info-label">Date d\'inspection</span><span class="info-value">'+esc(opts.date||'')+'</span></td>'
@@ -8754,7 +8760,7 @@ function _buildHSEPrintHTML(opts) {
           : '')
         +'</tr></table>';
     })()
-    +'<div class="footer">Document qualité interne — '+esc(docCode)+' — Éd. '+esc(docEdition)+' — Conforme aux exigences ISO 9001:2015</div>'
+    +'</div>'
     +autoScript
     +'</body></html>';
 }
