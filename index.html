@@ -10196,7 +10196,8 @@ function _buildGriffeTable13(rec, today) {
   var hseSigUrl  = (supNom || supMat)
     ? (_userSigMap[supMat] || _userSigMap[supNom] || '')
     : (_userSigMap[S_AUTH&&S_AUTH.matricule] || _hseSignatureDataUrl || _hseSignatureUrl || '');
-  var nom        = d.visa || supNom || (S_AUTH&&S_AUTH.nom) || '';
+  // Nom affiché : le superviseur sélectionné en priorité, sinon le visa saisi
+  var nom        = supNom || d.visa || (S_AUTH&&(S_AUTH.name||S_AUTH.nom)) || '';
   var prestaNom  = d.prestataireNom    || _enr13PrestataireSigNom || '';
   var prestaSig  = d.prestataireSigUrl || _enr13PrestataireSigUrl || '';
   var hseSigCell = hseSigUrl
