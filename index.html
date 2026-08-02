@@ -1058,6 +1058,7 @@ img{max-width:100%;display:block;}
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px">
         <button class="gsort-tab on" id="nuisTab_inspections" onclick="switchNuisiblesTab('inspections')">🔍 Inspections</button>
         <button class="gsort-tab" id="nuisTab_rapports" onclick="switchNuisiblesTab('rapports')" style="color:#9b59b6">🚨 Rapports présence</button>
+        <button class="gsort-tab" id="nuisTab_enr13" onclick="switchNuisiblesTab('enr13')" style="color:#27ae60">📋 ENR-13 Exécutions</button>
       </div>
       <!-- Filtres inspections (masqués quand onglet rapports) -->
       <div id="nuisInspFilters" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -2615,10 +2616,11 @@ img{max-width:100%;display:block;}
   <div class="sheet" style="max-height:92vh">
     <div class="sh-handle"></div>
     <div class="sh-head">
-      <div class="sh-title">📋 ENR-HSE-13 — Exécution Lutte Nuisibles</div>
+      <div class="sh-title" id="enr13SheetTitle">📋 ENR-HSE-13 — Exécution Lutte Nuisibles</div>
       <button class="sh-x" onclick="closeSheet('enr13ExecOv')">✕</button>
     </div>
     <div class="sh-body" style="overflow-y:auto;padding-bottom:16px">
+      <div id="enr13EditBanner" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(230,126,34,.12);border:1px solid rgba(230,126,34,.35);color:#e67e22;font-size:.8rem;font-weight:600"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <div>
           <label class="fl">Date</label>
@@ -2627,6 +2629,16 @@ img{max-width:100%;display:block;}
         <div>
           <label class="fl">Site</label>
           <input class="fi" id="enr13_site" placeholder="ex : SOBCO 3" style="height:38px"/>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label class="fl">Superviseur HSE</label>
+        <select class="fi" id="enr13_superviseur" style="height:38px" onchange="_enr13OnSupervisorChange()">
+          <option value="">—</option>
+        </select>
+        <div id="enr13SupGriffePreview" style="display:none;margin-top:8px">
+          <div style="font-size:.72rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Griffe du superviseur</div>
+          <img id="enr13SupGriffeImg" src="" style="max-height:55px;max-width:180px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
         </div>
       </div>
       <div style="overflow-x:auto;margin-bottom:12px">
@@ -2721,9 +2733,17 @@ img{max-width:100%;display:block;}
         <label class="fl">Visa de L'HSE</label>
         <input class="fi" id="enr13_visa" placeholder="Nom et prénom du responsable HSE" style="height:38px"/>
       </div>
+      <!-- Griffe du prestataire (affichée pour information — configurée dans Prestataires & griffes) -->
+      <div id="enr13PrestaBlock" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(125,60,152,.08);border:1px solid rgba(125,60,152,.25)">
+        <div style="font-size:.75rem;font-weight:700;color:#9b59b6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏢 Prestataire / Intervenant</div>
+        <div id="enr13PrestaNom" style="font-size:.86rem;color:var(--t1);font-weight:600;margin-bottom:6px">—</div>
+        <img id="enr13PrestaGriffeView" src="" style="display:none;max-height:60px;max-width:200px;object-fit:contain;border:1px solid #555;border-radius:4px;padding:3px;background:#fff"/>
+        <div id="enr13PrestaGriffeEmpty" style="font-size:.76rem;color:var(--t3)">Aucune griffe prestataire configurée.</div>
+      </div>
     </div>
     <div class="sh-foot">
       <button class="btn btn-g" onclick="closeSheet('enr13ExecOv')">Annuler</button>
+      <button class="btn" id="enr13SaveBtn" onclick="saveEnr13Exec()" style="background:#2980b9;color:#fff;gap:4px">💾 Enregistrer</button>
       <button class="btn" onclick="printEnr13Exec()" style="background:#27ae60;color:#fff;gap:4px">🖨 Imprimer</button>
     </div>
   </div>
@@ -9965,7 +9985,7 @@ var _nuisiblesCurrentTab = 'inspections';
 
 function switchNuisiblesTab(tab) {
   _nuisiblesCurrentTab = tab;
-  ['inspections','rapports'].forEach(function(t) {
+  ['inspections','rapports','enr13'].forEach(function(t) {
     var btn = document.getElementById('nuisTab_'+t);
     if (btn) btn.className = 'gsort-tab'+(t===tab?' on':'');
   });
@@ -9975,8 +9995,9 @@ function switchNuisiblesTab(tab) {
   // Boutons type inspection
   var typeBtnsRow = document.getElementById('nuisInspTypeRow');
   if (typeBtnsRow) typeBtnsRow.style.display = tab==='inspections' ? '' : 'none';
-  if (tab === 'inspections') renderNuisibles();
-  else renderRapportNuisibles();
+  if (tab === 'inspections')    renderNuisibles();
+  else if (tab === 'enr13')     renderEnr13Execs();
+  else                          renderRapportNuisibles();
 }
 
 function renderNuisibles() {
@@ -10167,17 +10188,24 @@ var _enr15PrestataireSigNom = '';
 /* ══════════════════════════════════════════
    HELPERS GRIFFES ENR-13 / ENR-15
 ══════════════════════════════════════════ */
-function _buildGriffeTable13(visaText, today) {
-  var hseSigUrl  = (_userSigMap[S_AUTH&&S_AUTH.matricule]) || _hseSignatureDataUrl || _hseSignatureUrl || '';
-  var nom        = visaText || (S_AUTH&&S_AUTH.nom) || '';
+function _buildGriffeTable13(rec, today) {
+  var d          = rec || {};
+  var supNom     = d.superviseurNom || '';
+  var supMat     = d.superviseurMatricule || '';
+  // Griffe du superviseur sélectionné ; à défaut de sélection, celle de l'utilisateur connecté
+  var hseSigUrl  = (supNom || supMat)
+    ? (_userSigMap[supMat] || _userSigMap[supNom] || '')
+    : (_userSigMap[S_AUTH&&S_AUTH.matricule] || _hseSignatureDataUrl || _hseSignatureUrl || '');
+  var nom        = d.visa || supNom || (S_AUTH&&S_AUTH.nom) || '';
+  var prestaNom  = d.prestataireNom    || _enr13PrestataireSigNom || '';
+  var prestaSig  = d.prestataireSigUrl || _enr13PrestataireSigUrl || '';
   var hseSigCell = hseSigUrl
     ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
       +'<img src="'+hseSigUrl+'" alt="Griffe HSE" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(-2deg);z-index:10;pointer-events:none;"/></div>'
     : '<div class="sig-line-lg"></div>';
-  var showPresta = !!_enr13PrestataireSigUrl;
-  var prestaSigCell = showPresta
+  var prestaSigCell = prestaSig
     ? '<div style="position:relative;height:58px;overflow:visible;margin-bottom:-14px">'
-      +'<img src="'+_enr13PrestataireSigUrl+'" alt="Griffe prestataire" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
+      +'<img src="'+prestaSig+'" alt="Griffe prestataire" style="position:absolute;top:-12px;left:-6px;width:190px;max-height:74px;object-fit:contain;transform:rotate(1deg);z-index:10;pointer-events:none;"/></div>'
     : '<div class="sig-line-lg"></div>';
   return '<table class="sig-table"><tr>'
     +'<td><div class="sig-title">Responsable HSE / Visa</div>'
@@ -10190,7 +10218,7 @@ function _buildGriffeTable13(visaText, today) {
     +'</td>'
     +'<td><div class="sig-title">Prestataire / Intervenant</div>'
     +'<div class="sig-lbl">Nom et prénom :</div>'
-    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(_enr13PrestataireSigNom||'')+'</span></div>'
+    +'<div class="sig-line"><span style="font-size:8.5pt;font-weight:600">'+esc(prestaNom)+'</span></div>'
     +'<div class="sig-lbl">Signature / Griffe :</div>'
     +prestaSigCell
     +'<div class="sig-lbl">Date :</div>'
@@ -10297,40 +10325,318 @@ function saveEnr13Products() {
 /* ══════════════════════════════════════════
    ENR-HSE-13 — Exécution de la Lutte contre les Nuisibles
 ══════════════════════════════════════════ */
-function openEnr13Exec() {
-  var d = new Date(); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0');
-  var el = document.getElementById('enr13_date');
-  if (el && !el.value) el.value = d.getFullYear()+'-'+mm+'-'+dd;
-  // Si la liste est vide, charger depuis le backend
-  if (!_enr13Products.length) {
-    google.script.run
-      .withSuccessHandler(function(r){
-        if (r&&r.success&&r.products) { _enr13Products = r.products; }
-        _refreshEnr13ProductSelects();
-      })
-      .withFailureHandler(function(){})
-      .getEnr13Products(S.adminKey);
-  } else {
-    _refreshEnr13ProductSelects();
-  }
-  openSheet('enr13ExecOv');
+/* ── État des fiches ENR-13 enregistrées ─────── */
+var _enr13Records       = [];
+var _enr13EditId        = 0;
+var _enr13Supervisors   = [];
+var _enr13PrestataireId = '';
+var ENR13_ROWS  = ['produit','lot','dilution','mode'];
+var ENR13_ZONES = ['zmp','zn1','zn0','znm1','zext','zvest'];
+
+function _enr13FieldIds() {
+  var ids = [];
+  ENR13_ROWS.concat(ENR13_ZONES).forEach(function(k) {
+    ['r','v','g','o'].forEach(function(c) { ids.push('enr13_'+k+'_'+c); });
+  });
+  return ids;
 }
 
 function _gv13(id) { var el=document.getElementById(id); return el?(el.type==='checkbox'?el.checked:el.value.trim()):''; }
 
-function printEnr13Exec() {
-  var date   = _gv13('enr13_date');
-  var site   = _gv13('enr13_site');
-  var visa   = _gv13('enr13_visa');
+function _sv13(id, val) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (el.type === 'checkbox') { el.checked = (val===true||val==='true'); return; }
+  var v = (val==null ? '' : String(val));
+  el.value = v;
+  // Produit retiré de la configuration : on garde la valeur enregistrée
+  if (el.tagName === 'SELECT' && v && el.value !== v) {
+    var opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    el.appendChild(opt);
+    el.value = v;
+  }
+}
+
+/* ── Superviseur ─────────────────────────────── */
+function _enr13SupMatricule(nom) {
+  var mat = '';
+  _enr13Supervisors.forEach(function(s){ if (s.nom === nom) mat = s.matricule; });
+  return mat;
+}
+
+function _enr13SupSigUrl(nom, mat) {
+  return _userSigMap[mat] || _userSigMap[nom] || '';
+}
+
+function _enr13FillSupervisors(currentNom) {
+  var sel = document.getElementById('enr13_superviseur');
+  if (!sel) return;
+  var known = false;
+  var opts  = '<option value="">— Sélectionner —</option>';
+  _enr13Supervisors.forEach(function(s) {
+    if (s.nom === currentNom) known = true;
+    opts += '<option value="'+esc(s.nom)+'">'+esc(s.nom)+'</option>';
+  });
+  // Superviseur d'une fiche ancienne, absent de la liste actuelle
+  if (currentNom && !known) opts += '<option value="'+esc(currentNom)+'">'+esc(currentNom)+'</option>';
+  sel.innerHTML = opts;
+  sel.value = currentNom || '';
+  _enr13OnSupervisorChange();
+}
+
+function _enr13OnSupervisorChange() {
+  var sel = document.getElementById('enr13_superviseur');
+  var nom = sel ? sel.value : '';
+  var url = _enr13SupSigUrl(nom, _enr13SupMatricule(nom));
+  var prev = document.getElementById('enr13SupGriffePreview');
+  var img  = document.getElementById('enr13SupGriffeImg');
+  if (prev && img) {
+    if (url) { img.src = url; prev.style.display = ''; }
+    else     { img.src = ''; prev.style.display = 'none'; }
+  }
+  var visa = document.getElementById('enr13_visa');
+  if (visa && nom && !visa.value.trim()) visa.value = nom;
+}
+
+/* ── Griffe prestataire affichée dans le formulaire ── */
+function _enr13RenderPresta() {
+  var nomEl = document.getElementById('enr13PrestaNom');
+  var img   = document.getElementById('enr13PrestaGriffeView');
+  var empty = document.getElementById('enr13PrestaGriffeEmpty');
+  if (nomEl) nomEl.textContent = _enr13PrestataireSigNom || '—';
+  if (!img || !empty) return;
+  if (_enr13PrestataireSigUrl) {
+    img.src = _enr13PrestataireSigUrl; img.style.display = ''; empty.style.display = 'none';
+  } else {
+    img.src = ''; img.style.display = 'none'; empty.style.display = '';
+  }
+}
+
+/* ── Chargement config (produits, prestataire, superviseurs, griffes) ── */
+function _enr13LoadConfig(cb) {
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.success) {
+        _enr13Products          = r.products          || [];
+        _enr13Supervisors       = r.superviseurs      || [];
+        _enr13PrestataireId     = r.prestataireId     || '';
+        _enr13PrestataireSigNom = r.prestataireNom    || '';
+        _enr13PrestataireSigUrl = r.prestataireSigUrl || '';
+        if (r.logoUrl) _hseLogoUrl = r.logoUrl;
+        if (r.sigMap) { Object.keys(r.sigMap).forEach(function(k){ _userSigMap[k] = r.sigMap[k]; }); }
+      }
+      if (cb) cb();
+    })
+    .withFailureHandler(function(){ if (cb) cb(); })
+    .getEnr13FormConfig({ token: S.adminKey, adminKey: S.adminKey });
+}
+
+/* ── Ouverture / édition du formulaire ───────── */
+function _enr13SetMode(isEdit, id) {
+  var btn    = document.getElementById('enr13SaveBtn');
+  var banner = document.getElementById('enr13EditBanner');
+  var title  = document.getElementById('enr13SheetTitle');
+  if (btn)   btn.innerHTML = isEdit ? '💾 Mettre à jour' : '💾 Enregistrer';
+  if (title) title.textContent = isEdit
+    ? '📋 ENR-HSE-13 — Fiche #'+id
+    : '📋 ENR-HSE-13 — Exécution Lutte Nuisibles';
+  if (banner) {
+    banner.style.display = isEdit ? '' : 'none';
+    banner.textContent   = isEdit ? '✏ Modification de la fiche enregistrée #'+id : '';
+  }
+}
+
+function _enr13ResetForm() {
+  var d = new Date();
+  var dd = String(d.getDate()).padStart(2,'0'), mm = String(d.getMonth()+1).padStart(2,'0');
+  _sv13('enr13_date', d.getFullYear()+'-'+mm+'-'+dd);
+  _sv13('enr13_site', '');
+  _sv13('enr13_visa', '');
+  _enr13FieldIds().forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.type === 'checkbox') el.checked = false;
+    else _sv13(id, '');
+  });
+}
+
+function openEnr13Exec() {
+  _enr13EditId = 0;
+  _enr13ResetForm();
+  _enr13SetMode(false, 0);
+  _enr13LoadConfig(function() {
+    _refreshEnr13ProductSelects();
+    _enr13RenderPresta();
+    _enr13FillSupervisors((S_AUTH && (S_AUTH.name || S_AUTH.matricule)) || '');
+  });
+  openSheet('enr13ExecOv');
+}
+
+function openEnr13Edit(idx) {
+  var c = _enr13Records[idx];
+  if (!c) return;
+  _enr13ResetForm();
+  _enr13EditId = c.id;
+  _enr13SetMode(true, c.id);
+  _enr13LoadConfig(function() {
+    _refreshEnr13ProductSelects();
+    // La griffe prestataire enregistrée avec la fiche prime sur la config courante
+    if (c.prestataireNom || c.prestataireSigUrl) {
+      _enr13PrestataireId     = c.prestataireId     || '';
+      _enr13PrestataireSigNom = c.prestataireNom    || '';
+      _enr13PrestataireSigUrl = c.prestataireSigUrl || '';
+    }
+    _enr13RenderPresta();
+    _sv13('enr13_date', c.date);
+    _sv13('enr13_site', c.site);
+    _sv13('enr13_visa', c.visa);
+    var f = c.fields || {};
+    _enr13FieldIds().forEach(function(id){ _sv13(id, f[id]); });
+    _enr13FillSupervisors(c.superviseurNom || '');
+  });
+  openSheet('enr13ExecOv');
+}
+
+/* ── Collecte + enregistrement ───────────────── */
+function _enr13Collect() {
+  var fields = {};
+  _enr13FieldIds().forEach(function(id){ fields[id] = _gv13(id); });
+  var sel = document.getElementById('enr13_superviseur');
+  var nom = sel ? sel.value.trim() : '';
+  return {
+    id:                   _enr13EditId,
+    date:                 _gv13('enr13_date'),
+    site:                 _gv13('enr13_site'),
+    visa:                 _gv13('enr13_visa'),
+    superviseurNom:       nom,
+    superviseurMatricule: _enr13SupMatricule(nom),
+    prestataireId:        _enr13PrestataireId,
+    prestataireNom:       _enr13PrestataireSigNom,
+    prestataireSigUrl:    _enr13PrestataireSigUrl,
+    fields:               fields
+  };
+}
+
+function saveEnr13Exec() {
+  var d = _enr13Collect();
+  if (!d.date)           { toast('La date est requise','err'); return; }
+  if (!d.superviseurNom) { toast('Sélectionnez le superviseur HSE','err'); return; }
+  var isEdit = !!_enr13EditId;
+  showLoader(isEdit ? 'Mise à jour…' : 'Enregistrement…');
+  var payload = {
+    token:                S.adminKey,
+    adminKey:             S.adminKey,
+    id:                   _enr13EditId,
+    date:                 d.date,
+    site:                 d.site,
+    visa:                 d.visa,
+    superviseurNom:       d.superviseurNom,
+    superviseurMatricule: d.superviseurMatricule,
+    prestataireId:        d.prestataireId,
+    prestataireNom:       d.prestataireNom,
+    prestataireSigUrl:    d.prestataireSigUrl,
+    fields:               d.fields
+  };
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      _enr13EditId = r.id || _enr13EditId;
+      _enr13SetMode(true, _enr13EditId);
+      toast(isEdit ? '✓ Fiche ENR-13 mise à jour' : '✅ Fiche ENR-13 enregistrée (#'+_enr13EditId+')','ok');
+      if (_nuisiblesCurrentTab === 'enr13') renderEnr13Execs();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    [isEdit ? 'updateEnr13Exec' : 'saveEnr13Exec'](payload);
+}
+
+/* ── Liste des fiches enregistrées ───────────── */
+function renderEnr13Execs() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body) return;
+  body.innerHTML = '<div style="color:var(--t3);font-size:.85rem;padding:20px 0">Chargement…</div>';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r || !r.success) { body.innerHTML = '<div style="color:red">'+(r&&r.error||'Erreur')+'</div>'; return; }
+      _enr13Records = r.data || [];
+      // Griffes (superviseurs) pour l'impression depuis la liste
+      _enr13LoadConfig(function(){ _renderEnr13ExecList(); });
+      _renderEnr13ExecList();
+    })
+    .withFailureHandler(function(e){ body.innerHTML = '<div style="color:red">'+e.message+'</div>'; })
+    .getEnr13Execs({ token: S.adminKey, adminKey: S.adminKey });
+}
+
+function _renderEnr13ExecList() {
+  var body = document.getElementById('nuisiblesBody');
+  if (!body || _nuisiblesCurrentTab !== 'enr13') return;
+  if (!_enr13Records.length) {
+    body.innerHTML = '<div class="hse-empty"><div class="hse-empty-ico">📋</div><div>Aucune fiche ENR-13 enregistrée.</div>'
+      + '<div style="margin-top:8px;font-size:.8rem">Cliquez sur « ENR-13 Exécution » pour créer une fiche.</div></div>';
+    return;
+  }
+  body.innerHTML = _enr13Records.map(function(c,i) {
+    var f = c.fields || {};
+    var produits = ['enr13_produit_r','enr13_produit_v','enr13_produit_g']
+      .map(function(k){ return f[k]||''; }).filter(function(x){ return x; }).join(' · ');
+    var zones = ENR13_ZONES.filter(function(z) {
+      return f['enr13_'+z+'_r']===true || f['enr13_'+z+'_v']===true || f['enr13_'+z+'_g']===true;
+    }).length;
+    return '<div class="hse-card">'
+      + '<div class="hse-card-header">'
+      + '<div><div class="hse-card-title">📋 ENR-13 #'+esc(String(c.id))+(c.site?' — '+esc(c.site):'')+'</div>'
+      + '<div class="hse-card-meta"><span>📅 '+esc(c.date||'')+'</span>'
+      + '<span>🦺 '+esc(c.superviseurNom||'—')+'</span>'
+      + (c.prestataireNom?'<span>🏢 '+esc(c.prestataireNom)+'</span>':'')+'</div></div>'
+      + '<span class="hse-card-badge badge-ok">'+zones+' zone'+(zones>1?'s':'')+'</span>'
+      + '</div>'
+      + (produits?'<div style="font-size:.8rem;color:var(--t2);margin-top:6px;line-height:1.4">🧴 '+esc(produits)+'</div>':'')
+      + (c.dateModification?'<div style="font-size:.75rem;color:var(--t3);margin-top:4px">✏ Modifiée le '+esc(c.dateModification)+'</div>':'')
+      + '<div style="display:flex;gap:8px;margin-top:10px">'
+      + '<button class="btn btn-g" onclick="openEnr13Edit('+i+')" style="flex:1;font-size:.78rem;height:32px">✏ Modifier</button>'
+      + '<button class="btn btn-g" onclick="printEnr13Record('+i+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      + (isAdmin()?'<button class="btn" onclick="deleteEnr13Record('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:var(--rs)" title="Supprimer">🗑</button>':'')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function deleteEnr13Record(idx) {
+  var c = _enr13Records[idx];
+  if (!c) return;
+  if (!confirm('Supprimer la fiche ENR-13 #'+c.id+' ?')) return;
+  showLoader('Suppression…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (r && r.success) { toast('Fiche supprimée','ok'); renderEnr13Execs(); }
+      else toast('Erreur: '+(r&&r.error||'?'),'err');
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .deleteEnr13Exec({ adminKey:S.adminKey, id:c.id });
+}
+
+function printEnr13Record(idx) {
+  var c = _enr13Records[idx];
+  if (c) _printEnr13(c);
+}
+
+function printEnr13Exec() { _printEnr13(_enr13Collect()); }
+
+function _printEnr13(rec) {
+  var d      = rec || {};
+  var fields = d.fields || {};
+  var date   = d.date || '';
+  var site   = d.site || '';
   var logoUrl = _hseLogoDataUrl || _hseLogoUrl || '';
   var now = new Date(); var today = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var fmtDate = date ? (function(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];})(date) : '';
+  var fmtDate = date ? (function(s){var p=String(s).split('-');return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):String(s);})(date) : '';
 
   function row13(label, ids, isZone) {
-    var cols = ['r','v','g','o'];
     var html = '<tr><td class="rl">'+(isZone?'<span style="padding-left:10px">':'')+(label)+(isZone?'</span>':'')+'</td>';
     ids.forEach(function(id,i){
-      var val = _gv13(id);
+      var val = fields[id];
+      if (val === undefined || val === null) val = '';
       if (i < 3 && isZone) {
         html += '<td class="tc">'+(val?'✓':'')+'</td>';
       } else {
@@ -10389,7 +10695,8 @@ function printEnr13Exec() {
     +'<span class="mk">Date</span><span class="mv">21/11/2021</span>'
     +'<span class="mk">Version</span><span class="mv">01</span></div>'
     +'</div>'
-    +'<div class="meta-line"><div>Date : <span>'+esc(fmtDate||'___________')+'</span></div><div>Site : <span>'+esc(site||'___________')+'</span></div></div>'
+    +'<div class="meta-line"><div>Date : <span>'+esc(fmtDate||'___________')+'</span></div><div>Site : <span>'+esc(site||'___________')+'</span></div>'
+    +(d.superviseurNom?'<div>Superviseur : <span>'+esc(d.superviseurNom)+'</span></div>':'')+'</div>'
     +'<table class="main">'
     +'<thead><tr>'
     +'<th style="width:30%"></th>'
@@ -10406,7 +10713,7 @@ function printEnr13Exec() {
     +'<tr><td class="zone-hdr" colspan="5" style="border:1px solid #555;padding:4px 8px">Zones traitées</td></tr>'
     + zoneRows
     +'</tbody></table>'
-    + _buildGriffeTable13(visa, today)
+    + _buildGriffeTable13(d, today)
     +'<div class="footer">ENR-HSE-13 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
     +'<script>window.onload=function(){window.print();}<\/script>'
     +'</body></html>';

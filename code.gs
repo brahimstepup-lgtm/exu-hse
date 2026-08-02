@@ -1885,6 +1885,155 @@ function saveEnr13Products(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ENR-HSE-13 — ENREGISTREMENTS D'EXÉCUTION DE LA LUTTE
+//   Feuille : ENR13_Executions
+//   0:ID  1:Date  2:Site  3:MatriculeSuperviseur  4:NomSuperviseur
+//   5:VisaHSE  6:IDPrestataire  7:NomPrestataire  8:GriffePrestataire
+//   9:DonnéesJSON  10:DateCréation  11:DateModification
+// ══════════════════════════════════════════════════════════════════
+function getEnr13ExecSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('ENR13_Executions');
+  if (!sh) {
+    sh = ss.insertSheet('ENR13_Executions');
+    sh.appendRow([
+      'ID','Date','Site','Matricule Superviseur','Nom Superviseur','Visa HSE',
+      'ID Prestataire','Nom Prestataire','Griffe Prestataire','Données JSON',
+      'Date Création','Date Modification'
+    ]);
+    sh.getRange(1,1,1,12).setFontWeight('bold').setBackground('#27ae60').setFontColor('#ffffff');
+  }
+  return sh;
+}
+
+// Le front envoie le jeton de session tantôt sous token, tantôt sous adminKey
+function _enr13Token_(p) { return p && (p.token || p.adminKey); }
+
+function _findEnr13Row_(sh, id) {
+  var lr = sh.getLastRow();
+  if (lr < 2) return -1;
+  var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+  for (var i=0; i<ids.length; i++) {
+    if (String(ids[i][0]) === String(id)) return i+2;
+  }
+  return -1;
+}
+
+// ── Enregistrer une exécution ENR-13 ───────────────────────────
+function saveEnr13Exec(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess   = verifySession_(tok);
+    var sh     = getEnr13ExecSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.site||''),
+      String(p.superviseurMatricule||(sess&&sess.matricule)||''),
+      String(p.superviseurNom||(sess&&sess.matricule)||''),
+      String(p.visa||''),
+      String(p.prestataireId||''),
+      String(p.prestataireNom||''),
+      String(p.prestataireSigUrl||''),
+      JSON.stringify(p.fields||{}),
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Modifier une exécution ENR-13 (superviseur ou admin) ───────
+function updateEnr13Exec(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr13ExecSheet_();
+    var row = _findEnr13Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.date)                     sh.getRange(row, 2).setValue(new Date(p.date));
+    if (p.site                != null) sh.getRange(row, 3).setValue(String(p.site));
+    if (p.superviseurMatricule!= null) sh.getRange(row, 4).setValue(String(p.superviseurMatricule));
+    if (p.superviseurNom      != null) sh.getRange(row, 5).setValue(String(p.superviseurNom));
+    if (p.visa                != null) sh.getRange(row, 6).setValue(String(p.visa));
+    if (p.prestataireId       != null) sh.getRange(row, 7).setValue(String(p.prestataireId));
+    if (p.prestataireNom      != null) sh.getRange(row, 8).setValue(String(p.prestataireNom));
+    if (p.prestataireSigUrl   != null) sh.getRange(row, 9).setValue(String(p.prestataireSigUrl));
+    if (p.fields              != null) sh.getRange(row,10).setValue(JSON.stringify(p.fields));
+    sh.getRange(row, 12).setValue(new Date());
+    return { success:true, id:p.id };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire les exécutions ENR-13 ─────────────────────────────────
+function getEnr13Execs(p) {
+  var tok = (typeof p === 'string') ? p : _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEnr13ExecSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2, 1, lr-1, 12).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var fields = {};
+      try { fields = JSON.parse(r[9]||'{}'); } catch(e) { fields = {}; }
+      return {
+        id:                   r[0],
+        date:                 fmtDate_(r[1]),
+        site:                 String(r[2]||''),
+        superviseurMatricule: String(r[3]||''),
+        superviseurNom:       String(r[4]||''),
+        visa:                 String(r[5]||''),
+        prestataireId:        String(r[6]||''),
+        prestataireNom:       String(r[7]||''),
+        prestataireSigUrl:    String(r[8]||''),
+        fields:               fields,
+        dateCreation:         fmtDate_(r[10]),
+        dateModification:     fmtDate_(r[11])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Supprimer une exécution ENR-13 (admin uniquement) ──────────
+function deleteEnr13Exec(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr13ExecSheet_();
+    var row = _findEnr13Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    sh.deleteRow(row);
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Config du formulaire ENR-13 (produits, prestataire, superviseurs) ──
+function getEnr13FormConfig(p) {
+  var tok = (typeof p === 'string') ? p : _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var props    = PropertiesService.getScriptProperties();
+    var prestaId = props.getProperty('ENR13_PRESTA_ID') || '';
+    var presta   = _getPrestataires_().filter(function(x){ return x.id === prestaId; })[0] || null;
+    var sup      = getSuperviseursList({ token: tok, adminKey: tok });
+    return {
+      success:      true,
+      products:     JSON.parse(props.getProperty('ENR13_PRODUCTS_CONFIG') || '[]'),
+      prestataireId:      prestaId,
+      prestataireNom:     (presta && presta.nom)    || '',
+      prestataireSigUrl:  (presta && presta.sigUrl) || '',
+      superviseurs: (sup && sup.success && sup.data) || [],
+      logoUrl:      props.getProperty('HSE_LOGO_URL') || '',
+      sigMap:       _buildSigMap_()
+    };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Sauvegarder la configuration des dispositifs ───────────────
 function savePestConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
