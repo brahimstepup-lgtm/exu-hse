@@ -10704,7 +10704,10 @@ function _printEnr13(rec) {
 
   var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-13</title>'
     +'<style>*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:A4 portrait;margin:14mm 12mm}'
+    /* marge de page à 0 : supprime les en-têtes/pieds automatiques du navigateur
+       (date, heure, titre, URL) — les marges sont portées par .sheet */
+    +'@page{size:A4 portrait;margin:0}'
+    +'.sheet{padding:14mm 12mm}'
     +'body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#111;background:#fff}'
     +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
     +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
@@ -10731,6 +10734,7 @@ function _printEnr13(rec) {
     +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
     +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
     +'</style></head><body>'
+    +'<div class="sheet">'
     +'<div class="hdr">'
     +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
     +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Exécution de la Lutte contre les Nuisibles</div></div>'
@@ -10758,6 +10762,7 @@ function _printEnr13(rec) {
     +'</tbody></table>'
     + _buildGriffeTable13(d, today)
     +'<div class="footer">ENR-HSE-13 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
+    +'</div>'
     +'<script>window.onload=function(){window.print();}<\/script>'
     +'</body></html>';
 
@@ -11091,7 +11096,10 @@ function _printEnr15(rec) {
 
   var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ENR-HSE-15</title>'
     +'<style>*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:A4 landscape;margin:12mm 10mm}'
+    /* marge de page à 0 : supprime les en-têtes/pieds automatiques du navigateur
+       (date, heure, titre, URL) — les marges sont portées par .sheet */
+    +'@page{size:A4 landscape;margin:0}'
+    +'.sheet{padding:12mm 10mm}'
     +'body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#111;background:#fff}'
     +'.hdr{display:flex;align-items:stretch;border:1.5px solid #222;margin-bottom:10px}'
     +'.logo-box{width:110px;min-width:110px;border-right:1.5px solid #222;display:flex;align-items:center;justify-content:center;padding:6px}'
@@ -11116,6 +11124,7 @@ function _printEnr15(rec) {
     +'.footer{text-align:center;font-size:7pt;color:#aaa;border-top:1px solid #ddd;padding-top:5px;margin-top:10px}'
     +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}}'
     +'</style></head><body>'
+    +'<div class="sheet">'
     +'<div class="hdr">'
     +(logoUrl?'<div class="logo-box"><img src="'+logoUrl+'"/></div>':'<div class="logo-box" style="font-size:7.5pt;color:#aaa;text-align:center">LOGO</div>')
     +'<div class="title-box"><div class="doc-title">Enregistrement</div><div class="doc-sub">Vérification de la Lutte contre les Nuisibles</div></div>'
@@ -11149,6 +11158,7 @@ function _printEnr15(rec) {
     +'</tbody></table>'
     + _buildGriffeTable15(d, today)
     +'<div class="footer">ENR-HSE-15 — V.01 — Document qualité interne — Généré le '+today+' — HSE Tags 2025/2026</div>'
+    +'</div>'
     +'<script>window.onload=function(){window.print();}<\/script>'
     +'</body></html>';
 
