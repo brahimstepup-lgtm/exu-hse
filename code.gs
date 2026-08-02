@@ -2000,6 +2000,35 @@ function getEnr13Execs(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ── Dupliquer une exécution ENR-13 ─────────────────────────────
+function duplicateEnr13Exec(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr13ExecSheet_();
+    var row = _findEnr13Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    var src    = sh.getRange(row, 1, 1, 12).getValues()[0];
+    var lr     = sh.getLastRow();
+    var nextId = (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),  // la copie part de la date du jour
+      src[2],  // Site
+      src[3],  // Matricule superviseur
+      src[4],  // Nom superviseur
+      src[5],  // Visa HSE
+      src[6],  // ID prestataire
+      src[7],  // Nom prestataire
+      src[8],  // Griffe prestataire
+      src[9],  // Données JSON
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Supprimer une exécution ENR-13 (admin uniquement) ──────────
 function deleteEnr13Exec(p) {
   if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };

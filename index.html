@@ -10594,10 +10594,27 @@ function _renderEnr13ExecList() {
       + '<div style="display:flex;gap:8px;margin-top:10px">'
       + '<button class="btn btn-g" onclick="openEnr13Edit('+i+')" style="flex:1;font-size:.78rem;height:32px">✏ Modifier</button>'
       + '<button class="btn btn-g" onclick="printEnr13Record('+i+')" style="flex:1;font-size:.78rem;height:32px">🖨 Imprimer</button>'
+      + '<button class="btn" onclick="duplicateEnr13Record('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(52,152,219,.15);border:1px solid rgba(52,152,219,.4);color:#3498db;border-radius:var(--rs)" title="Dupliquer">⧉</button>'
       + (isAdmin()?'<button class="btn" onclick="deleteEnr13Record('+i+')" style="font-size:.78rem;height:32px;padding:0 12px;flex-shrink:0;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.35);color:#e74c3c;border-radius:var(--rs)" title="Supprimer">🗑</button>':'')
       + '</div>'
       + '</div>';
   }).join('');
+}
+
+function duplicateEnr13Record(idx) {
+  var c = _enr13Records[idx];
+  if (!c) return;
+  if (!confirm('Dupliquer la fiche ENR-13 #'+c.id+' ?\n\nLa copie reprend le site, le superviseur, les produits et les zones, avec la date du jour.')) return;
+  showLoader('Duplication…');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      hideSplash();
+      if (!r || !r.success) { toast('Erreur: '+(r&&r.error||'?'),'err'); return; }
+      toast('✓ Fiche dupliquée (#'+r.id+')','ok');
+      renderEnr13Execs();
+    })
+    .withFailureHandler(function(e){ hideSplash(); toast(e.message,'err'); })
+    .duplicateEnr13Exec({ token:S.adminKey, adminKey:S.adminKey, id:c.id, date:todayStr() });
 }
 
 function deleteEnr13Record(idx) {
