@@ -2063,6 +2063,176 @@ function getEnr13FormConfig(p) {
   } catch(e) { return { success:false, error:e.message }; }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ENR-HSE-15 — ENREGISTREMENTS DE VÉRIFICATION DE LA LUTTE
+//   Feuille : ENR15_Verifications
+//   0:ID  1:Date  2:MatriculeSuperviseur  3:NomSuperviseur  4:VisaHSE
+//   5:IDPrestataire  6:NomPrestataire  7:GriffePrestataire
+//   8:DonnéesJSON  9:DateCréation  10:DateModification
+// ══════════════════════════════════════════════════════════════════
+function getEnr15VerifSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('ENR15_Verifications');
+  if (!sh) {
+    sh = ss.insertSheet('ENR15_Verifications');
+    sh.appendRow([
+      'ID','Date','Matricule Superviseur','Nom Superviseur','Visa HSE',
+      'ID Prestataire','Nom Prestataire','Griffe Prestataire','Données JSON',
+      'Date Création','Date Modification'
+    ]);
+    sh.getRange(1,1,1,11).setFontWeight('bold').setBackground('#3498db').setFontColor('#ffffff');
+  }
+  return sh;
+}
+
+function _findEnr15Row_(sh, id) {
+  var lr = sh.getLastRow();
+  if (lr < 2) return -1;
+  var ids = sh.getRange(2, 1, lr-1, 1).getValues();
+  for (var i=0; i<ids.length; i++) {
+    if (String(ids[i][0]) === String(id)) return i+2;
+  }
+  return -1;
+}
+
+// ── Enregistrer une vérification ENR-15 ────────────────────────
+function saveEnr15Verif(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sess   = verifySession_(tok);
+    var sh     = getEnr15VerifSheet_();
+    var lr     = sh.getLastRow();
+    var nextId = lr < 2 ? 1 : (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),
+      String(p.superviseurMatricule||(sess&&sess.matricule)||''),
+      String(p.superviseurNom||(sess&&sess.matricule)||''),
+      String(p.visa||''),
+      String(p.prestataireId||''),
+      String(p.prestataireNom||''),
+      String(p.prestataireSigUrl||''),
+      JSON.stringify(p.fields||{}),
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Modifier une vérification ENR-15 (superviseur ou admin) ────
+function updateEnr15Verif(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr15VerifSheet_();
+    var row = _findEnr15Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    if (p.date)                        sh.getRange(row, 2).setValue(new Date(p.date));
+    if (p.superviseurMatricule != null) sh.getRange(row, 3).setValue(String(p.superviseurMatricule));
+    if (p.superviseurNom       != null) sh.getRange(row, 4).setValue(String(p.superviseurNom));
+    if (p.visa                 != null) sh.getRange(row, 5).setValue(String(p.visa));
+    if (p.prestataireId        != null) sh.getRange(row, 6).setValue(String(p.prestataireId));
+    if (p.prestataireNom       != null) sh.getRange(row, 7).setValue(String(p.prestataireNom));
+    if (p.prestataireSigUrl    != null) sh.getRange(row, 8).setValue(String(p.prestataireSigUrl));
+    if (p.fields               != null) sh.getRange(row, 9).setValue(JSON.stringify(p.fields));
+    sh.getRange(row, 11).setValue(new Date());
+    return { success:true, id:p.id };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Lire les vérifications ENR-15 ──────────────────────────────
+function getEnr15Verifs(p) {
+  var tok = (typeof p === 'string') ? p : _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh = getEnr15VerifSheet_();
+    var lr = sh.getLastRow();
+    if (lr < 2) return { success:true, data:[] };
+    var rows = sh.getRange(2, 1, lr-1, 11).getValues();
+    var data = rows.filter(function(r){ return r[0]; }).map(function(r) {
+      var fields = {};
+      try { fields = JSON.parse(r[8]||'{}'); } catch(e) { fields = {}; }
+      return {
+        id:                   r[0],
+        date:                 fmtDate_(r[1]),
+        superviseurMatricule: String(r[2]||''),
+        superviseurNom:       String(r[3]||''),
+        visa:                 String(r[4]||''),
+        prestataireId:        String(r[5]||''),
+        prestataireNom:       String(r[6]||''),
+        prestataireSigUrl:    String(r[7]||''),
+        fields:               fields,
+        dateCreation:         fmtDate_(r[9]),
+        dateModification:     fmtDate_(r[10])
+      };
+    });
+    return { success:true, data:data.reverse() };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Dupliquer une vérification ENR-15 ──────────────────────────
+function duplicateEnr15Verif(p) {
+  var tok = _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr15VerifSheet_();
+    var row = _findEnr15Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    var src    = sh.getRange(row, 1, 1, 11).getValues()[0];
+    var lr     = sh.getLastRow();
+    var nextId = (parseInt(sh.getRange(lr,1).getValue(),10)||0)+1;
+    sh.appendRow([
+      nextId,
+      p.date ? new Date(p.date) : new Date(),  // la copie part de la date du jour
+      src[2],  // Matricule superviseur
+      src[3],  // Nom superviseur
+      src[4],  // Visa HSE
+      src[5],  // ID prestataire
+      src[6],  // Nom prestataire
+      src[7],  // Griffe prestataire
+      src[8],  // Données JSON
+      new Date(),
+      ''
+    ]);
+    return { success:true, id:nextId };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Supprimer une vérification ENR-15 (admin uniquement) ───────
+function deleteEnr15Verif(p) {
+  if (!isAdmin_(p&&p.adminKey) && !isSessionAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
+  try {
+    var sh  = getEnr15VerifSheet_();
+    var row = _findEnr15Row_(sh, p&&p.id);
+    if (row < 0) return { success:false, error:'Enregistrement introuvable' };
+    sh.deleteRow(row);
+    return { success:true };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
+// ── Config du formulaire ENR-15 (prestataire, superviseurs) ────
+function getEnr15FormConfig(p) {
+  var tok = (typeof p === 'string') ? p : _enr13Token_(p);
+  if (!isSessionSuperOrAdmin_(tok)) return { success:false, error:'Accès refusé' };
+  try {
+    var props    = PropertiesService.getScriptProperties();
+    var prestaId = props.getProperty('ENR15_PRESTA_ID') || '';
+    var presta   = _getPrestataires_().filter(function(x){ return x.id === prestaId; })[0] || null;
+    var sup      = getSuperviseursList({ token: tok, adminKey: tok });
+    return {
+      success:            true,
+      prestataireId:      prestaId,
+      prestataireNom:     (presta && presta.nom)    || '',
+      prestataireSigUrl:  (presta && presta.sigUrl) || '',
+      superviseurs:       (sup && sup.success && sup.data) || [],
+      logoUrl:            props.getProperty('HSE_LOGO_URL') || '',
+      sigMap:             _buildSigMap_()
+    };
+  } catch(e) { return { success:false, error:e.message }; }
+}
+
 // ── Sauvegarder la configuration des dispositifs ───────────────
 function savePestConfig(p) {
   if (!isSessionSuperOrAdmin_(p&&p.adminKey)) return { success:false, error:'Accès refusé' };
